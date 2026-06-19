@@ -48,18 +48,18 @@ jobs:
             if (context.eventName === 'pull_request_review') {
               const reviewState = context.payload.review?.state;
               if (reviewState === 'changes_requested') {
-                targetStatus = 'In Progress';
+                targetStatus = 'In progress';
               } else if (reviewState === 'approved') {
-                targetStatus = 'In Review';
+                targetStatus = 'In review';
               }
             } else if (context.eventName === 'pull_request') {
               const action = context.payload.action;
               if (action === 'closed') {
                 targetStatus = pr.merged ? 'Done' : null;
               } else if (action === 'converted_to_draft') {
-                targetStatus = 'In Progress';
+                targetStatus = 'In progress';
               } else {
-                targetStatus = 'In Review';
+                targetStatus = 'In review';
               }
             }
 
