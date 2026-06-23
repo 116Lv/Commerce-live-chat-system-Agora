@@ -1,4 +1,4 @@
-package com.team11.agora.global.response;
+package com.team7.agora.global.response;
 
 public record ApiResponse<T>(
         String status,
