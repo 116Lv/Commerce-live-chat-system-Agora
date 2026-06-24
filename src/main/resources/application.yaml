@@ -36,6 +36,7 @@ spring:
 jwt:
   secret-key: localEnvDummySecretKeyForAgoraProjectTest12345!
   access-token-valid-time: 36000000
+  refresh-token-valid-time: 1209600000
 
 ---
 
@@ -72,3 +73,4 @@ spring:
 jwt:
   secret-key: ${JWT_SECRET_KEY}
   access-token-valid-time: 3600000
+  refresh-token-valid-time: 1209600000
