@@ -57,24 +57,24 @@ public class JwtProvider {
         return token.substring(BEARER_PREFIX.length());
     }
 
-    public AuthUser parseToken(String token) {
+    public JwtClaims parse(String token) {
         String[] parts = token.split("\\.");
         if (parts.length != 3) {
-            throw new IllegalArgumentException("JWT 토큰 형식이 올바르지 않습니다.");
+            throw new BusinessException(ErrorCode.INVALID_TOKEN, "JWT 토큰 형식이 올바르지 않습니다.");
         }
 
         String unsignedToken = parts[0] + "." + parts[1];
         if (!constantTimeEquals(sign(unsignedToken), parts[2])) {
-            throw new IllegalArgumentException("JWT 서명이 올바르지 않습니다.");
+            throw new BusinessException(ErrorCode.INVALID_TOKEN, "JWT 서명이 올바르지 않습니다.");
         }
 
         Map<String, String> claims = parseFlatJson(new String(URL_DECODER.decode(parts[1]), StandardCharsets.UTF_8));
         long expiresAt = Long.parseLong(claims.get("exp"));
         if (expiresAt < Instant.now().toEpochMilli()) {
-            throw new IllegalArgumentException("JWT 토큰이 만료되었습니다.");
+            throw new BusinessException(ErrorCode.EXPIRED_TOKEN);
         }
 
-        return new AuthUser(
+        return new JwtClaims(
             Long.parseLong(claims.get("sub")),
             claims.get("email"),
             claims.get("role"),
