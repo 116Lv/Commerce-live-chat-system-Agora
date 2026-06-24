@@ -1,11 +1,14 @@
 package com.team7.agora.domain.coupon.repository;
 
 import com.team7.agora.domain.coupon.entity.Coupon;
+import java.util.List;
 import java.util.Optional;
 
 public interface CouponRepository {
 
     Coupon save(Coupon coupon);
+
+    List<Coupon> findAll();
 
     Optional<Coupon> findFirstComeCoupon();
 }

@@ -3,6 +3,7 @@ package com.team7.agora.domain.coupon.repository;
 import com.team7.agora.domain.coupon.entity.Coupon;
 import com.team7.agora.domain.coupon.enums.CouponStatus;
 import com.team7.agora.domain.coupon.enums.CouponType;
+import java.util.List;
 import java.util.Optional;
 import org.springframework.stereotype.Repository;
 
@@ -18,6 +19,11 @@ class CouponRepositoryAdapter implements CouponRepository {
     @Override
     public Coupon save(Coupon coupon) {
         return repository.save(coupon);
+    }
+
+    @Override
+    public List<Coupon> findAll() {
+        return repository.findAll();
     }
 
     @Override

@@ -3,6 +3,7 @@ package com.team7.agora.domain.coupon.controller;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -14,6 +15,7 @@ import com.team7.agora.domain.user.enums.UserRole;
 import com.team7.agora.domain.user.enums.UserStatus;
 import com.team7.agora.global.auth.CustomUserDetails;
 import com.team7.agora.global.exception.GlobalExceptionHandler;
+import java.util.List;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -83,6 +85,24 @@ class AdminCouponControllerTest {
             any(CouponType.class),
             any(Integer.class)
         );
+    }
+
+    @Test
+    void listUsesAuthenticatedAdminAndReturnsCoupons() throws Exception {
+        authenticate(UserRole.ROOT_ADMIN);
+        when(adminCouponService.list(any(CustomUserDetails.class))).thenReturn(List.of(
+            new AdminCouponResponse(1L, "신규 쿠폰", 5000, 10000, "FIRST_COME", "ACTIVE", 30),
+            new AdminCouponResponse(2L, "스마일 보상 쿠폰", 3000, 5000, "SMILE_REWARD", "ACTIVE", 14)
+        ));
+
+        mockMvc.perform(get("/api/admin/coupons"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.status").value("SUCCESS"))
+            .andExpect(jsonPath("$.data").isArray())
+            .andExpect(jsonPath("$.data[0].couponId").value(1L))
+            .andExpect(jsonPath("$.data[1].couponId").value(2L));
+
+        verify(adminCouponService).list(any(CustomUserDetails.class));
     }
 
     @Test
