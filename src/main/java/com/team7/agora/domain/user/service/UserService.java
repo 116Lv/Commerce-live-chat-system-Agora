@@ -1,4 +1,3 @@
-// 내 정보 조회/비밀번호 변경/프로필 수정을 처리하는 서비스
 package com.team7.agora.domain.user.service;
 
 import com.team7.agora.domain.user.dto.response.SmileScoreResponse;
@@ -27,6 +26,10 @@ public class UserService {
         return UserMeResponse.from(getUser(userId));
     }
 
+    public SmileScoreResponse getSmileScore(Long userId) {
+        return SmileScoreResponse.from(getUser(userId));
+    }
+
     @Transactional
     public UserMeResponse updateProfile(Long userId, String nickname) {
         User user = getUser(userId);
@@ -41,13 +44,6 @@ public class UserService {
             throw new BusinessException(ErrorCode.INVALID_REQUEST, "현재 비밀번호가 일치하지 않습니다.");
         }
         user.changePassword(passwordEncoder.encode(newPassword));
-    }
-
-    @Transactional
-    public UserMeResponse updateProfile(Long userId, String nickname) {
-        User user = getUser(userId);
-        user.updateProfile(nickname);
-        return UserMeResponse.from(user);
     }
 
     private User getUser(Long userId) {
