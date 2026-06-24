@@ -64,10 +64,6 @@ public class User {
         return new User(email, encodedPassword, nickname, phone);
     }
 
-    public static User create(String email, String encodedPassword, String nickname) {
-        return new User(email, encodedPassword, nickname, null);
-    }
-
     public void updateSmileScore(int delta) {
         int nextScore = this.smileScore + delta;
         this.smileScore = Math.max(0, Math.min(100, nextScore));
