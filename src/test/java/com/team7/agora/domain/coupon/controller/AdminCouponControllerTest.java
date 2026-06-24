@@ -15,6 +15,7 @@ import com.team7.agora.domain.user.enums.UserRole;
 import com.team7.agora.domain.user.enums.UserStatus;
 import com.team7.agora.global.auth.CustomUserDetails;
 import com.team7.agora.global.exception.GlobalExceptionHandler;
+import java.util.List;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

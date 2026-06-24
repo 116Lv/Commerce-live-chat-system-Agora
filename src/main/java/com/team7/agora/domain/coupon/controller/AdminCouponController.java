@@ -6,6 +6,7 @@ import com.team7.agora.domain.coupon.service.AdminCouponService;
 import com.team7.agora.global.auth.CustomUserDetails;
 import com.team7.agora.global.response.ApiResponse;
 import jakarta.validation.Valid;
+import java.util.List;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
