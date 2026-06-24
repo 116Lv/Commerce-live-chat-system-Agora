@@ -56,4 +56,8 @@ public class Coupon {
     public static Coupon firstCome(String name, int discountAmount, int minOrderAmount, int validDays) {
         return new Coupon(name, discountAmount, minOrderAmount, CouponType.FIRST_COME, validDays);
     }
+
+    public static Coupon create(String name, int discountAmount, int minOrderAmount, CouponType type, int validDays) {
+        return new Coupon(name, discountAmount, minOrderAmount, type, validDays);
+    }
 }
