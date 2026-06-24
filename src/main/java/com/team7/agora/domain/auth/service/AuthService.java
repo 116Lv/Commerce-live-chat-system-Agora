@@ -9,12 +9,14 @@ import com.team7.agora.domain.auth.dto.response.SignupResponse;
 import com.team7.agora.domain.auth.entity.RefreshToken;
 import com.team7.agora.domain.auth.repository.RefreshTokenRepository;
 import com.team7.agora.domain.user.entity.User;
+import com.team7.agora.domain.user.enums.UserStatus;
 import com.team7.agora.domain.user.repository.UserRepository;
 import com.team7.agora.global.auth.JwtProvider;
 import com.team7.agora.global.exception.BusinessException;
 import com.team7.agora.global.exception.ErrorCode;
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -68,6 +70,7 @@ public class AuthService {
         if (!passwordEncoder.matches(request.password(), user.getPassword())) {
             throw new BusinessException(ErrorCode.INVALID_CREDENTIALS);
         }
+        validateActiveUser(user);
 
         String accessToken = createAccessToken(user);
         String refreshToken = issueRefreshToken(user);
@@ -84,12 +87,16 @@ public class AuthService {
         RefreshToken refreshToken = refreshTokenRepository.findByToken(refreshTokenValue)
                 .orElseThrow(() -> new BusinessException(ErrorCode.INVALID_TOKEN));
 
-        if (refreshToken.isExpired(LocalDateTime.now())) {
+        if (refreshToken.isExpired(nowUtc())) {
             refreshTokenRepository.delete(refreshToken);
             throw new BusinessException(ErrorCode.EXPIRED_TOKEN);
         }
 
         User user = refreshToken.getUser();
+        if (user.getStatus() != UserStatus.ACTIVE) {
+            refreshTokenRepository.delete(refreshToken);
+            throw new BusinessException(ErrorCode.INACTIVE_USER);
+        }
         refreshTokenRepository.delete(refreshToken);
 
         String accessToken = createAccessToken(user);
@@ -108,8 +115,18 @@ public class AuthService {
 
     private String issueRefreshToken(User user) {
         String token = UUID.randomUUID().toString();
-        LocalDateTime expiresAt = LocalDateTime.now().plus(Duration.ofMillis(refreshTokenValidTime));
+        LocalDateTime expiresAt = nowUtc().plus(Duration.ofMillis(refreshTokenValidTime));
         refreshTokenRepository.save(RefreshToken.issue(user, token, expiresAt));
         return token;
+    }
+
+    private void validateActiveUser(User user) {
+        if (user.getStatus() != UserStatus.ACTIVE) {
+            throw new BusinessException(ErrorCode.INACTIVE_USER);
+        }
+    }
+
+    private LocalDateTime nowUtc() {
+        return LocalDateTime.now(ZoneOffset.UTC);
     }
 }
