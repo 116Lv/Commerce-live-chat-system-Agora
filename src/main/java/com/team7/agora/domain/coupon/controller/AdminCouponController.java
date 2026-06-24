@@ -6,8 +6,10 @@ import com.team7.agora.domain.coupon.service.AdminCouponService;
 import com.team7.agora.global.auth.CustomUserDetails;
 import com.team7.agora.global.response.ApiResponse;
 import jakarta.validation.Valid;
+import java.util.List;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -38,5 +40,11 @@ public class AdminCouponController {
             request.validDays()
         );
         return ApiResponse.success("쿠폰 정책이 생성되었습니다.", response);
+    }
+    @PreAuthorize("hasAnyAuthority('USER_ADMIN', 'ROOT_ADMIN')")
+    @GetMapping
+    public ApiResponse<List<AdminCouponResponse>> list(@AuthenticationPrincipal CustomUserDetails admin) {
+        List<AdminCouponResponse> response = adminCouponService.list(admin);
+        return ApiResponse.success("쿠폰 정책 목록을 조회했습니다.", response);
     }
 }
