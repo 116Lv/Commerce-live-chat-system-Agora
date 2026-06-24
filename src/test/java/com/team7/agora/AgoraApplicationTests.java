@@ -1,4 +1,4 @@
-package com.team11.agora;
+package com.team7.agora;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;

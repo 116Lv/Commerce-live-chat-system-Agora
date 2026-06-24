@@ -1,4 +1,4 @@
-package com.team11.agora;
+package com.team7.agora;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
