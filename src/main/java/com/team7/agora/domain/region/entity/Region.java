@@ -1,3 +1,4 @@
+// 거래 지역 정보를 표현하는 JPA 엔티티
 package com.team7.agora.domain.region.entity;
 
 import jakarta.persistence.Column;
@@ -15,8 +16,8 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
 @Table(
-    name = "regions",
-    indexes = @Index(name = "idx_regions_name", columnList = "name")
+        name = "regions",
+        indexes = @Index(name = "idx_regions_name", columnList = "name")
 )
 public class Region {
 

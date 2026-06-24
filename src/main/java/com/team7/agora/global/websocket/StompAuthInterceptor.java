@@ -2,6 +2,7 @@ package com.team7.agora.global.websocket;
 
 import com.team7.agora.domain.chat.controller.StompPrincipal;
 import com.team7.agora.global.auth.AuthUser;
+import com.team7.agora.global.auth.JwtClaims;
 import com.team7.agora.global.auth.JwtProvider;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
@@ -30,7 +31,13 @@ public class StompAuthInterceptor implements ChannelInterceptor {
         }
 
         String authorization = accessor.getFirstNativeHeader(AUTHORIZATION_HEADER);
-        AuthUser authUser = jwtProvider.parseToken(jwtProvider.substringBearer(authorization));
+        JwtClaims claims = jwtProvider.parse(jwtProvider.substringBearer(authorization));
+        AuthUser authUser = new AuthUser(
+            claims.userId(),
+            claims.email(),
+            claims.role(),
+            claims.nickname()
+        );
         accessor.setUser(new StompPrincipal(authUser));
         return MessageBuilder.createMessage(message.getPayload(), accessor.getMessageHeaders());
     }
