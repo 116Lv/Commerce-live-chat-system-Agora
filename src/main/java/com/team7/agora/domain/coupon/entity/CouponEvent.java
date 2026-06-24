@@ -2,6 +2,8 @@ package com.team7.agora.domain.coupon.entity;
 
 import com.team7.agora.domain.common.entity.BaseTimeEntity;
 import com.team7.agora.domain.coupon.enums.CouponEventStatus;
+import com.team7.agora.global.exception.BusinessException;
+import com.team7.agora.global.exception.ErrorCode;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -56,5 +58,22 @@ public class CouponEvent extends BaseTimeEntity {
 
     public static CouponEvent create(String name, int totalQuantity, LocalDateTime startAt, LocalDateTime endAt) {
         return new CouponEvent(name, totalQuantity, startAt, endAt);
+    }
+
+    public void issue() {
+        validateIssueable(LocalDateTime.now());
+        this.issuedQuantity++;
+    }
+
+    public void validateIssueable(LocalDateTime now) {
+        if (status != CouponEventStatus.ACTIVE) {
+            throw new BusinessException(ErrorCode.CONFLICT, "종료된 쿠폰 이벤트입니다.");
+        }
+        if (now.isBefore(startAt) || now.isAfter(endAt)) {
+            throw new BusinessException(ErrorCode.CONFLICT, "쿠폰 이벤트 진행 시간이 아닙니다.");
+        }
+        if (issuedQuantity >= totalQuantity) {
+            throw new BusinessException(ErrorCode.CONFLICT, "쿠폰이 모두 소진되었습니다.");
+        }
     }
 }
