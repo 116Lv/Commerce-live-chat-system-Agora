@@ -69,4 +69,11 @@ public class SearchController {
     ) {
         return ResponseEntity.ok(ApiResponse.success("일간 인기 검색어입니다.", popularKeywordService.getTopDailyKeywords(limit)));
     }
+
+    @GetMapping("/search/keywords/weekly")
+    public ResponseEntity<ApiResponse<List<PopularKeywordResponse>>> weeklyPopularKeywords(
+        @RequestParam(defaultValue = "10") int limit
+    ) {
+        return ResponseEntity.ok(ApiResponse.success("주간 인기 검색어입니다.", popularKeywordService.getTopWeeklyKeywords(limit)));
+    }
 }

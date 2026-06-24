@@ -100,4 +100,18 @@ class SearchControllerTest {
         assertThat(response.getStatusCode().value()).isEqualTo(200);
         assertThat(response.getBody().data()).hasSize(1);
     }
+
+    @Test
+    void weeklyPopularKeywords_returnsServiceRanking() {
+        SearchController controller = new SearchController(productSearchService, popularKeywordService);
+        when(popularKeywordService.getTopWeeklyKeywords(10)).thenReturn(List.of(
+            new PopularKeywordResponse("아이폰", 7)
+        ));
+
+        ResponseEntity<ApiResponse<List<PopularKeywordResponse>>> response =
+            controller.weeklyPopularKeywords(10);
+
+        assertThat(response.getStatusCode().value()).isEqualTo(200);
+        assertThat(response.getBody().data()).hasSize(1);
+    }
 }
