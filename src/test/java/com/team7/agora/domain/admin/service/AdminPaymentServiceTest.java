@@ -1,0 +1,115 @@
+package com.team7.agora.domain.admin.service;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import com.team7.agora.domain.payment.client.PaymentClient;
+import com.team7.agora.domain.payment.entity.Payment;
+import com.team7.agora.domain.payment.enums.PaymentStatus;
+import com.team7.agora.domain.payment.repository.PaymentRepository;
+import com.team7.agora.domain.user.enums.UserRole;
+import com.team7.agora.domain.user.enums.UserStatus;
+import com.team7.agora.global.auth.CustomUserDetails;
+import com.team7.agora.global.exception.BusinessException;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+
+@ExtendWith(MockitoExtension.class)
+class AdminPaymentServiceTest {
+
+    @Mock
+    private PaymentRepository paymentRepository;
+
+    @Mock
+    private PaymentClient paymentClient;
+
+    private AdminPaymentService adminPaymentService;
+    private CustomUserDetails settlementAdmin;
+
+    @BeforeEach
+    void setUp() {
+        adminPaymentService = new AdminPaymentService(paymentRepository, paymentClient);
+        settlementAdmin = new CustomUserDetails(
+            99L,
+            "settlement@admin.com",
+            "encoded",
+            UserRole.SETTLEMENT_ADMIN,
+            UserStatus.ACTIVE,
+            "정산관리자"
+        );
+    }
+
+    @Test
+    void getPaymentsAllowsSettlementAdmin() {
+        Payment payment = payment(1L, PaymentStatus.PAID);
+        when(paymentRepository.findAll(PageRequest.of(0, 20))).thenReturn(new PageImpl<>(List.of(payment)));
+
+        var responses = adminPaymentService.getPayments(settlementAdmin, null, PageRequest.of(0, 20));
+
+        assertThat(responses).hasSize(1);
+        assertThat(responses.getFirst().paymentId()).isEqualTo(1L);
+        assertThat(responses.getFirst().status()).isEqualTo("PAID");
+    }
+
+    @Test
+    void getRefundsReturnsRefundedPaymentsOnly() {
+        Payment refunded = payment(2L, PaymentStatus.REFUNDED);
+        when(paymentRepository.findAllByStatus(PaymentStatus.REFUNDED)).thenReturn(List.of(refunded));
+
+        var responses = adminPaymentService.getRefunds(settlementAdmin);
+
+        assertThat(responses).hasSize(1);
+        assertThat(responses.getFirst().status()).isEqualTo("REFUNDED");
+    }
+
+    @Test
+    void verifyPaymentRejectsPaymentWithoutPaymentKey() {
+        Payment ready = payment(3L, PaymentStatus.READY);
+        when(ready.getPaymentKey()).thenReturn(null);
+        when(paymentRepository.findById(3L)).thenReturn(Optional.of(ready));
+
+        assertThatThrownBy(() -> adminPaymentService.verifyPayment(settlementAdmin, 3L))
+            .isInstanceOf(BusinessException.class);
+        verify(paymentClient, never()).confirm(any(), any(), any());
+    }
+
+    @Test
+    void normalUserCannotReadPayments() {
+        CustomUserDetails user = new CustomUserDetails(
+            1L,
+            "user@test.com",
+            "encoded",
+            UserRole.ROLE_USER,
+            UserStatus.ACTIVE,
+            "일반사용자"
+        );
+
+        assertThatThrownBy(() -> adminPaymentService.getPayments(user, null, PageRequest.of(0, 20)))
+            .isInstanceOf(BusinessException.class);
+    }
+
+    private Payment payment(Long id, PaymentStatus status) {
+        Payment payment = org.mockito.Mockito.mock(Payment.class);
+        lenient().when(payment.getId()).thenReturn(id);
+        lenient().when(payment.getAmount()).thenReturn(BigDecimal.valueOf(50000));
+        lenient().when(payment.getOrderId()).thenReturn("order-" + id);
+        lenient().when(payment.getPaymentKey()).thenReturn("payment-key-" + id);
+        lenient().when(payment.getStatus()).thenReturn(status);
+        lenient().when(payment.getRequestedAt()).thenReturn(LocalDateTime.now());
+        return payment;
+    }
+}
