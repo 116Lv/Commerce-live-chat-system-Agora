@@ -27,8 +27,11 @@ public class UserService {
         return UserMeResponse.from(getUser(userId));
     }
 
-    public SmileScoreResponse getSmileScore(Long userId) {
-        return SmileScoreResponse.from(getUser(userId));
+    @Transactional
+    public UserMeResponse updateProfile(Long userId, String nickname) {
+        User user = getUser(userId);
+        user.updateProfile(nickname);
+        return UserMeResponse.from(user);
     }
 
     @Transactional

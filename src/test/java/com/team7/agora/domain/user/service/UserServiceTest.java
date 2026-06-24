@@ -18,6 +18,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.test.util.ReflectionTestUtils;
 
 @ExtendWith(MockitoExtension.class)
 class UserServiceTest {
@@ -27,79 +28,86 @@ class UserServiceTest {
 
     private final PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
-    @Test
-    void getMeReturnsUserInfo() {
-        UserService userService = new UserService(userRepository, passwordEncoder);
-        User user = User.signup("user@test.com", passwordEncoder.encode("password123!"), "동네유저", "01012345678");
-        assignId(user, 1L);
-        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+    private UserService createService() {
+        return new UserService(userRepository, passwordEncoder);
+    }
 
+    private User userWithId(long id) {
+        User user = User.create("user@test.com", passwordEncoder.encode("oldPassword1!"), "동네유저");
+        ReflectionTestUtils.setField(user, "id", id);
+        return user;
+    }
+
+    @Test
+    void getMe_returnsAuthenticatedUserInfo() {
+        // given
+        UserService userService = createService();
+        when(userRepository.findById(1L)).thenReturn(Optional.of(userWithId(1L)));
+
+        // when
         UserMeResponse response = userService.getMe(1L);
 
+        // then
         assertThat(response.id()).isEqualTo(1L);
         assertThat(response.email()).isEqualTo("user@test.com");
         assertThat(response.nickname()).isEqualTo("동네유저");
+        assertThat(response.role()).isEqualTo("ROLE_USER");
+        assertThat(response.status()).isEqualTo("ACTIVE");
     }
 
     @Test
-    void getMeThrowsNotFoundWhenUserMissing() {
-        UserService userService = new UserService(userRepository, passwordEncoder);
+    void getMe_throwsNotFoundWhenUserMissing() {
+        // given
+        UserService userService = createService();
         when(userRepository.findById(1L)).thenReturn(Optional.empty());
 
+        // when & then
         assertThatThrownBy(() -> userService.getMe(1L))
-            .isInstanceOf(BusinessException.class)
-            .extracting("errorCode")
-            .isEqualTo(ErrorCode.NOT_FOUND);
+                .isInstanceOf(BusinessException.class)
+                .extracting("errorCode")
+                .isEqualTo(ErrorCode.NOT_FOUND);
     }
 
     @Test
-    void changePasswordUpdatesPasswordWhenCurrentPasswordMatches() {
-        UserService userService = new UserService(userRepository, passwordEncoder);
-        User user = User.signup("user@test.com", passwordEncoder.encode("oldPassword1!"), "동네유저", "01012345678");
-        assignId(user, 1L);
+    void updateProfile_changesNickname() {
+        // given
+        UserService userService = createService();
+        User user = userWithId(1L);
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
 
+        // when
+        UserMeResponse response = userService.updateProfile(1L, "새닉네임");
+
+        // then
+        assertThat(response.nickname()).isEqualTo("새닉네임");
+        assertThat(user.getNickname()).isEqualTo("새닉네임");
+    }
+
+    @Test
+    void changePassword_updatesEncodedPasswordWhenCurrentPasswordMatches() {
+        // given
+        UserService userService = createService();
+        User user = userWithId(1L);
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+
+        // when
         userService.changePassword(1L, "oldPassword1!", "newPassword1!");
 
+        // then
         assertThat(passwordEncoder.matches("newPassword1!", user.getPassword())).isTrue();
     }
 
     @Test
-    void changePasswordRejectsWhenCurrentPasswordDoesNotMatch() {
-        UserService userService = new UserService(userRepository, passwordEncoder);
-        User user = User.signup("user@test.com", passwordEncoder.encode("oldPassword1!"), "동네유저", "01012345678");
-        assignId(user, 1L);
+    void changePassword_throwsInvalidRequestWhenCurrentPasswordMismatches() {
+        // given
+        UserService userService = createService();
+        User user = userWithId(1L);
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
 
+        // when & then
         assertThatThrownBy(() -> userService.changePassword(1L, "wrongPassword", "newPassword1!"))
-            .isInstanceOf(BusinessException.class)
-            .extracting("errorCode")
-            .isEqualTo(ErrorCode.INVALID_REQUEST);
-    }
-
-    @Test
-    void getSmileScoreReturnsUserScore() {
-        UserService userService = new UserService(userRepository, passwordEncoder);
-        User user = User.signup("user@test.com", passwordEncoder.encode("password123!"), "동네유저", "01012345678");
-        assignId(user, 1L);
-        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
-
-        var response = userService.getSmileScore(1L);
-
-        assertThat(response.userId()).isEqualTo(1L);
-        assertThat(response.smileScore()).isEqualTo(60);
-    }
-
-    @Test
-    void updateProfileChangesNickname() {
-        UserService userService = new UserService(userRepository, passwordEncoder);
-        User user = User.signup("user@test.com", passwordEncoder.encode("password123!"), "동네유저", "01012345678");
-        assignId(user, 1L);
-        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
-
-        UserMeResponse response = userService.updateProfile(1L, "새이름");
-
-        assertThat(response.nickname()).isEqualTo("새이름");
-        assertThat(user.getNickname()).isEqualTo("새이름");
+                .isInstanceOf(BusinessException.class)
+                .extracting("errorCode")
+                .isEqualTo(ErrorCode.INVALID_REQUEST);
     }
 }

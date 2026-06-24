@@ -1,3 +1,4 @@
+// 사용자가 선택한 관심 지역을 표현하는 JPA 엔티티
 package com.team7.agora.domain.region.entity;
 
 import com.team7.agora.domain.user.entity.User;
