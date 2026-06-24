@@ -1,6 +1,6 @@
-// 회원 셀프서비스 비즈니스 로직을 처리하는 서비스
 package com.team7.agora.domain.user.service;
 
+import com.team7.agora.domain.user.dto.response.SmileScoreResponse;
 import com.team7.agora.domain.user.dto.response.UserMeResponse;
 import com.team7.agora.domain.user.entity.User;
 import com.team7.agora.domain.user.repository.UserRepository;
@@ -26,6 +26,10 @@ public class UserService {
         return UserMeResponse.from(getUser(userId));
     }
 
+    public SmileScoreResponse getSmileScore(Long userId) {
+        return SmileScoreResponse.from(getUser(userId));
+    }
+
     @Transactional
     public UserMeResponse updateProfile(Long userId, String nickname) {
         User user = getUser(userId);
@@ -44,6 +48,6 @@ public class UserService {
 
     private User getUser(Long userId) {
         return userRepository.findById(userId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "회원을 찾을 수 없습니다."));
+            .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "회원을 찾을 수 없습니다."));
     }
 }

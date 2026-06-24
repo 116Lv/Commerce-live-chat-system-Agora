@@ -1,5 +1,6 @@
-// 회원 셀프서비스 비즈니스 규칙을 검증하는 단위 테스트
+// UserService 단위 테스트
 package com.team7.agora.domain.user.service;
+import static com.team7.agora.support.TestEntityIds.assignId;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
