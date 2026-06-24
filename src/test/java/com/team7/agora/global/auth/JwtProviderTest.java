@@ -30,6 +30,21 @@ class JwtProviderTest {
     }
 
     @Test
+    void createAndParse_preservesSpecialCharactersInClaims() {
+        // given: nickname에 쉼표/콜론/따옴표/역슬래시 포함
+        String nickname = "동네, 유저: \"특수\" \\값";
+        String bearerToken = jwtProvider.createToken(1L, "user@test.com", "ROLE_USER", nickname);
+
+        // when
+        JwtClaims claims = jwtProvider.parse(jwtProvider.substringBearer(bearerToken));
+
+        // then
+        assertThat(claims.nickname()).isEqualTo(nickname);
+        assertThat(claims.email()).isEqualTo("user@test.com");
+        assertThat(claims.userId()).isEqualTo(1L);
+    }
+
+    @Test
     void substringBearer_rejectsMalformedToken() {
         // when & then
         assertThatThrownBy(() -> jwtProvider.substringBearer("wrong-token"))
