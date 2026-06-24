@@ -36,11 +36,11 @@ public class AdminCouponService {
         return AdminCouponResponse.from(coupon);
     }
 
-    public List<AdminCouponResponse> list(CustomUserDetails admin) {
+    public AdminCouponResponse getDetail(CustomUserDetails admin, Long couponId) {
         validateAdminAuthority(admin);
-        return couponRepository.findAll().stream()
-            .map(AdminCouponResponse::from)
-            .toList();
+        Coupon coupon = couponRepository.findById(couponId)
+            .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "쿠폰 정책을 찾을 수 없습니다."));
+        return AdminCouponResponse.from(coupon);
     }
 
     private void validateAdminAuthority(CustomUserDetails admin) {

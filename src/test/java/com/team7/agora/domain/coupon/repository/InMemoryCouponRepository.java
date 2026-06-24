@@ -26,8 +26,9 @@ public class InMemoryCouponRepository implements CouponRepository {
     }
 
     @Override
-    public List<Coupon> findAll() {
-        return List.copyOf(coupons);
+    public Optional<Coupon> findById(Long couponId) {
+        return Optional.ofNullable(firstComeCoupon)
+            .filter(coupon -> coupon.getId().equals(couponId));
     }
 
     @Override

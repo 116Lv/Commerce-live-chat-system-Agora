@@ -22,8 +22,8 @@ class CouponRepositoryAdapter implements CouponRepository {
     }
 
     @Override
-    public List<Coupon> findAll() {
-        return repository.findAll();
+    public Optional<Coupon> findById(Long couponId) {
+        return repository.findById(couponId);
     }
 
     @Override

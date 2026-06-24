@@ -88,21 +88,18 @@ class AdminCouponControllerTest {
     }
 
     @Test
-    void listUsesAuthenticatedAdminAndReturnsCoupons() throws Exception {
+    void getDetailUsesAuthenticatedAdminAndReturnsCoupon() throws Exception {
         authenticate(UserRole.ROOT_ADMIN);
-        when(adminCouponService.list(any(CustomUserDetails.class))).thenReturn(List.of(
-            new AdminCouponResponse(1L, "신규 쿠폰", 5000, 10000, "FIRST_COME", "ACTIVE", 30),
-            new AdminCouponResponse(2L, "스마일 보상 쿠폰", 3000, 5000, "SMILE_REWARD", "ACTIVE", 14)
-        ));
+        when(adminCouponService.getDetail(any(CustomUserDetails.class), any(Long.class)))
+            .thenReturn(new AdminCouponResponse(1L, "신규 쿠폰", 5000, 10000, "FIRST_COME", "ACTIVE", 30));
 
-        mockMvc.perform(get("/api/admin/coupons"))
+        mockMvc.perform(get("/api/admin/coupons/{couponId}", 1L))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.status").value("SUCCESS"))
-            .andExpect(jsonPath("$.data").isArray())
-            .andExpect(jsonPath("$.data[0].couponId").value(1L))
-            .andExpect(jsonPath("$.data[1].couponId").value(2L));
+            .andExpect(jsonPath("$.data.couponId").value(1L))
+            .andExpect(jsonPath("$.data.name").value("신규 쿠폰"));
 
-        verify(adminCouponService).list(any(CustomUserDetails.class));
+        verify(adminCouponService).getDetail(any(CustomUserDetails.class), any(Long.class));
     }
 
     @Test

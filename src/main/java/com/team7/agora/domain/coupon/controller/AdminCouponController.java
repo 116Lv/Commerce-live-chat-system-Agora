@@ -10,6 +10,7 @@ import java.util.List;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -42,9 +43,12 @@ public class AdminCouponController {
         return ApiResponse.success("쿠폰 정책이 생성되었습니다.", response);
     }
     @PreAuthorize("hasAnyAuthority('USER_ADMIN', 'ROOT_ADMIN')")
-    @GetMapping
-    public ApiResponse<List<AdminCouponResponse>> list(@AuthenticationPrincipal CustomUserDetails admin) {
-        List<AdminCouponResponse> response = adminCouponService.list(admin);
-        return ApiResponse.success("쿠폰 정책 목록을 조회했습니다.", response);
+    @GetMapping("/{couponId}")
+    public ApiResponse<AdminCouponResponse> getDetail(
+        @AuthenticationPrincipal CustomUserDetails admin,
+        @PathVariable Long couponId
+    ) {
+        AdminCouponResponse response = adminCouponService.getDetail(admin, couponId);
+        return ApiResponse.success("쿠폰 정책 상세를 조회했습니다.", response);
     }
 }
