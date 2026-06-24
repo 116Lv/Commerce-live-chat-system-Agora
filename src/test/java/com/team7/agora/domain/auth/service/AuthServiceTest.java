@@ -23,6 +23,7 @@ import com.team7.agora.global.auth.JwtProvider;
 import com.team7.agora.global.exception.BusinessException;
 import com.team7.agora.global.exception.ErrorCode;
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -152,6 +153,22 @@ class AuthServiceTest {
     }
 
     @Test
+    void login_throwsInactiveUserWhenUserSuspended() {
+        // given
+        AuthService authService = createService();
+        User user = userWithId(1L, "user@test.com", "password123!");
+        user.changeStatus(UserStatus.SUSPENDED);
+        when(userRepository.findByEmail("user@test.com")).thenReturn(Optional.of(user));
+
+        // when & then
+        assertThatThrownBy(() -> authService.login(new LoginRequest("user@test.com", "password123!")))
+                .isInstanceOf(BusinessException.class)
+                .extracting("errorCode")
+                .isEqualTo(ErrorCode.INACTIVE_USER);
+        verify(refreshTokenRepository, never()).save(any(RefreshToken.class));
+    }
+
+    @Test
     void logout_deletesRefreshTokenByUserId() {
         // given
         AuthService authService = createService();
@@ -184,6 +201,30 @@ class AuthServiceTest {
     }
 
     @Test
+    void login_issuesRefreshTokenExpirationByUtcClock() {
+        // given
+        AuthService authService = createService();
+        User user = userWithId(1L, "user@test.com", "password123!");
+        when(userRepository.findByEmail("user@test.com")).thenReturn(Optional.of(user));
+        when(refreshTokenRepository.save(any(RefreshToken.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        // when
+        authService.login(new LoginRequest("user@test.com", "password123!"));
+
+        // then
+        ArgumentCaptor<RefreshToken> captor = ArgumentCaptor.forClass(RefreshToken.class);
+        verify(refreshTokenRepository).save(captor.capture());
+        LocalDateTime expectedEarliest = LocalDateTime.now(ZoneOffset.UTC)
+                .plusNanos(REFRESH_TOKEN_VALID_TIME * 1_000_000L)
+                .minusSeconds(5);
+        LocalDateTime expectedLatest = LocalDateTime.now(ZoneOffset.UTC)
+                .plusNanos(REFRESH_TOKEN_VALID_TIME * 1_000_000L)
+                .plusSeconds(5);
+        assertThat(captor.getValue().getExpiresAt()).isBetween(expectedEarliest, expectedLatest);
+    }
+
+    @Test
     void reissue_throwsInvalidTokenWhenRefreshTokenNotFound() {
         // given
         AuthService authService = createService();
@@ -201,7 +242,7 @@ class AuthServiceTest {
         // given
         AuthService authService = createService();
         User user = userWithId(1L, "user@test.com", "password123!");
-        RefreshToken expired = RefreshToken.issue(user, "expired-token", LocalDateTime.now().minusSeconds(1));
+        RefreshToken expired = RefreshToken.issue(user, "expired-token", LocalDateTime.now(ZoneOffset.UTC).minusSeconds(1));
         when(refreshTokenRepository.findByToken("expired-token")).thenReturn(Optional.of(expired));
 
         // when & then
@@ -210,6 +251,24 @@ class AuthServiceTest {
                 .extracting("errorCode")
                 .isEqualTo(ErrorCode.EXPIRED_TOKEN);
         verify(refreshTokenRepository).delete(expired);
+        verify(refreshTokenRepository, never()).save(any(RefreshToken.class));
+    }
+
+    @Test
+    void reissue_throwsInactiveUserAndDeletesRefreshTokenWhenUserSuspended() {
+        // given
+        AuthService authService = createService();
+        User user = userWithId(1L, "user@test.com", "password123!");
+        user.changeStatus(UserStatus.SUSPENDED);
+        RefreshToken stored = RefreshToken.issue(user, "old-refresh-token", LocalDateTime.now().plusDays(1));
+        when(refreshTokenRepository.findByToken("old-refresh-token")).thenReturn(Optional.of(stored));
+
+        // when & then
+        assertThatThrownBy(() -> authService.reissue("old-refresh-token"))
+                .isInstanceOf(BusinessException.class)
+                .extracting("errorCode")
+                .isEqualTo(ErrorCode.INACTIVE_USER);
+        verify(refreshTokenRepository).delete(stored);
         verify(refreshTokenRepository, never()).save(any(RefreshToken.class));
     }
 }
