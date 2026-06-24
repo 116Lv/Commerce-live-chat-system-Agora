@@ -30,8 +30,16 @@ public class StompAuthInterceptor implements ChannelInterceptor {
         }
 
         String authorization = accessor.getFirstNativeHeader(AUTHORIZATION_HEADER);
-        AuthUser authUser = jwtProvider.parseToken(jwtProvider.substringBearer(authorization));
-        accessor.setUser(new StompPrincipal(authUser));
+        String token = jwtProvider.substringBearer(authorization);
+        JwtClaims claims = jwtProvider.parse(token);
+
+        Authentication authentication =
+            new UsernamePasswordAuthenticationToken(
+                claims.userId().toString(),
+                null,
+                List.of()
+            );
+        accessor.setUser(authentication);
         return MessageBuilder.createMessage(message.getPayload(), accessor.getMessageHeaders());
     }
 }
