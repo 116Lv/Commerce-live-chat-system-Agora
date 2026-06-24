@@ -1,7 +1,9 @@
 package com.team7.agora.domain.search.controller;
 
+import com.team7.agora.domain.search.dto.PopularKeywordResponse;
 import com.team7.agora.domain.search.dto.ProductSearchCondition;
 import com.team7.agora.domain.search.dto.ProductSearchResponse;
+import com.team7.agora.domain.search.service.PopularKeywordService;
 import com.team7.agora.domain.search.service.ProductSearchService;
 import com.team7.agora.global.response.ApiResponse;
 import java.util.List;
@@ -17,9 +19,11 @@ import org.springframework.web.bind.annotation.RestController;
 public class SearchController {
 
     private final ProductSearchService productSearchService;
+    private final PopularKeywordService popularKeywordService;
 
-    public SearchController(ProductSearchService productSearchService) {
+    public SearchController(ProductSearchService productSearchService, PopularKeywordService popularKeywordService) {
         this.productSearchService = productSearchService;
+        this.popularKeywordService = popularKeywordService;
     }
 
     @GetMapping("/v1/products/search")
@@ -30,6 +34,7 @@ public class SearchController {
         @RequestParam(defaultValue = "0") int page,
         @RequestParam(defaultValue = "20") int size
     ) {
+        popularKeywordService.recordSearchKeyword(keyword);
         List<ProductSearchResponse> responses = productSearchService.searchV1(
             new ProductSearchCondition(keyword, regionId, category, PageRequest.of(page, size))
         );
@@ -44,9 +49,17 @@ public class SearchController {
         @RequestParam(defaultValue = "0") int page,
         @RequestParam(defaultValue = "20") int size
     ) {
+        popularKeywordService.recordSearchKeyword(keyword);
         List<ProductSearchResponse> responses = productSearchService.searchV2(
             new ProductSearchCondition(keyword, regionId, category, PageRequest.of(page, size))
         );
         return ResponseEntity.ok(ApiResponse.success("캐시 적용 상품 검색 결과입니다.", responses));
+    }
+
+    @GetMapping({"/v1/search/popular", "/search/keywords/realtime"})
+    public ResponseEntity<ApiResponse<List<PopularKeywordResponse>>> popularKeywords(
+        @RequestParam(defaultValue = "10") int limit
+    ) {
+        return ResponseEntity.ok(ApiResponse.success("인기 검색어 목록입니다.", popularKeywordService.getTopKeywords(limit)));
     }
 }
