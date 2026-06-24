@@ -70,6 +70,20 @@ class AuthControllerTest {
     }
 
     @Test
+    void signup_returns500WhenUnexpectedErrorOccurs() throws Exception {
+        // given
+        when(authService.signup(any(SignupRequest.class)))
+                .thenThrow(new RuntimeException("예상치 못한 오류"));
+
+        // when & then
+        mockMvc.perform(post("/api/auth/signup")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(signupJson("user@test.com", "password123!", "동네유저")))
+                .andExpect(status().isInternalServerError())
+                .andExpect(jsonPath("$.status").value("ERROR"));
+    }
+
+    @Test
     void signup_returns409WhenEmailDuplicated() throws Exception {
         // given
         when(authService.signup(any(SignupRequest.class)))
