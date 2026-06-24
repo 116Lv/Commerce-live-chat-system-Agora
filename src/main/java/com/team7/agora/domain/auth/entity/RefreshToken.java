@@ -1,5 +1,5 @@
-// 사용자가 선택한 관심 지역을 표현하는 JPA 엔티티
-package com.team7.agora.domain.region.entity;
+// 로그인 유지/토큰 재발급에 사용되는 Refresh Token 엔티티
+package com.team7.agora.domain.auth.entity;
 
 import com.team7.agora.domain.user.entity.User;
 import jakarta.persistence.Column;
@@ -11,6 +11,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import java.time.LocalDateTime;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -18,8 +19,8 @@ import lombok.NoArgsConstructor;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
-@Table(name = "user_regions")
-public class UserRegion {
+@Table(name = "refresh_tokens")
+public class RefreshToken {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -29,20 +30,23 @@ public class UserRegion {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "region_id", nullable = false)
-    private Region region;
+    @Column(nullable = false, unique = true, length = 100)
+    private String token;
 
     @Column(nullable = false)
-    private boolean primaryRegion;
+    private LocalDateTime expiresAt;
 
-    private UserRegion(User user, Region region, boolean primaryRegion) {
+    private RefreshToken(User user, String token, LocalDateTime expiresAt) {
         this.user = user;
-        this.region = region;
-        this.primaryRegion = primaryRegion;
+        this.token = token;
+        this.expiresAt = expiresAt;
     }
 
-    public static UserRegion of(User user, Region region, boolean primaryRegion) {
-        return new UserRegion(user, region, primaryRegion);
+    public static RefreshToken issue(User user, String token, LocalDateTime expiresAt) {
+        return new RefreshToken(user, token, expiresAt);
+    }
+
+    public boolean isExpired(LocalDateTime now) {
+        return !expiresAt.isAfter(now);
     }
 }
