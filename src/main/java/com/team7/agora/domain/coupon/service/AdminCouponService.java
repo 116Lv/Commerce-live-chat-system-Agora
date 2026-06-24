@@ -35,6 +35,13 @@ public class AdminCouponService {
         return AdminCouponResponse.from(coupon);
     }
 
+    public AdminCouponResponse getDetail(CustomUserDetails admin, Long couponId) {
+        validateAdminAuthority(admin);
+        Coupon coupon = couponRepository.findById(couponId)
+            .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "쿠폰 정책을 찾을 수 없습니다."));
+        return AdminCouponResponse.from(coupon);
+    }
+
     private void validateAdminAuthority(CustomUserDetails admin) {
         if (admin == null || !(admin.getRole() == UserRole.ROOT_ADMIN || admin.getRole() == UserRole.USER_ADMIN)) {
             throw new BusinessException(ErrorCode.FORBIDDEN, "쿠폰 정책 관리는 관리자만 수행할 수 있습니다.");

@@ -22,6 +22,12 @@ public class InMemoryCouponRepository implements CouponRepository {
     }
 
     @Override
+    public Optional<Coupon> findById(Long couponId) {
+        return Optional.ofNullable(firstComeCoupon)
+            .filter(coupon -> coupon.getId().equals(couponId));
+    }
+
+    @Override
     public Optional<Coupon> findFirstComeCoupon() {
         return Optional.ofNullable(firstComeCoupon)
             .filter(coupon -> coupon.getType() == CouponType.FIRST_COME);
