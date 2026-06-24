@@ -1,5 +1,8 @@
-package com.team11.agora.global.auth;
+// JWT(HS256) 토큰을 생성하고 서명·만료를 검증하는 컴포넌트
+package com.team7.agora.global.auth;
 
+import com.team7.agora.global.exception.BusinessException;
+import com.team7.agora.global.exception.ErrorCode;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.Base64;
@@ -7,7 +10,6 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
-
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -52,7 +54,7 @@ public class JwtProvider {
 
     public String substringBearer(String token) {
         if (token == null || !token.startsWith(BEARER_PREFIX)) {
-            throw new IllegalArgumentException("Bearer 토큰 형식이 아닙니다.");
+            throw new BusinessException(ErrorCode.INVALID_TOKEN, "Bearer 토큰 형식이 아닙니다.");
         }
         return token.substring(BEARER_PREFIX.length());
     }
@@ -102,16 +104,63 @@ public class JwtProvider {
         return URL_ENCODER.encodeToString(builder.toString().getBytes(StandardCharsets.UTF_8));
     }
 
+    // 따옴표 안의 쉼표/콜론까지 안전하게 처리하는 평면 JSON 객체 파서
     private Map<String, String> parseFlatJson(String json) {
         Map<String, String> values = new LinkedHashMap<>();
-        String body = json.substring(1, json.length() - 1);
-        for (String pair : body.split(",")) {
-            int separatorIndex = pair.indexOf(':');
-            String key = unquote(pair.substring(0, separatorIndex));
-            String value = pair.substring(separatorIndex + 1);
-            values.put(key, unquote(value));
+        int[] cursor = {1}; // 여는 중괄호 다음부터 시작
+        while (cursor[0] < json.length() && json.charAt(cursor[0]) != '}') {
+            skipWhitespace(json, cursor);
+            String key = readString(json, cursor);
+            skipWhitespace(json, cursor);
+            cursor[0]++; // ':' 건너뛰기
+            skipWhitespace(json, cursor);
+            String value = json.charAt(cursor[0]) == '"'
+                ? readString(json, cursor)
+                : readPrimitive(json, cursor);
+            values.put(key, value);
+            skipWhitespace(json, cursor);
+            if (cursor[0] < json.length() && json.charAt(cursor[0]) == ',') {
+                cursor[0]++;
+            }
         }
         return values;
+    }
+
+    // cursor가 여는 따옴표를 가리킨다고 가정하고, 이스케이프를 해제한 문자열을 읽는다
+    private String readString(String json, int[] cursor) {
+        StringBuilder builder = new StringBuilder();
+        cursor[0]++; // 여는 따옴표 건너뛰기
+        while (cursor[0] < json.length()) {
+            char current = json.charAt(cursor[0]);
+            if (current == '\\' && cursor[0] + 1 < json.length()) {
+                builder.append(json.charAt(cursor[0] + 1));
+                cursor[0] += 2;
+            } else if (current == '"') {
+                cursor[0]++; // 닫는 따옴표 건너뛰기
+                break;
+            } else {
+                builder.append(current);
+                cursor[0]++;
+            }
+        }
+        return builder.toString();
+    }
+
+    // 따옴표가 없는 값(숫자 등)을 ',' 또는 '}' 전까지 읽는다
+    private String readPrimitive(String json, int[] cursor) {
+        int start = cursor[0];
+        while (cursor[0] < json.length()
+            && json.charAt(cursor[0]) != ','
+            && json.charAt(cursor[0]) != '}') {
+            cursor[0]++;
+        }
+        return json.substring(start, cursor[0]).trim();
+    }
+
+    private void skipWhitespace(String json, int[] cursor) {
+        while (cursor[0] < json.length() && Character.isWhitespace(json.charAt(cursor[0]))) {
+            cursor[0]++;
+        }
     }
 
     private String sign(String value) {
@@ -126,16 +175,6 @@ public class JwtProvider {
 
     private String escape(String value) {
         return value.replace("\\", "\\\\").replace("\"", "\\\"");
-    }
-
-    private String unquote(String value) {
-        String trimmed = value.trim();
-        if (trimmed.startsWith("\"") && trimmed.endsWith("\"")) {
-            return trimmed.substring(1, trimmed.length() - 1)
-                .replace("\\\"", "\"")
-                .replace("\\\\", "\\");
-        }
-        return trimmed;
     }
 
     private boolean constantTimeEquals(String expected, String actual) {
