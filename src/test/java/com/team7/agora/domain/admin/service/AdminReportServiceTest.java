@@ -142,4 +142,28 @@ class AdminReportServiceTest {
         assertThatThrownBy(() -> adminReportService.getProductReports(regularUser))
             .isInstanceOf(BusinessException.class);
     }
+
+    @Test
+    void resolveProductReport_resolvesReport() {
+        when(reportRepository.findById(100L)).thenReturn(Optional.of(productReport));
+
+        AdminReportResponse response = adminReportService.resolveProductReport(productAdmin, 100L, "가품 판매 확인");
+
+        assertThat(response.reportId()).isEqualTo(100L);
+        assertThat(response.status()).isEqualTo("RESOLVED");
+    }
+
+    @Test
+    void resolveProductReport_rejectsNonProductAdmin() {
+        assertThatThrownBy(() -> adminReportService.resolveProductReport(regularUser, 100L, "가품 판매 확인"))
+            .isInstanceOf(BusinessException.class);
+    }
+
+    @Test
+    void resolveProductReport_rejectsUserReport() {
+        when(reportRepository.findById(200L)).thenReturn(Optional.of(userReport));
+
+        assertThatThrownBy(() -> adminReportService.resolveProductReport(productAdmin, 200L, "욕설 확인"))
+            .isInstanceOf(BusinessException.class);
+    }
 }
