@@ -32,6 +32,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 
 @ExtendWith(MockitoExtension.class)
 class AdminCouponServiceTest {
@@ -49,7 +51,23 @@ class AdminCouponServiceTest {
     private UserRepository userRepository;
 
     private AdminCouponService newService() {
-        return new AdminCouponService(couponRepository, couponEventRepository, couponIssueRepository, userRepository);
+        return new AdminCouponService(
+            couponRepository,
+            couponEventRepository,
+            couponIssueRepository,
+            userRepository,
+            LockService.local()
+        );
+    }
+
+    private AdminCouponService newService(LockService lockService) {
+        return new AdminCouponService(
+            couponRepository,
+            couponEventRepository,
+            couponIssueRepository,
+            userRepository,
+            lockService
+        );
     }
 
     @Test
