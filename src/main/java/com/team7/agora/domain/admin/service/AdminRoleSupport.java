@@ -18,4 +18,12 @@ final class AdminRoleSupport {
     static boolean isSettlementAdminRole(UserRole role) {
         return role == UserRole.ROOT_ADMIN || role == UserRole.SETTLEMENT_ADMIN;
     }
+
+    static boolean isUserAdminRole(UserRole role) {
+        return role == UserRole.ROOT_ADMIN || role == UserRole.USER_ADMIN;
+    }
+
+    static boolean isProductAdminRole(UserRole role) {
+        return role == UserRole.ROOT_ADMIN || role == UserRole.PRODUCT_ADMIN;
+    }
 }
