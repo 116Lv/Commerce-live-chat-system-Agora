@@ -42,4 +42,11 @@ public class AdminReportController {
         AdminReportResponse response = adminReportService.resolveUserReport(admin, reportId, request.adminMemo());
         return ApiResponse.success("유저 신고를 처리했습니다.", response);
     }
+
+    @GetMapping("/products")
+    public ApiResponse<List<AdminReportListResponse>> getProductReports(
+        @AuthenticationPrincipal CustomUserDetails admin
+    ) {
+        return ApiResponse.success("상품 신고 내역을 조회했습니다.", adminReportService.getProductReports(admin));
+    }
 }
