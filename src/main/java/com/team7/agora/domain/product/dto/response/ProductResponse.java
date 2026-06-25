@@ -5,7 +5,7 @@ import com.team7.agora.domain.product.enums.ProductStatus;
 import java.math.BigDecimal;
 
 public record ProductResponse(
-    Long id,
+    Long productId,
     String title,
     String description,
     BigDecimal price,

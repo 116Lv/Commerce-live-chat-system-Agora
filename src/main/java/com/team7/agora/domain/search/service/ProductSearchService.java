@@ -4,9 +4,7 @@ import com.team7.agora.domain.product.repository.ProductRepository;
 import com.team7.agora.domain.search.dto.ProductSearchCondition;
 import com.team7.agora.domain.search.dto.ProductSearchResponse;
 import com.team7.agora.domain.search.metric.SearchPerformanceRecorder;
-import com.team7.agora.global.cache.ProductSearchCache;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,21 +14,25 @@ import org.springframework.transaction.annotation.Transactional;
 public class ProductSearchService {
 
     private final ProductRepository productRepository;
-    private final ProductSearchCache productSearchCache;
+    private final ProductSearchCacheLoader productSearchCacheLoader;
     private final SearchPerformanceRecorder searchPerformanceRecorder;
 
     public ProductSearchService(ProductRepository productRepository) {
-        this(productRepository, new ProductSearchCache(1_000, 60_000L), new SearchPerformanceRecorder());
+        this(productRepository, new SearchPerformanceRecorder());
+    }
+
+    private ProductSearchService(ProductRepository productRepository, SearchPerformanceRecorder searchPerformanceRecorder) {
+        this(productRepository, new ProductSearchCacheLoader(productRepository, searchPerformanceRecorder), searchPerformanceRecorder);
     }
 
     @Autowired
     public ProductSearchService(
         ProductRepository productRepository,
-        ProductSearchCache productSearchCache,
+        ProductSearchCacheLoader productSearchCacheLoader,
         SearchPerformanceRecorder searchPerformanceRecorder
     ) {
         this.productRepository = productRepository;
-        this.productSearchCache = productSearchCache;
+        this.productSearchCacheLoader = productSearchCacheLoader;
         this.searchPerformanceRecorder = searchPerformanceRecorder;
     }
 
@@ -43,19 +45,12 @@ public class ProductSearchService {
 
     public List<ProductSearchResponse> searchV2(ProductSearchCondition condition) {
         long start = System.nanoTime();
-        AtomicBoolean dbQueried = new AtomicBoolean(false);
-        List<ProductSearchResponse> responses = productSearchCache.get(condition)
-            .orElseGet(() -> {
-                dbQueried.set(true);
-                List<ProductSearchResponse> dbResponses = productRepository.search(condition);
-                productSearchCache.put(condition, dbResponses);
-                return dbResponses;
-            });
-        searchPerformanceRecorder.record("v2", System.nanoTime() - start, dbQueried.get());
+        List<ProductSearchResponse> responses = productSearchCacheLoader.load(condition);
+        searchPerformanceRecorder.recordCall("v2", System.nanoTime() - start);
         return responses;
     }
 
     public void evictSearchCache() {
-        productSearchCache.clear();
+        productSearchCacheLoader.evictAll();
     }
 }

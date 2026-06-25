@@ -5,6 +5,8 @@ import java.util.List;
 
 public interface PopularKeywordRepository {
 
+    boolean tryMarkSearched(Long userId, String keyword);
+
     void increment(String keyword);
 
     List<PopularKeywordResponse> getTopKeywords(int limit);

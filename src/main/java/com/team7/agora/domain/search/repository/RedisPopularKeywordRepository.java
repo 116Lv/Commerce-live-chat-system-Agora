@@ -14,13 +14,22 @@ public class RedisPopularKeywordRepository implements PopularKeywordRepository {
     private static final String KEY = "search:popular";
     private static final String DAILY_KEY_PREFIX = "popular:keyword:daily:";
     private static final String WEEKLY_KEY_PREFIX = "popular:keyword:weekly:";
+    private static final String DEDUP_KEY_PREFIX = "popular:keyword:dedup:";
     private static final Duration DAILY_TTL = Duration.ofDays(2);
     private static final Duration WEEKLY_TTL = Duration.ofDays(15);
+    private static final Duration DEDUP_TTL = Duration.ofMinutes(1);
 
     private final StringRedisTemplate redisTemplate;
 
     public RedisPopularKeywordRepository(StringRedisTemplate redisTemplate) {
         this.redisTemplate = redisTemplate;
+    }
+
+    @Override
+    public boolean tryMarkSearched(Long userId, String keyword) {
+        String key = DEDUP_KEY_PREFIX + userId + ":" + keyword;
+        Boolean firstSearch = redisTemplate.opsForValue().setIfAbsent(key, "1", DEDUP_TTL);
+        return Boolean.TRUE.equals(firstSearch);
     }
 
     @Override

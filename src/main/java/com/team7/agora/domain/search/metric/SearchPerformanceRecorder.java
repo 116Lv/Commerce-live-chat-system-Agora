@@ -15,6 +15,18 @@ public class SearchPerformanceRecorder {
             .record(elapsedNanos, dbQueried);
     }
 
+    public void recordCall(String version, long elapsedNanos) {
+        countersByVersion
+            .computeIfAbsent(version, key -> new VersionCounters())
+            .recordCall(elapsedNanos);
+    }
+
+    public void recordDbHit(String version) {
+        countersByVersion
+            .computeIfAbsent(version, key -> new VersionCounters())
+            .recordDbHit();
+    }
+
     public SearchPerformanceStats getStats(String version) {
         VersionCounters counters = countersByVersion.get(version);
         if (counters == null) {
@@ -32,6 +44,13 @@ public class SearchPerformanceRecorder {
         private volatile long lastCallNanos = -1;
 
         void record(long elapsedNanos, boolean dbQueried) {
+            recordCall(elapsedNanos);
+            if (dbQueried) {
+                recordDbHit();
+            }
+        }
+
+        void recordCall(long elapsedNanos) {
             long now = System.nanoTime();
             if (firstCallNanos < 0) {
                 firstCallNanos = now;
@@ -39,9 +58,10 @@ public class SearchPerformanceRecorder {
             lastCallNanos = now;
             callCount.incrementAndGet();
             totalElapsedNanos.addAndGet(elapsedNanos);
-            if (dbQueried) {
-                dbQueryCount.incrementAndGet();
-            }
+        }
+
+        void recordDbHit() {
+            dbQueryCount.incrementAndGet();
         }
 
         SearchPerformanceStats toStats() {

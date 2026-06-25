@@ -23,13 +23,16 @@ public class PopularKeywordService {
         this.popularKeywordRepository = popularKeywordRepository;
     }
 
-    public void recordSearchKeyword(String keyword) {
+    public void recordSearchKeyword(Long userId, String keyword) {
         String normalizedKeyword = normalize(keyword);
         if (normalizedKeyword.isBlank()) {
             return;
         }
         LocalDate today = LocalDate.now();
         runWithoutRedisFailure("record popular keyword. keyword=" + normalizedKeyword, () -> {
+            if (userId != null && !popularKeywordRepository.tryMarkSearched(userId, normalizedKeyword)) {
+                return;
+            }
             popularKeywordRepository.increment(normalizedKeyword);
             popularKeywordRepository.incrementDaily(normalizedKeyword, dateKeyOf(today));
             popularKeywordRepository.incrementWeekly(normalizedKeyword, weekKeyOf(today));

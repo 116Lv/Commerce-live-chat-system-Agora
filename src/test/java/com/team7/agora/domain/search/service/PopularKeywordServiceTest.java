@@ -26,11 +26,31 @@ class PopularKeywordServiceTest {
     void recordSearchKeyword_normalizesKeywordBeforeIncrement() {
         PopularKeywordService service = new PopularKeywordService(popularKeywordRepository);
 
-        service.recordSearchKeyword("  자전거  ");
+        service.recordSearchKeyword(null, "  자전거  ");
 
         verify(popularKeywordRepository).increment("자전거");
         verify(popularKeywordRepository).incrementDaily(eq("자전거"), any());
         verify(popularKeywordRepository).incrementWeekly(eq("자전거"), any());
+    }
+
+    @Test
+    void recordSearchKeyword_skipsIncrementWhenSameUserAlreadySearchedRecently() {
+        PopularKeywordService service = new PopularKeywordService(popularKeywordRepository);
+        when(popularKeywordRepository.tryMarkSearched(1L, "자전거")).thenReturn(false);
+
+        service.recordSearchKeyword(1L, "자전거");
+
+        verify(popularKeywordRepository, org.mockito.Mockito.never()).increment(any());
+    }
+
+    @Test
+    void recordSearchKeyword_incrementsWhenSameUserFirstSearch() {
+        PopularKeywordService service = new PopularKeywordService(popularKeywordRepository);
+        when(popularKeywordRepository.tryMarkSearched(1L, "자전거")).thenReturn(true);
+
+        service.recordSearchKeyword(1L, "자전거");
+
+        verify(popularKeywordRepository).increment("자전거");
     }
 
     @Test
@@ -52,7 +72,7 @@ class PopularKeywordServiceTest {
         PopularKeywordService service = new PopularKeywordService(popularKeywordRepository);
         doThrow(new RuntimeException("redis down")).when(popularKeywordRepository).increment("자전거");
 
-        assertThatCode(() -> service.recordSearchKeyword("자전거"))
+        assertThatCode(() -> service.recordSearchKeyword(null, "자전거"))
             .doesNotThrowAnyException();
     }
 

@@ -27,6 +27,7 @@ import lombok.NoArgsConstructor;
 @Table(
     name = "products",
     indexes = {
+        @Index(name = "idx_products_status_deleted", columnList = "status, deleted_at"),
         @Index(name = "idx_products_region_status_deleted", columnList = "region_id, status, deleted_at"),
         @Index(name = "idx_products_category_status_deleted", columnList = "category, status, deleted_at"),
         @Index(name = "idx_products_title", columnList = "title")
