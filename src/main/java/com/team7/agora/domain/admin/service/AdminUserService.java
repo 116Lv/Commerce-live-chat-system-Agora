@@ -1,6 +1,8 @@
 package com.team7.agora.domain.admin.service;
 
 import com.team7.agora.domain.admin.dto.response.AdminUserResponse;
+import com.team7.agora.domain.user.entity.User;
+import com.team7.agora.domain.user.enums.UserStatus;
 import com.team7.agora.domain.user.repository.UserRepository;
 import com.team7.agora.global.auth.CustomUserDetails;
 import com.team7.agora.global.exception.BusinessException;
@@ -25,6 +27,15 @@ public class AdminUserService {
         return userRepository.findAll(pageable).stream()
                 .map(AdminUserResponse::from)
                 .toList();
+    }
+
+    @Transactional
+    public AdminUserResponse changeStatus(CustomUserDetails admin, Long userId, UserStatus status) {
+        validateUserAdmin(admin);
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "사용자를 찾을 수 없습니다."));
+        user.changeStatus(status);
+        return AdminUserResponse.from(user);
     }
 
     private void validateUserAdmin(CustomUserDetails admin) {

@@ -1,8 +1,10 @@
 package com.team7.agora.domain.admin.controller;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -18,6 +20,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.MediaType;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.method.annotation.AuthenticationPrincipalArgumentResolver;
@@ -57,6 +60,23 @@ class AdminUserControllerTest {
                 .andExpect(jsonPath("$.status").value("SUCCESS"))
                 .andExpect(jsonPath("$.data[0].id").value(1L))
                 .andExpect(jsonPath("$.data[0].email").value("user@test.com"));
+    }
+
+    @Test
+    void changeStatus_usesAuthenticatedAdminAndReturnsUpdatedUser() throws Exception {
+        authenticate(UserRole.USER_ADMIN);
+        when(adminUserService.changeStatus(any(CustomUserDetails.class), eq(1L), eq(UserStatus.BLOCKED)))
+                .thenReturn(new AdminUserResponse(1L, "user@test.com", "동네유저", "ROLE_USER", "BLOCKED"));
+
+        mockMvc.perform(patch("/api/admin/users/{userId}/status", 1L)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"status":"BLOCKED"}
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("SUCCESS"))
+                .andExpect(jsonPath("$.data.id").value(1L))
+                .andExpect(jsonPath("$.data.status").value("BLOCKED"));
     }
 
     private void authenticate(UserRole role) {
