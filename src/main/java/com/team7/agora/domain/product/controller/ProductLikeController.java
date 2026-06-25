@@ -3,7 +3,7 @@ package com.team7.agora.domain.product.controller;
 
 import com.team7.agora.domain.product.dto.response.ProductLikeResponse;
 import com.team7.agora.domain.product.service.ProductLikeService;
-import com.team7.agora.global.auth.AuthUser;
+import com.team7.agora.global.auth.CustomUserDetails;
 import com.team7.agora.global.response.ApiResponse;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -24,19 +24,19 @@ public class ProductLikeController {
 
     @PostMapping
     public ApiResponse<ProductLikeResponse> like(
-        @AuthenticationPrincipal AuthUser authUser,
+        @AuthenticationPrincipal CustomUserDetails userDetails,
         @PathVariable Long productId
     ) {
-        ProductLikeResponse response = productLikeService.like(authUser.userId(), productId);
+        ProductLikeResponse response = productLikeService.like(userDetails.getUserId(), productId);
         return ApiResponse.success("상품을 찜했습니다.", response);
     }
 
     @DeleteMapping
     public ApiResponse<ProductLikeResponse> unlike(
-        @AuthenticationPrincipal AuthUser authUser,
+        @AuthenticationPrincipal CustomUserDetails userDetails,
         @PathVariable Long productId
     ) {
-        ProductLikeResponse response = productLikeService.unlike(authUser.userId(), productId);
+        ProductLikeResponse response = productLikeService.unlike(userDetails.getUserId(), productId);
         return ApiResponse.success("상품 찜을 취소했습니다.", response);
     }
 }

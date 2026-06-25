@@ -3,7 +3,7 @@ package com.team7.agora.domain.review.controller;
 import com.team7.agora.domain.review.dto.request.ReviewCreateRequest;
 import com.team7.agora.domain.review.dto.response.ReviewResponse;
 import com.team7.agora.domain.review.service.ReviewService;
-import com.team7.agora.global.auth.AuthUser;
+import com.team7.agora.global.auth.CustomUserDetails;
 import com.team7.agora.global.response.ApiResponse;
 import jakarta.validation.Valid;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -24,11 +24,11 @@ public class ReviewController {
 
     @PostMapping
     public ApiResponse<ReviewResponse> create(
-        @AuthenticationPrincipal AuthUser authUser,
+        @AuthenticationPrincipal CustomUserDetails userDetails,
         @Valid @RequestBody ReviewCreateRequest request
     ) {
         ReviewResponse response = reviewService.create(
-            authUser.userId(),
+            userDetails.getUserId(),
             request.tradeId(),
             request.rating(),
             request.content()
