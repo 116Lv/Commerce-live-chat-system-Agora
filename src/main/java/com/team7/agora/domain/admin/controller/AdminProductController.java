@@ -4,7 +4,8 @@ import com.team7.agora.domain.admin.dto.response.AdminProductResponse;
 import com.team7.agora.domain.admin.service.AdminProductService;
 import com.team7.agora.global.auth.CustomUserDetails;
 import com.team7.agora.global.response.ApiResponse;
-import java.util.List;
+import com.team7.agora.global.response.PageResponse;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -23,13 +24,13 @@ public class AdminProductController {
     }
 
     @GetMapping
-    public ApiResponse<List<AdminProductResponse>> getProducts(
+    public ApiResponse<PageResponse<AdminProductResponse>> getProducts(
             @AuthenticationPrincipal CustomUserDetails admin,
             @RequestParam(defaultValue = "false") boolean reportedOnly,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size
     ) {
-        List<AdminProductResponse> responses = adminProductService.getProducts(admin, reportedOnly, PageRequest.of(page, size));
-        return ApiResponse.success("상품 목록을 조회했습니다.", responses);
+        Page<AdminProductResponse> responses = adminProductService.getProducts(admin, reportedOnly, PageRequest.of(page, size));
+        return ApiResponse.success("상품 목록을 조회했습니다.", PageResponse.from(responses));
     }
 }

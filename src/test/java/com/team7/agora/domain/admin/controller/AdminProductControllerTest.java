@@ -20,6 +20,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.method.annotation.AuthenticationPrincipalArgumentResolver;
@@ -50,7 +52,11 @@ class AdminProductControllerTest {
     void getProducts_usesAuthenticatedAdminAndReturnsProducts() throws Exception {
         authenticate(UserRole.PRODUCT_ADMIN);
         when(adminProductService.getProducts(any(CustomUserDetails.class), eq(true), any()))
-                .thenReturn(List.of(new AdminProductResponse(1L, "중고 자전거", BigDecimal.valueOf(100000), 10L, "SELLING")));
+                .thenReturn(new PageImpl<>(
+                        List.of(new AdminProductResponse(1L, "중고 자전거", BigDecimal.valueOf(100000), 10L, "SELLING")),
+                        PageRequest.of(0, 20),
+                        42
+                ));
 
         mockMvc.perform(get("/api/admin/products")
                         .param("reportedOnly", "true")
@@ -58,8 +64,12 @@ class AdminProductControllerTest {
                         .param("size", "20"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("SUCCESS"))
-                .andExpect(jsonPath("$.data[0].id").value(1L))
-                .andExpect(jsonPath("$.data[0].title").value("중고 자전거"));
+                .andExpect(jsonPath("$.data.content[0].id").value(1L))
+                .andExpect(jsonPath("$.data.content[0].title").value("중고 자전거"))
+                .andExpect(jsonPath("$.data.page").value(0))
+                .andExpect(jsonPath("$.data.size").value(20))
+                .andExpect(jsonPath("$.data.totalElements").value(42))
+                .andExpect(jsonPath("$.data.totalPages").value(3));
     }
 
     private void authenticate(UserRole role) {
