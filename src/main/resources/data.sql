@@ -35,10 +35,10 @@ VALUES
     (5, 2, 4, '자전거 헬멧', '사이즈 M, 사용감 적습니다.', 25000, '스포츠/레저', 'SELLING', 8, 1, NULL),
     (6, 3, 5, '커피 원두 1kg', '선물 받았는데 마시지 않아 판매합니다.', 18000, '생활/식품', 'SELLING', 5, 0, NULL);
 
-INSERT INTO coupon_events (id, name, total_quantity, issued_quantity, start_at, end_at, status)
+INSERT INTO coupon_events (id, name, total_quantity, issued_quantity, start_at, end_at, status, created_at)
 VALUES
-    (1, '동네 첫 거래 선착순 쿠폰', 100, 2, '2026-01-01 00:00:00', '2026-12-31 23:59:59', 'ACTIVE'),
-    (2, '종료된 테스트 쿠폰 이벤트', 10, 10, '2026-01-01 00:00:00', '2026-01-31 23:59:59', 'ENDED');
+    (1, '동네 첫 거래 선착순 쿠폰', 100, 2, '2026-01-01 00:00:00', '2026-12-31 23:59:59', 'ACTIVE', '2026-01-01 00:00:00'),
+    (2, '종료된 테스트 쿠폰 이벤트', 10, 10, '2026-01-01 00:00:00', '2026-01-31 23:59:59', 'ENDED', '2026-01-01 00:00:00');
 
 INSERT INTO coupons (id, name, discount_amount, min_order_amount, type, status, valid_days)
 VALUES
