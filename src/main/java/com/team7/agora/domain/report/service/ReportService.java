@@ -1,5 +1,7 @@
 package com.team7.agora.domain.report.service;
 
+import com.team7.agora.domain.product.entity.Product;
+import com.team7.agora.domain.product.repository.ProductRepository;
 import com.team7.agora.domain.report.dto.response.ReportResponse;
 import com.team7.agora.domain.report.entity.Report;
 import com.team7.agora.domain.report.repository.ReportRepository;
@@ -16,10 +18,31 @@ public class ReportService {
 
     private final ReportRepository reportRepository;
     private final UserRepository userRepository;
+    private final ProductRepository productRepository;
 
-    public ReportService(ReportRepository reportRepository, UserRepository userRepository) {
+    public ReportService(
+        ReportRepository reportRepository,
+        UserRepository userRepository,
+        ProductRepository productRepository
+    ) {
         this.reportRepository = reportRepository;
         this.userRepository = userRepository;
+        this.productRepository = productRepository;
+    }
+
+    @Transactional
+    public ReportResponse createProductReport(Long reporterId, Long productId, String reason) {
+        User reporter = userRepository.findById(reporterId)
+            .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "신고자를 찾을 수 없습니다."));
+        Product product = productRepository.findByIdAndDeletedAtIsNull(productId)
+            .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "상품을 찾을 수 없습니다."));
+
+        if (product.isSeller(reporterId)) {
+            throw new BusinessException(ErrorCode.INVALID_REQUEST, "내 상품은 신고할 수 없습니다.");
+        }
+
+        Report report = Report.product(reporter, product.getSeller(), product, reason);
+        return ReportResponse.from(reportRepository.save(report));
     }
 
     @Transactional

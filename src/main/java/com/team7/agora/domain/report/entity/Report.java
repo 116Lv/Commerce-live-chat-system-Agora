@@ -4,8 +4,6 @@ import com.team7.agora.domain.common.entity.BaseTimeEntity;
 import com.team7.agora.domain.product.entity.Product;
 import com.team7.agora.domain.report.enums.ReportStatus;
 import com.team7.agora.domain.user.entity.User;
-import com.team7.agora.global.exception.BusinessException;
-import com.team7.agora.global.exception.ErrorCode;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -81,9 +79,6 @@ public class Report extends BaseTimeEntity {
     }
 
     public void resolve(String adminMemo) {
-        if (this.status != ReportStatus.PENDING) {
-            throw new BusinessException(ErrorCode.INVALID_REQUEST, "이미 처리된 신고입니다.");
-        }
         this.status = ReportStatus.RESOLVED;
         this.adminMemo = adminMemo;
         this.resolvedAt = LocalDateTime.now();
