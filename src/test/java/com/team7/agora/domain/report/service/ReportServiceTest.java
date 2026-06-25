@@ -6,12 +6,16 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
+import com.team7.agora.domain.product.entity.Product;
+import com.team7.agora.domain.product.repository.ProductRepository;
+import com.team7.agora.domain.region.entity.Region;
 import com.team7.agora.domain.report.dto.response.ReportResponse;
 import com.team7.agora.domain.report.entity.Report;
 import com.team7.agora.domain.report.repository.ReportRepository;
 import com.team7.agora.domain.user.entity.User;
 import com.team7.agora.domain.user.repository.UserRepository;
 import com.team7.agora.global.exception.BusinessException;
+import java.math.BigDecimal;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -28,17 +32,27 @@ class ReportServiceTest {
     @Mock
     private UserRepository userRepository;
 
+    @Mock
+    private ProductRepository productRepository;
+
     private ReportService reportService;
     private User reporter;
     private User reportedUser;
+    private User seller;
+    private Product product;
 
     @BeforeEach
     void setUp() {
-        reportService = new ReportService(reportRepository, userRepository);
+        reportService = new ReportService(reportRepository, userRepository, productRepository);
         reporter = User.signup("reporter@test.com", "password", "신고자", "01011112222");
         assignId(reporter, 1L);
         reportedUser = User.signup("reported@test.com", "password", "피신고자", "01044445555");
         assignId(reportedUser, 3L);
+        seller = User.signup("seller@test.com", "password", "판매자", "01033334444");
+        assignId(seller, 2L);
+        Region region = Region.create("서울 강남구 역삼동", "1168010100", "서울", "강남구", "역삼동");
+        product = Product.create(seller, region, "가품 의심 상품", "설명이 이상해요", BigDecimal.valueOf(50000), "디지털");
+        assignId(product, 10L);
     }
 
     @Test
@@ -63,6 +77,34 @@ class ReportServiceTest {
     @Test
     void createUserReport_rejectsSelfReport() {
         assertThatThrownBy(() -> reportService.createUserReport(1L, 1L, "욕설을 했습니다."))
+            .isInstanceOf(BusinessException.class);
+    }
+
+    @Test
+    void createProductReport_storesPendingReport() {
+        when(userRepository.findById(1L)).thenReturn(Optional.of(reporter));
+        when(productRepository.findByIdAndDeletedAtIsNull(10L)).thenReturn(Optional.of(product));
+        when(reportRepository.save(any(Report.class))).thenAnswer(invocation -> {
+            Report report = invocation.getArgument(0);
+            assignId(report, 100L);
+            return report;
+        });
+
+        ReportResponse response = reportService.createProductReport(1L, 10L, "가품이 의심됩니다.");
+
+        assertThat(response.reportId()).isEqualTo(100L);
+        assertThat(response.reporterId()).isEqualTo(1L);
+        assertThat(response.reportedUserId()).isEqualTo(2L);
+        assertThat(response.productId()).isEqualTo(10L);
+        assertThat(response.status()).isEqualTo("PENDING");
+    }
+
+    @Test
+    void createProductReport_rejectsOwnProduct() {
+        when(userRepository.findById(2L)).thenReturn(Optional.of(seller));
+        when(productRepository.findByIdAndDeletedAtIsNull(10L)).thenReturn(Optional.of(product));
+
+        assertThatThrownBy(() -> reportService.createProductReport(2L, 10L, "내 상품 신고 시도"))
             .isInstanceOf(BusinessException.class);
     }
 }
