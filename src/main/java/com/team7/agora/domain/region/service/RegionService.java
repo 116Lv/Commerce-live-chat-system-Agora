@@ -2,6 +2,7 @@
 package com.team7.agora.domain.region.service;
 
 import com.team7.agora.domain.region.dto.request.PreferredRegionUpdateRequest;
+import com.team7.agora.domain.region.dto.response.RegionResponse;
 import com.team7.agora.domain.region.entity.Region;
 import com.team7.agora.domain.region.entity.UserRegion;
 import com.team7.agora.domain.region.repository.RegionRepository;
@@ -55,6 +56,16 @@ public class RegionService {
                 .toList();
         userRegionRepository.deleteByUser(user);
         userRegionRepository.saveAll(userRegions);
+    }
+
+    public List<RegionResponse> findRegions(String keyword) {
+        List<Region> regions = (keyword == null || keyword.isBlank())
+                ? regionRepository.findAll()
+                : regionRepository.findByNameContaining(keyword);
+
+        return regions.stream()
+                .map(RegionResponse::from)
+                .toList();
     }
 
     private void validateRegionSelection(List<Long> regionIds, Long primaryRegionId) {

@@ -7,7 +7,7 @@ import com.team7.agora.domain.report.repository.ReportRepository;
 import com.team7.agora.global.auth.CustomUserDetails;
 import com.team7.agora.global.exception.BusinessException;
 import com.team7.agora.global.exception.ErrorCode;
-import java.util.List;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,21 +24,12 @@ public class AdminProductService {
         this.reportRepository = reportRepository;
     }
 
-    public List<AdminProductResponse> getProducts(CustomUserDetails admin, boolean reportedOnly, Pageable pageable) {
+    public Page<AdminProductResponse> getProducts(CustomUserDetails admin, boolean reportedOnly, Pageable pageable) {
         validateProductAdmin(admin);
-        if (reportedOnly) {
-            List<Long> reportedProductIds = reportRepository.findAllByProductIsNotNull().stream()
-                    .map(report -> report.getProduct().getId())
-                    .distinct()
-                    .toList();
-            return productRepository.findAllById(reportedProductIds).stream()
-                    .map(AdminProductResponse::from)
-                    .toList();
-        }
-
-        return productRepository.findAll(pageable).stream()
-                .map(AdminProductResponse::from)
-                .toList();
+        Page<Product> products = reportedOnly
+                ? reportRepository.findDistinctReportedProducts(pageable)
+                : productRepository.findAll(pageable);
+        return products.map(AdminProductResponse::from);
     }
 
     @Transactional

@@ -8,6 +8,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.team7.agora.domain.region.dto.request.PreferredRegionUpdateRequest;
+import com.team7.agora.domain.region.dto.response.RegionResponse;
 import com.team7.agora.domain.region.entity.Region;
 import com.team7.agora.domain.region.entity.UserRegion;
 import com.team7.agora.domain.region.repository.RegionRepository;
@@ -50,6 +51,39 @@ class RegionServiceTest {
         Region region = Region.create(name, "R-%d".formatted(id), "서울", "강남구", name);
         ReflectionTestUtils.setField(region, "id", id);
         return region;
+    }
+
+    @Test
+    void findRegions_returnsAllRegionsWhenKeywordIsBlank() {
+        // given
+        RegionService regionService = createService();
+        Region first = region(1L, "서울 강남구 역삼동");
+        Region second = region(2L, "서울 강남구 삼성동");
+        when(regionRepository.findAll()).thenReturn(List.of(first, second));
+
+        // when
+        List<RegionResponse> responses = regionService.findRegions(" ");
+
+        // then
+        assertThat(responses)
+                .extracting(RegionResponse::name)
+                .containsExactly("서울 강남구 역삼동", "서울 강남구 삼성동");
+    }
+
+    @Test
+    void findRegions_filtersRegionsByKeyword() {
+        // given
+        RegionService regionService = createService();
+        Region region = region(1L, "서울 강남구 역삼동");
+        when(regionRepository.findByNameContaining("역삼")).thenReturn(List.of(region));
+
+        // when
+        List<RegionResponse> responses = regionService.findRegions("역삼");
+
+        // then
+        assertThat(responses).hasSize(1);
+        assertThat(responses.get(0).regionId()).isEqualTo(1L);
+        assertThat(responses.get(0).name()).isEqualTo("서울 강남구 역삼동");
     }
 
     @Test
