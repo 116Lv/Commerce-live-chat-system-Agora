@@ -1,6 +1,7 @@
 package com.team7.agora.domain.admin.service;
 
 import com.team7.agora.domain.admin.dto.response.AdminProductResponse;
+import com.team7.agora.domain.product.entity.Product;
 import com.team7.agora.domain.product.repository.ProductRepository;
 import com.team7.agora.domain.report.repository.ReportRepository;
 import com.team7.agora.global.auth.CustomUserDetails;
@@ -38,6 +39,15 @@ public class AdminProductService {
         return productRepository.findAll(pageable).stream()
                 .map(AdminProductResponse::from)
                 .toList();
+    }
+
+    @Transactional
+    public AdminProductResponse hideProduct(CustomUserDetails admin, Long productId) {
+        validateProductAdmin(admin);
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "상품을 찾을 수 없습니다."));
+        product.hide();
+        return AdminProductResponse.from(product);
     }
 
     private void validateProductAdmin(CustomUserDetails admin) {
