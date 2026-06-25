@@ -16,6 +16,7 @@ import com.team7.agora.domain.user.enums.UserRole;
 import com.team7.agora.domain.user.enums.UserStatus;
 import com.team7.agora.global.auth.CustomUserDetails;
 import com.team7.agora.global.exception.BusinessException;
+import com.team7.agora.global.exception.ErrorCode;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
@@ -120,8 +121,43 @@ class AdminReportServiceTest {
     }
 
     @Test
+    void resolveProductReport_rejectsAlreadyResolvedReport() {
+        productReport.resolve("이미 처리됨");
+        when(reportRepository.findById(100L)).thenReturn(Optional.of(productReport));
+
+        assertThatThrownBy(() -> adminReportService.resolveProductReport(productAdmin, 100L, "다시 처리"))
+            .isInstanceOf(BusinessException.class)
+            .extracting("errorCode")
+            .isEqualTo(ErrorCode.CONFLICT);
+    }
+
+    @Test
     void getProductReports_rejectsNonProductAdmin() {
         assertThatThrownBy(() -> adminReportService.getProductReports(regularUser))
+            .isInstanceOf(BusinessException.class);
+    }
+
+    @Test
+    void resolveProductReport_resolvesReport() {
+        when(reportRepository.findById(100L)).thenReturn(Optional.of(productReport));
+
+        AdminReportResponse response = adminReportService.resolveProductReport(productAdmin, 100L, "가품 판매 확인");
+
+        assertThat(response.reportId()).isEqualTo(100L);
+        assertThat(response.status()).isEqualTo("RESOLVED");
+    }
+
+    @Test
+    void resolveProductReport_rejectsNonProductAdmin() {
+        assertThatThrownBy(() -> adminReportService.resolveProductReport(regularUser, 100L, "가품 판매 확인"))
+            .isInstanceOf(BusinessException.class);
+    }
+
+    @Test
+    void resolveProductReport_rejectsUserReport() {
+        when(reportRepository.findById(200L)).thenReturn(Optional.of(userReport));
+
+        assertThatThrownBy(() -> adminReportService.resolveProductReport(productAdmin, 200L, "욕설 확인"))
             .isInstanceOf(BusinessException.class);
     }
 }

@@ -49,4 +49,14 @@ public class AdminReportController {
     ) {
         return ApiResponse.success("상품 신고 내역을 조회했습니다.", adminReportService.getProductReports(admin));
     }
+
+    @PostMapping("/products/{reportId}/resolve")
+    public ApiResponse<AdminReportResponse> resolveProductReport(
+        @AuthenticationPrincipal CustomUserDetails admin,
+        @PathVariable Long reportId,
+        @Valid @RequestBody AdminReportResolveRequest request
+    ) {
+        AdminReportResponse response = adminReportService.resolveProductReport(admin, reportId, request.adminMemo());
+        return ApiResponse.success("상품 신고를 처리했습니다.", response);
+    }
 }
