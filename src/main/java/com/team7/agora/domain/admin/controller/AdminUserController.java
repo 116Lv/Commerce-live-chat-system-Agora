@@ -28,13 +28,13 @@ public class AdminUserController {
     }
 
     @GetMapping
-    public ApiResponse<List<AdminUserResponse>> getUsers(
+    public ApiResponse<PageResponse<AdminUserResponse>> getUsers(
             @AuthenticationPrincipal CustomUserDetails admin,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size
     ) {
-        List<AdminUserResponse> responses = adminUserService.getUsers(admin, PageRequest.of(page, size));
-        return ApiResponse.success("사용자 목록을 조회했습니다.", responses);
+        Page<AdminUserResponse> responses = adminUserService.getUsers(admin, PageRequest.of(page, size));
+        return ApiResponse.success("사용자 목록을 조회했습니다.", PageResponse.from(responses));
     }
 
     @PatchMapping("/{userId}/status")
