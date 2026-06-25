@@ -32,6 +32,11 @@ class CouponIssueRepositoryAdapter implements CouponIssueRepository {
     }
 
     @Override
+    public List<CouponIssue> findAllByCoupon(Coupon coupon) {
+        return repository.findAllByCoupon(coupon);
+    }
+
+    @Override
     public List<CouponIssue> findAllByUser(User user) {
         return repository.findAllByUser(user);
     }
