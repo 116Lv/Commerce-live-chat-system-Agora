@@ -63,4 +63,13 @@ public class AdminCouponController {
         CouponBroadcastResponse response = adminCouponService.issueToUsers(admin, couponId, request.userIds());
         return ApiResponse.success("지정 사용자에게 쿠폰을 발급했습니다.", response);
     }
+    @PreAuthorize("hasAnyAuthority('USER_ADMIN', 'ROOT_ADMIN')")
+    @PostMapping("/{couponId}/broadcast")
+    public ApiResponse<CouponBroadcastResponse> broadcast(
+        @AuthenticationPrincipal CustomUserDetails admin,
+        @PathVariable Long couponId
+    ) {
+        CouponBroadcastResponse response = adminCouponService.broadcast(admin, couponId);
+        return ApiResponse.success("쿠폰을 전체 발송했습니다.", response);
+    }
 }

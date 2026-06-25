@@ -11,6 +11,7 @@ import com.team7.agora.domain.coupon.repository.CouponIssueRepository;
 import com.team7.agora.domain.coupon.repository.CouponRepository;
 import com.team7.agora.domain.user.entity.User;
 import com.team7.agora.domain.user.enums.UserRole;
+import com.team7.agora.domain.user.enums.UserStatus;
 import com.team7.agora.domain.user.repository.UserRepository;
 import com.team7.agora.global.auth.CustomUserDetails;
 import com.team7.agora.global.exception.BusinessException;
@@ -76,6 +77,40 @@ public class AdminCouponService {
         LocalDateTime now = LocalDateTime.now();
         CouponEvent event = couponEventRepository.save(CouponEvent.create(
             coupon.getName() + " 지정 발급",
+            targets.size(),
+            now.minusMinutes(1),
+            now.plusDays(coupon.getValidDays())
+        ));
+
+        int issuedCount = 0;
+        int skippedCount = 0;
+        for (User user : targets) {
+            if (couponIssueRepository.existsByCouponAndUser(coupon, user)) {
+                skippedCount++;
+                continue;
+            }
+            event.issue();
+            couponIssueRepository.save(CouponIssue.issue(coupon, event, user));
+            issuedCount++;
+        }
+
+        return new CouponBroadcastResponse(couponId, issuedCount, skippedCount);
+    }
+
+    @Transactional
+    public CouponBroadcastResponse broadcast(CustomUserDetails admin, Long couponId) {
+        validateAdminAuthority(admin);
+        Coupon coupon = couponRepository.findById(couponId)
+            .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "쿠폰 정책을 찾을 수 없습니다."));
+
+        List<User> targets = userRepository.findAllByStatus(UserStatus.ACTIVE);
+        if (targets.isEmpty()) {
+            throw new BusinessException(ErrorCode.NOT_FOUND, "발급 대상 사용자가 없습니다.");
+        }
+
+        LocalDateTime now = LocalDateTime.now();
+        CouponEvent event = couponEventRepository.save(CouponEvent.create(
+            coupon.getName() + " 전체 발송",
             targets.size(),
             now.minusMinutes(1),
             now.plusDays(coupon.getValidDays())

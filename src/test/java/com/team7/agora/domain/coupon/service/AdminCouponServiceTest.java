@@ -168,6 +168,64 @@ class AdminCouponServiceTest {
     }
 
     @Test
+    void broadcastIssuesCouponToActiveUsersAndSkipsDuplicatedUsers() {
+        AdminCouponService service = newService();
+        Coupon coupon = Coupon.create("신규 쿠폰", 5000, 10000, CouponType.FIRST_COME, 30);
+        assignId(coupon, 1L);
+        User first = User.signup("first@test.com", "encoded", "첫번째", "01011112222");
+        User second = User.signup("second@test.com", "encoded", "두번째", "01033334444");
+        assignId(first, 10L);
+        assignId(second, 11L);
+
+        when(couponRepository.findById(1L)).thenReturn(Optional.of(coupon));
+        when(userRepository.findAllByStatus(UserStatus.ACTIVE)).thenReturn(List.of(first, second));
+        when(couponEventRepository.save(any(CouponEvent.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(couponIssueRepository.existsByCouponAndUser(any(Coupon.class), any(User.class)))
+            .thenReturn(false, true);
+
+        CouponBroadcastResponse response = service.broadcast(principal(UserRole.ROOT_ADMIN), 1L);
+
+        assertThat(response.couponId()).isEqualTo(1L);
+        assertThat(response.issuedCount()).isEqualTo(1);
+        assertThat(response.skippedCount()).isEqualTo(1);
+    }
+
+    @Test
+    void broadcastRejectsMissingCoupon() {
+        AdminCouponService service = newService();
+        when(couponRepository.findById(1L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> service.broadcast(principal(UserRole.ROOT_ADMIN), 1L))
+            .isInstanceOf(BusinessException.class)
+            .extracting("errorCode")
+            .isEqualTo(ErrorCode.NOT_FOUND);
+    }
+
+    @Test
+    void broadcastRejectsEmptyTargets() {
+        AdminCouponService service = newService();
+        Coupon coupon = Coupon.create("신규 쿠폰", 5000, 10000, CouponType.FIRST_COME, 30);
+        assignId(coupon, 1L);
+        when(couponRepository.findById(1L)).thenReturn(Optional.of(coupon));
+        when(userRepository.findAllByStatus(UserStatus.ACTIVE)).thenReturn(List.of());
+
+        assertThatThrownBy(() -> service.broadcast(principal(UserRole.USER_ADMIN), 1L))
+            .isInstanceOf(BusinessException.class)
+            .extracting("errorCode")
+            .isEqualTo(ErrorCode.NOT_FOUND);
+    }
+
+    @Test
+    void broadcastRejectsNonAdmin() {
+        AdminCouponService service = newService();
+
+        assertThatThrownBy(() -> service.broadcast(principal(UserRole.ROLE_USER), 1L))
+            .isInstanceOf(BusinessException.class)
+            .extracting("errorCode")
+            .isEqualTo(ErrorCode.FORBIDDEN);
+    }
+
+    @Test
     void createRejectsNonAdmin() {
         AdminCouponService service = newService();
 

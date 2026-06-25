@@ -142,6 +142,22 @@ class AdminCouponControllerTest {
     }
 
     @Test
+    void broadcastUsesAuthenticatedAdminAndReturnsBroadcastResult() throws Exception {
+        authenticate(UserRole.ROOT_ADMIN);
+        when(adminCouponService.broadcast(any(CustomUserDetails.class), any(Long.class)))
+            .thenReturn(new CouponBroadcastResponse(1L, 3, 1));
+
+        mockMvc.perform(post("/api/admin/coupons/{couponId}/broadcast", 1L))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.status").value("SUCCESS"))
+            .andExpect(jsonPath("$.data.couponId").value(1L))
+            .andExpect(jsonPath("$.data.issuedCount").value(3))
+            .andExpect(jsonPath("$.data.skippedCount").value(1));
+
+        verify(adminCouponService).broadcast(any(CustomUserDetails.class), any(Long.class));
+    }
+
+    @Test
     void createReturnsBadRequestWhenNameIsBlank() throws Exception {
         authenticate(UserRole.USER_ADMIN);
 
