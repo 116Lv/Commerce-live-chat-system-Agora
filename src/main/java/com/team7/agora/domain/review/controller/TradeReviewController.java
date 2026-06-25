@@ -2,7 +2,7 @@ package com.team7.agora.domain.review.controller;
 
 import com.team7.agora.domain.review.dto.response.ReviewResponse;
 import com.team7.agora.domain.review.service.ReviewService;
-import com.team7.agora.global.auth.AuthUser;
+import com.team7.agora.global.auth.CustomUserDetails;
 import com.team7.agora.global.response.ApiResponse;
 import java.util.List;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -21,10 +21,10 @@ public class TradeReviewController {
 
     @GetMapping("/api/trades/{tradeId}/reviews")
     public ApiResponse<List<ReviewResponse>> getTradeReviews(
-        @AuthenticationPrincipal AuthUser authUser,
+        @AuthenticationPrincipal CustomUserDetails userDetails,
         @PathVariable Long tradeId
     ) {
-        List<ReviewResponse> response = reviewService.getTradeReviews(authUser.userId(), tradeId);
+        List<ReviewResponse> response = reviewService.getTradeReviews(userDetails.getUserId(), tradeId);
         return ApiResponse.success("거래 후기 조회가 완료되었습니다.", response);
     }
 }

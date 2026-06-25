@@ -4,7 +4,7 @@ import com.team7.agora.domain.chat.dto.response.ChatMessageResponse;
 import com.team7.agora.domain.chat.dto.response.ChatRoomResponse;
 import com.team7.agora.domain.chat.dto.request.ChatRoomOpenRequest;
 import com.team7.agora.domain.chat.service.ChatService;
-import com.team7.agora.global.auth.AuthUser;
+import com.team7.agora.global.auth.CustomUserDetails;
 import com.team7.agora.global.response.ApiResponse;
 import jakarta.validation.Valid;
 import java.util.List;
@@ -31,56 +31,56 @@ public class ChatRoomController {
 
     @PostMapping("/rooms/products/{productId}")
     public ApiResponse<ChatRoomResponse> openRoom(
-        @AuthenticationPrincipal AuthUser authUser,
+        @AuthenticationPrincipal CustomUserDetails userDetails,
         @PathVariable Long productId
     ) {
-        return openRoomResponse(authUser, productId);
+        return openRoomResponse(userDetails, productId);
     }
 
     @PostMapping("/rooms")
     public ApiResponse<ChatRoomResponse> openRoomByRequest(
-        @AuthenticationPrincipal AuthUser authUser,
+        @AuthenticationPrincipal CustomUserDetails userDetails,
         @Valid @RequestBody ChatRoomOpenRequest request
     ) {
-        return openRoomResponse(authUser, request.productId());
+        return openRoomResponse(userDetails, request.productId());
     }
 
     @PostMapping("/rooms/{chatRoomId}/images")
     public ApiResponse<ChatMessageResponse> sendImage(
-        @AuthenticationPrincipal AuthUser authUser,
+        @AuthenticationPrincipal CustomUserDetails userDetails,
         @PathVariable Long chatRoomId,
         @RequestParam("image") MultipartFile image
     ) {
-        ChatMessageResponse response = chatService.sendImageMessage(authUser.userId(), chatRoomId, image);
+        ChatMessageResponse response = chatService.sendImageMessage(userDetails.getUserId(), chatRoomId, image);
         return ApiResponse.success("이미지 메시지를 전송했습니다.", response);
     }
 
     @GetMapping("/rooms/{chatRoomId}/messages")
     public ApiResponse<List<ChatMessageResponse>> getMessages(
-        @AuthenticationPrincipal AuthUser authUser,
+        @AuthenticationPrincipal CustomUserDetails userDetails,
         @PathVariable Long chatRoomId
     ) {
-        List<ChatMessageResponse> responses = chatService.getMessages(authUser.userId(), chatRoomId);
+        List<ChatMessageResponse> responses = chatService.getMessages(userDetails.getUserId(), chatRoomId);
         return ApiResponse.success("채팅 메시지 목록을 조회했습니다.", responses);
     }
 
     @GetMapping("/rooms")
-    public ApiResponse<List<ChatRoomResponse>> getMyRooms(@AuthenticationPrincipal AuthUser authUser) {
-        List<ChatRoomResponse> responses = chatService.getMyRooms(authUser.userId());
+    public ApiResponse<List<ChatRoomResponse>> getMyRooms(@AuthenticationPrincipal CustomUserDetails userDetails) {
+        List<ChatRoomResponse> responses = chatService.getMyRooms(userDetails.getUserId());
         return ApiResponse.success("채팅방 목록을 조회했습니다.", responses);
     }
 
     @PatchMapping("/rooms/{chatRoomId}/read")
     public ApiResponse<ChatRoomResponse> markRead(
-        @AuthenticationPrincipal AuthUser authUser,
+        @AuthenticationPrincipal CustomUserDetails userDetails,
         @PathVariable Long chatRoomId
     ) {
-        ChatRoomResponse response = chatService.markRead(authUser.userId(), chatRoomId);
+        ChatRoomResponse response = chatService.markRead(userDetails.getUserId(), chatRoomId);
         return ApiResponse.success("채팅방을 읽음 처리했습니다.", response);
     }
 
-    private ApiResponse<ChatRoomResponse> openRoomResponse(AuthUser authUser, Long productId) {
-        ChatRoomResponse response = chatService.openRoom(authUser.userId(), productId);
+    private ApiResponse<ChatRoomResponse> openRoomResponse(CustomUserDetails userDetails, Long productId) {
+        ChatRoomResponse response = chatService.openRoom(userDetails.getUserId(), productId);
         return ApiResponse.success("채팅방이 준비되었습니다.", response);
     }
 }

@@ -4,7 +4,7 @@ package com.team7.agora.domain.nego.controller;
 import com.team7.agora.domain.nego.dto.request.NegoOfferCreateRequest;
 import com.team7.agora.domain.nego.dto.response.NegoOfferResponse;
 import com.team7.agora.domain.nego.service.NegoService;
-import com.team7.agora.global.auth.AuthUser;
+import com.team7.agora.global.auth.CustomUserDetails;
 import com.team7.agora.global.response.ApiResponse;
 import jakarta.validation.Valid;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -26,12 +26,12 @@ public class NegoChatRoomController {
 
     @PostMapping("/{chatRoomId}/nego-offers")
     public ApiResponse<NegoOfferResponse> createOffer(
-        @AuthenticationPrincipal AuthUser authUser,
+        @AuthenticationPrincipal CustomUserDetails userDetails,
         @PathVariable Long chatRoomId,
         @Valid @RequestBody NegoOfferCreateRequest request
     ) {
         NegoOfferResponse response = negoService.createOffer(
-            authUser.userId(),
+            userDetails.getUserId(),
             chatRoomId,
             request.offerPrice()
         );

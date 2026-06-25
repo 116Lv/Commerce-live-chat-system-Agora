@@ -7,7 +7,7 @@ import com.team7.agora.domain.payment.dto.request.PaymentRefundRequest;
 import com.team7.agora.domain.payment.dto.response.PaymentResponse;
 import com.team7.agora.domain.payment.dto.response.RefundStatusResponse;
 import com.team7.agora.domain.payment.service.PaymentService;
-import com.team7.agora.global.auth.AuthUser;
+import com.team7.agora.global.auth.CustomUserDetails;
 import com.team7.agora.global.response.ApiResponse;
 import jakarta.validation.Valid;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -30,63 +30,63 @@ public class PaymentController {
 
     @PostMapping("/trades/{tradeId}/prepare")
     public ApiResponse<PaymentResponse> prepare(
-        @AuthenticationPrincipal AuthUser authUser,
+        @AuthenticationPrincipal CustomUserDetails userDetails,
         @PathVariable Long tradeId
     ) {
-        return prepareResponse(authUser, tradeId);
+        return prepareResponse(userDetails, tradeId);
     }
 
     @PostMapping("/prepare")
     public ApiResponse<PaymentResponse> prepareByRequest(
-        @AuthenticationPrincipal AuthUser authUser,
+        @AuthenticationPrincipal CustomUserDetails userDetails,
         @Valid @RequestBody PaymentPrepareRequest request
     ) {
-        return prepareResponse(authUser, request.tradeId());
+        return prepareResponse(userDetails, request.tradeId());
     }
 
     @PostMapping("/{paymentId}/confirm")
     public ApiResponse<PaymentResponse> confirm(
-        @AuthenticationPrincipal AuthUser authUser,
+        @AuthenticationPrincipal CustomUserDetails userDetails,
         @PathVariable Long paymentId,
         @Valid @RequestBody PaymentConfirmRequest request
     ) {
-        return confirmResponse(authUser, paymentId, request.paymentKey());
+        return confirmResponse(userDetails, paymentId, request.paymentKey());
     }
 
     @PostMapping("/confirm")
     public ApiResponse<PaymentResponse> confirmByRequest(
-        @AuthenticationPrincipal AuthUser authUser,
+        @AuthenticationPrincipal CustomUserDetails userDetails,
         @Valid @RequestBody PaymentConfirmByIdRequest request
     ) {
-        return confirmResponse(authUser, request.paymentId(), request.paymentKey());
+        return confirmResponse(userDetails, request.paymentId(), request.paymentKey());
     }
 
     @PostMapping("/{paymentId}/refund")
     public ApiResponse<PaymentResponse> refund(
-        @AuthenticationPrincipal AuthUser authUser,
+        @AuthenticationPrincipal CustomUserDetails userDetails,
         @PathVariable Long paymentId,
         @Valid @RequestBody PaymentRefundRequest request
     ) {
-        PaymentResponse response = paymentService.refund(authUser.userId(), paymentId, request.reason());
+        PaymentResponse response = paymentService.refund(userDetails.getUserId(), paymentId, request.reason());
         return ApiResponse.success("결제가 환불되었습니다.", response);
     }
 
     @GetMapping("/{paymentId}/refund")
     public ApiResponse<RefundStatusResponse> getRefundStatus(
-        @AuthenticationPrincipal AuthUser authUser,
+        @AuthenticationPrincipal CustomUserDetails userDetails,
         @PathVariable Long paymentId
     ) {
-        RefundStatusResponse response = paymentService.getRefundStatus(authUser, paymentId);
+        RefundStatusResponse response = paymentService.getRefundStatus(userDetails.toAuthUser(), paymentId);
         return ApiResponse.success("환불 상태 조회가 완료되었습니다.", response);
     }
 
-    private ApiResponse<PaymentResponse> prepareResponse(AuthUser authUser, Long tradeId) {
-        PaymentResponse response = paymentService.prepare(authUser.userId(), tradeId);
+    private ApiResponse<PaymentResponse> prepareResponse(CustomUserDetails userDetails, Long tradeId) {
+        PaymentResponse response = paymentService.prepare(userDetails.getUserId(), tradeId);
         return ApiResponse.success("결제가 준비되었습니다.", response);
     }
 
-    private ApiResponse<PaymentResponse> confirmResponse(AuthUser authUser, Long paymentId, String paymentKey) {
-        PaymentResponse response = paymentService.confirm(authUser.userId(), paymentId, paymentKey);
+    private ApiResponse<PaymentResponse> confirmResponse(CustomUserDetails userDetails, Long paymentId, String paymentKey) {
+        PaymentResponse response = paymentService.confirm(userDetails.getUserId(), paymentId, paymentKey);
         return ApiResponse.success("결제가 승인되었습니다.", response);
     }
 }
