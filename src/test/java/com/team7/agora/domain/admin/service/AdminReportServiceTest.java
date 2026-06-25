@@ -36,6 +36,9 @@ class AdminReportServiceTest {
     private final CustomUserDetails userAdmin = new CustomUserDetails(
         99L, "user-admin@test.com", "pw", UserRole.USER_ADMIN, UserStatus.ACTIVE, "유저관리자"
     );
+    private final CustomUserDetails productAdmin = new CustomUserDetails(
+        98L, "product-admin@test.com", "pw", UserRole.PRODUCT_ADMIN, UserStatus.ACTIVE, "상품관리자"
+    );
     private final CustomUserDetails regularUser = new CustomUserDetails(
         1L, "user@test.com", "pw", UserRole.ROLE_USER, UserStatus.ACTIVE, "일반유저"
     );
@@ -101,6 +104,24 @@ class AdminReportServiceTest {
         when(reportRepository.findById(100L)).thenReturn(Optional.of(productReport));
 
         assertThatThrownBy(() -> adminReportService.resolveUserReport(userAdmin, 100L, "가품 판매 확인"))
+            .isInstanceOf(BusinessException.class);
+    }
+
+    @Test
+    void getProductReports_returnsProductReportList() {
+        when(reportRepository.findAllByProductIsNotNull()).thenReturn(List.of(productReport));
+
+        List<AdminReportListResponse> responses = adminReportService.getProductReports(productAdmin);
+
+        assertThat(responses).hasSize(1);
+        assertThat(responses.get(0).reportId()).isEqualTo(100L);
+        assertThat(responses.get(0).productId()).isEqualTo(10L);
+        assertThat(responses.get(0).status()).isEqualTo("PENDING");
+    }
+
+    @Test
+    void getProductReports_rejectsNonProductAdmin() {
+        assertThatThrownBy(() -> adminReportService.getProductReports(regularUser))
             .isInstanceOf(BusinessException.class);
     }
 }

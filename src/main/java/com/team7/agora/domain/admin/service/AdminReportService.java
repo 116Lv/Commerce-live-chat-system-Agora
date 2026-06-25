@@ -41,6 +41,13 @@ public class AdminReportService {
         return AdminReportResponse.from(report);
     }
 
+    public List<AdminReportListResponse> getProductReports(CustomUserDetails admin) {
+        validateProductAdmin(admin);
+        return reportRepository.findAllByProductIsNotNull().stream()
+            .map(AdminReportListResponse::from)
+            .toList();
+    }
+
     private Report findReport(Long reportId) {
         return reportRepository.findById(reportId)
             .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "신고를 찾을 수 없습니다."));
@@ -49,6 +56,12 @@ public class AdminReportService {
     private void validateUserAdmin(CustomUserDetails admin) {
         if (admin == null || !AdminRoleSupport.isUserAdminRole(admin.getRole())) {
             throw new BusinessException(ErrorCode.FORBIDDEN, "유저 신고 처리는 관리자만 수행할 수 있습니다.");
+        }
+    }
+
+    private void validateProductAdmin(CustomUserDetails admin) {
+        if (admin == null || !AdminRoleSupport.isProductAdminRole(admin.getRole())) {
+            throw new BusinessException(ErrorCode.FORBIDDEN, "상품 신고 내역 조회는 관리자만 수행할 수 있습니다.");
         }
     }
 }
