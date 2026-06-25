@@ -16,6 +16,7 @@ import com.team7.agora.domain.user.enums.UserRole;
 import com.team7.agora.domain.user.enums.UserStatus;
 import com.team7.agora.global.auth.CustomUserDetails;
 import com.team7.agora.global.exception.BusinessException;
+import com.team7.agora.global.exception.ErrorCode;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
@@ -120,9 +121,14 @@ class AdminReportServiceTest {
     }
 
     @Test
-    void getProductReports_rejectsNonProductAdmin() {
-        assertThatThrownBy(() -> adminReportService.getProductReports(regularUser))
-            .isInstanceOf(BusinessException.class);
+    void resolveProductReport_rejectsAlreadyResolvedReport() {
+        productReport.resolve("이미 처리됨");
+        when(reportRepository.findById(100L)).thenReturn(Optional.of(productReport));
+
+        assertThatThrownBy(() -> adminReportService.resolveProductReport(productAdmin, 100L, "다시 처리"))
+            .isInstanceOf(BusinessException.class)
+            .extracting("errorCode")
+            .isEqualTo(ErrorCode.CONFLICT);
     }
 
     @Test
