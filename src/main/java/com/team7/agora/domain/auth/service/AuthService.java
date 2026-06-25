@@ -17,6 +17,7 @@ import com.team7.agora.global.exception.ErrorCode;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.util.Locale;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -49,12 +50,14 @@ public class AuthService {
 
     @Transactional
     public SignupResponse signup(SignupRequest request) {
-        if (userRepository.existsByEmail(request.email())) {
+        String email = normalizeEmail(request.email());
+
+        if (userRepository.existsByEmailIgnoreCase(email)) {
             throw new BusinessException(ErrorCode.DUPLICATE_EMAIL);
         }
 
         User user = User.create(
-                request.email(),
+                email,
                 passwordEncoder.encode(request.password()),
                 request.nickname()
         );
@@ -64,7 +67,8 @@ public class AuthService {
 
     @Transactional
     public LoginResponse login(LoginRequest request) {
-        User user = userRepository.findByEmail(request.email())
+        String email = normalizeEmail(request.email());
+        User user = userRepository.findByEmailIgnoreCase(email)
                 .orElseThrow(() -> new BusinessException(ErrorCode.INVALID_CREDENTIALS));
 
         if (!passwordEncoder.matches(request.password(), user.getPassword())) {
@@ -124,6 +128,10 @@ public class AuthService {
         if (user.getStatus() != UserStatus.ACTIVE) {
             throw new BusinessException(ErrorCode.INACTIVE_USER);
         }
+    }
+
+    private String normalizeEmail(String email) {
+        return email.trim().toLowerCase(Locale.ROOT);
     }
 
     private LocalDateTime nowUtc() {

@@ -3,6 +3,7 @@ package com.team7.agora.global.auth;
 
 import com.team7.agora.domain.user.entity.User;
 import com.team7.agora.domain.user.repository.UserRepository;
+import java.util.Locale;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -21,7 +22,7 @@ public class CustomUserDetailsService implements UserDetailsService {
     @Override
     @Transactional(readOnly = true)
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
-        User user = userRepository.findByEmail(email)
+        User user = userRepository.findByEmailIgnoreCase(email.trim().toLowerCase(Locale.ROOT))
             .orElseThrow(() -> new UsernameNotFoundException(email));
         return CustomUserDetails.from(user);
     }

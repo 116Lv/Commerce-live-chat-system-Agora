@@ -53,7 +53,7 @@ class AdminAuthServiceTest {
         // given
         AdminAuthService service = createService();
         User admin = userWithRole(UserRole.ROOT_ADMIN);
-        when(userRepository.findByEmail("admin@test.com")).thenReturn(Optional.of(admin));
+        when(userRepository.findByEmailIgnoreCase("admin@test.com")).thenReturn(Optional.of(admin));
         when(jwtProvider.createToken(1L, "admin@test.com", "ROOT_ADMIN", "관리자")).thenReturn("Bearer admin-token");
 
         // when
@@ -64,10 +64,25 @@ class AdminAuthServiceTest {
     }
 
     @Test
+    void login_findsAdminByNormalizedEmail() {
+        // given
+        AdminAuthService service = createService();
+        User admin = userWithRole(UserRole.ROOT_ADMIN);
+        when(userRepository.findByEmailIgnoreCase("admin@test.com")).thenReturn(Optional.of(admin));
+        when(jwtProvider.createToken(1L, "admin@test.com", "ROOT_ADMIN", "관리자")).thenReturn("Bearer admin-token");
+
+        // when
+        AdminLoginResponse response = service.login(new AdminLoginRequest("  ADMIN@test.com  ", "password123!"));
+
+        // then
+        assertThat(response.accessToken()).isEqualTo("Bearer admin-token");
+    }
+
+    @Test
     void login_throwsUnauthorizedWhenPasswordMismatches() {
         // given
         AdminAuthService service = createService();
-        when(userRepository.findByEmail("admin@test.com")).thenReturn(Optional.of(userWithRole(UserRole.ROOT_ADMIN)));
+        when(userRepository.findByEmailIgnoreCase("admin@test.com")).thenReturn(Optional.of(userWithRole(UserRole.ROOT_ADMIN)));
 
         // when & then
         assertThatThrownBy(() -> service.login(new AdminLoginRequest("admin@test.com", "wrongPassword")))
@@ -82,7 +97,7 @@ class AdminAuthServiceTest {
     void login_throwsForbiddenWhenAccountIsNotAdmin() {
         // given
         AdminAuthService service = createService();
-        when(userRepository.findByEmail("user@test.com")).thenReturn(Optional.of(userWithRole(UserRole.ROLE_USER)));
+        when(userRepository.findByEmailIgnoreCase("user@test.com")).thenReturn(Optional.of(userWithRole(UserRole.ROLE_USER)));
 
         // when & then
         assertThatThrownBy(() -> service.login(new AdminLoginRequest("user@test.com", "password123!")))
@@ -97,7 +112,7 @@ class AdminAuthServiceTest {
         AdminAuthService service = createService();
         User admin = userWithRole(UserRole.ROOT_ADMIN);
         admin.changeStatus(UserStatus.SUSPENDED);
-        when(userRepository.findByEmail("admin@test.com")).thenReturn(Optional.of(admin));
+        when(userRepository.findByEmailIgnoreCase("admin@test.com")).thenReturn(Optional.of(admin));
 
         // when & then
         assertThatThrownBy(() -> service.login(new AdminLoginRequest("admin@test.com", "password123!")))

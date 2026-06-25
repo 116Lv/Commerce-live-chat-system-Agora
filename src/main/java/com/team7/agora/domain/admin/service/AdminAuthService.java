@@ -10,6 +10,7 @@ import com.team7.agora.global.auth.CustomUserDetails;
 import com.team7.agora.global.auth.JwtProvider;
 import com.team7.agora.global.exception.BusinessException;
 import com.team7.agora.global.exception.ErrorCode;
+import java.util.Locale;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,7 +30,8 @@ public class AdminAuthService {
     }
 
     public AdminLoginResponse login(AdminLoginRequest request) {
-        User user = userRepository.findByEmail(request.email())
+        String email = normalizeEmail(request.email());
+        User user = userRepository.findByEmailIgnoreCase(email)
                 .orElseThrow(() -> new BusinessException(ErrorCode.UNAUTHORIZED, "이메일 또는 비밀번호가 올바르지 않습니다."));
 
         if (!passwordEncoder.matches(request.password(), user.getPassword())) {
@@ -58,5 +60,9 @@ public class AdminAuthService {
         if (!AdminRoleSupport.isAdminRole(admin.getRole())) {
             throw new BusinessException(ErrorCode.FORBIDDEN, "관리자 권한이 없는 계정입니다.");
         }
+    }
+
+    private String normalizeEmail(String email) {
+        return email.trim().toLowerCase(Locale.ROOT);
     }
 }
