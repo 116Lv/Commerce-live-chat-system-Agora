@@ -142,6 +142,21 @@ class AdminCouponControllerTest {
     }
 
     @Test
+    void issueReturnsBadRequestWhenUserIdsContainNull() throws Exception {
+        authenticate(UserRole.USER_ADMIN);
+
+        mockMvc.perform(post("/api/admin/coupons/{couponId}/issue", 1L)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                    {
+                      "userIds":[10,null,12]
+                    }
+                    """))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.status").value("ERROR"));
+    }
+
+    @Test
     void broadcastUsesAuthenticatedAdminAndReturnsBroadcastResult() throws Exception {
         authenticate(UserRole.ROOT_ADMIN);
         when(adminCouponService.broadcast(any(CustomUserDetails.class), any(Long.class)))

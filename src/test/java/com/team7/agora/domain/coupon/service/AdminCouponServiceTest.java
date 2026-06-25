@@ -4,6 +4,8 @@ import static com.team7.agora.support.TestEntityIds.assignId;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.team7.agora.domain.coupon.dto.response.CouponBroadcastResponse;
@@ -27,6 +29,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 
 @ExtendWith(MockitoExtension.class)
 class AdminCouponServiceTest {
@@ -117,7 +121,11 @@ class AdminCouponServiceTest {
 
         when(couponRepository.findById(1L)).thenReturn(Optional.of(coupon));
         when(userRepository.findAllById(List.of(10L, 11L))).thenReturn(List.of(user, duplicatedUser));
-        when(couponEventRepository.save(any(CouponEvent.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(couponEventRepository.save(any(CouponEvent.class))).thenAnswer(invocation -> {
+            CouponEvent event = invocation.getArgument(0);
+            assertThat(event.getTotalQuantity()).isEqualTo(1);
+            return event;
+        });
         when(couponIssueRepository.existsByCouponAndUser(any(Coupon.class), any(User.class)))
             .thenReturn(false, true);
 
@@ -130,6 +138,32 @@ class AdminCouponServiceTest {
         assertThat(response.couponId()).isEqualTo(1L);
         assertThat(response.issuedCount()).isEqualTo(1);
         assertThat(response.skippedCount()).isEqualTo(1);
+    }
+
+    @Test
+    void issueToUsersDoesNotCreateEventWhenAllTargetsAreDuplicated() {
+        AdminCouponService service = newService();
+        Coupon coupon = Coupon.create("신규 쿠폰", 5000, 10000, CouponType.FIRST_COME, 30);
+        assignId(coupon, 1L);
+        User first = User.signup("first@test.com", "encoded", "첫번째", "01011112222");
+        User second = User.signup("second@test.com", "encoded", "두번째", "01033334444");
+        assignId(first, 10L);
+        assignId(second, 11L);
+
+        when(couponRepository.findById(1L)).thenReturn(Optional.of(coupon));
+        when(userRepository.findAllById(List.of(10L, 11L))).thenReturn(List.of(first, second));
+        when(couponIssueRepository.existsByCouponAndUser(any(Coupon.class), any(User.class)))
+            .thenReturn(true, true);
+
+        CouponBroadcastResponse response = service.issueToUsers(
+            principal(UserRole.USER_ADMIN),
+            1L,
+            List.of(10L, 11L)
+        );
+
+        assertThat(response.issuedCount()).isEqualTo(0);
+        assertThat(response.skippedCount()).isEqualTo(2);
+        verify(couponEventRepository, never()).save(any(CouponEvent.class));
     }
 
     @Test
@@ -178,8 +212,13 @@ class AdminCouponServiceTest {
         assignId(second, 11L);
 
         when(couponRepository.findById(1L)).thenReturn(Optional.of(coupon));
-        when(userRepository.findAllByStatus(UserStatus.ACTIVE)).thenReturn(List.of(first, second));
-        when(couponEventRepository.save(any(CouponEvent.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(userRepository.findAllByStatus(any(UserStatus.class), any(Pageable.class)))
+            .thenReturn(new PageImpl<>(List.of(first, second)));
+        when(couponEventRepository.save(any(CouponEvent.class))).thenAnswer(invocation -> {
+            CouponEvent event = invocation.getArgument(0);
+            assertThat(event.getTotalQuantity()).isEqualTo(1);
+            return event;
+        });
         when(couponIssueRepository.existsByCouponAndUser(any(Coupon.class), any(User.class)))
             .thenReturn(false, true);
 
@@ -188,6 +227,29 @@ class AdminCouponServiceTest {
         assertThat(response.couponId()).isEqualTo(1L);
         assertThat(response.issuedCount()).isEqualTo(1);
         assertThat(response.skippedCount()).isEqualTo(1);
+    }
+
+    @Test
+    void broadcastDoesNotCreateEventWhenAllTargetsAreDuplicated() {
+        AdminCouponService service = newService();
+        Coupon coupon = Coupon.create("신규 쿠폰", 5000, 10000, CouponType.FIRST_COME, 30);
+        assignId(coupon, 1L);
+        User first = User.signup("first@test.com", "encoded", "첫번째", "01011112222");
+        User second = User.signup("second@test.com", "encoded", "두번째", "01033334444");
+        assignId(first, 10L);
+        assignId(second, 11L);
+
+        when(couponRepository.findById(1L)).thenReturn(Optional.of(coupon));
+        when(userRepository.findAllByStatus(any(UserStatus.class), any(Pageable.class)))
+            .thenReturn(new PageImpl<>(List.of(first, second)));
+        when(couponIssueRepository.existsByCouponAndUser(any(Coupon.class), any(User.class)))
+            .thenReturn(true, true);
+
+        CouponBroadcastResponse response = service.broadcast(principal(UserRole.ROOT_ADMIN), 1L);
+
+        assertThat(response.issuedCount()).isEqualTo(0);
+        assertThat(response.skippedCount()).isEqualTo(2);
+        verify(couponEventRepository, never()).save(any(CouponEvent.class));
     }
 
     @Test
@@ -207,7 +269,8 @@ class AdminCouponServiceTest {
         Coupon coupon = Coupon.create("신규 쿠폰", 5000, 10000, CouponType.FIRST_COME, 30);
         assignId(coupon, 1L);
         when(couponRepository.findById(1L)).thenReturn(Optional.of(coupon));
-        when(userRepository.findAllByStatus(UserStatus.ACTIVE)).thenReturn(List.of());
+        when(userRepository.findAllByStatus(any(UserStatus.class), any(Pageable.class)))
+            .thenReturn(new PageImpl<>(List.of()));
 
         assertThatThrownBy(() -> service.broadcast(principal(UserRole.USER_ADMIN), 1L))
             .isInstanceOf(BusinessException.class)
