@@ -16,6 +16,7 @@ import com.team7.agora.global.auth.CustomUserDetails;
 import com.team7.agora.global.exception.BusinessException;
 import com.team7.agora.global.exception.ErrorCode;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -73,6 +74,21 @@ public class AdminCouponService {
             throw new BusinessException(ErrorCode.NOT_FOUND, "발급 대상 사용자가 없습니다.");
         }
 
+        int skippedCount = 0;
+        List<User> issueTargets = new ArrayList<>();
+        for (User user : targets) {
+            if (couponIssueRepository.existsByCouponAndUser(coupon, user)) {
+                skippedCount++;
+                continue;
+            }
+            issueTargets.add(user);
+        }
+
+        if (issueTargets.isEmpty()) {
+            return new CouponBroadcastResponse(couponId, 0, skippedCount);
+        }
+        targets = issueTargets;
+
         LocalDateTime now = LocalDateTime.now();
         CouponEvent event = couponEventRepository.save(CouponEvent.create(
             coupon.getName() + " 지정 발급",
@@ -82,12 +98,7 @@ public class AdminCouponService {
         ));
 
         int issuedCount = 0;
-        int skippedCount = 0;
         for (User user : targets) {
-            if (couponIssueRepository.existsByCouponAndUser(coupon, user)) {
-                skippedCount++;
-                continue;
-            }
             event.issue();
             couponIssueRepository.save(CouponIssue.issue(coupon, event, user));
             issuedCount++;

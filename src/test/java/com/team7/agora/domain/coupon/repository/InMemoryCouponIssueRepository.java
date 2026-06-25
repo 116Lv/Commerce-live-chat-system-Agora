@@ -5,29 +5,31 @@ import com.team7.agora.domain.coupon.entity.CouponEvent;
 import com.team7.agora.domain.coupon.entity.CouponIssue;
 import com.team7.agora.domain.user.entity.User;
 import java.util.List;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 public class InMemoryCouponIssueRepository implements CouponIssueRepository {
 
-    private final Set<String> issuedKeys = ConcurrentHashMap.newKeySet();
+    private final List<CouponIssue> issues = new CopyOnWriteArrayList<>();
     private final AtomicInteger count = new AtomicInteger();
 
     @Override
     public CouponIssue save(CouponIssue couponIssue) {
         count.incrementAndGet();
+        issues.add(couponIssue);
         return couponIssue;
     }
 
     @Override
     public boolean existsByCouponEventAndUser(CouponEvent couponEvent, User user) {
-        return !issuedKeys.add(System.identityHashCode(couponEvent) + ":" + System.identityHashCode(user));
+        return issues.stream()
+            .anyMatch(issue -> issue.getCouponEvent() == couponEvent && issue.getUser() == user);
     }
 
     @Override
     public boolean existsByCouponAndUser(Coupon coupon, User user) {
-        return !issuedKeys.add(System.identityHashCode(coupon) + ":" + System.identityHashCode(user));
+        return issues.stream()
+            .anyMatch(issue -> issue.getCoupon() == coupon && issue.getUser() == user);
     }
 
     @Override
