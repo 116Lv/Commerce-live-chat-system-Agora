@@ -11,6 +11,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.team7.agora.domain.coupon.dto.response.AdminCouponResponse;
 import com.team7.agora.domain.coupon.dto.response.CouponBroadcastResponse;
+import com.team7.agora.domain.coupon.dto.response.CouponIssueHistoryResponse;
 import com.team7.agora.domain.coupon.enums.CouponType;
 import com.team7.agora.domain.coupon.service.AdminCouponService;
 import com.team7.agora.domain.user.enums.UserRole;
@@ -154,6 +155,27 @@ class AdminCouponControllerTest {
                     """))
             .andExpect(status().isBadRequest())
             .andExpect(jsonPath("$.status").value("ERROR"));
+    }
+
+    @Test
+    void getIssueHistoryUsesAuthenticatedAdminAndReturnsIssues() throws Exception {
+        authenticate(UserRole.USER_ADMIN);
+        CouponIssueHistoryResponse response = new CouponIssueHistoryResponse(
+            1L,
+            1,
+            List.of(new CouponIssueHistoryResponse.IssueRecord(100L, 10L, "사용자", "ISSUED", null))
+        );
+        when(adminCouponService.getIssueHistory(any(CustomUserDetails.class), any(Long.class))).thenReturn(response);
+
+        mockMvc.perform(get("/api/admin/coupons/{couponId}/issues", 1L))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.status").value("SUCCESS"))
+            .andExpect(jsonPath("$.data.couponId").value(1L))
+            .andExpect(jsonPath("$.data.totalIssued").value(1))
+            .andExpect(jsonPath("$.data.issues[0].issueId").value(100L))
+            .andExpect(jsonPath("$.data.issues[0].userId").value(10L));
+
+        verify(adminCouponService).getIssueHistory(any(CustomUserDetails.class), any(Long.class));
     }
 
     @Test
