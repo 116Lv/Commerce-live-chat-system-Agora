@@ -7,6 +7,8 @@ import static org.mockito.Mockito.when;
 
 import com.team7.agora.domain.admin.dto.response.AdminReportListResponse;
 import com.team7.agora.domain.admin.dto.response.AdminReportResponse;
+import com.team7.agora.domain.product.entity.Product;
+import com.team7.agora.domain.region.entity.Region;
 import com.team7.agora.domain.report.entity.Report;
 import com.team7.agora.domain.report.repository.ReportRepository;
 import com.team7.agora.domain.user.entity.User;
@@ -14,6 +16,7 @@ import com.team7.agora.domain.user.enums.UserRole;
 import com.team7.agora.domain.user.enums.UserStatus;
 import com.team7.agora.global.auth.CustomUserDetails;
 import com.team7.agora.global.exception.BusinessException;
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
@@ -38,6 +41,7 @@ class AdminReportServiceTest {
     );
 
     private Report userReport;
+    private Report productReport;
 
     @BeforeEach
     void setUp() {
@@ -48,6 +52,14 @@ class AdminReportServiceTest {
         assignId(reportedUser, 3L);
         userReport = Report.user(reporter, reportedUser, "욕설을 했습니다.");
         assignId(userReport, 200L);
+
+        User seller = User.signup("seller@test.com", "password", "판매자", "01033334444");
+        assignId(seller, 2L);
+        Region region = Region.create("서울 강남구 역삼동", "1168010100", "서울", "강남구", "역삼동");
+        Product product = Product.create(seller, region, "가품 의심 상품", "설명이 이상해요", BigDecimal.valueOf(50000), "디지털");
+        assignId(product, 10L);
+        productReport = Report.product(reporter, seller, product, "가품이 의심됩니다.");
+        assignId(productReport, 100L);
     }
 
     @Test
@@ -86,7 +98,9 @@ class AdminReportServiceTest {
 
     @Test
     void resolveUserReport_rejectsProductReport() {
-        assertThatThrownBy(() -> adminReportService.resolveUserReport(regularUser, 100L, "가품 판매 확인"))
+        when(reportRepository.findById(100L)).thenReturn(Optional.of(productReport));
+
+        assertThatThrownBy(() -> adminReportService.resolveUserReport(userAdmin, 100L, "가품 판매 확인"))
             .isInstanceOf(BusinessException.class);
     }
 }
