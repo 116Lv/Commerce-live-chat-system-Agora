@@ -124,4 +124,22 @@ class AdminReportServiceTest {
         assertThatThrownBy(() -> adminReportService.getProductReports(regularUser))
             .isInstanceOf(BusinessException.class);
     }
+
+    @Test
+    void getProductReports_returnsProductReportList() {
+        when(reportRepository.findAllByProductIsNotNull()).thenReturn(List.of(productReport));
+
+        List<AdminReportListResponse> responses = adminReportService.getProductReports(productAdmin);
+
+        assertThat(responses).hasSize(1);
+        assertThat(responses.get(0).reportId()).isEqualTo(100L);
+        assertThat(responses.get(0).productId()).isEqualTo(10L);
+        assertThat(responses.get(0).status()).isEqualTo("PENDING");
+    }
+
+    @Test
+    void getProductReports_rejectsNonProductAdmin() {
+        assertThatThrownBy(() -> adminReportService.getProductReports(regularUser))
+            .isInstanceOf(BusinessException.class);
+    }
 }
