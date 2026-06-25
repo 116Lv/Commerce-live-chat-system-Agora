@@ -6,6 +6,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.when;
 
 import com.team7.agora.domain.admin.dto.response.AdminReportListResponse;
+import com.team7.agora.domain.admin.dto.response.AdminReportResponse;
 import com.team7.agora.domain.report.entity.Report;
 import com.team7.agora.domain.report.repository.ReportRepository;
 import com.team7.agora.domain.user.entity.User;
@@ -14,6 +15,7 @@ import com.team7.agora.domain.user.enums.UserStatus;
 import com.team7.agora.global.auth.CustomUserDetails;
 import com.team7.agora.global.exception.BusinessException;
 import java.util.List;
+import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -62,6 +64,29 @@ class AdminReportServiceTest {
     @Test
     void getUserReports_rejectsNonUserAdmin() {
         assertThatThrownBy(() -> adminReportService.getUserReports(regularUser))
+            .isInstanceOf(BusinessException.class);
+    }
+
+    @Test
+    void resolveUserReport_resolvesReportAndBlocksUser() {
+        when(reportRepository.findById(200L)).thenReturn(Optional.of(userReport));
+
+        AdminReportResponse response = adminReportService.resolveUserReport(userAdmin, 200L, "욕설 확인");
+
+        assertThat(response.reportId()).isEqualTo(200L);
+        assertThat(response.status()).isEqualTo("RESOLVED");
+        assertThat(userReport.getReportedUser().getStatus()).isEqualTo(UserStatus.BLOCKED);
+    }
+
+    @Test
+    void resolveUserReport_rejectsNonUserAdmin() {
+        assertThatThrownBy(() -> adminReportService.resolveUserReport(regularUser, 200L, "욕설 확인"))
+            .isInstanceOf(BusinessException.class);
+    }
+
+    @Test
+    void resolveUserReport_rejectsProductReport() {
+        assertThatThrownBy(() -> adminReportService.resolveUserReport(regularUser, 100L, "가품 판매 확인"))
             .isInstanceOf(BusinessException.class);
     }
 }
