@@ -4,6 +4,7 @@ import static com.team7.agora.support.TestEntityIds.assignId;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -109,6 +110,29 @@ class AdminCouponServiceTest {
     }
 
     @Test
+    void getListReturnsAllCouponPolicies() {
+        AdminCouponService service = newService();
+        Coupon coupon = Coupon.create("신규 쿠폰", 5000, 10000, CouponType.FIRST_COME, 30);
+        assignId(coupon, 1L);
+        when(couponRepository.findAll()).thenReturn(List.of(coupon));
+
+        List<AdminCouponResponse> responses = service.getList(principal(UserRole.ROOT_ADMIN));
+
+        assertThat(responses).hasSize(1);
+        assertThat(responses.get(0).couponId()).isEqualTo(1L);
+    }
+
+    @Test
+    void getListRejectsNonAdmin() {
+        AdminCouponService service = newService();
+
+        assertThatThrownBy(() -> service.getList(principal(UserRole.ROLE_USER)))
+            .isInstanceOf(BusinessException.class)
+            .extracting("errorCode")
+            .isEqualTo(ErrorCode.FORBIDDEN);
+    }
+
+    @Test
     void getDetailRejectsMissingCoupon() {
         AdminCouponService service = newService();
         when(couponRepository.findById(1L)).thenReturn(Optional.empty());
@@ -209,6 +233,56 @@ class AdminCouponServiceTest {
             .isInstanceOf(BusinessException.class)
             .extracting("errorCode")
             .isEqualTo(ErrorCode.NOT_FOUND);
+    }
+
+    @Test
+    void broadcastIssuesCouponToActiveUsersExceptAlreadyIssued() {
+        AdminCouponService service = newService();
+        Coupon coupon = Coupon.create("신규 쿠폰", 5000, 10000, CouponType.FIRST_COME, 30);
+        assignId(coupon, 1L);
+        User user = User.signup("user@test.com", "encoded", "사용자", "01012345678");
+        User duplicatedUser = User.signup("dup@test.com", "encoded", "중복사용자", "01011112222");
+        assignId(user, 10L);
+        assignId(duplicatedUser, 11L);
+
+        when(couponRepository.findById(1L)).thenReturn(Optional.of(coupon));
+        when(userRepository.findAllByStatus(eq(UserStatus.ACTIVE), any(Pageable.class)))
+            .thenReturn(new PageImpl<>(List.of(user, duplicatedUser)));
+        when(couponEventRepository.save(any(CouponEvent.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(couponIssueRepository.existsByCouponAndUser(any(Coupon.class), any(User.class)))
+            .thenReturn(false, true);
+
+        CouponBroadcastResponse response = service.broadcast(principal(UserRole.ROOT_ADMIN), 1L);
+
+        assertThat(response.couponId()).isEqualTo(1L);
+        assertThat(response.issuedCount()).isEqualTo(1);
+        assertThat(response.skippedCount()).isEqualTo(1);
+    }
+
+    @Test
+    void broadcastRejectsWhenNoActiveUsers() {
+        AdminCouponService service = newService();
+        Coupon coupon = Coupon.create("신규 쿠폰", 5000, 10000, CouponType.FIRST_COME, 30);
+        assignId(coupon, 1L);
+
+        when(couponRepository.findById(1L)).thenReturn(Optional.of(coupon));
+        when(userRepository.findAllByStatus(eq(UserStatus.ACTIVE), any(Pageable.class)))
+            .thenReturn(new PageImpl<>(List.of()));
+
+        assertThatThrownBy(() -> service.broadcast(principal(UserRole.ROOT_ADMIN), 1L))
+            .isInstanceOf(BusinessException.class)
+            .extracting("errorCode")
+            .isEqualTo(ErrorCode.NOT_FOUND);
+    }
+
+    @Test
+    void broadcastRejectsNonAdmin() {
+        AdminCouponService service = newService();
+
+        assertThatThrownBy(() -> service.broadcast(principal(UserRole.ROLE_USER), 1L))
+            .isInstanceOf(BusinessException.class)
+            .extracting("errorCode")
+            .isEqualTo(ErrorCode.FORBIDDEN);
     }
 
     @Test

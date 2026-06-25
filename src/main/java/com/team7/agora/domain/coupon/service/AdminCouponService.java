@@ -73,6 +73,13 @@ public class AdminCouponService {
         return AdminCouponResponse.from(coupon);
     }
 
+    public List<AdminCouponResponse> getList(CustomUserDetails admin) {
+        validateAdminAuthority(admin);
+        return couponRepository.findAll().stream()
+            .map(AdminCouponResponse::from)
+            .toList();
+    }
+
     @Transactional
     public CouponBroadcastResponse issueToUsers(CustomUserDetails admin, Long couponId, List<Long> userIds) {
         validateAdminAuthority(admin);

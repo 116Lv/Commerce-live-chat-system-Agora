@@ -11,4 +11,6 @@ public interface CouponRepository {
     Optional<Coupon> findById(Long couponId);
 
     Optional<Coupon> findFirstComeCoupon();
+
+    List<Coupon> findAll();
 }

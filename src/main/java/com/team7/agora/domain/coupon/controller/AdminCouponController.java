@@ -46,6 +46,12 @@ public class AdminCouponController {
         return ApiResponse.success("쿠폰 정책이 생성되었습니다.", response);
     }
     @PreAuthorize("hasAnyAuthority('USER_ADMIN', 'ROOT_ADMIN')")
+    @GetMapping
+    public ApiResponse<List<AdminCouponResponse>> getList(@AuthenticationPrincipal CustomUserDetails admin) {
+        List<AdminCouponResponse> response = adminCouponService.getList(admin);
+        return ApiResponse.success("쿠폰 정책 목록을 조회했습니다.", response);
+    }
+    @PreAuthorize("hasAnyAuthority('USER_ADMIN', 'ROOT_ADMIN')")
     @GetMapping("/{couponId}")
     public ApiResponse<AdminCouponResponse> getDetail(
         @AuthenticationPrincipal CustomUserDetails admin,
@@ -63,6 +69,15 @@ public class AdminCouponController {
     ) {
         CouponBroadcastResponse response = adminCouponService.issueToUsers(admin, couponId, request.userIds());
         return ApiResponse.success("지정 사용자에게 쿠폰을 발급했습니다.", response);
+    }
+    @PreAuthorize("hasAnyAuthority('USER_ADMIN', 'ROOT_ADMIN')")
+    @PostMapping("/{couponId}/broadcast")
+    public ApiResponse<CouponBroadcastResponse> broadcast(
+        @AuthenticationPrincipal CustomUserDetails admin,
+        @PathVariable Long couponId
+    ) {
+        CouponBroadcastResponse response = adminCouponService.broadcast(admin, couponId);
+        return ApiResponse.success("전체 사용자에게 쿠폰을 발송했습니다.", response);
     }
     @PreAuthorize("hasAnyAuthority('USER_ADMIN', 'ROOT_ADMIN')")
     @GetMapping("/{couponId}/issues")

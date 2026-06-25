@@ -36,4 +36,9 @@ public class InMemoryCouponRepository implements CouponRepository {
         return Optional.ofNullable(firstComeCoupon)
             .filter(coupon -> coupon.getType() == CouponType.FIRST_COME);
     }
+
+    @Override
+    public List<Coupon> findAll() {
+        return List.copyOf(coupons);
+    }
 }

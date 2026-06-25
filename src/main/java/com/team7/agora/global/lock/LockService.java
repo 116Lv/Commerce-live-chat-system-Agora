@@ -14,7 +14,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class LockService {
 
-    private static final Duration REDIS_LOCK_TTL = Duration.ofSeconds(3);
+    private static final Duration REDIS_LOCK_TTL = Duration.ofSeconds(10);
 
     private final Map<String, ReentrantLock> locks = new ConcurrentHashMap<>();
     private final RedisLockRepository redisLockRepository;
@@ -54,7 +54,7 @@ public class LockService {
     private <T> T withRedisLock(String key, Supplier<T> supplier) {
         String lockOwner = UUID.randomUUID().toString();
         if (!redisLockRepository.tryLock(key, lockOwner, redisLockTtl)) {
-            throw new BusinessException(ErrorCode.CONFLICT, "잠시 후 다시 시도해 주세요.");
+            throw new BusinessException(ErrorCode.CONFLICT, "요청이 많습니다. 다시 시도해주세요.");
         }
 
         try {
