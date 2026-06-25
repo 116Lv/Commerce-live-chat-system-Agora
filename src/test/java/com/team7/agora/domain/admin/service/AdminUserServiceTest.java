@@ -18,6 +18,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 
@@ -32,14 +33,17 @@ class AdminUserServiceTest {
         AdminUserService service = new AdminUserService(userRepository);
         User user = User.signup("user@test.com", "encoded", "동네유저", "01011112222");
         assignId(user, 1L);
-        when(userRepository.findAll(PageRequest.of(0, 20))).thenReturn(new PageImpl<>(List.of(user)));
+        when(userRepository.findAll(PageRequest.of(0, 20)))
+                .thenReturn(new PageImpl<>(List.of(user), PageRequest.of(0, 20), 42));
 
-        List<AdminUserResponse> responses = service.getUsers(principal(UserRole.USER_ADMIN), PageRequest.of(0, 20));
+        Page<AdminUserResponse> responses = service.getUsers(principal(UserRole.USER_ADMIN), PageRequest.of(0, 20));
 
-        assertThat(responses).hasSize(1);
-        assertThat(responses.get(0).id()).isEqualTo(1L);
-        assertThat(responses.get(0).email()).isEqualTo("user@test.com");
-        assertThat(responses.get(0).status()).isEqualTo("ACTIVE");
+        assertThat(responses.getContent()).hasSize(1);
+        assertThat(responses.getContent().get(0).id()).isEqualTo(1L);
+        assertThat(responses.getContent().get(0).email()).isEqualTo("user@test.com");
+        assertThat(responses.getContent().get(0).status()).isEqualTo("ACTIVE");
+        assertThat(responses.getTotalElements()).isEqualTo(42);
+        assertThat(responses.getTotalPages()).isEqualTo(3);
     }
 
     @Test
@@ -58,6 +62,32 @@ class AdminUserServiceTest {
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
 
         AdminUserResponse response = service.changeStatus(principal(UserRole.USER_ADMIN), 1L, UserStatus.BLOCKED);
+
+        assertThat(response.status()).isEqualTo("BLOCKED");
+        assertThat(user.getStatus()).isEqualTo(UserStatus.BLOCKED);
+    }
+
+    @Test
+    void changeStatus_rejectsUserAdminWhenTargetIsAdminAccount() {
+        AdminUserService service = new AdminUserService(userRepository);
+        User user = User.signup("admin@test.com", "encoded", "관리자", "01011112222");
+        user.changeRole(UserRole.ROOT_ADMIN);
+        assignId(user, 1L);
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+
+        assertThatThrownBy(() -> service.changeStatus(principal(UserRole.USER_ADMIN), 1L, UserStatus.BLOCKED))
+                .isInstanceOf(BusinessException.class);
+    }
+
+    @Test
+    void changeStatus_allowsRootAdminWhenTargetIsAdminAccount() {
+        AdminUserService service = new AdminUserService(userRepository);
+        User user = User.signup("admin@test.com", "encoded", "관리자", "01011112222");
+        user.changeRole(UserRole.USER_ADMIN);
+        assignId(user, 1L);
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+
+        AdminUserResponse response = service.changeStatus(principal(UserRole.ROOT_ADMIN), 1L, UserStatus.BLOCKED);
 
         assertThat(response.status()).isEqualTo("BLOCKED");
         assertThat(user.getStatus()).isEqualTo(UserStatus.BLOCKED);
