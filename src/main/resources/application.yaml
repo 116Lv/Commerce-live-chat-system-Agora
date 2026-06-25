@@ -36,6 +36,16 @@ spring:
 jwt:
   secret-key: localEnvDummySecretKeyForAgoraProjectTest12345!
   access-token-valid-time: 36000000
+  refresh-token-valid-time: 1209600000
+
+portone:
+  webhook-secret: local-webhook-secret
+
+agora:
+  scheduler:
+    nego-expiration:
+      fixed-delay: 300000
+      initial-delay: 300000
 
 ---
 
@@ -72,3 +82,15 @@ spring:
 jwt:
   secret-key: ${JWT_SECRET_KEY}
   access-token-valid-time: 3600000
+  refresh-token-valid-time: 1209600000
+
+portone:
+  api-base-url: ${PORTONE_API_BASE_URL:https://api.portone.io}
+  api-secret: ${PORTONE_API_SECRET}
+  webhook-secret: ${PORTONE_WEBHOOK_SECRET}
+
+agora:
+  scheduler:
+    nego-expiration:
+      fixed-delay: ${NEGO_EXPIRATION_FIXED_DELAY:300000}
+      initial-delay: ${NEGO_EXPIRATION_INITIAL_DELAY:300000}
