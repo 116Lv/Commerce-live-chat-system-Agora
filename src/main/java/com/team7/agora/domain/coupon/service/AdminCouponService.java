@@ -2,6 +2,7 @@ package com.team7.agora.domain.coupon.service;
 
 import com.team7.agora.domain.coupon.dto.response.AdminCouponResponse;
 import com.team7.agora.domain.coupon.dto.response.CouponBroadcastResponse;
+import com.team7.agora.domain.coupon.dto.response.CouponIssueHistoryResponse;
 import com.team7.agora.domain.coupon.entity.Coupon;
 import com.team7.agora.domain.coupon.entity.CouponEvent;
 import com.team7.agora.domain.coupon.entity.CouponIssue;
@@ -163,6 +164,13 @@ public class AdminCouponService {
     private Coupon findCoupon(Long couponId) {
         return couponRepository.findById(couponId)
             .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "쿠폰 정책을 찾을 수 없습니다."));
+    }
+
+    public CouponIssueHistoryResponse getIssueHistory(CustomUserDetails admin, Long couponId) {
+        validateAdminAuthority(admin);
+        Coupon coupon = couponRepository.findById(couponId)
+            .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "쿠폰 정책을 찾을 수 없습니다."));
+        return CouponIssueHistoryResponse.of(coupon.getId(), couponIssueRepository.findAllByCoupon(coupon));
     }
 
     private void validateAdminAuthority(CustomUserDetails admin) {
