@@ -32,6 +32,15 @@ public class AdminProductService {
         return products.map(AdminProductResponse::from);
     }
 
+    @Transactional
+    public AdminProductResponse hideProduct(CustomUserDetails admin, Long productId) {
+        validateProductAdmin(admin);
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "상품을 찾을 수 없습니다."));
+        product.hide();
+        return AdminProductResponse.from(product);
+    }
+
     private void validateProductAdmin(CustomUserDetails admin) {
         if (admin == null || !AdminRoleSupport.isProductAdminRole(admin.getRole())) {
             throw new BusinessException(ErrorCode.FORBIDDEN, "상품 관리는 관리자만 수행할 수 있습니다.");

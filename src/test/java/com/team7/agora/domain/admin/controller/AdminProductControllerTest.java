@@ -4,6 +4,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -70,6 +71,19 @@ class AdminProductControllerTest {
                 .andExpect(jsonPath("$.data.size").value(20))
                 .andExpect(jsonPath("$.data.totalElements").value(42))
                 .andExpect(jsonPath("$.data.totalPages").value(3));
+    }
+
+    @Test
+    void hideProduct_usesAuthenticatedAdminAndReturnsHiddenProduct() throws Exception {
+        authenticate(UserRole.PRODUCT_ADMIN);
+        when(adminProductService.hideProduct(any(CustomUserDetails.class), eq(1L)))
+                .thenReturn(new AdminProductResponse(1L, "중고 자전거", BigDecimal.valueOf(100000), 10L, "HIDDEN"));
+
+        mockMvc.perform(patch("/api/admin/products/{productId}/hide", 1L))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("SUCCESS"))
+                .andExpect(jsonPath("$.data.id").value(1L))
+                .andExpect(jsonPath("$.data.status").value("HIDDEN"));
     }
 
     private void authenticate(UserRole role) {

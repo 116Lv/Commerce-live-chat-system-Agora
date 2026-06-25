@@ -9,6 +9,7 @@ import static org.mockito.Mockito.when;
 
 import com.team7.agora.domain.admin.dto.response.AdminProductResponse;
 import com.team7.agora.domain.product.entity.Product;
+import com.team7.agora.domain.product.enums.ProductStatus;
 import com.team7.agora.domain.product.repository.ProductRepository;
 import com.team7.agora.domain.region.entity.Region;
 import com.team7.agora.domain.report.repository.ReportRepository;
@@ -19,6 +20,7 @@ import com.team7.agora.global.auth.CustomUserDetails;
 import com.team7.agora.global.exception.BusinessException;
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -75,6 +77,35 @@ class AdminProductServiceTest {
         AdminProductService service = new AdminProductService(productRepository, reportRepository);
 
         assertThatThrownBy(() -> service.getProducts(principal(UserRole.USER_ADMIN), false, PageRequest.of(0, 20)))
+                .isInstanceOf(BusinessException.class);
+    }
+
+    @Test
+    void hideProduct_hidesProduct() {
+        AdminProductService service = new AdminProductService(productRepository, reportRepository);
+        Product product = product(1L);
+        when(productRepository.findById(1L)).thenReturn(Optional.of(product));
+
+        AdminProductResponse response = service.hideProduct(principal(UserRole.PRODUCT_ADMIN), 1L);
+
+        assertThat(response.status()).isEqualTo("HIDDEN");
+        assertThat(product.getStatus()).isEqualTo(ProductStatus.HIDDEN);
+    }
+
+    @Test
+    void hideProduct_rejectsNonProductAdmin() {
+        AdminProductService service = new AdminProductService(productRepository, reportRepository);
+
+        assertThatThrownBy(() -> service.hideProduct(principal(UserRole.USER_ADMIN), 1L))
+                .isInstanceOf(BusinessException.class);
+    }
+
+    @Test
+    void hideProduct_throwsNotFoundWhenProductMissing() {
+        AdminProductService service = new AdminProductService(productRepository, reportRepository);
+        when(productRepository.findById(1L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> service.hideProduct(principal(UserRole.PRODUCT_ADMIN), 1L))
                 .isInstanceOf(BusinessException.class);
     }
 
