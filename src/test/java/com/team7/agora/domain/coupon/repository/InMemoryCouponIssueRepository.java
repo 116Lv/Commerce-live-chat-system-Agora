@@ -33,6 +33,13 @@ public class InMemoryCouponIssueRepository implements CouponIssueRepository {
     }
 
     @Override
+    public List<CouponIssue> findAllByCoupon(Coupon coupon) {
+        return issues.stream()
+            .filter(issue -> issue.getCoupon() == coupon)
+            .toList();
+    }
+
+    @Override
     public List<CouponIssue> findAllByUser(User user) {
         return List.of();
     }
