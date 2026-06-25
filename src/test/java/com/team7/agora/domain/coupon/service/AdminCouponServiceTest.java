@@ -25,6 +25,7 @@ import com.team7.agora.domain.user.repository.UserRepository;
 import com.team7.agora.global.auth.CustomUserDetails;
 import com.team7.agora.global.exception.BusinessException;
 import com.team7.agora.global.exception.ErrorCode;
+import com.team7.agora.global.lock.LockService;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
