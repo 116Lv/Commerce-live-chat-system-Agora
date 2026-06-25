@@ -24,7 +24,7 @@ import lombok.NoArgsConstructor;
 @Entity
 @Table(
     name = "chat_messages",
-    indexes = @Index(name = "idx_chat_messages_room_created", columnList = "chat_room_id, created_at")
+    indexes = @Index(name = "idx_chat_messages_room_id", columnList = "chat_room_id, id")
 )
 public class ChatMessage extends BaseTimeEntity {
 
@@ -61,5 +61,9 @@ public class ChatMessage extends BaseTimeEntity {
 
     public static ChatMessage sendImage(ChatRoom chatRoom, User sender, String imageUrl) {
         return new ChatMessage(chatRoom, sender, imageUrl, ChatMessageType.IMAGE);
+    }
+
+    public static ChatMessage system(ChatRoom chatRoom, User actor, String content) {
+        return new ChatMessage(chatRoom, actor, content, ChatMessageType.SYSTEM);
     }
 }

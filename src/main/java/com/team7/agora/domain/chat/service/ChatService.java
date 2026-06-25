@@ -15,6 +15,8 @@ import com.team7.agora.global.exception.BusinessException;
 import com.team7.agora.global.exception.ErrorCode;
 import com.team7.agora.global.storage.ImageStorageClient;
 import java.util.List;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -86,14 +88,19 @@ public class ChatService {
         return ChatMessageResponse.from(message);
     }
 
-    public List<ChatMessageResponse> getMessages(Long userId, Long chatRoomId) {
+    public List<ChatMessageResponse> getMessages(Long userId, Long chatRoomId, Long lastMessageId, int size) {
         ChatRoom chatRoom = findActiveRoom(chatRoomId);
 
         if (!chatRoom.isParticipant(userId)) {
             throw new BusinessException(ErrorCode.FORBIDDEN, "채팅방 참여자만 메시지를 조회할 수 있습니다.");
         }
 
-        return chatMessageRepository.findByChatRoomOrderByCreatedAtAsc(chatRoom).stream()
+        Pageable pageable = PageRequest.of(0, size);
+        List<ChatMessage> messages = lastMessageId == null
+            ? chatMessageRepository.findLatestByChatRoom(chatRoom, pageable)
+            : chatMessageRepository.findByChatRoomBeforeMessageId(chatRoom, lastMessageId, pageable);
+
+        return messages.stream()
             .map(ChatMessageResponse::from)
             .toList();
     }
