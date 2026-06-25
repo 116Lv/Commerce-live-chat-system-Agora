@@ -13,6 +13,8 @@ interface JpaCouponIssueDataRepository extends JpaRepository<CouponIssue, Long> 
 
     boolean existsByCouponEventAndUser(CouponEvent couponEvent, User user);
 
+    boolean existsByCouponAndUser(Coupon coupon, User user);
+
     @Query("select ci from CouponIssue ci join fetch ci.user where ci.coupon = :coupon order by ci.issuedAt desc")
     List<CouponIssue> findAllByCoupon(@Param("coupon") Coupon coupon);
 

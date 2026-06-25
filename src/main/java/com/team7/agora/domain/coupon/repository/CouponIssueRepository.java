@@ -12,6 +12,8 @@ public interface CouponIssueRepository {
 
     boolean existsByCouponEventAndUser(CouponEvent couponEvent, User user);
 
+    boolean existsByCouponAndUser(Coupon coupon, User user);
+
     List<CouponIssue> findAllByCoupon(Coupon coupon);
 
     List<CouponIssue> findAllByUser(User user);

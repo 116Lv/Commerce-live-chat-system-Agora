@@ -27,6 +27,11 @@ class CouponIssueRepositoryAdapter implements CouponIssueRepository {
     }
 
     @Override
+    public boolean existsByCouponAndUser(Coupon coupon, User user) {
+        return repository.existsByCouponAndUser(coupon, user);
+    }
+
+    @Override
     public List<CouponIssue> findAllByCoupon(Coupon coupon) {
         return repository.findAllByCoupon(coupon);
     }

@@ -1,4 +1,3 @@
-// 검색 API 버전별 응답시간/TPS/DB 조회 횟수를 집계하는 컴포넌트
 package com.team7.agora.domain.search.metric;
 
 import java.util.concurrent.ConcurrentHashMap;
