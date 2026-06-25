@@ -1,5 +1,6 @@
 package com.team7.agora.domain.coupon.repository;
 
+import com.team7.agora.domain.coupon.entity.Coupon;
 import com.team7.agora.domain.coupon.entity.CouponEvent;
 import com.team7.agora.domain.coupon.entity.CouponIssue;
 import com.team7.agora.domain.user.entity.User;
@@ -23,6 +24,11 @@ class CouponIssueRepositoryAdapter implements CouponIssueRepository {
     @Override
     public boolean existsByCouponEventAndUser(CouponEvent couponEvent, User user) {
         return repository.existsByCouponEventAndUser(couponEvent, user);
+    }
+
+    @Override
+    public List<CouponIssue> findAllByCoupon(Coupon coupon) {
+        return repository.findAllByCoupon(coupon);
     }
 
     @Override

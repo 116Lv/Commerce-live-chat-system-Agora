@@ -2,6 +2,7 @@ package com.team7.agora.domain.coupon.controller;
 
 import com.team7.agora.domain.coupon.dto.request.AdminCouponCreateRequest;
 import com.team7.agora.domain.coupon.dto.response.AdminCouponResponse;
+import com.team7.agora.domain.coupon.dto.response.CouponIssueHistoryResponse;
 import com.team7.agora.domain.coupon.service.AdminCouponService;
 import com.team7.agora.global.auth.CustomUserDetails;
 import com.team7.agora.global.response.ApiResponse;
@@ -50,5 +51,14 @@ public class AdminCouponController {
     ) {
         AdminCouponResponse response = adminCouponService.getDetail(admin, couponId);
         return ApiResponse.success("쿠폰 정책 상세를 조회했습니다.", response);
+    }
+    @PreAuthorize("hasAnyAuthority('USER_ADMIN', 'ROOT_ADMIN')")
+    @GetMapping("/{couponId}/issues")
+    public ApiResponse<CouponIssueHistoryResponse> getIssueHistory(
+        @AuthenticationPrincipal CustomUserDetails admin,
+        @PathVariable Long couponId
+    ) {
+        CouponIssueHistoryResponse response = adminCouponService.getIssueHistory(admin, couponId);
+        return ApiResponse.success("쿠폰 발급 내역을 조회했습니다.", response);
     }
 }

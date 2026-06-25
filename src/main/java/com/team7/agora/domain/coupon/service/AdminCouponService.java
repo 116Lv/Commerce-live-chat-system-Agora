@@ -1,8 +1,10 @@
 package com.team7.agora.domain.coupon.service;
 
 import com.team7.agora.domain.coupon.dto.response.AdminCouponResponse;
+import com.team7.agora.domain.coupon.dto.response.CouponIssueHistoryResponse;
 import com.team7.agora.domain.coupon.entity.Coupon;
 import com.team7.agora.domain.coupon.enums.CouponType;
+import com.team7.agora.domain.coupon.repository.CouponIssueRepository;
 import com.team7.agora.domain.coupon.repository.CouponRepository;
 import com.team7.agora.domain.user.enums.UserRole;
 import com.team7.agora.global.auth.CustomUserDetails;
@@ -17,9 +19,11 @@ import org.springframework.transaction.annotation.Transactional;
 public class AdminCouponService {
 
     private final CouponRepository couponRepository;
+    private final CouponIssueRepository couponIssueRepository;
 
-    public AdminCouponService(CouponRepository couponRepository) {
+    public AdminCouponService(CouponRepository couponRepository, CouponIssueRepository couponIssueRepository) {
         this.couponRepository = couponRepository;
+        this.couponIssueRepository = couponIssueRepository;
     }
 
     @Transactional
@@ -41,6 +45,13 @@ public class AdminCouponService {
         Coupon coupon = couponRepository.findById(couponId)
             .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "쿠폰 정책을 찾을 수 없습니다."));
         return AdminCouponResponse.from(coupon);
+    }
+
+    public CouponIssueHistoryResponse getIssueHistory(CustomUserDetails admin, Long couponId) {
+        validateAdminAuthority(admin);
+        Coupon coupon = couponRepository.findById(couponId)
+            .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "쿠폰 정책을 찾을 수 없습니다."));
+        return CouponIssueHistoryResponse.of(coupon.getId(), couponIssueRepository.findAllByCoupon(coupon));
     }
 
     private void validateAdminAuthority(CustomUserDetails admin) {
