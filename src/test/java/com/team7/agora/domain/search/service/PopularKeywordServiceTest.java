@@ -87,4 +87,26 @@ class PopularKeywordServiceTest {
 
         assertThat(responses).isEmpty();
     }
+
+    @Test
+    void getTopWeeklyKeywords_returnsRepositoryRanking() {
+        PopularKeywordService service = new PopularKeywordService(popularKeywordRepository);
+        when(popularKeywordRepository.getTopWeeklyKeywords(any(), eq(10))).thenReturn(List.of(
+            new PopularKeywordResponse("아이폰", 7)
+        ));
+
+        List<PopularKeywordResponse> responses = service.getTopWeeklyKeywords(10);
+
+        assertThat(responses).extracting(PopularKeywordResponse::keyword).containsExactly("아이폰");
+    }
+
+    @Test
+    void getTopWeeklyKeywords_returnsEmptyListWhenRepositoryFails() {
+        PopularKeywordService service = new PopularKeywordService(popularKeywordRepository);
+        when(popularKeywordRepository.getTopWeeklyKeywords(any(), eq(10))).thenThrow(new RuntimeException("redis down"));
+
+        List<PopularKeywordResponse> responses = service.getTopWeeklyKeywords(10);
+
+        assertThat(responses).isEmpty();
+    }
 }
