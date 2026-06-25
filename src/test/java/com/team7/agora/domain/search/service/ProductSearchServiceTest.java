@@ -20,7 +20,7 @@ import org.springframework.data.domain.PageRequest;
 class ProductSearchServiceTest {
 
     @Mock
-    private ProductSearchRepository productRepository;
+    private ProductRepository productRepository;
 
     @Test
     void searchV1_delegatesToRepositoryEveryCall() {
