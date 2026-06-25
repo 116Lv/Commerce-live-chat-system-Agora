@@ -23,6 +23,7 @@ import com.team7.agora.domain.user.repository.UserRepository;
 import com.team7.agora.global.auth.CustomUserDetails;
 import com.team7.agora.global.exception.BusinessException;
 import com.team7.agora.global.exception.ErrorCode;
+import com.team7.agora.global.lock.LockService;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
@@ -48,7 +49,23 @@ class AdminCouponServiceTest {
     private UserRepository userRepository;
 
     private AdminCouponService newService() {
-        return new AdminCouponService(couponRepository, couponEventRepository, couponIssueRepository, userRepository);
+        return new AdminCouponService(
+            couponRepository,
+            couponEventRepository,
+            couponIssueRepository,
+            userRepository,
+            LockService.local()
+        );
+    }
+
+    private AdminCouponService newService(LockService lockService) {
+        return new AdminCouponService(
+            couponRepository,
+            couponEventRepository,
+            couponIssueRepository,
+            userRepository,
+            lockService
+        );
     }
 
     @Test
@@ -199,6 +216,25 @@ class AdminCouponServiceTest {
             .isInstanceOf(BusinessException.class)
             .extracting("errorCode")
             .isEqualTo(ErrorCode.FORBIDDEN);
+    }
+
+    @Test
+    void issueToUsersRejectsWhenCouponPolicyLockIsUnavailable() {
+        LockService lockService = org.mockito.Mockito.mock(LockService.class);
+        AdminCouponService service = newService(lockService);
+        Coupon coupon = Coupon.create("신규 쿠폰", 5000, 10000, CouponType.FIRST_COME, 30);
+        assignId(coupon, 1L);
+        when(couponRepository.findById(1L)).thenReturn(Optional.of(coupon));
+        when(lockService.withLock(org.mockito.ArgumentMatchers.eq("lock:admin-coupon:1"), org.mockito.ArgumentMatchers.any()))
+            .thenThrow(new BusinessException(ErrorCode.CONFLICT, "쿠폰 발송이 이미 진행 중입니다."));
+
+        assertThatThrownBy(() -> service.issueToUsers(principal(UserRole.USER_ADMIN), 1L, List.of(10L)))
+            .isInstanceOf(BusinessException.class)
+            .extracting("errorCode")
+            .isEqualTo(ErrorCode.CONFLICT);
+
+        verify(userRepository, never()).findAllById(any());
+        verify(couponIssueRepository, never()).save(any());
     }
 
     @Test

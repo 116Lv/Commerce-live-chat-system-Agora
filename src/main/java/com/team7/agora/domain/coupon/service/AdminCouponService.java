@@ -16,6 +16,7 @@ import com.team7.agora.domain.user.repository.UserRepository;
 import com.team7.agora.global.auth.CustomUserDetails;
 import com.team7.agora.global.exception.BusinessException;
 import com.team7.agora.global.exception.ErrorCode;
+import com.team7.agora.global.lock.LockService;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -35,17 +36,20 @@ public class AdminCouponService {
     private final CouponEventRepository couponEventRepository;
     private final CouponIssueRepository couponIssueRepository;
     private final UserRepository userRepository;
+    private final LockService lockService;
 
     public AdminCouponService(
         CouponRepository couponRepository,
         CouponEventRepository couponEventRepository,
         CouponIssueRepository couponIssueRepository,
-        UserRepository userRepository
+        UserRepository userRepository,
+        LockService lockService
     ) {
         this.couponRepository = couponRepository;
         this.couponEventRepository = couponEventRepository;
         this.couponIssueRepository = couponIssueRepository;
         this.userRepository = userRepository;
+        this.lockService = lockService;
     }
 
     @Transactional
@@ -73,6 +77,10 @@ public class AdminCouponService {
         validateAdminAuthority(admin);
         Coupon coupon = findCoupon(couponId);
 
+        return lockService.withLock(adminCouponLockKey(couponId), () -> issueToUsersWithLock(coupon, couponId, userIds));
+    }
+
+    private CouponBroadcastResponse issueToUsersWithLock(Coupon coupon, Long couponId, List<Long> userIds) {
         List<User> targets = userRepository.findAllById(userIds);
         if (targets.isEmpty()) {
             throw new BusinessException(ErrorCode.NOT_FOUND, "발급 대상 사용자가 없습니다.");
@@ -87,6 +95,10 @@ public class AdminCouponService {
         validateAdminAuthority(admin);
         Coupon coupon = findCoupon(couponId);
 
+        return lockService.withLock(adminCouponLockKey(couponId), () -> broadcastWithLock(coupon, couponId));
+    }
+
+    private CouponBroadcastResponse broadcastWithLock(Coupon coupon, Long couponId) {
         int issuedCount = 0;
         int skippedCount = 0;
         boolean targetFound = false;
@@ -109,6 +121,10 @@ public class AdminCouponService {
         }
 
         return new CouponBroadcastResponse(couponId, issuedCount, skippedCount);
+    }
+
+    private String adminCouponLockKey(Long couponId) {
+        return "lock:admin-coupon:" + couponId;
     }
 
     private IssueResult issueTargets(Coupon coupon, List<User> targets, String eventName) {
