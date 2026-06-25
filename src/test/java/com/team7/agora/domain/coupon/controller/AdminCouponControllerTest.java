@@ -1,6 +1,7 @@
 package com.team7.agora.domain.coupon.controller;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -9,6 +10,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.team7.agora.domain.coupon.dto.response.AdminCouponResponse;
+import com.team7.agora.domain.coupon.dto.response.CouponBroadcastResponse;
 import com.team7.agora.domain.coupon.enums.CouponType;
 import com.team7.agora.domain.coupon.service.AdminCouponService;
 import com.team7.agora.domain.user.enums.UserRole;
@@ -100,6 +102,58 @@ class AdminCouponControllerTest {
             .andExpect(jsonPath("$.data.name").value("신규 쿠폰"));
 
         verify(adminCouponService).getDetail(any(CustomUserDetails.class), any(Long.class));
+    }
+
+    @Test
+    void issueUsesAuthenticatedAdminAndReturnsBroadcastResult() throws Exception {
+        authenticate(UserRole.USER_ADMIN);
+        when(adminCouponService.issueToUsers(any(CustomUserDetails.class), any(Long.class), anyList()))
+            .thenReturn(new CouponBroadcastResponse(1L, 2, 1));
+
+        mockMvc.perform(post("/api/admin/coupons/{couponId}/issue", 1L)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                    {
+                      "userIds":[10,11,12]
+                    }
+                    """))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.status").value("SUCCESS"))
+            .andExpect(jsonPath("$.data.couponId").value(1L))
+            .andExpect(jsonPath("$.data.issuedCount").value(2))
+            .andExpect(jsonPath("$.data.skippedCount").value(1));
+
+        verify(adminCouponService).issueToUsers(any(CustomUserDetails.class), any(Long.class), anyList());
+    }
+
+    @Test
+    void issueReturnsBadRequestWhenUserIdsAreEmpty() throws Exception {
+        authenticate(UserRole.USER_ADMIN);
+
+        mockMvc.perform(post("/api/admin/coupons/{couponId}/issue", 1L)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                    {
+                      "userIds":[]
+                    }
+                    """))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.status").value("ERROR"));
+    }
+
+    @Test
+    void issueReturnsBadRequestWhenUserIdsContainNull() throws Exception {
+        authenticate(UserRole.USER_ADMIN);
+
+        mockMvc.perform(post("/api/admin/coupons/{couponId}/issue", 1L)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                    {
+                      "userIds":[10,null,12]
+                    }
+                    """))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.status").value("ERROR"));
     }
 
     @Test
