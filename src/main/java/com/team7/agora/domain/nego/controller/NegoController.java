@@ -1,16 +1,13 @@
 package com.team7.agora.domain.nego.controller;
 
-import com.team7.agora.domain.nego.dto.request.NegoOfferCreateRequest;
 import com.team7.agora.domain.nego.dto.response.NegoOfferResponse;
 import com.team7.agora.domain.nego.service.NegoService;
 import com.team7.agora.global.auth.CustomUserDetails;
 import com.team7.agora.global.response.ApiResponse;
-import jakarta.validation.Valid;
 import java.util.function.BiFunction;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
@@ -23,20 +20,6 @@ public class NegoController {
 
     public NegoController(NegoService negoService) {
         this.negoService = negoService;
-    }
-
-    @PostMapping("/chat-rooms/{chatRoomId}")
-    public ApiResponse<NegoOfferResponse> createOffer(
-        @AuthenticationPrincipal CustomUserDetails userDetails,
-        @PathVariable Long chatRoomId,
-        @Valid @RequestBody NegoOfferCreateRequest request
-    ) {
-        NegoOfferResponse response = negoService.createOffer(
-            userDetails.getUserId(),
-            chatRoomId,
-            request.offerPrice()
-        );
-        return ApiResponse.success("가격 제안이 등록되었습니다.", response);
     }
 
     @RequestMapping(path = "/{offerId}/accept", method = {RequestMethod.PATCH, RequestMethod.POST})

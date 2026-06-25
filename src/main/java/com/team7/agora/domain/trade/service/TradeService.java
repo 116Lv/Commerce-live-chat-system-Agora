@@ -1,7 +1,9 @@
 package com.team7.agora.domain.trade.service;
 
+import com.team7.agora.domain.chat.dto.response.ChatMessageResponse;
 import com.team7.agora.domain.chat.entity.ChatMessage;
 import com.team7.agora.domain.chat.entity.ChatRoom;
+import com.team7.agora.domain.chat.realtime.ChatRedisPublisher;
 import com.team7.agora.domain.chat.repository.ChatMessageRepository;
 import com.team7.agora.domain.chat.repository.ChatRoomRepository;
 import com.team7.agora.domain.nego.entity.NegoOffer;
@@ -41,6 +43,7 @@ public class TradeService {
     private final SettlementRepository settlementRepository;
     private final PaymentRepository paymentRepository;
     private final ChatMessageRepository chatMessageRepository;
+    private final ChatRedisPublisher chatRedisPublisher;
 
     public TradeService(
         TradeRepository tradeRepository,
@@ -50,7 +53,8 @@ public class TradeService {
         NegoOfferRepository negoOfferRepository,
         SettlementRepository settlementRepository,
         PaymentRepository paymentRepository,
-        ChatMessageRepository chatMessageRepository
+        ChatMessageRepository chatMessageRepository,
+        ChatRedisPublisher chatRedisPublisher
     ) {
         this.tradeRepository = tradeRepository;
         this.productRepository = productRepository;
@@ -60,6 +64,7 @@ public class TradeService {
         this.settlementRepository = settlementRepository;
         this.paymentRepository = paymentRepository;
         this.chatMessageRepository = chatMessageRepository;
+        this.chatRedisPublisher = chatRedisPublisher;
     }
 
     public TradeDetailResponse getTradeDetail(Long userId, Long tradeId) {
@@ -108,7 +113,7 @@ public class TradeService {
 
     @Transactional
     public Trade createTradeFromAcceptedOffer(Product product, NegoOffer acceptedOffer) {
-        if (product.getStatus() != ProductStatus.SELLING && product.getStatus() != ProductStatus.NEGOTIATING) {
+        if (product.getStatus() != ProductStatus.SELLING) {
             throw new BusinessException(ErrorCode.CONFLICT, "거래 가능한 상태의 상품이 아닙니다.");
         }
         if (tradeRepository.existsByProductAndStatusNot(product, TradeStatus.CANCELLED)) {
@@ -128,12 +133,16 @@ public class TradeService {
         if (!trade.getBuyer().getId().equals(buyerId)) {
             throw new BusinessException(ErrorCode.FORBIDDEN, "구매자만 구매 확정을 할 수 있습니다.");
         }
+        if (trade.getStatus() != TradeStatus.PAID) {
+            throw new BusinessException(ErrorCode.INVALID_REQUEST, "결제가 완료된 거래만 구매 확정할 수 있습니다.");
+        }
 
         trade.complete();
 
         Settlement settlement = settlementRepository.findByPaymentTradeId(tradeId)
             .orElseThrow(() -> new BusinessException(ErrorCode.INVALID_REQUEST, "결제가 완료되지 않은 거래는 구매 확정할 수 없습니다."));
         settlement.complete();
+        sendRatingRequestMessage(trade);
 
         return TradeResponse.from(trade);
     }
@@ -145,6 +154,10 @@ public class TradeService {
         }
         Trade trade = tradeRepository.findById(tradeId)
             .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "거래를 찾을 수 없습니다."));
+
+        if (trade.getStatus() != TradeStatus.PAYMENT_PENDING) {
+            throw new BusinessException(ErrorCode.INVALID_REQUEST, "결제 대기 중인 거래만 예약 만료 처리할 수 있습니다.");
+        }
 
         trade.expire();
         return TradeResponse.from(trade);
@@ -167,13 +180,18 @@ public class TradeService {
             throw new BusinessException(ErrorCode.INVALID_REQUEST, "거래가 완료된 경우에만 평가 요청 메시지를 보낼 수 있습니다.");
         }
 
+        sendRatingRequestMessage(trade);
+    }
+
+    private void sendRatingRequestMessage(Trade trade) {
         ChatRoom chatRoom = chatRoomRepository
             .findByProductAndSellerAndBuyer(trade.getProduct(), trade.getSeller(), trade.getBuyer())
             .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "거래에 연결된 채팅방을 찾을 수 없습니다."));
 
-        chatMessageRepository.save(
+        ChatMessage message = chatMessageRepository.save(
             ChatMessage.send(chatRoom, trade.getSeller(), "거래가 완료되었습니다. 상대방에 대한 후기를 남겨주세요!")
         );
+        chatRedisPublisher.publish(chatRoom.getId(), ChatMessageResponse.from(message));
     }
 
     private boolean isSystemAuthority(AuthUser authUser) {

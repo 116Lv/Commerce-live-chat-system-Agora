@@ -5,6 +5,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 
 import com.team7.agora.domain.chat.entity.ChatRoom;
+import com.team7.agora.domain.chat.repository.ChatRoomRepository;
+import com.team7.agora.domain.chat.service.ChatSystemMessageService;
 import com.team7.agora.domain.nego.entity.NegoOffer;
 import com.team7.agora.domain.nego.enums.NegoOfferStatus;
 import com.team7.agora.domain.nego.repository.NegoOfferRepository;
@@ -33,6 +35,12 @@ class NegoExpirationServiceTest {
     @Mock
     private TradeRepository tradeRepository;
 
+    @Mock
+    private ChatRoomRepository chatRoomRepository;
+
+    @Mock
+    private ChatSystemMessageService chatSystemMessageService;
+
     private NegoExpirationService negoExpirationService;
     private User seller;
     private User buyer;
@@ -40,7 +48,9 @@ class NegoExpirationServiceTest {
 
     @BeforeEach
     void setUp() {
-        negoExpirationService = new NegoExpirationService(negoOfferRepository, tradeRepository);
+        negoExpirationService = new NegoExpirationService(
+            negoOfferRepository, tradeRepository, chatRoomRepository, chatSystemMessageService
+        );
         seller = User.signup("seller@test.com", "password", "판매자", "01011112222");
         assignId(seller, 1L);
         buyer = User.signup("buyer@test.com", "password", "구매자", "01033334444");

@@ -10,6 +10,7 @@ import static org.mockito.Mockito.verify;
 import com.team7.agora.domain.chat.entity.ChatRoom;
 import com.team7.agora.domain.chat.enums.ChatRoomStatus;
 import com.team7.agora.domain.chat.repository.ChatRoomRepository;
+import com.team7.agora.domain.chat.service.ChatSystemMessageService;
 import com.team7.agora.domain.nego.dto.response.NegoOfferResponse;
 import com.team7.agora.domain.nego.entity.NegoOffer;
 import com.team7.agora.domain.nego.enums.NegoOfferStatus;
@@ -46,6 +47,9 @@ class NegoServiceTest {
     @Mock
     private TradeService tradeService;
 
+    @Mock
+    private ChatSystemMessageService chatSystemMessageService;
+
     private NegoService negoService;
     private User seller;
     private User buyer;
@@ -54,7 +58,7 @@ class NegoServiceTest {
 
     @BeforeEach
     void setUp() {
-        negoService = new NegoService(negoOfferRepository, chatRoomRepository, tradeService);
+        negoService = new NegoService(negoOfferRepository, chatRoomRepository, tradeService, chatSystemMessageService);
         seller = User.signup("seller@test.com", "password", "판매자", "01011112222");
         assignId(seller, 1L);
         buyer = User.signup("buyer@test.com", "password", "구매자", "01033334444");
@@ -84,6 +88,7 @@ class NegoServiceTest {
         assertThat(response.requesterId()).isEqualTo(2L);
         assertThat(response.offerPrice()).isEqualByComparingTo(BigDecimal.valueOf(45000));
         assertThat(response.status()).isEqualTo("PENDING");
+        verify(chatSystemMessageService).send(chatRoom, buyer, "제안이 생성되었습니다.");
     }
 
     @Test
@@ -105,6 +110,16 @@ class NegoServiceTest {
     }
 
     @Test
+    void createOfferRejectsWhenProductAlreadyReserved() {
+        chatRoom.getProduct().markReserved();
+        when(chatRoomRepository.findByIdAndStatus(100L, ChatRoomStatus.ACTIVE))
+            .thenReturn(Optional.of(chatRoom));
+
+        assertThatThrownBy(() -> negoService.createOffer(2L, 100L, BigDecimal.valueOf(45000)))
+            .isInstanceOf(BusinessException.class);
+    }
+
+    @Test
     void createOfferRejectsSeller() {
         when(chatRoomRepository.findByIdAndStatus(100L, ChatRoomStatus.ACTIVE))
             .thenReturn(Optional.of(chatRoom));
@@ -119,7 +134,11 @@ class NegoServiceTest {
         assignId(offer, 1000L);
         when(negoOfferRepository.findById(1000L)).thenReturn(Optional.of(offer));
         when(tradeService.createTradeFromAcceptedOffer(any(Product.class), any(NegoOffer.class)))
-            .thenReturn(Trade.start(chatRoom.getProduct(), seller, buyer, BigDecimal.valueOf(45000)));
+            .thenAnswer(invocation -> {
+                Trade trade = Trade.start(chatRoom.getProduct(), seller, buyer, BigDecimal.valueOf(45000));
+                assignId(trade, 2000L);
+                return trade;
+            });
         when(negoOfferRepository.findAllByChatRoomProductIdAndStatusIn(
             10L,
             NegoOffer.ACTIVE_STATUSES
@@ -128,6 +147,7 @@ class NegoServiceTest {
         NegoOfferResponse response = negoService.acceptOffer(1L, 1000L);
 
         assertThat(response.status()).isEqualTo("ACCEPTED");
+        assertThat(response.tradeId()).isEqualTo(2000L);
     }
 
     @Test
@@ -169,6 +189,8 @@ class NegoServiceTest {
         assertThat(chatRoom.getProduct().getStatus()).isEqualTo(com.team7.agora.domain.product.enums.ProductStatus.RESERVED);
         assertThat(otherOffer.getStatus()).isEqualTo(NegoOfferStatus.CANCELLED);
         verify(tradeService).createTradeFromAcceptedOffer(chatRoom.getProduct(), offer);
+        verify(chatSystemMessageService).send(chatRoom, seller, "판매자가 제안을 최종 승인했습니다.");
+        verify(chatSystemMessageService).send(otherChatRoom, seller, "판매자가 다른 구매자를 선택했습니다.");
     }
 
     @Test
@@ -184,52 +206,73 @@ class NegoServiceTest {
     }
 
     @Test
-    void requestExtensionAllowsSellerAndMarksExtensionRequested() {
+    void rejectOfferRejectsAlreadyRespondedOfferAsBusinessException() {
+        NegoOffer offer = NegoOffer.create(chatRoom, buyer, BigDecimal.valueOf(45000));
+        assignId(offer, 1000L);
+        offer.accept();
+        when(negoOfferRepository.findById(1000L)).thenReturn(Optional.of(offer));
+
+        assertThatThrownBy(() -> negoService.rejectOffer(1L, 1000L))
+            .isInstanceOf(BusinessException.class);
+    }
+
+    @Test
+    void requestExtensionAllowsBuyerAndMarksExtensionRequested() {
         NegoOffer offer = NegoOffer.create(chatRoom, buyer, BigDecimal.valueOf(45000));
         assignId(offer, 1000L);
         when(negoOfferRepository.findById(1000L)).thenReturn(Optional.of(offer));
 
-        NegoOfferResponse response = negoService.requestExtension(1L, 1000L);
+        NegoOfferResponse response = negoService.requestExtension(2L, 1000L);
 
         assertThat(response.status()).isEqualTo("EXTENSION_REQUESTED");
     }
 
     @Test
-    void requestExtensionRejectsNonSeller() {
+    void requestExtensionRejectsNonBuyer() {
         NegoOffer offer = NegoOffer.create(chatRoom, buyer, BigDecimal.valueOf(45000));
         assignId(offer, 1000L);
         when(negoOfferRepository.findById(1000L)).thenReturn(Optional.of(offer));
 
-        assertThatThrownBy(() -> negoService.requestExtension(2L, 1000L))
+        assertThatThrownBy(() -> negoService.requestExtension(1L, 1000L))
             .isInstanceOf(BusinessException.class);
     }
 
     @Test
-    void approveExtensionAllowsBuyerAndAdds12Hours() {
+    void approveExtensionAllowsSellerAndAdds12Hours() {
         NegoOffer offer = NegoOffer.create(chatRoom, buyer, BigDecimal.valueOf(45000));
         assignId(offer, 1000L);
         offer.requestExtension();
         LocalDateTime previousExpiresAt = offer.getExpiresAt();
         when(negoOfferRepository.findById(1000L)).thenReturn(Optional.of(offer));
 
-        NegoOfferResponse response = negoService.approveExtension(2L, 1000L);
+        NegoOfferResponse response = negoService.approveExtension(1L, 1000L);
 
         assertThat(response.status()).isEqualTo("EXTENDED");
         assertThat(Duration.between(previousExpiresAt, response.expiresAt())).isEqualTo(Duration.ofHours(12));
     }
 
     @Test
-    void rejectExtensionAllowsBuyerAndKeepsExpiration() {
+    void rejectExtensionAllowsSellerAndKeepsExpiration() {
         NegoOffer offer = NegoOffer.create(chatRoom, buyer, BigDecimal.valueOf(45000));
         assignId(offer, 1000L);
         offer.requestExtension();
         LocalDateTime previousExpiresAt = offer.getExpiresAt();
         when(negoOfferRepository.findById(1000L)).thenReturn(Optional.of(offer));
 
-        NegoOfferResponse response = negoService.rejectExtension(2L, 1000L);
+        NegoOfferResponse response = negoService.rejectExtension(1L, 1000L);
 
         assertThat(response.status()).isEqualTo("PENDING");
         assertThat(response.expiresAt()).isEqualTo(previousExpiresAt);
+    }
+
+    @Test
+    void rejectExtensionRejectsNonExtensionRequestedOfferAsBusinessException() {
+        NegoOffer offer = NegoOffer.create(chatRoom, buyer, BigDecimal.valueOf(45000));
+        assignId(offer, 1000L);
+        when(negoOfferRepository.findById(1000L)).thenReturn(Optional.of(offer));
+
+        assertThatThrownBy(() -> negoService.rejectExtension(1L, 1000L))
+            .isInstanceOf(BusinessException.class);
     }
 
     @Test
