@@ -65,4 +65,26 @@ class PopularKeywordServiceTest {
 
         assertThat(responses).isEmpty();
     }
+
+    @Test
+    void getTopDailyKeywords_returnsRepositoryRanking() {
+        PopularKeywordService service = new PopularKeywordService(popularKeywordRepository);
+        when(popularKeywordRepository.getTopDailyKeywords(any(), eq(10))).thenReturn(List.of(
+            new PopularKeywordResponse("자전거", 5)
+        ));
+
+        List<PopularKeywordResponse> responses = service.getTopDailyKeywords(10);
+
+        assertThat(responses).extracting(PopularKeywordResponse::keyword).containsExactly("자전거");
+    }
+
+    @Test
+    void getTopDailyKeywords_returnsEmptyListWhenRepositoryFails() {
+        PopularKeywordService service = new PopularKeywordService(popularKeywordRepository);
+        when(popularKeywordRepository.getTopDailyKeywords(any(), eq(10))).thenThrow(new RuntimeException("redis down"));
+
+        List<PopularKeywordResponse> responses = service.getTopDailyKeywords(10);
+
+        assertThat(responses).isEmpty();
+    }
 }
