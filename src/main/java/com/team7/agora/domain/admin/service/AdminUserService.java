@@ -5,7 +5,7 @@ import com.team7.agora.domain.user.repository.UserRepository;
 import com.team7.agora.global.auth.CustomUserDetails;
 import com.team7.agora.global.exception.BusinessException;
 import com.team7.agora.global.exception.ErrorCode;
-import java.util.List;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,11 +20,10 @@ public class AdminUserService {
         this.userRepository = userRepository;
     }
 
-    public List<AdminUserResponse> getUsers(CustomUserDetails admin, Pageable pageable) {
+    public Page<AdminUserResponse> getUsers(CustomUserDetails admin, Pageable pageable) {
         validateUserAdmin(admin);
-        return userRepository.findAll(pageable).stream()
-                .map(AdminUserResponse::from)
-                .toList();
+        return userRepository.findAll(pageable)
+                .map(AdminUserResponse::from);
     }
 
     private void validateUserAdmin(CustomUserDetails admin) {

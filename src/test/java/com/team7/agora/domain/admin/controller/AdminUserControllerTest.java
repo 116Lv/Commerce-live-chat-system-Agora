@@ -20,6 +20,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.security.web.method.annotation.AuthenticationPrincipalArgumentResolver;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
@@ -48,15 +50,23 @@ class AdminUserControllerTest {
     void getUsers_usesAuthenticatedAdminAndReturnsUsers() throws Exception {
         authenticate(UserRole.USER_ADMIN);
         when(adminUserService.getUsers(any(CustomUserDetails.class), any()))
-                .thenReturn(List.of(new AdminUserResponse(1L, "user@test.com", "동네유저", "ROLE_USER", "ACTIVE")));
+                .thenReturn(new PageImpl<>(
+                        List.of(new AdminUserResponse(1L, "user@test.com", "동네유저", "ROLE_USER", "ACTIVE")),
+                        PageRequest.of(0, 20),
+                        42
+                ));
 
         mockMvc.perform(get("/api/admin/users")
                         .param("page", "0")
                         .param("size", "20"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("SUCCESS"))
-                .andExpect(jsonPath("$.data[0].id").value(1L))
-                .andExpect(jsonPath("$.data[0].email").value("user@test.com"));
+                .andExpect(jsonPath("$.data.content[0].id").value(1L))
+                .andExpect(jsonPath("$.data.content[0].email").value("user@test.com"))
+                .andExpect(jsonPath("$.data.page").value(0))
+                .andExpect(jsonPath("$.data.size").value(20))
+                .andExpect(jsonPath("$.data.totalElements").value(42))
+                .andExpect(jsonPath("$.data.totalPages").value(3));
     }
 
     private void authenticate(UserRole role) {
