@@ -35,4 +35,18 @@ public class SearchController {
         );
         return ResponseEntity.ok(ApiResponse.success("상품 검색 결과입니다.", responses));
     }
+
+    @GetMapping("/v2/products/search")
+    public ResponseEntity<ApiResponse<List<ProductSearchResponse>>> searchV2(
+        @RequestParam(required = false) String keyword,
+        @RequestParam(required = false) Long regionId,
+        @RequestParam(required = false) String category,
+        @RequestParam(defaultValue = "0") int page,
+        @RequestParam(defaultValue = "20") int size
+    ) {
+        List<ProductSearchResponse> responses = productSearchService.searchV2(
+            new ProductSearchCondition(keyword, regionId, category, PageRequest.of(page, size))
+        );
+        return ResponseEntity.ok(ApiResponse.success("캐시 적용 상품 검색 결과입니다.", responses));
+    }
 }
