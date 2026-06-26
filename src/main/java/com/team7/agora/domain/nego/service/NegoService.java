@@ -74,6 +74,14 @@ public class NegoService {
             throw new BusinessException(ErrorCode.CONFLICT, "이미 거래가 진행 중이거나 완료된 상품입니다.");
         }
 
+        if (negoOfferRepository.existsByChatRoomAndRequesterAndStatusIn(
+            chatRoom,
+            chatRoom.getBuyer(),
+            NegoOffer.ACTIVE_STATUSES
+        )) {
+            throw new BusinessException(ErrorCode.CONFLICT, "이미 진행 중인 가격 제안이 있습니다.");
+        }
+
         NegoOffer offer = NegoOffer.create(chatRoom, chatRoom.getBuyer(), offerPrice);
         NegoOfferResponse response = NegoOfferResponse.from(negoOfferRepository.save(offer));
         chatSystemMessageService.send(chatRoom, chatRoom.getBuyer(), "제안이 생성되었습니다.");
@@ -90,7 +98,7 @@ public class NegoService {
     public NegoOfferResponse acceptOffer(Long sellerId, Long offerId) {
         NegoOffer offer = findOfferForUpdate(offerId);
         validateSeller(offer, sellerId);
-        validateNotExpired(offer);
+        expireIfNeededAndThrow(offer);
         validateRespondable(offer);
 
         ChatRoom chatRoom = offer.getChatRoom();
@@ -126,7 +134,7 @@ public class NegoService {
     public NegoOfferResponse rejectOffer(Long sellerId, Long offerId) {
         NegoOffer offer = findOffer(offerId);
         validateSeller(offer, sellerId);
-        validateNotExpired(offer);
+        expireIfNeededAndThrow(offer);
         validateRespondable(offer);
         offer.reject();
         chatSystemMessageService.send(offer.getChatRoom(), offer.getChatRoom().getSeller(), "제안이 거절되었습니다.");
@@ -143,7 +151,7 @@ public class NegoService {
     public NegoOfferResponse requestExtension(Long buyerId, Long offerId) {
         NegoOffer offer = findOffer(offerId);
         validateBuyer(offer, buyerId);
-        validateNotExpired(offer);
+        expireIfNeededAndThrow(offer);
         validateRespondable(offer);
         offer.requestExtension();
         chatSystemMessageService.send(
@@ -162,7 +170,7 @@ public class NegoService {
     public NegoOfferResponse approveExtension(Long sellerId, Long offerId) {
         NegoOffer offer = findOffer(offerId);
         validateSeller(offer, sellerId);
-        validateNotExpired(offer);
+        expireIfNeededAndThrow(offer);
         validateExtensionRequested(offer);
         offer.approveExtension();
         chatSystemMessageService.send(
@@ -181,7 +189,7 @@ public class NegoService {
     public NegoOfferResponse rejectExtension(Long sellerId, Long offerId) {
         NegoOffer offer = findOffer(offerId);
         validateSeller(offer, sellerId);
-        validateNotExpired(offer);
+        expireIfNeededAndThrow(offer);
         validateExtensionRequested(offer);
         offer.rejectExtension();
         return NegoOfferResponse.from(offer);
@@ -234,7 +242,7 @@ public class NegoService {
         }
     }
 
-    private void validateNotExpired(NegoOffer offer) {
+    private void expireIfNeededAndThrow(NegoOffer offer) {
         if (offer.isExpired(LocalDateTime.now())) {
             offer.expire(LocalDateTime.now());
             chatSystemMessageService.send(offer.getChatRoom(), offer.getChatRoom().getSeller(), "제안이 만료되었습니다.");

@@ -120,6 +120,17 @@ class NegoServiceTest {
     }
 
     @Test
+    void createOfferRejectsWhenRequesterAlreadyHasActiveOfferInRoom() {
+        when(chatRoomRepository.findByIdAndStatus(100L, ChatRoomStatus.ACTIVE))
+            .thenReturn(Optional.of(chatRoom));
+        when(negoOfferRepository.existsByChatRoomAndRequesterAndStatusIn(chatRoom, buyer, NegoOffer.ACTIVE_STATUSES))
+            .thenReturn(true);
+
+        assertThatThrownBy(() -> negoService.createOffer(2L, 100L, BigDecimal.valueOf(45000)))
+            .isInstanceOf(BusinessException.class);
+    }
+
+    @Test
     void createOfferRejectsSeller() {
         when(chatRoomRepository.findByIdAndStatus(100L, ChatRoomStatus.ACTIVE))
             .thenReturn(Optional.of(chatRoom));

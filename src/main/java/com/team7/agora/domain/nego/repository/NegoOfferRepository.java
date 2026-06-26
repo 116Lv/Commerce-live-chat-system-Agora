@@ -2,6 +2,8 @@ package com.team7.agora.domain.nego.repository;
 
 import com.team7.agora.domain.nego.entity.NegoOffer;
 import com.team7.agora.domain.nego.enums.NegoOfferStatus;
+import com.team7.agora.domain.chat.entity.ChatRoom;
+import com.team7.agora.domain.user.entity.User;
 import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
@@ -21,6 +23,12 @@ public interface NegoOfferRepository extends JpaRepository<NegoOffer, Long> {
     Optional<NegoOffer> findByIdForUpdate(@Param("id") Long id);
 
     Optional<NegoOffer> findFirstByChatRoomIdAndStatusOrderByCreatedAtDesc(Long chatRoomId, NegoOfferStatus status);
+
+    boolean existsByChatRoomAndRequesterAndStatusIn(
+        ChatRoom chatRoom,
+        User requester,
+        Collection<NegoOfferStatus> statuses
+    );
 
     List<NegoOffer> findAllByChatRoomProductIdAndStatusIn(Long productId, Collection<NegoOfferStatus> statuses);
 

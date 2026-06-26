@@ -57,6 +57,10 @@ public class ReportService {
             throw new BusinessException(ErrorCode.INVALID_REQUEST, "내 상품은 신고할 수 없습니다.");
         }
 
+        if (reportRepository.existsByReporterAndProduct(reporter, product)) {
+            throw new BusinessException(ErrorCode.CONFLICT, "이미 신고한 상품입니다.");
+        }
+
         Report report = Report.product(reporter, product.getSeller(), product, reason);
         return ReportResponse.from(reportRepository.save(report));
     }
@@ -78,6 +82,10 @@ public class ReportService {
             .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "신고자를 찾을 수 없습니다."));
         User reportedUser = userRepository.findById(reportedUserId)
             .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "신고 대상 회원을 찾을 수 없습니다."));
+
+        if (reportRepository.existsByReporterAndReportedUserAndProductIsNull(reporter, reportedUser)) {
+            throw new BusinessException(ErrorCode.CONFLICT, "이미 신고한 회원입니다.");
+        }
 
         Report report = Report.user(reporter, reportedUser, reason);
         return ReportResponse.from(reportRepository.save(report));
