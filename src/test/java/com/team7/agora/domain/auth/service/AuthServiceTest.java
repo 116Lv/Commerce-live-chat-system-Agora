@@ -253,7 +253,7 @@ class AuthServiceTest {
         AuthService authService = createService();
         User user = userWithId(1L, "user@test.com", "password123!");
         RefreshToken stored = RefreshToken.issue(user, AuthService.hashRefreshToken("old-refresh-token"), LocalDateTime.now().plusDays(1));
-        when(refreshTokenRepository.findByTokenHash(AuthService.hashRefreshToken("old-refresh-token"))).thenReturn(Optional.of(stored));
+        when(refreshTokenRepository.findByTokenHashForUpdate(AuthService.hashRefreshToken("old-refresh-token"))).thenReturn(Optional.of(stored));
         when(refreshTokenRepository.save(any(RefreshToken.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
 
@@ -295,7 +295,7 @@ class AuthServiceTest {
     void reissue_throwsInvalidTokenWhenRefreshTokenNotFound() {
         // given
         AuthService authService = createService();
-        when(refreshTokenRepository.findByTokenHash(AuthService.hashRefreshToken("unknown-token"))).thenReturn(Optional.empty());
+        when(refreshTokenRepository.findByTokenHashForUpdate(AuthService.hashRefreshToken("unknown-token"))).thenReturn(Optional.empty());
 
         // when & then
         assertThatThrownBy(() -> authService.reissue("unknown-token"))
@@ -310,7 +310,7 @@ class AuthServiceTest {
         AuthService authService = createService();
         User user = userWithId(1L, "user@test.com", "password123!");
         RefreshToken expired = RefreshToken.issue(user, AuthService.hashRefreshToken("expired-token"), LocalDateTime.now(ZoneOffset.UTC).minusSeconds(1));
-        when(refreshTokenRepository.findByTokenHash(AuthService.hashRefreshToken("expired-token"))).thenReturn(Optional.of(expired));
+        when(refreshTokenRepository.findByTokenHashForUpdate(AuthService.hashRefreshToken("expired-token"))).thenReturn(Optional.of(expired));
 
         // when & then
         assertThatThrownBy(() -> authService.reissue("expired-token"))
@@ -328,7 +328,7 @@ class AuthServiceTest {
         User user = userWithId(1L, "user@test.com", "password123!");
         user.changeStatus(UserStatus.SUSPENDED);
         RefreshToken stored = RefreshToken.issue(user, AuthService.hashRefreshToken("old-refresh-token"), LocalDateTime.now().plusDays(1));
-        when(refreshTokenRepository.findByTokenHash(AuthService.hashRefreshToken("old-refresh-token"))).thenReturn(Optional.of(stored));
+        when(refreshTokenRepository.findByTokenHashForUpdate(AuthService.hashRefreshToken("old-refresh-token"))).thenReturn(Optional.of(stored));
 
         // when & then
         assertThatThrownBy(() -> authService.reissue("old-refresh-token"))

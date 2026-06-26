@@ -5,6 +5,7 @@ import com.team7.agora.domain.payment.exception.PaymentException;
 import com.team7.agora.domain.trade.entity.Trade;
 import com.team7.agora.domain.user.entity.User;
 import com.team7.agora.global.exception.ErrorCode;
+import com.team7.agora.global.time.AgoraClock;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -75,7 +76,7 @@ public class Payment {
         this.amount = amount;
         this.orderId = orderId;
         this.status = PaymentStatus.READY;
-        this.requestedAt = LocalDateTime.now();
+        this.requestedAt = AgoraClock.now();
     }
 
     /**
@@ -113,7 +114,7 @@ public class Payment {
         }
         this.paymentKey = paymentKey;
         this.status = PaymentStatus.PAID;
-        this.paidAt = LocalDateTime.now();
+        this.paidAt = AgoraClock.now();
     }
 
     /**
@@ -125,7 +126,7 @@ public class Payment {
             throw new PaymentException(ErrorCode.CONFLICT, "결제 완료 상태에서만 환불할 수 있습니다.");
         }
         this.status = PaymentStatus.REFUNDED;
-        this.refundedAt = LocalDateTime.now();
+        this.refundedAt = AgoraClock.now();
     }
 
     /**

@@ -3,6 +3,7 @@ package com.team7.agora.domain.trade.entity;
 import com.team7.agora.domain.product.entity.Product;
 import com.team7.agora.domain.trade.enums.TradeStatus;
 import com.team7.agora.domain.user.entity.User;
+import com.team7.agora.global.time.AgoraClock;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -72,7 +73,7 @@ public class Trade {
         this.buyer = buyer;
         this.price = price;
         this.status = TradeStatus.PAYMENT_PENDING;
-        this.paymentDueAt = LocalDateTime.now().plusHours(24);
+        this.paymentDueAt = AgoraClock.now().plusHours(24);
     }
 
     /**
@@ -107,7 +108,7 @@ public class Trade {
             throw new IllegalStateException("결제가 완료된 거래만 완료할 수 있습니다.");
         }
         this.status = TradeStatus.COMPLETED;
-        this.completedAt = LocalDateTime.now();
+        this.completedAt = AgoraClock.now();
     }
 
     /**

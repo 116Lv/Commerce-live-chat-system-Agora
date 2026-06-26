@@ -23,6 +23,7 @@ import com.team7.agora.domain.user.entity.User;
 import com.team7.agora.global.auth.AuthUser;
 import com.team7.agora.global.exception.BusinessException;
 import com.team7.agora.global.exception.ErrorCode;
+import com.team7.agora.global.time.AgoraClock;
 import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -100,11 +101,11 @@ class NegoServiceTest {
             assignId(offer, 1000L);
             return offer;
         });
-        LocalDateTime before = LocalDateTime.now();
+        LocalDateTime before = AgoraClock.now();
 
         NegoOfferResponse response = negoService.createOffer(2L, 100L, BigDecimal.valueOf(45000));
 
-        LocalDateTime after = LocalDateTime.now();
+        LocalDateTime after = AgoraClock.now();
         assertThat(response.expiresAt()).isAfterOrEqualTo(before.plusHours(24));
         assertThat(response.expiresAt()).isBeforeOrEqualTo(after.plusHours(24));
     }
@@ -290,7 +291,7 @@ class NegoServiceTest {
     void expireOfferAllowsRootAdminAndMarksExpiredWhenDue() {
         NegoOffer offer = NegoOffer.create(chatRoom, buyer, BigDecimal.valueOf(45000));
         assignId(offer, 1000L);
-        ReflectionTestUtils.setField(offer, "expiresAt", LocalDateTime.now().minusHours(1));
+        ReflectionTestUtils.setField(offer, "expiresAt", AgoraClock.now().minusHours(1));
         when(negoOfferRepository.findById(1000L)).thenReturn(Optional.of(offer));
         AuthUser rootAdmin = new AuthUser(99L, "root@admin.com", "ROOT_ADMIN", "최고관리자");
 

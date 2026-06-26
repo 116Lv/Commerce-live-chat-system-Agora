@@ -4,6 +4,7 @@ import com.team7.agora.domain.common.entity.BaseTimeEntity;
 import com.team7.agora.domain.payment.entity.Payment;
 import com.team7.agora.domain.settlement.enums.SettlementStatus;
 import com.team7.agora.domain.user.entity.User;
+import com.team7.agora.global.time.AgoraClock;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -97,6 +98,6 @@ public class Settlement extends BaseTimeEntity {
             throw new IllegalStateException("정산 가능 상태의 정산만 완료할 수 있습니다.");
         }
         status = SettlementStatus.SETTLED;
-        settledAt = LocalDateTime.now();
+        settledAt = AgoraClock.now();
     }
 }

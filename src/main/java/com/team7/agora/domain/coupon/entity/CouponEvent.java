@@ -5,6 +5,7 @@ import com.team7.agora.domain.coupon.enums.CouponEventStatus;
 import com.team7.agora.domain.coupon.enums.CouponEventType;
 import com.team7.agora.global.exception.BusinessException;
 import com.team7.agora.global.exception.ErrorCode;
+import com.team7.agora.global.time.AgoraClock;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -97,7 +98,7 @@ public class CouponEvent extends BaseTimeEntity {
     }
 
     public void issue() {
-        validateIssueable(LocalDateTime.now());
+        validateIssueable(AgoraClock.now());
         this.issuedQuantity++;
     }
 

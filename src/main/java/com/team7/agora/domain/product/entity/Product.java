@@ -3,6 +3,7 @@ package com.team7.agora.domain.product.entity;
 import com.team7.agora.domain.product.enums.ProductStatus;
 import com.team7.agora.domain.region.entity.Region;
 import com.team7.agora.domain.user.entity.User;
+import com.team7.agora.global.time.AgoraClock;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -134,7 +135,7 @@ public class Product {
      * 데이터를 삭제한다.
      */
     public void delete() {
-        this.deletedAt = LocalDateTime.now();
+        this.deletedAt = AgoraClock.now();
     }
 
     /**

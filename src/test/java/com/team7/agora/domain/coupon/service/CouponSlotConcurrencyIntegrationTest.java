@@ -10,6 +10,7 @@ import com.team7.agora.domain.coupon.repository.CouponRepository;
 import com.team7.agora.domain.user.entity.User;
 import com.team7.agora.domain.user.repository.UserRepository;
 import com.team7.agora.global.exception.BusinessException;
+import com.team7.agora.global.time.AgoraClock;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
@@ -53,8 +54,8 @@ class CouponSlotConcurrencyIntegrationTest {
             CouponEventType.FIRST_COME,
             "concurrency coupon " + System.nanoTime(),
             slotCount,
-            LocalDateTime.now().minusMinutes(1),
-            LocalDateTime.now().plusMinutes(10),
+            AgoraClock.now().minusMinutes(1),
+            AgoraClock.now().plusMinutes(10),
             5000,
             10000,
             30

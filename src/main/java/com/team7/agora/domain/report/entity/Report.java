@@ -6,6 +6,7 @@ import com.team7.agora.domain.report.enums.ReportStatus;
 import com.team7.agora.domain.user.entity.User;
 import com.team7.agora.global.exception.BusinessException;
 import com.team7.agora.global.exception.ErrorCode;
+import com.team7.agora.global.time.AgoraClock;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -108,6 +109,6 @@ public class Report extends BaseTimeEntity {
         }
         this.status = ReportStatus.RESOLVED;
         this.adminMemo = adminMemo;
-        this.resolvedAt = LocalDateTime.now();
+        this.resolvedAt = AgoraClock.now();
     }
 }

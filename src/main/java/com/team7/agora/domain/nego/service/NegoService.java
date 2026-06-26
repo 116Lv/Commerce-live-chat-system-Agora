@@ -16,6 +16,7 @@ import com.team7.agora.domain.user.entity.User;
 import com.team7.agora.global.auth.AuthUser;
 import com.team7.agora.global.exception.BusinessException;
 import com.team7.agora.global.exception.ErrorCode;
+import com.team7.agora.global.time.AgoraClock;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -207,7 +208,7 @@ public class NegoService {
             throw new BusinessException(ErrorCode.FORBIDDEN, "가격 제안 만료 처리는 관리자만 수행할 수 있습니다.");
         }
         NegoOffer offer = findOffer(offerId);
-        offer.expire(LocalDateTime.now());
+        offer.expire(AgoraClock.now());
         chatSystemMessageService.send(offer.getChatRoom(), offer.getChatRoom().getSeller(), "제안이 만료되었습니다.");
         return NegoOfferResponse.from(offer);
     }
@@ -243,8 +244,8 @@ public class NegoService {
     }
 
     private void expireIfNeededAndThrow(NegoOffer offer) {
-        if (offer.isExpired(LocalDateTime.now())) {
-            offer.expire(LocalDateTime.now());
+        if (offer.isExpired(AgoraClock.now())) {
+            offer.expire(AgoraClock.now());
             chatSystemMessageService.send(offer.getChatRoom(), offer.getChatRoom().getSeller(), "제안이 만료되었습니다.");
             throw new BusinessException(ErrorCode.CONFLICT, "만료된 가격 제안입니다.");
         }
