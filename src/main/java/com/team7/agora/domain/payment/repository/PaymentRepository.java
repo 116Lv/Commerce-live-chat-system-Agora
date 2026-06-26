@@ -3,6 +3,7 @@ package com.team7.agora.domain.payment.repository;
 import com.team7.agora.domain.payment.entity.Payment;
 import com.team7.agora.domain.payment.enums.PaymentStatus;
 import com.team7.agora.domain.trade.entity.Trade;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import jakarta.persistence.LockModeType;
@@ -35,4 +36,11 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
     Page<Payment> findAllByStatus(PaymentStatus status, Pageable pageable);
 
     List<Payment> findAllByStatus(PaymentStatus status);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select p from Payment p where p.status = :status and p.confirmingAt <= :threshold")
+    List<Payment> findAllByStatusAndConfirmingAtLessThanEqualForUpdate(
+        @Param("status") PaymentStatus status,
+        @Param("threshold") LocalDateTime threshold
+    );
 }

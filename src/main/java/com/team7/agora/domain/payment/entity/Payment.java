@@ -69,6 +69,7 @@ public class Payment {
 
     private LocalDateTime paidAt;
     private LocalDateTime refundedAt;
+    private LocalDateTime confirmingAt;
 
     private Payment(Trade trade, User payer, BigDecimal amount, String orderId) {
         this.trade = trade;
@@ -115,6 +116,7 @@ public class Payment {
         this.paymentKey = paymentKey;
         this.status = PaymentStatus.PAID;
         this.paidAt = AgoraClock.now();
+        this.confirmingAt = null;
     }
 
     public void markConfirming() {
@@ -122,6 +124,15 @@ public class Payment {
             throw new PaymentException(ErrorCode.CONFLICT, "결제 대기 상태에서만 승인할 수 있습니다.");
         }
         this.status = PaymentStatus.CONFIRMING;
+        this.confirmingAt = AgoraClock.now();
+    }
+
+    public void restoreReadyFromConfirming() {
+        if (status != PaymentStatus.CONFIRMING) {
+            throw new PaymentException(ErrorCode.CONFLICT, "결제 승인 중인 상태만 대기로 복구할 수 있습니다.");
+        }
+        this.status = PaymentStatus.READY;
+        this.confirmingAt = null;
     }
 
     /**
@@ -144,5 +155,6 @@ public class Payment {
             throw new PaymentException(ErrorCode.CONFLICT, "결제완료 상태는 실패로 변경할 수 없습니다.");
         }
         this.status = PaymentStatus.FAILED;
+        this.confirmingAt = null;
     }
 }

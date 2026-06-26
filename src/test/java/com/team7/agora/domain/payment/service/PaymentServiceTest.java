@@ -22,6 +22,7 @@ import com.team7.agora.domain.trade.entity.Trade;
 import com.team7.agora.domain.trade.repository.TradeRepository;
 import com.team7.agora.domain.user.entity.User;
 import com.team7.agora.global.auth.AuthUser;
+import com.team7.agora.global.exception.ErrorCode;
 import java.math.BigDecimal;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
@@ -138,6 +139,21 @@ class PaymentServiceTest {
         assertThat(response.status()).isEqualTo("PAID");
         assertThat(response.paymentKey()).isEqualTo("payment-key");
         assertThat(response.settlementId()).isEqualTo(2000L);
+    }
+
+    @Test
+    void confirmRestoresReadyWhenPaymentClientThrows() {
+        Payment payment = Payment.ready(trade, buyer, BigDecimal.valueOf(50000), "order-1");
+        assignId(payment, 1000L);
+        when(paymentRepository.findByIdForUpdate(1000L)).thenReturn(Optional.of(payment), Optional.of(payment));
+        when(paymentClient.confirm("payment-key", "order-1", BigDecimal.valueOf(50000)))
+            .thenThrow(new PaymentException(ErrorCode.INTERNAL_SERVER_ERROR, "PG confirm failed"));
+
+        assertThatThrownBy(() -> paymentService.confirm(2L, 1000L, "payment-key"))
+            .isInstanceOf(PaymentException.class);
+
+        assertThat(payment.getStatus()).isEqualTo(PaymentStatus.READY);
+        verify(settlementRepository, never()).save(any(Settlement.class));
     }
 
     @Test

@@ -136,7 +136,16 @@ public class PaymentService {
             return attempt.alreadyConfirmed();
         }
 
-        boolean approved = paymentClient.confirm(paymentKey, attempt.orderId(), attempt.amount());
+        boolean approved;
+        try {
+            approved = paymentClient.confirm(paymentKey, attempt.orderId(), attempt.amount());
+        } catch (PaymentException e) {
+            restoreConfirmationToReady(attempt.paymentId());
+            throw e;
+        } catch (RuntimeException e) {
+            restoreConfirmationToReady(attempt.paymentId());
+            throw e;
+        }
         if (!approved) {
             markConfirmationFailed(attempt.paymentId());
             throw new PaymentException(ErrorCode.INVALID_REQUEST, "결제 승인이 거절되었습니다.");
@@ -182,6 +191,16 @@ public class PaymentService {
         transactionOperations.execute(status -> {
             Payment payment = findPaymentForUpdate(paymentId);
             payment.markFailed();
+            return null;
+        });
+    }
+
+    private void restoreConfirmationToReady(Long paymentId) {
+        transactionOperations.execute(status -> {
+            Payment payment = findPaymentForUpdate(paymentId);
+            if (payment.getStatus() == PaymentStatus.CONFIRMING) {
+                payment.restoreReadyFromConfirming();
+            }
             return null;
         });
     }
