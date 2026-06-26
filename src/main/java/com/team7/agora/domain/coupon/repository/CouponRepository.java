@@ -25,5 +25,7 @@ public interface CouponRepository {
 
     void deleteByCouponEventIdAndUserIsNull(Long eventId);
 
+    int deleteAvailableSlotsForEndedEventsBefore(LocalDateTime now);
+
     int expireIssuedCouponsBefore(LocalDateTime now);
 }

@@ -34,4 +34,9 @@ class CouponEventRepositoryAdapter implements CouponEventRepository {
     public List<CouponEvent> findPublicIssueableEvents(LocalDateTime now) {
         return repository.findPublicIssueableEvents(now);
     }
+
+    @Override
+    public int endActiveEventsBefore(LocalDateTime now) {
+        return repository.endActiveEventsBefore(now);
+    }
 }

@@ -58,6 +58,11 @@ class CouponRepositoryAdapter implements CouponRepository {
     }
 
     @Override
+    public int deleteAvailableSlotsForEndedEventsBefore(LocalDateTime now) {
+        return repository.deleteAvailableSlotsForEndedEventsBefore(now);
+    }
+
+    @Override
     public int expireIssuedCouponsBefore(LocalDateTime now) {
         return repository.expireIssuedCouponsBefore(now);
     }

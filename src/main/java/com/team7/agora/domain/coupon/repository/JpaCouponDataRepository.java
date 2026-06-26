@@ -28,6 +28,20 @@ interface JpaCouponDataRepository extends JpaRepository<Coupon, Long> {
 
     @Modifying
     @Query("""
+        delete from Coupon c
+        where c.status = com.team7.agora.domain.coupon.enums.CouponStatus.AVAILABLE
+          and c.user is null
+          and c.couponEvent.id in (
+              select ce.id
+              from CouponEvent ce
+              where ce.status = com.team7.agora.domain.coupon.enums.CouponEventStatus.ENDED
+                and ce.endAt < :now
+          )
+        """)
+    int deleteAvailableSlotsForEndedEventsBefore(@Param("now") LocalDateTime now);
+
+    @Modifying
+    @Query("""
         update Coupon c
         set c.status = com.team7.agora.domain.coupon.enums.CouponStatus.EXPIRED
         where c.status = com.team7.agora.domain.coupon.enums.CouponStatus.ISSUED

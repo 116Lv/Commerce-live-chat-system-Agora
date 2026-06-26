@@ -14,4 +14,6 @@ public interface CouponEventRepository {
     List<CouponEvent> findAll();
 
     List<CouponEvent> findPublicIssueableEvents(LocalDateTime now);
+
+    int endActiveEventsBefore(LocalDateTime now);
 }
