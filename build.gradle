@@ -6,7 +6,10 @@ plugins {
 
 // Gradle 9.x on Windows: @argfile for test worker classpath uses system codepage (MS949),
 // but paths with non-ASCII chars (Korean username) get corrupted. Redirect build output to ASCII path.
-layout.buildDirectory = file("C:/agora-build")
+// Linux CI is unaffected, so this workaround is applied only on Windows.
+if (System.properties['os.name'].toLowerCase().contains('windows')) {
+    layout.buildDirectory = file("C:/agora-build")
+}
 
 group = 'com.team7'
 version = '0.0.1-SNAPSHOT'
