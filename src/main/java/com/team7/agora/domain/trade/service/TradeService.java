@@ -28,6 +28,7 @@ import com.team7.agora.global.exception.BusinessException;
 import com.team7.agora.global.exception.ErrorCode;
 import java.math.BigDecimal;
 import java.util.Optional;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -160,7 +161,11 @@ public class TradeService {
 
         Trade trade = Trade.start(lockedProduct, lockedProduct.getSeller(), acceptedOffer.getRequester(), acceptedOffer.getOfferPrice());
         lockedProduct.markReserved();
-        return tradeRepository.save(trade);
+        try {
+            return tradeRepository.save(trade);
+        } catch (DataIntegrityViolationException e) {
+            throw new BusinessException(ErrorCode.CONFLICT, "이미 진행 중이거나 완료된 거래입니다.");
+        }
     }
 
     /**
