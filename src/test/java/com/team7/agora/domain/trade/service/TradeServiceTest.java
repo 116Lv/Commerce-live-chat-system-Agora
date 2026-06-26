@@ -98,9 +98,8 @@ class TradeServiceTest {
 
     @Test
     void startTradeRejectsWhenNoAcceptedNego() {
-        when(productRepository.findByIdAndDeletedAtIsNull(10L)).thenReturn(Optional.of(product));
+        when(productRepository.findByIdForUpdateAndDeletedAtIsNull(10L)).thenReturn(Optional.of(product));
         when(userRepository.findById(2L)).thenReturn(Optional.of(buyer));
-        when(tradeRepository.existsByProductAndStatusNot(product, TradeStatus.CANCELLED)).thenReturn(false);
         when(chatRoomRepository.findByProductAndSellerAndBuyer(product, seller, buyer)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> tradeService.startTrade(2L, 10L))
@@ -114,7 +113,7 @@ class TradeServiceTest {
         NegoOffer acceptedOffer = NegoOffer.create(chatRoom, buyer, BigDecimal.valueOf(45000));
         acceptedOffer.accept();
 
-        when(productRepository.findByIdAndDeletedAtIsNull(10L)).thenReturn(Optional.of(product));
+        when(productRepository.findByIdForUpdateAndDeletedAtIsNull(10L)).thenReturn(Optional.of(product));
         when(userRepository.findById(2L)).thenReturn(Optional.of(buyer));
         when(tradeRepository.existsByProductAndStatusNot(product, TradeStatus.CANCELLED)).thenReturn(false);
         when(chatRoomRepository.findByProductAndSellerAndBuyer(product, seller, buyer)).thenReturn(Optional.of(chatRoom));
@@ -130,6 +129,7 @@ class TradeServiceTest {
 
         assertThat(response.price()).isEqualByComparingTo(BigDecimal.valueOf(45000));
         assertThat(response.status()).isEqualTo("PAYMENT_PENDING");
+        verify(productRepository).findByIdForUpdateAndDeletedAtIsNull(10L);
     }
 
     @Test

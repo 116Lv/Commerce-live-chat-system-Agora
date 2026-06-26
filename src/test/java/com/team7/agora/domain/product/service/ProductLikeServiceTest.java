@@ -5,6 +5,7 @@ import static com.team7.agora.support.TestEntityIds.assignId;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.verify;
 
 import com.team7.agora.domain.product.dto.response.ProductLikeResponse;
 import com.team7.agora.domain.product.entity.Product;
@@ -56,11 +57,13 @@ class ProductLikeServiceTest {
         when(productRepository.findByIdAndDeletedAtIsNull(10L)).thenReturn(Optional.of(product));
         when(userRepository.findById(2L)).thenReturn(Optional.of(user));
         when(productLikeRepository.existsByProductAndUser(product, user)).thenReturn(false);
+        when(productRepository.findLikeCountById(10L)).thenReturn(1);
 
         ProductLikeResponse response = service.like(2L, 10L);
 
         assertThat(response.liked()).isTrue();
         assertThat(response.likeCount()).isEqualTo(1);
+        verify(productRepository).increaseLikeCount(10L);
     }
 
     @Test
@@ -84,11 +87,13 @@ class ProductLikeServiceTest {
         when(productRepository.findByIdAndDeletedAtIsNull(10L)).thenReturn(Optional.of(product));
         when(userRepository.findById(2L)).thenReturn(Optional.of(user));
         when(productLikeRepository.findByProductAndUser(product, user)).thenReturn(Optional.of(productLike));
+        when(productRepository.findLikeCountById(10L)).thenReturn(0);
 
         ProductLikeResponse response = service.unlike(2L, 10L);
 
         assertThat(response.liked()).isFalse();
         assertThat(response.likeCount()).isEqualTo(0);
+        verify(productRepository).decreaseLikeCount(10L);
     }
 
     @Test

@@ -33,12 +33,15 @@ class PaymentWebhookServiceTest {
     @Mock
     private SettlementRepository settlementRepository;
 
+    @Mock
+    private PaymentService paymentService;
+
     private PaymentWebhookService paymentWebhookService;
     private Payment payment;
 
     @BeforeEach
     void setUp() {
-        paymentWebhookService = new PaymentWebhookService(paymentRepository, settlementRepository);
+        paymentWebhookService = new PaymentWebhookService(paymentService);
         User seller = User.signup("seller@test.com", "password", "판매자", "01011112222");
         assignId(seller, 1L);
         User buyer = User.signup("buyer@test.com", "password", "구매자", "01033334444");
@@ -60,13 +63,8 @@ class PaymentWebhookServiceTest {
 
     @Test
     void paidWebhookMarksPaymentPaidAndCreatesSettlement() {
-        when(paymentRepository.findByOrderId("order-1")).thenReturn(Optional.of(payment));
-        when(settlementRepository.existsByPayment(payment)).thenReturn(false);
-        when(settlementRepository.save(any(Settlement.class))).thenAnswer(invocation -> {
-            Settlement settlement = invocation.getArgument(0);
-            assignId(settlement, 2000L);
-            return settlement;
-        });
+        PaymentResponse expected = new PaymentResponse(1000L, 100L, 2L, BigDecimal.valueOf(50000), "order-1", "payment-key", "PAID", 2000L);
+        when(paymentService.confirmByOrderId("order-1", "payment-key")).thenReturn(expected);
 
         PaymentResponse response = paymentWebhookService.handlePaid("order-1", "payment-key");
 
@@ -76,10 +74,8 @@ class PaymentWebhookServiceTest {
 
     @Test
     void duplicatedPaidWebhookDoesNotCreateSettlementAgain() {
-        payment.markPaid("payment-key");
-        payment.getTrade().markPaid();
-        when(paymentRepository.findByOrderId("order-1")).thenReturn(Optional.of(payment));
-        when(settlementRepository.existsByPayment(payment)).thenReturn(true);
+        PaymentResponse expected = new PaymentResponse(1000L, 100L, 2L, BigDecimal.valueOf(50000), "order-1", "payment-key", "PAID", null);
+        when(paymentService.confirmByOrderId("order-1", "payment-key")).thenReturn(expected);
 
         PaymentResponse response = paymentWebhookService.handlePaid("order-1", "payment-key");
 
