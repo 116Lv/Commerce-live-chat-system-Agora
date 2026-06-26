@@ -2,11 +2,36 @@ package com.team7.agora.domain.coupon.repository;
 
 import com.team7.agora.domain.coupon.entity.Coupon;
 import com.team7.agora.domain.coupon.enums.CouponStatus;
-import com.team7.agora.domain.coupon.enums.CouponType;
+import jakarta.persistence.LockModeType;
+import java.time.LocalDateTime;
+import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 interface JpaCouponDataRepository extends JpaRepository<Coupon, Long> {
 
-    Optional<Coupon> findFirstByTypeAndStatus(CouponType type, CouponStatus status);
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    Optional<Coupon> findFirstByCouponEventIdAndUserIsNullAndStatusOrderByIdAsc(Long eventId, CouponStatus status);
+
+    List<Coupon> findAllByUserIdAndStatusIn(Long userId, Collection<CouponStatus> statuses);
+
+    List<Coupon> findAllByCouponEventIdAndUserIsNotNull(Long eventId);
+
+    boolean existsByCouponEventIdAndUserId(Long eventId, Long userId);
+
+    void deleteByCouponEventIdAndUserIsNull(Long eventId);
+
+    @Modifying
+    @Query("""
+        update Coupon c
+        set c.status = com.team7.agora.domain.coupon.enums.CouponStatus.EXPIRED
+        where c.status = com.team7.agora.domain.coupon.enums.CouponStatus.ISSUED
+          and c.expiresAt < :now
+        """)
+    int expireIssuedCouponsBefore(@Param("now") LocalDateTime now);
 }

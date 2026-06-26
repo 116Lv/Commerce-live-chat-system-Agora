@@ -1,83 +1,90 @@
 package com.team7.agora.domain.coupon.entity;
 
 import com.team7.agora.domain.coupon.enums.CouponStatus;
-import com.team7.agora.domain.coupon.enums.CouponType;
+import com.team7.agora.domain.user.entity.User;
+import com.team7.agora.global.exception.BusinessException;
+import com.team7.agora.global.exception.ErrorCode;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
+import java.time.LocalDateTime;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-/**
- * Coupon 도메인 정보를 영속화하는 JPA 엔티티이다.
- */
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
-@Table(name = "coupons")
+@Table(
+    name = "coupons",
+    uniqueConstraints = {
+        @UniqueConstraint(columnNames = {"coupon_event_id", "user_id"})
+    },
+    indexes = {
+        @Index(name = "idx_coupons_event_status", columnList = "coupon_event_id, status"),
+        @Index(name = "idx_coupons_user_status", columnList = "user_id, status")
+    }
+)
 public class Coupon {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, length = 100)
-    private String name;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "coupon_event_id", nullable = false)
+    private CouponEvent couponEvent;
 
-    @Column(nullable = false)
-    private int discountAmount;
-
-    @Column(nullable = false)
-    private int minOrderAmount;
-
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 30)
-    private CouponType type;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
+    private User user;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private CouponStatus status;
 
-    @Column(nullable = false)
-    private int validDays;
+    private LocalDateTime issuedAt;
+    private LocalDateTime expiresAt;
 
-    private Coupon(String name, int discountAmount, int minOrderAmount, CouponType type, int validDays) {
-        this.name = name;
-        this.discountAmount = discountAmount;
-        this.minOrderAmount = minOrderAmount;
-        this.type = type;
-        this.status = CouponStatus.ACTIVE;
-        this.validDays = validDays;
+    private Coupon(CouponEvent couponEvent) {
+        this.couponEvent = couponEvent;
+        this.status = CouponStatus.AVAILABLE;
     }
 
-    /**
-     * 'firstCome' 메서드가 맡은 기능을 수행하고 필요한 결과를 반환한다.
-     * @param name 이름 또는 제목
-     * @param discountAmount 쿠폰 할인 금액
-     * @param minOrderAmount 쿠폰 사용을 위한 최소 주문 금액
-     * @param validDays 쿠폰 유효 일수
-     * @return 클라이언트에 반환할 API 응답
-     */
-    public static Coupon firstCome(String name, int discountAmount, int minOrderAmount, int validDays) {
-        return new Coupon(name, discountAmount, minOrderAmount, CouponType.FIRST_COME, validDays);
+    public static Coupon createAvailableSlot(CouponEvent couponEvent) {
+        return new Coupon(couponEvent);
     }
 
-    /**
-     * 관리자가 입력한 쿠폰 정책으로 새 쿠폰 엔티티를 생성한다.
-     * @param name 이름 또는 제목
-     * @param discountAmount 쿠폰 할인 금액
-     * @param minOrderAmount 쿠폰 사용을 위한 최소 주문 금액
-     * @param type 쿠폰 유형
-     * @param validDays 쿠폰 유효 일수
-     * @return 클라이언트에 반환할 API 응답
-     */
-    public static Coupon create(String name, int discountAmount, int minOrderAmount, CouponType type, int validDays) {
-        return new Coupon(name, discountAmount, minOrderAmount, type, validDays);
+    public void assign(User user, LocalDateTime now, int validDays) {
+        if (status != CouponStatus.AVAILABLE || this.user != null) {
+            throw new BusinessException(ErrorCode.CONFLICT, "이미 발급된 쿠폰 슬롯입니다.");
+        }
+        this.user = user;
+        this.issuedAt = now;
+        this.expiresAt = now.plusDays(validDays);
+        this.status = CouponStatus.ISSUED;
+    }
+
+    public void use() {
+        if (status != CouponStatus.ISSUED) {
+            throw new BusinessException(ErrorCode.CONFLICT, "발급된 쿠폰만 사용할 수 있습니다.");
+        }
+        this.status = CouponStatus.USED;
+    }
+
+    public void expire() {
+        if (status != CouponStatus.USED) {
+            this.status = CouponStatus.EXPIRED;
+        }
     }
 }
