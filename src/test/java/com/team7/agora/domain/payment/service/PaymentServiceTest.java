@@ -26,6 +26,7 @@ import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -66,7 +67,7 @@ class PaymentServiceTest {
 
     @Test
     void prepareCreatesReadyPaymentForBuyer() {
-        when(tradeRepository.findById(100L)).thenReturn(Optional.of(trade));
+        when(tradeRepository.findByIdForUpdate(100L)).thenReturn(Optional.of(trade));
         when(paymentRepository.existsByTrade(trade)).thenReturn(false);
         when(paymentRepository.save(any(Payment.class))).thenAnswer(invocation -> {
             Payment payment = invocation.getArgument(0);
@@ -85,9 +86,20 @@ class PaymentServiceTest {
 
     @Test
     void prepareRejectsNonBuyer() {
-        when(tradeRepository.findById(100L)).thenReturn(Optional.of(trade));
+        when(tradeRepository.findByIdForUpdate(100L)).thenReturn(Optional.of(trade));
 
         assertThatThrownBy(() -> paymentService.prepare(1L, 100L))
+            .isInstanceOf(PaymentException.class);
+    }
+
+    @Test
+    void prepareRejectsDuplicatePaymentConstraintViolationAsConflict() {
+        when(tradeRepository.findByIdForUpdate(100L)).thenReturn(Optional.of(trade));
+        when(paymentRepository.existsByTrade(trade)).thenReturn(false);
+        when(paymentRepository.save(any(Payment.class)))
+            .thenThrow(new DataIntegrityViolationException("duplicate payment trade"));
+
+        assertThatThrownBy(() -> paymentService.prepare(2L, 100L))
             .isInstanceOf(PaymentException.class);
     }
 

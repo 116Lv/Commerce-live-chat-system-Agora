@@ -16,6 +16,7 @@ import com.team7.agora.domain.trade.repository.TradeRepository;
 import com.team7.agora.global.auth.AuthUser;
 import com.team7.agora.global.exception.ErrorCode;
 import java.util.UUID;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -58,7 +59,7 @@ public class PaymentService {
      */
     @Transactional
     public PaymentResponse prepare(Long payerId, Long tradeId) {
-        Trade trade = findTrade(tradeId);
+        Trade trade = findTradeForUpdate(tradeId);
 
         if (!trade.getBuyer().getId().equals(payerId)) {
             throw new PaymentException(ErrorCode.FORBIDDEN, "구매자만 결제를 준비할 수 있습니다.");
@@ -79,7 +80,11 @@ public class PaymentService {
             trade.getPrice(),
             "order-" + UUID.randomUUID()
         );
-        return PaymentResponse.from(paymentRepository.save(payment));
+        try {
+            return PaymentResponse.from(paymentRepository.save(payment));
+        } catch (DataIntegrityViolationException e) {
+            throw new PaymentException(ErrorCode.CONFLICT, "이미 결제가 생성된 거래입니다.");
+        }
     }
 
     /**
@@ -176,6 +181,11 @@ public class PaymentService {
 
     private Trade findTrade(Long tradeId) {
         return tradeRepository.findById(tradeId)
+            .orElseThrow(() -> new PaymentException(ErrorCode.NOT_FOUND, "거래를 찾을 수 없습니다."));
+    }
+
+    private Trade findTradeForUpdate(Long tradeId) {
+        return tradeRepository.findByIdForUpdate(tradeId)
             .orElseThrow(() -> new PaymentException(ErrorCode.NOT_FOUND, "거래를 찾을 수 없습니다."));
     }
 }
