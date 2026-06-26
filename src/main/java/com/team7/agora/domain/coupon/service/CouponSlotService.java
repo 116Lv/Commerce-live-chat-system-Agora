@@ -25,6 +25,13 @@ public class CouponSlotService {
         );
     }
 
+    public CouponEventIssueResponse assignPublicSlot(Long eventId, Long userId) {
+        return lockService.withLock(
+            COUPON_EVENT_LOCK_PREFIX + eventId,
+            () -> executor.assignPublicSlotInTransaction(eventId, userId)
+        );
+    }
+
     public CouponEventIssueResponse assignSlots(Long eventId, List<Long> userIds) {
         return lockService.withLock(
             COUPON_EVENT_LOCK_PREFIX + eventId,

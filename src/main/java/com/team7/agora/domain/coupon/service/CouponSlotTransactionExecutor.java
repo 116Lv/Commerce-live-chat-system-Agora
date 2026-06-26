@@ -3,6 +3,7 @@ package com.team7.agora.domain.coupon.service;
 import com.team7.agora.domain.coupon.dto.response.CouponEventIssueResponse;
 import com.team7.agora.domain.coupon.entity.Coupon;
 import com.team7.agora.domain.coupon.entity.CouponEvent;
+import com.team7.agora.domain.coupon.enums.CouponEventType;
 import com.team7.agora.domain.coupon.repository.CouponEventRepository;
 import com.team7.agora.domain.coupon.repository.CouponRepository;
 import com.team7.agora.domain.user.entity.User;
@@ -40,6 +41,17 @@ public class CouponSlotTransactionExecutor {
     }
 
     @Transactional
+    public CouponEventIssueResponse assignPublicSlotInTransaction(Long eventId, Long userId) {
+        CouponEvent event = findEvent(eventId);
+        if (event.getType() == CouponEventType.ADMIN_INDIVIDUAL) {
+            throw new BusinessException(ErrorCode.FORBIDDEN, "관리자 전용 쿠폰 이벤트입니다.");
+        }
+        User user = findUser(userId);
+        assignSlot(event, user);
+        return CouponEventIssueResponse.issued(eventId);
+    }
+
+    @Transactional
     public CouponEventIssueResponse assignSlotsInTransaction(Long eventId, List<Long> userIds) {
         CouponEvent event = findEvent(eventId);
         int issuedCount = 0;
@@ -61,14 +73,18 @@ public class CouponSlotTransactionExecutor {
     private void assignSlot(CouponEvent event, User user) {
         LocalDateTime now = LocalDateTime.now();
         event.validateIssueable(now);
-        if (couponRepository.existsByCouponEventIdAndUserId(event.getId(), user.getId())) {
-            throw new BusinessException(ErrorCode.CONFLICT, "이미 발급받은 쿠폰 이벤트입니다.");
-        }
+        ensureNotIssuedToUser(event.getId(), user.getId());
 
         Coupon coupon = couponRepository.findFirstAvailableSlotForUpdate(event.getId())
             .orElseThrow(() -> new BusinessException(ErrorCode.CONFLICT, "쿠폰이 모두 소진되었습니다."));
         coupon.assign(user, now, event.getValidDays());
         event.issue();
+    }
+
+    private void ensureNotIssuedToUser(Long eventId, Long userId) {
+        if (couponRepository.existsByCouponEventIdAndUserId(eventId, userId)) {
+            throw new BusinessException(ErrorCode.CONFLICT, "이미 발급받은 쿠폰 이벤트입니다.");
+        }
     }
 
     private CouponEvent findEvent(Long eventId) {

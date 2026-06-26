@@ -42,7 +42,10 @@ public class CouponQueryService {
             throw new BusinessException(ErrorCode.NOT_FOUND, "회원을 찾을 수 없습니다.");
         }
 
-        return couponRepository.findAllByUserIdAndStatusIn(userId, List.of(CouponStatus.ISSUED, CouponStatus.EXPIRED))
+        return couponRepository.findAllByUserIdAndStatusIn(
+                userId,
+                List.of(CouponStatus.ISSUED, CouponStatus.USED, CouponStatus.EXPIRED)
+            )
             .stream()
             .map(MyCouponResponse::from)
             .toList();

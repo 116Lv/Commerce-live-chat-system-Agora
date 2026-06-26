@@ -22,6 +22,8 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(readOnly = true)
 public class AdminCouponEventService {
 
+    private static final int MAX_ADMIN_ISSUE_USER_COUNT = 100;
+
     private final CouponEventRepository couponEventRepository;
     private final CouponRepository couponRepository;
     private final CouponSlotService couponSlotService;
@@ -76,6 +78,7 @@ public class AdminCouponEventService {
 
     public CouponEventIssueResponse issueToUsers(CustomUserDetails admin, Long eventId, List<Long> userIds) {
         validateAdminAuthority(admin);
+        validateIssueTargetCount(userIds);
         CouponEvent event = findEvent(eventId);
         if (event.getType() != CouponEventType.ADMIN_INDIVIDUAL) {
             throw new BusinessException(ErrorCode.INVALID_REQUEST, "관리자 개별 발급 이벤트만 지정 발급할 수 있습니다.");
@@ -102,7 +105,14 @@ public class AdminCouponEventService {
         }
     }
 
+    private void validateIssueTargetCount(List<Long> userIds) {
+        if (userIds.size() > MAX_ADMIN_ISSUE_USER_COUNT) {
+            throw new BusinessException(ErrorCode.INVALID_REQUEST, "관리자 개별 발급은 한 번에 100명까지만 가능합니다.");
+        }
+    }
+
     private void validateAdminAuthority(CustomUserDetails admin) {
+        // Controller 권한 검증을 우회한 내부 호출에서도 관리자 정책을 지키기 위한 방어 코드다.
         if (admin == null || !(admin.getRole() == UserRole.ROOT_ADMIN || admin.getRole() == UserRole.USER_ADMIN)) {
             throw new BusinessException(ErrorCode.FORBIDDEN, "쿠폰 이벤트 관리는 관리자만 수행할 수 있습니다.");
         }

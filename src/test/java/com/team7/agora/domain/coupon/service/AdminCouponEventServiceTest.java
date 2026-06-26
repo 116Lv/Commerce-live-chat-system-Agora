@@ -20,6 +20,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import java.util.stream.LongStream;
 
 @ExtendWith(MockitoExtension.class)
 class AdminCouponEventServiceTest {
@@ -72,6 +73,15 @@ class AdminCouponEventServiceTest {
             5000,
             10000,
             30
+        )).isInstanceOf(BusinessException.class);
+    }
+
+    @Test
+    void issueToUsersRejectsTooManyTargets() {
+        assertThatThrownBy(() -> newService().issueToUsers(
+            principal(UserRole.ROOT_ADMIN),
+            1L,
+            LongStream.rangeClosed(1, 101).boxed().toList()
         )).isInstanceOf(BusinessException.class);
     }
 

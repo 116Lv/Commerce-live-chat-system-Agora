@@ -53,7 +53,10 @@ class CouponQueryServiceTest {
         assignId(coupon, 100L);
         coupon.assign(user, LocalDateTime.now(), event.getValidDays());
         when(userRepository.existsById(10L)).thenReturn(true);
-        when(couponRepository.findAllByUserIdAndStatusIn(10L, List.of(CouponStatus.ISSUED, CouponStatus.EXPIRED)))
+        when(couponRepository.findAllByUserIdAndStatusIn(
+                10L,
+                List.of(CouponStatus.ISSUED, CouponStatus.USED, CouponStatus.EXPIRED)
+            ))
             .thenReturn(List.of(coupon));
 
         var responses = newService().getMyCoupons(10L);

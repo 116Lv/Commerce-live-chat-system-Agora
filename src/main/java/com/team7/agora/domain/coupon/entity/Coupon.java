@@ -83,7 +83,7 @@ public class Coupon {
     }
 
     public void expire() {
-        if (status != CouponStatus.USED) {
+        if (status == CouponStatus.ISSUED) {
             this.status = CouponStatus.EXPIRED;
         }
     }
