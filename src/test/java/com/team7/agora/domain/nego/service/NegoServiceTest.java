@@ -132,14 +132,14 @@ class NegoServiceTest {
     void acceptOfferAllowsSellerOnly() {
         NegoOffer offer = NegoOffer.create(chatRoom, buyer, BigDecimal.valueOf(45000));
         assignId(offer, 1000L);
-        when(negoOfferRepository.findById(1000L)).thenReturn(Optional.of(offer));
+        when(negoOfferRepository.findByIdForUpdate(1000L)).thenReturn(Optional.of(offer));
         when(tradeService.createTradeFromAcceptedOffer(any(Product.class), any(NegoOffer.class)))
             .thenAnswer(invocation -> {
                 Trade trade = Trade.start(chatRoom.getProduct(), seller, buyer, BigDecimal.valueOf(45000));
                 assignId(trade, 2000L);
                 return trade;
             });
-        when(negoOfferRepository.findAllByChatRoomProductIdAndStatusIn(
+        when(negoOfferRepository.findAllByChatRoomProductIdAndStatusInForUpdate(
             10L,
             NegoOffer.ACTIVE_STATUSES
         )).thenReturn(Collections.emptyList());
@@ -154,7 +154,7 @@ class NegoServiceTest {
     void acceptOfferRejectsNonSeller() {
         NegoOffer offer = NegoOffer.create(chatRoom, buyer, BigDecimal.valueOf(45000));
         assignId(offer, 1000L);
-        when(negoOfferRepository.findById(1000L)).thenReturn(Optional.of(offer));
+        when(negoOfferRepository.findByIdForUpdate(1000L)).thenReturn(Optional.of(offer));
 
         assertThatThrownBy(() -> negoService.acceptOffer(2L, 1000L))
             .isInstanceOf(BusinessException.class);
@@ -170,7 +170,7 @@ class NegoServiceTest {
         NegoOffer otherOffer = NegoOffer.create(otherChatRoom, stranger, BigDecimal.valueOf(48000));
         assignId(otherOffer, 1001L);
         
-        when(negoOfferRepository.findById(1000L)).thenReturn(Optional.of(offer));
+        when(negoOfferRepository.findByIdForUpdate(1000L)).thenReturn(Optional.of(offer));
         when(tradeService.createTradeFromAcceptedOffer(any(Product.class), any(NegoOffer.class)))
             .thenAnswer(invocation -> {
                 Product product = invocation.getArgument(0);
@@ -178,7 +178,7 @@ class NegoServiceTest {
                 product.markReserved();
                 return Trade.start(product, product.getSeller(), acceptedOffer.getRequester(), acceptedOffer.getOfferPrice());
             });
-        when(negoOfferRepository.findAllByChatRoomProductIdAndStatusIn(
+        when(negoOfferRepository.findAllByChatRoomProductIdAndStatusInForUpdate(
             10L,
             NegoOffer.ACTIVE_STATUSES
         )).thenReturn(java.util.Arrays.asList(offer, otherOffer));
@@ -197,7 +197,7 @@ class NegoServiceTest {
     void acceptOfferRejectsWhenProductAlreadyHasActiveTrade() {
         NegoOffer offer = NegoOffer.create(chatRoom, buyer, BigDecimal.valueOf(45000));
         assignId(offer, 1000L);
-        when(negoOfferRepository.findById(1000L)).thenReturn(Optional.of(offer));
+        when(negoOfferRepository.findByIdForUpdate(1000L)).thenReturn(Optional.of(offer));
         when(tradeService.createTradeFromAcceptedOffer(any(Product.class), any(NegoOffer.class)))
             .thenThrow(new BusinessException(ErrorCode.CONFLICT, "이미 진행 중이거나 완료된 거래입니다."));
 

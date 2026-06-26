@@ -88,7 +88,7 @@ public class NegoService {
      */
     @Transactional
     public NegoOfferResponse acceptOffer(Long sellerId, Long offerId) {
-        NegoOffer offer = findOffer(offerId);
+        NegoOffer offer = findOfferForUpdate(offerId);
         validateSeller(offer, sellerId);
         validateNotExpired(offer);
         validateRespondable(offer);
@@ -104,7 +104,7 @@ public class NegoService {
     }
 
     private void cancelOtherActiveOffers(Product product, NegoOffer acceptedOffer, User seller) {
-        List<NegoOffer> otherOffers = negoOfferRepository.findAllByChatRoomProductIdAndStatusIn(
+        List<NegoOffer> otherOffers = negoOfferRepository.findAllByChatRoomProductIdAndStatusInForUpdate(
             product.getId(),
             NegoOffer.ACTIVE_STATUSES
         );
@@ -252,5 +252,10 @@ public class NegoService {
         if (offer.getStatus() != NegoOfferStatus.EXTENSION_REQUESTED) {
             throw new BusinessException(ErrorCode.CONFLICT, "연장 요청 상태의 가격 제안만 응답할 수 있습니다.");
         }
+    }
+
+    private NegoOffer findOfferForUpdate(Long offerId) {
+        return negoOfferRepository.findByIdForUpdate(offerId)
+            .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "가격 제안을 찾을 수 없습니다."));
     }
 }
