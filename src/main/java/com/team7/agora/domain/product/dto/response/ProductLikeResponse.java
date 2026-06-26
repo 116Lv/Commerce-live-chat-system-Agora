@@ -24,4 +24,8 @@ public record ProductLikeResponse(
     public static ProductLikeResponse of(Product product, boolean liked) {
         return new ProductLikeResponse(product.getId(), liked, product.getLikeCount());
     }
+
+    public static ProductLikeResponse of(Product product, boolean liked, int likeCount) {
+        return new ProductLikeResponse(product.getId(), liked, likeCount);
+    }
 }

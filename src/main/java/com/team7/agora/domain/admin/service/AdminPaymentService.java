@@ -5,6 +5,7 @@ import com.team7.agora.domain.payment.client.PaymentClient;
 import com.team7.agora.domain.payment.entity.Payment;
 import com.team7.agora.domain.payment.enums.PaymentStatus;
 import com.team7.agora.domain.payment.repository.PaymentRepository;
+import com.team7.agora.domain.payment.service.PaymentService;
 import com.team7.agora.global.auth.CustomUserDetails;
 import com.team7.agora.global.exception.BusinessException;
 import com.team7.agora.global.exception.ErrorCode;
@@ -22,15 +23,17 @@ public class AdminPaymentService {
 
     private final PaymentRepository paymentRepository;
     private final PaymentClient paymentClient;
+    private final PaymentService paymentService;
 
     /**
      * 필요한 의존성을 주입받아 컴포넌트를 생성한다.
      * @param paymentRepository 데이터를 조회하고 저장하는 리포지토리
      * @param paymentClient 외부 시스템 또는 저장소와 통신하는 클라이언트
      */
-    public AdminPaymentService(PaymentRepository paymentRepository, PaymentClient paymentClient) {
+    public AdminPaymentService(PaymentRepository paymentRepository, PaymentClient paymentClient, PaymentService paymentService) {
         this.paymentRepository = paymentRepository;
         this.paymentClient = paymentClient;
+        this.paymentService = paymentService;
     }
 
     /**
@@ -84,12 +87,7 @@ public class AdminPaymentService {
             throw new BusinessException(ErrorCode.INVALID_REQUEST, "결제 키가 없는 결제는 재검증할 수 없습니다.");
         }
 
-        boolean approved = paymentClient.confirm(payment.getPaymentKey(), payment.getOrderId(), payment.getAmount());
-        if (approved) {
-            payment.markPaid(payment.getPaymentKey());
-        } else if (payment.getStatus() != PaymentStatus.FAILED) {
-            payment.markFailed();
-        }
+        paymentService.confirmByPaymentId(paymentId, payment.getPaymentKey());
         return AdminPaymentResponse.from(payment);
     }
 

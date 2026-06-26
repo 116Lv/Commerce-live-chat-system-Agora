@@ -12,6 +12,7 @@ import com.team7.agora.domain.payment.exception.PaymentException;
 import com.team7.agora.domain.payment.service.PaymentWebhookService;
 import com.team7.agora.domain.payment.service.PaymentWebhookVerifier;
 import com.team7.agora.global.exception.ErrorCode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.math.BigDecimal;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -29,11 +30,11 @@ class PaymentWebhookControllerTest {
 
     @Test
     void portOneWebhookRejectsMissingSignature() {
-        PaymentWebhookController controller = new PaymentWebhookController(paymentWebhookService, paymentWebhookVerifier);
-        PaymentWebhookRequest request = new PaymentWebhookRequest("order-1", "payment-key", "PAID");
-        when(paymentWebhookVerifier.isValid(null)).thenReturn(false);
+        PaymentWebhookController controller = new PaymentWebhookController(paymentWebhookService, paymentWebhookVerifier, new ObjectMapper());
+        String body = "{\"orderId\":\"order-1\",\"paymentKey\":\"payment-key\",\"status\":\"PAID\"}";
+        when(paymentWebhookVerifier.isValid(body, null, null)).thenReturn(false);
 
-        assertThatThrownBy(() -> controller.portOneWebhook(null, request))
+        assertThatThrownBy(() -> controller.portOneWebhook(null, null, body))
             .isInstanceOf(PaymentException.class)
             .extracting("errorCode")
             .isEqualTo(ErrorCode.UNAUTHORIZED);
@@ -42,8 +43,8 @@ class PaymentWebhookControllerTest {
 
     @Test
     void portOneWebhookProcessesPaidEventWithValidSignature() {
-        PaymentWebhookController controller = new PaymentWebhookController(paymentWebhookService, paymentWebhookVerifier);
-        PaymentWebhookRequest request = new PaymentWebhookRequest("order-1", "payment-key", "PAID");
+        PaymentWebhookController controller = new PaymentWebhookController(paymentWebhookService, paymentWebhookVerifier, new ObjectMapper());
+        String body = "{\"orderId\":\"order-1\",\"paymentKey\":\"payment-key\",\"status\":\"PAID\"}";
         PaymentResponse response = new PaymentResponse(
             1L,
             10L,
@@ -54,10 +55,10 @@ class PaymentWebhookControllerTest {
             "PAID",
             100L
         );
-        when(paymentWebhookVerifier.isValid("local-secret")).thenReturn(true);
+        when(paymentWebhookVerifier.isValid(body, "100", "signature")).thenReturn(true);
         when(paymentWebhookService.handlePaid("order-1", "payment-key")).thenReturn(response);
 
-        var result = controller.portOneWebhook("local-secret", request);
+        var result = controller.portOneWebhook("100", "signature", body);
 
         assertThat(result.getBody().data()).isEqualTo(response);
     }

@@ -7,6 +7,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.argThat;
 
 import com.team7.agora.domain.auth.dto.request.LoginRequest;
 import com.team7.agora.domain.auth.dto.request.SignupRequest;
@@ -169,7 +170,7 @@ class AuthServiceTest {
         // then
         assertThat(response.accessToken()).startsWith("Bearer ");
         assertThat(response.refreshToken()).isNotBlank();
-        verify(refreshTokenRepository).save(any(RefreshToken.class));
+        verify(refreshTokenRepository).save(argThat(token -> !response.refreshToken().equals(token.getTokenHash())));
     }
 
     @Test
@@ -251,8 +252,8 @@ class AuthServiceTest {
         // given
         AuthService authService = createService();
         User user = userWithId(1L, "user@test.com", "password123!");
-        RefreshToken stored = RefreshToken.issue(user, "old-refresh-token", LocalDateTime.now().plusDays(1));
-        when(refreshTokenRepository.findByToken("old-refresh-token")).thenReturn(Optional.of(stored));
+        RefreshToken stored = RefreshToken.issue(user, AuthService.hashRefreshToken("old-refresh-token"), LocalDateTime.now().plusDays(1));
+        when(refreshTokenRepository.findByTokenHash(AuthService.hashRefreshToken("old-refresh-token"))).thenReturn(Optional.of(stored));
         when(refreshTokenRepository.save(any(RefreshToken.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
 
@@ -294,7 +295,7 @@ class AuthServiceTest {
     void reissue_throwsInvalidTokenWhenRefreshTokenNotFound() {
         // given
         AuthService authService = createService();
-        when(refreshTokenRepository.findByToken("unknown-token")).thenReturn(Optional.empty());
+        when(refreshTokenRepository.findByTokenHash(AuthService.hashRefreshToken("unknown-token"))).thenReturn(Optional.empty());
 
         // when & then
         assertThatThrownBy(() -> authService.reissue("unknown-token"))
@@ -308,8 +309,8 @@ class AuthServiceTest {
         // given
         AuthService authService = createService();
         User user = userWithId(1L, "user@test.com", "password123!");
-        RefreshToken expired = RefreshToken.issue(user, "expired-token", LocalDateTime.now(ZoneOffset.UTC).minusSeconds(1));
-        when(refreshTokenRepository.findByToken("expired-token")).thenReturn(Optional.of(expired));
+        RefreshToken expired = RefreshToken.issue(user, AuthService.hashRefreshToken("expired-token"), LocalDateTime.now(ZoneOffset.UTC).minusSeconds(1));
+        when(refreshTokenRepository.findByTokenHash(AuthService.hashRefreshToken("expired-token"))).thenReturn(Optional.of(expired));
 
         // when & then
         assertThatThrownBy(() -> authService.reissue("expired-token"))
@@ -326,8 +327,8 @@ class AuthServiceTest {
         AuthService authService = createService();
         User user = userWithId(1L, "user@test.com", "password123!");
         user.changeStatus(UserStatus.SUSPENDED);
-        RefreshToken stored = RefreshToken.issue(user, "old-refresh-token", LocalDateTime.now().plusDays(1));
-        when(refreshTokenRepository.findByToken("old-refresh-token")).thenReturn(Optional.of(stored));
+        RefreshToken stored = RefreshToken.issue(user, AuthService.hashRefreshToken("old-refresh-token"), LocalDateTime.now().plusDays(1));
+        when(refreshTokenRepository.findByTokenHash(AuthService.hashRefreshToken("old-refresh-token"))).thenReturn(Optional.of(stored));
 
         // when & then
         assertThatThrownBy(() -> authService.reissue("old-refresh-token"))

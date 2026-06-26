@@ -9,6 +9,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.team7.agora.domain.payment.client.PaymentClient;
+import com.team7.agora.domain.payment.service.PaymentService;
 import com.team7.agora.domain.payment.entity.Payment;
 import com.team7.agora.domain.payment.enums.PaymentStatus;
 import com.team7.agora.domain.payment.repository.PaymentRepository;
@@ -37,12 +38,15 @@ class AdminPaymentServiceTest {
     @Mock
     private PaymentClient paymentClient;
 
+    @Mock
+    private PaymentService paymentService;
+
     private AdminPaymentService adminPaymentService;
     private CustomUserDetails settlementAdmin;
 
     @BeforeEach
     void setUp() {
-        adminPaymentService = new AdminPaymentService(paymentRepository, paymentClient);
+        adminPaymentService = new AdminPaymentService(paymentRepository, paymentClient, paymentService);
         settlementAdmin = new CustomUserDetails(
             99L,
             "settlement@admin.com",
@@ -84,6 +88,17 @@ class AdminPaymentServiceTest {
 
         assertThatThrownBy(() -> adminPaymentService.verifyPayment(settlementAdmin, 3L))
             .isInstanceOf(BusinessException.class);
+        verify(paymentClient, never()).confirm(any(), any(), any());
+    }
+
+    @Test
+    void verifyPaymentUsesSharedPaymentConfirmationFlow() {
+        Payment ready = payment(4L, PaymentStatus.READY);
+        when(paymentRepository.findById(4L)).thenReturn(Optional.of(ready));
+
+        adminPaymentService.verifyPayment(settlementAdmin, 4L);
+
+        verify(paymentService).confirmByPaymentId(4L, "payment-key-4");
         verify(paymentClient, never()).confirm(any(), any(), any());
     }
 

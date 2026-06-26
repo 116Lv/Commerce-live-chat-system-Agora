@@ -58,8 +58,8 @@ public class ProductLikeService {
         }
 
         productLikeRepository.save(ProductLike.create(product, user));
-        product.increaseLikeCount();
-        return ProductLikeResponse.of(product, true);
+        productRepository.increaseLikeCount(productId);
+        return ProductLikeResponse.of(product, true, productRepository.findLikeCountById(productId));
     }
 
     /**
@@ -77,8 +77,8 @@ public class ProductLikeService {
             .orElseThrow(() -> new ProductException(ErrorCode.NOT_FOUND, "찜하지 않은 상품입니다."));
 
         productLikeRepository.delete(productLike);
-        product.decreaseLikeCount();
-        return ProductLikeResponse.of(product, false);
+        productRepository.decreaseLikeCount(productId);
+        return ProductLikeResponse.of(product, false, productRepository.findLikeCountById(productId));
     }
 
     /**
