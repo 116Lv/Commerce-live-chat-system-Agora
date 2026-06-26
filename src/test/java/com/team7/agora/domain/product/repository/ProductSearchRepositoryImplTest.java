@@ -15,6 +15,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -58,7 +59,7 @@ class ProductSearchRepositoryImplTest {
             seller, seoul, "그릭요거트 메이커", "상관없는 상품", BigDecimal.valueOf(10000), KEYWORD_CATEGORY
         ));
 
-        List<ProductSearchResponse> results = productRepository.search(
+        Page<ProductSearchResponse> results = productRepository.search(
             new ProductSearchCondition("galaxy", null, KEYWORD_CATEGORY, PageRequest.of(0, 20))
         );
 
@@ -72,13 +73,13 @@ class ProductSearchRepositoryImplTest {
         productRepository.save(Product.create(seller, seoul, "서울 상품", "설명", BigDecimal.valueOf(10000), category));
         productRepository.save(Product.create(seller, busan, "부산 상품", "설명", BigDecimal.valueOf(10000), category));
 
-        List<ProductSearchResponse> results = productRepository.search(
+        Page<ProductSearchResponse> results = productRepository.search(
             new ProductSearchCondition(null, seoul.getId(), category, PageRequest.of(0, 20))
         );
 
         assertThat(results).hasSize(1);
-        assertThat(results.get(0).title()).isEqualTo("서울 상품");
-        assertThat(results.get(0).regionName()).isEqualTo(seoul.getName());
+        assertThat(results.getContent().get(0).title()).isEqualTo("서울 상품");
+        assertThat(results.getContent().get(0).regionName()).isEqualTo(seoul.getName());
     }
 
     @Test
@@ -87,12 +88,12 @@ class ProductSearchRepositoryImplTest {
         productRepository.save(Product.create(seller, seoul, "운동화", "설명", BigDecimal.valueOf(30000), category));
         productRepository.save(Product.create(seller, seoul, "냄비", "설명", BigDecimal.valueOf(15000), "QDSL_IT_OTHER"));
 
-        List<ProductSearchResponse> results = productRepository.search(
+        Page<ProductSearchResponse> results = productRepository.search(
             new ProductSearchCondition(null, null, category, PageRequest.of(0, 20))
         );
 
         assertThat(results).hasSize(1);
-        assertThat(results.get(0).title()).isEqualTo("운동화");
+        assertThat(results.getContent().get(0).title()).isEqualTo("운동화");
     }
 
     @Test
@@ -107,7 +108,7 @@ class ProductSearchRepositoryImplTest {
         hidden.hide();
         productRepository.save(Product.create(seller, seoul, "정상 상품", "설명", BigDecimal.valueOf(1000), HIDDEN_CATEGORY));
 
-        List<ProductSearchResponse> results = productRepository.search(
+        Page<ProductSearchResponse> results = productRepository.search(
             new ProductSearchCondition(null, null, HIDDEN_CATEGORY, PageRequest.of(0, 20))
         );
 
@@ -124,16 +125,16 @@ class ProductSearchRepositoryImplTest {
         ));
         productRepository.save(Product.create(seller, seoul, "상품3", "설명", BigDecimal.valueOf(1000), PAGING_CATEGORY));
 
-        List<ProductSearchResponse> firstPage = productRepository.search(
+        Page<ProductSearchResponse> firstPage = productRepository.search(
             new ProductSearchCondition(null, null, PAGING_CATEGORY, PageRequest.of(0, 2))
         );
-        List<ProductSearchResponse> secondPage = productRepository.search(
+        Page<ProductSearchResponse> secondPage = productRepository.search(
             new ProductSearchCondition(null, null, PAGING_CATEGORY, PageRequest.of(1, 2))
         );
 
         assertThat(firstPage).hasSize(2);
         assertThat(secondPage).hasSize(1);
-        assertThat(secondPage.get(0).id()).isEqualTo(first.getId());
-        assertThat(firstPage.get(1).id()).isEqualTo(second.getId());
+        assertThat(secondPage.getContent().get(0).id()).isEqualTo(first.getId());
+        assertThat(firstPage.getContent().get(1).id()).isEqualTo(second.getId());
     }
 }

@@ -18,6 +18,7 @@ public class RedisPopularKeywordRepository implements PopularKeywordRepository {
     private static final String DAILY_KEY_PREFIX = "popular:keyword:daily:";
     private static final String WEEKLY_KEY_PREFIX = "popular:keyword:weekly:";
     private static final String DEDUP_KEY_PREFIX = "popular:keyword:dedup:";
+    private static final Duration REALTIME_TTL = Duration.ofDays(1);
     private static final Duration DAILY_TTL = Duration.ofDays(2);
     private static final Duration WEEKLY_TTL = Duration.ofDays(15);
     private static final Duration DEDUP_TTL = Duration.ofMinutes(1);
@@ -39,13 +40,14 @@ public class RedisPopularKeywordRepository implements PopularKeywordRepository {
     @Override
     public boolean tryMarkSearched(Long userId, String keyword) {
         String key = DEDUP_KEY_PREFIX + userId + ":" + keyword;
-        Boolean firstSearch = redisTemplate.opsForValue().setIfAbsent(key, "1", DEDUP_TTL);
+        Boolean firstSearch = redisTemplate.opsForValue().setIfAbsent(key, "20", DEDUP_TTL);
         return Boolean.TRUE.equals(firstSearch);
     }
 
     @Override
     public void increment(String keyword) {
         redisTemplate.opsForZSet().incrementScore(KEY, keyword, 1);
+        setTtlOnce(KEY, REALTIME_TTL);
     }
 
     /**
@@ -67,7 +69,7 @@ public class RedisPopularKeywordRepository implements PopularKeywordRepository {
     public void incrementDaily(String keyword, String dateKey) {
         String key = DAILY_KEY_PREFIX + dateKey;
         redisTemplate.opsForZSet().incrementScore(key, keyword, 1);
-        redisTemplate.expire(key, DAILY_TTL);
+        setTtlOnce(key, DAILY_TTL);
     }
 
     /**
@@ -90,7 +92,7 @@ public class RedisPopularKeywordRepository implements PopularKeywordRepository {
     public void incrementWeekly(String keyword, String weekKey) {
         String key = WEEKLY_KEY_PREFIX + weekKey;
         redisTemplate.opsForZSet().incrementScore(key, keyword, 1);
-        redisTemplate.expire(key, WEEKLY_TTL);
+        setTtlOnce(key, WEEKLY_TTL);
     }
 
     /**
@@ -116,5 +118,13 @@ public class RedisPopularKeywordRepository implements PopularKeywordRepository {
                 tuple.getScore() == null ? 0 : tuple.getScore().longValue()
             ))
             .toList();
+    }
+
+    // TTL이 없는 키에만 만료 시각을 설정한다. 이미 TTL이 있으면 리셋하지 않는다.
+    private void setTtlOnce(String key, Duration ttl) {
+        Long remaining = redisTemplate.getExpire(key);
+        if (remaining != null && remaining == -1L) {
+            redisTemplate.expire(key, ttl);
+        }
     }
 }
