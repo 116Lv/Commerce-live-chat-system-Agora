@@ -42,7 +42,7 @@ class UserServiceTest {
     void getMe_returnsAuthenticatedUserInfo() {
         // given
         UserService userService = createService();
-        when(userRepository.findById(1L)).thenReturn(Optional.of(userWithId(1L)));
+        when(userRepository.findByIdAndDeletedAtIsNull(1L)).thenReturn(Optional.of(userWithId(1L)));
 
         // when
         UserMeResponse response = userService.getMe(1L);
@@ -59,7 +59,7 @@ class UserServiceTest {
     void getMe_throwsNotFoundWhenUserMissing() {
         // given
         UserService userService = createService();
-        when(userRepository.findById(1L)).thenReturn(Optional.empty());
+        when(userRepository.findByIdAndDeletedAtIsNull(1L)).thenReturn(Optional.empty());
 
         // when & then
         assertThatThrownBy(() -> userService.getMe(1L))
@@ -73,7 +73,7 @@ class UserServiceTest {
         // given
         UserService userService = createService();
         User user = userWithId(1L);
-        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(userRepository.findByIdAndDeletedAtIsNull(1L)).thenReturn(Optional.of(user));
 
         // when
         UserMeResponse response = userService.updateProfile(1L, "새닉네임");
@@ -88,7 +88,7 @@ class UserServiceTest {
         // given
         UserService userService = createService();
         User user = userWithId(1L);
-        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(userRepository.findByIdAndDeletedAtIsNull(1L)).thenReturn(Optional.of(user));
 
         // when
         userService.changePassword(1L, "oldPassword1!", "newPassword1!");
@@ -102,7 +102,7 @@ class UserServiceTest {
         // given
         UserService userService = createService();
         User user = userWithId(1L);
-        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(userRepository.findByIdAndDeletedAtIsNull(1L)).thenReturn(Optional.of(user));
 
         // when & then
         assertThatThrownBy(() -> userService.changePassword(1L, "wrongPassword", "newPassword1!"))

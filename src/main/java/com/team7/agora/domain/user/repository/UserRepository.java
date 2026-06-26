@@ -21,9 +21,13 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     Optional<User> findByEmailIgnoreCase(String email);
 
+    Optional<User> findByIdAndDeletedAtIsNull(Long id);
+
     List<User> findBySmileScoreGreaterThanEqualAndStatus(int smileScore, UserStatus status);
 
     List<User> findAllByStatus(UserStatus status);
 
     Page<User> findAllByStatus(UserStatus status, Pageable pageable);
+
+    Page<User> findAllByDeletedAtIsNull(Pageable pageable);
 }
