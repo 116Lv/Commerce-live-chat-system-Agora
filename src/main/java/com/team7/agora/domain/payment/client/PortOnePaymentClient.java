@@ -11,6 +11,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
+/**
+ * PortOne 결제 제공자 연동 구현체이다.
+ */
 @Component
 @Profile("prod")
 public class PortOnePaymentClient implements PaymentClient {
@@ -19,6 +22,11 @@ public class PortOnePaymentClient implements PaymentClient {
     private final String apiBaseUrl;
     private final String apiSecret;
 
+    /**
+     * 의존성을 주입받아 인스턴스를 생성한다.
+     * @param apiBaseUrl 입력 값
+     * @param apiSecret 입력 값
+     */
     public PortOnePaymentClient(
         @Value("${portone.api-base-url:https://api.portone.io}") String apiBaseUrl,
         @Value("${portone.api-secret}") String apiSecret
@@ -27,6 +35,13 @@ public class PortOnePaymentClient implements PaymentClient {
         this.apiSecret = apiSecret;
     }
 
+    /**
+     * 요청한 동작을 처리한다.
+     * @param paymentKey 입력 값
+     * @param orderId 입력 값
+     * @param amount 입력 값
+     * @return 처리 결과
+     */
     @Override
     public boolean confirm(String paymentKey, String orderId, BigDecimal amount) {
         String accessToken = issueAccessToken();

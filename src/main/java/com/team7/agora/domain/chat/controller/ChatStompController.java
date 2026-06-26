@@ -12,6 +12,9 @@ import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Controller;
 import org.springframework.validation.annotation.Validated;
 
+/**
+ * REST 엔드포인트를 제공하는 컨트롤러이다.
+ */
 @Controller
 @Validated
 public class ChatStompController {
@@ -24,6 +27,12 @@ public class ChatStompController {
         this.chatRedisPublisher = chatRedisPublisher;
     }
 
+    /**
+     * 요청한 동작을 처리한다.
+     * @param chatRoomId 입력 값
+     * @param request 입력 값
+     * @param principal 입력 값
+     */
     @MessageMapping("/chat/{chatRoomId}/messages")
     public void send(
         @DestinationVariable Long chatRoomId,

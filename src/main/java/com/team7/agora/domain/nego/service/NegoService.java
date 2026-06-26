@@ -22,6 +22,9 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+/**
+ * 애플리케이션 유스케이스를 조정하는 서비스이다.
+ */
 @Service
 @Transactional(readOnly = true)
 public class NegoService {
@@ -31,6 +34,12 @@ public class NegoService {
     private final TradeService tradeService;
     private final ChatSystemMessageService chatSystemMessageService;
 
+    /**
+     * 의존성을 주입받아 인스턴스를 생성한다.
+     * @param negoOfferRepository 입력 값
+     * @param chatRoomRepository 입력 값
+     * @param tradeService 입력 값
+     */
     public NegoService(
         NegoOfferRepository negoOfferRepository,
         ChatRoomRepository chatRoomRepository,
@@ -43,6 +52,13 @@ public class NegoService {
         this.chatSystemMessageService = chatSystemMessageService;
     }
 
+    /**
+     * 도메인 객체를 생성한다.
+     * @param requesterId 입력 값
+     * @param chatRoomId 입력 값
+     * @param offerPrice 입력 값
+     * @return 처리 결과
+     */
     @Transactional
     public NegoOfferResponse createOffer(Long requesterId, Long chatRoomId, BigDecimal offerPrice) {
         ChatRoom chatRoom = findActiveRoom(chatRoomId);
@@ -63,6 +79,12 @@ public class NegoService {
         return response;
     }
 
+    /**
+     * 요청한 동작을 처리한다.
+     * @param sellerId 입력 값
+     * @param offerId 입력 값
+     * @return 처리 결과
+     */
     @Transactional
     public NegoOfferResponse acceptOffer(Long sellerId, Long offerId) {
         NegoOffer offer = findOffer(offerId);
@@ -93,6 +115,12 @@ public class NegoService {
         }
     }
 
+    /**
+     * 요청한 동작을 처리한다.
+     * @param sellerId 입력 값
+     * @param offerId 입력 값
+     * @return 처리 결과
+     */
     @Transactional
     public NegoOfferResponse rejectOffer(Long sellerId, Long offerId) {
         NegoOffer offer = findOffer(offerId);
@@ -104,6 +132,12 @@ public class NegoService {
         return NegoOfferResponse.from(offer);
     }
 
+    /**
+     * 요청한 동작을 처리한다.
+     * @param sellerId 입력 값
+     * @param offerId 입력 값
+     * @return 처리 결과
+     */
     @Transactional
     public NegoOfferResponse requestExtension(Long buyerId, Long offerId) {
         NegoOffer offer = findOffer(offerId);
@@ -130,6 +164,12 @@ public class NegoService {
         return NegoOfferResponse.from(offer);
     }
 
+    /**
+     * 요청한 동작을 처리한다.
+     * @param buyerId 입력 값
+     * @param offerId 입력 값
+     * @return 처리 결과
+     */
     @Transactional
     public NegoOfferResponse rejectExtension(Long sellerId, Long offerId) {
         NegoOffer offer = findOffer(offerId);
@@ -140,6 +180,12 @@ public class NegoService {
         return NegoOfferResponse.from(offer);
     }
 
+    /**
+     * 요청한 동작을 처리한다.
+     * @param authUser 입력 값
+     * @param offerId 입력 값
+     * @return 처리 결과
+     */
     @Transactional
     public NegoOfferResponse expireOffer(AuthUser authUser, Long offerId) {
         if (!isExpiryAuthority(authUser)) {

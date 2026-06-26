@@ -16,6 +16,9 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+/**
+ * 애플리케이션 유스케이스를 조정하는 서비스이다.
+ */
 @Service
 @Transactional(readOnly = true)
 public class RegionService {
@@ -27,6 +30,12 @@ public class RegionService {
     private final RegionRepository regionRepository;
     private final UserRegionRepository userRegionRepository;
 
+    /**
+     * 의존성을 주입받아 인스턴스를 생성한다.
+     * @param userRepository 입력 값
+     * @param regionRepository 입력 값
+     * @param userRegionRepository 입력 값
+     */
     public RegionService(
             UserRepository userRepository,
             RegionRepository regionRepository,
@@ -37,6 +46,11 @@ public class RegionService {
         this.userRegionRepository = userRegionRepository;
     }
 
+    /**
+     * 데이터를 수정한다.
+     * @param userId 입력 값
+     * @param request 입력 값
+     */
     @Transactional
     public void updatePreferredRegions(Long userId, PreferredRegionUpdateRequest request) {
         List<Long> regionIds = request.regionIds();
@@ -58,6 +72,11 @@ public class RegionService {
         userRegionRepository.saveAll(userRegions);
     }
 
+    /**
+     * 데이터를 반환한다.
+     * @param keyword 입력 값
+     * @return 처리 결과
+     */
     public List<RegionResponse> findRegions(String keyword) {
         List<Region> regions = (keyword == null || keyword.isBlank())
                 ? regionRepository.findAll()

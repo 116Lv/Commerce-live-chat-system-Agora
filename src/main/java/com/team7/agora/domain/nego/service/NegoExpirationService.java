@@ -13,6 +13,9 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+/**
+ * 애플리케이션 유스케이스를 조정하는 서비스이다.
+ */
 @Service
 @Transactional(readOnly = true)
 public class NegoExpirationService {
@@ -34,6 +37,11 @@ public class NegoExpirationService {
         this.chatSystemMessageService = chatSystemMessageService;
     }
 
+    /**
+     * 요청한 동작을 처리한다.
+     * @param now 입력 값
+     * @return 처리 결과
+     */
     @Transactional
     public int expireDueOffers(LocalDateTime now) {
         List<NegoOffer> dueOffers = negoOfferRepository.findAllByStatusInAndExpiresAtLessThanEqual(
@@ -47,6 +55,11 @@ public class NegoExpirationService {
         return dueOffers.size();
     }
 
+    /**
+     * 요청한 동작을 처리한다.
+     * @param now 입력 값
+     * @return 처리 결과
+     */
     @Transactional
     public int expireDuePaymentReservations(LocalDateTime now) {
         List<Trade> dueTrades = tradeRepository.findAllByStatusAndPaymentDueAtLessThanEqual(

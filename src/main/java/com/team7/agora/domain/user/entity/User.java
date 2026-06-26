@@ -15,6 +15,9 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+/**
+ * JPA 엔티티이다.
+ */
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
@@ -60,35 +63,73 @@ public class User {
         this.status = UserStatus.ACTIVE;
     }
 
+    /**
+     * 요청한 동작을 처리한다.
+     * @param email 입력 값
+     * @param encodedPassword 입력 값
+     * @param nickname 입력 값
+     * @param phone 입력 값
+     * @return 처리 결과
+     */
     public static User signup(String email, String encodedPassword, String nickname, String phone) {
         return new User(email, encodedPassword, nickname, phone);
     }
 
+    /**
+     * 도메인 객체를 생성한다.
+     * @param email 입력 값
+     * @param encodedPassword 입력 값
+     * @param nickname 입력 값
+     * @return 처리 결과
+     */
     public static User create(String email, String encodedPassword, String nickname) {
         return new User(email, encodedPassword, nickname, null);
     }
 
+    /**
+     * 데이터를 수정한다.
+     * @param delta 입력 값
+     */
     public void updateSmileScore(int delta) {
         int nextScore = this.smileScore + delta;
         this.smileScore = Math.max(0, Math.min(100, nextScore));
     }
 
+    /**
+     * 요청한 동작을 처리한다.
+     */
     public void block() {
         this.status = UserStatus.BLOCKED;
     }
 
+    /**
+     * 요청한 동작을 처리한다.
+     * @param status 입력 값
+     */
     public void changeStatus(UserStatus status) {
         this.status = status;
     }
 
+    /**
+     * 요청한 동작을 처리한다.
+     * @param role 입력 값
+     */
     public void changeRole(UserRole role) {
         this.role = role;
     }
 
+    /**
+     * 요청한 동작을 처리한다.
+     * @param encodedPassword 입력 값
+     */
     public void changePassword(String encodedPassword) {
         this.password = encodedPassword;
     }
 
+    /**
+     * 데이터를 수정한다.
+     * @param nickname 입력 값
+     */
     public void updateProfile(String nickname) {
         this.nickname = nickname;
     }

@@ -15,6 +15,9 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+/**
+ * 애플리케이션 유스케이스를 조정하는 서비스이다.
+ */
 @Service
 @Transactional(readOnly = true)
 public class ProductLikeService {
@@ -23,6 +26,12 @@ public class ProductLikeService {
     private final ProductLikeRepository productLikeRepository;
     private final UserRepository userRepository;
 
+    /**
+     * 의존성을 주입받아 인스턴스를 생성한다.
+     * @param productRepository 입력 값
+     * @param productLikeRepository 입력 값
+     * @param userRepository 입력 값
+     */
     public ProductLikeService(
         ProductRepository productRepository,
         ProductLikeRepository productLikeRepository,
@@ -33,6 +42,12 @@ public class ProductLikeService {
         this.userRepository = userRepository;
     }
 
+    /**
+     * 요청한 동작을 처리한다.
+     * @param userId 입력 값
+     * @param productId 입력 값
+     * @return 처리 결과
+     */
     @Transactional
     public ProductLikeResponse like(Long userId, Long productId) {
         Product product = getActiveProduct(productId);
@@ -47,6 +62,12 @@ public class ProductLikeService {
         return ProductLikeResponse.of(product, true);
     }
 
+    /**
+     * 요청한 동작을 처리한다.
+     * @param userId 입력 값
+     * @param productId 입력 값
+     * @return 처리 결과
+     */
     @Transactional
     public ProductLikeResponse unlike(Long userId, Long productId) {
         Product product = getActiveProduct(productId);
@@ -60,6 +81,11 @@ public class ProductLikeService {
         return ProductLikeResponse.of(product, false);
     }
 
+    /**
+     * 데이터를 반환한다.
+     * @param userId 입력 값
+     * @return 처리 결과
+     */
     public List<ProductResponse> getMyLikedProducts(Long userId) {
         User user = getUser(userId);
         return productLikeRepository.findAllByUser(user).stream()

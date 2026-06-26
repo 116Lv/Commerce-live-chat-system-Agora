@@ -11,6 +11,9 @@ import com.team7.agora.domain.search.dto.ProductSearchResponse;
 import java.util.List;
 import org.springframework.stereotype.Repository;
 
+/**
+ * 영속성 작업을 구현하는 저장소 어댑터이다.
+ */
 @Repository
 public class ProductSearchRepositoryImpl implements ProductSearchRepository {
 
@@ -20,6 +23,11 @@ public class ProductSearchRepositoryImpl implements ProductSearchRepository {
         this.queryFactory = queryFactory;
     }
 
+    /**
+     * 요청한 동작을 처리한다.
+     * @param condition 입력 값
+     * @return 처리 결과
+     */
     @Override
     public List<ProductSearchResponse> search(ProductSearchCondition condition) {
         QProduct product = QProduct.product;

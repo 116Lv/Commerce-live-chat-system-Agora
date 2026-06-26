@@ -19,6 +19,9 @@ import java.util.UUID;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+/**
+ * 애플리케이션 유스케이스를 조정하는 서비스이다.
+ */
 @Service
 @Transactional(readOnly = true)
 public class PaymentService {
@@ -28,6 +31,13 @@ public class PaymentService {
     private final TradeRepository tradeRepository;
     private final PaymentClient paymentClient;
 
+    /**
+     * 의존성을 주입받아 인스턴스를 생성한다.
+     * @param paymentRepository 입력 값
+     * @param settlementRepository 입력 값
+     * @param tradeRepository 입력 값
+     * @param paymentClient 입력 값
+     */
     public PaymentService(
         PaymentRepository paymentRepository,
         SettlementRepository settlementRepository,
@@ -40,6 +50,12 @@ public class PaymentService {
         this.paymentClient = paymentClient;
     }
 
+    /**
+     * 요청한 동작을 처리한다.
+     * @param payerId 입력 값
+     * @param tradeId 입력 값
+     * @return 처리 결과
+     */
     @Transactional
     public PaymentResponse prepare(Long payerId, Long tradeId) {
         Trade trade = findTrade(tradeId);
@@ -66,6 +82,13 @@ public class PaymentService {
         return PaymentResponse.from(paymentRepository.save(payment));
     }
 
+    /**
+     * 요청한 동작을 처리한다.
+     * @param payerId 입력 값
+     * @param paymentId 입력 값
+     * @param paymentKey 입력 값
+     * @return 처리 결과
+     */
     @Transactional
     public PaymentResponse confirm(Long payerId, Long paymentId, String paymentKey) {
         Payment payment = findPayment(paymentId);
@@ -85,6 +108,13 @@ public class PaymentService {
         return PaymentResponse.from(payment, settlement.getId());
     }
 
+    /**
+     * 요청한 동작을 처리한다.
+     * @param payerId 입력 값
+     * @param paymentId 입력 값
+     * @param reason 입력 값
+     * @return 처리 결과
+     */
     @Transactional
     public PaymentResponse refund(Long payerId, Long paymentId, String reason) {
         Payment payment = findPayment(paymentId);
@@ -97,6 +127,12 @@ public class PaymentService {
         return PaymentResponse.from(payment);
     }
 
+    /**
+     * 데이터를 반환한다.
+     * @param authUser 입력 값
+     * @param paymentId 입력 값
+     * @return 처리 결과
+     */
     public RefundStatusResponse getRefundStatus(AuthUser authUser, Long paymentId) {
         Payment payment = findPayment(paymentId);
 

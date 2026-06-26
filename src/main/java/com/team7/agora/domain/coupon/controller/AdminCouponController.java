@@ -19,16 +19,29 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+/**
+ * REST 엔드포인트를 제공하는 컨트롤러이다.
+ */
 @RestController
 @RequestMapping("/api/admin/coupons")
 public class AdminCouponController {
 
     private final AdminCouponService adminCouponService;
 
+    /**
+     * 의존성을 주입받아 인스턴스를 생성한다.
+     * @param adminCouponService 입력 값
+     */
     public AdminCouponController(AdminCouponService adminCouponService) {
         this.adminCouponService = adminCouponService;
     }
 
+    /**
+     * 도메인 객체를 생성한다.
+     * @param admin 입력 값
+     * @param request 입력 값
+     * @return 처리 결과
+     */
     @PreAuthorize("hasAnyAuthority('USER_ADMIN', 'ROOT_ADMIN')")
     @PostMapping
     public ApiResponse<AdminCouponResponse> create(
@@ -45,6 +58,13 @@ public class AdminCouponController {
         );
         return ApiResponse.success("쿠폰 정책이 생성되었습니다.", response);
     }
+
+    /**
+     * 데이터를 반환한다.
+     * @param admin 입력 값
+     * @param couponId 입력 값
+     * @return 처리 결과
+     */
     @PreAuthorize("hasAnyAuthority('USER_ADMIN', 'ROOT_ADMIN')")
     @GetMapping
     public ApiResponse<List<AdminCouponResponse>> getList(@AuthenticationPrincipal CustomUserDetails admin) {
@@ -60,6 +80,14 @@ public class AdminCouponController {
         AdminCouponResponse response = adminCouponService.getDetail(admin, couponId);
         return ApiResponse.success("쿠폰 정책 상세를 조회했습니다.", response);
     }
+
+    /**
+     * 조건 충족 여부를 확인한다.
+     * @param admin 입력 값
+     * @param couponId 입력 값
+     * @param request 입력 값
+     * @return 처리 결과
+     */
     @PreAuthorize("hasAnyAuthority('USER_ADMIN', 'ROOT_ADMIN')")
     @PostMapping("/{couponId}/issue")
     public ApiResponse<CouponBroadcastResponse> issue(
@@ -70,6 +98,13 @@ public class AdminCouponController {
         CouponBroadcastResponse response = adminCouponService.issueToUsers(admin, couponId, request.userIds());
         return ApiResponse.success("지정 사용자에게 쿠폰을 발급했습니다.", response);
     }
+
+    /**
+     * 데이터를 반환한다.
+     * @param admin 입력 값
+     * @param couponId 입력 값
+     * @return 처리 결과
+     */
     @PreAuthorize("hasAnyAuthority('USER_ADMIN', 'ROOT_ADMIN')")
     @PostMapping("/{couponId}/broadcast")
     public ApiResponse<CouponBroadcastResponse> broadcast(

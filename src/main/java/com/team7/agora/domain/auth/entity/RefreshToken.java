@@ -16,6 +16,9 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+/**
+ * JPA 엔티티이다.
+ */
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
@@ -42,10 +45,22 @@ public class RefreshToken {
         this.expiresAt = expiresAt;
     }
 
+    /**
+     * 조건 충족 여부를 확인한다.
+     * @param user 입력 값
+     * @param token 입력 값
+     * @param expiresAt 입력 값
+     * @return 처리 결과
+     */
     public static RefreshToken issue(User user, String token, LocalDateTime expiresAt) {
         return new RefreshToken(user, token, expiresAt);
     }
 
+    /**
+     * 조건 충족 여부를 확인한다.
+     * @param now 입력 값
+     * @return 처리 결과
+     */
     public boolean isExpired(LocalDateTime now) {
         return !expiresAt.isAfter(now);
     }

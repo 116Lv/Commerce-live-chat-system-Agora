@@ -23,6 +23,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+/**
+ * REST 엔드포인트를 제공하는 컨트롤러이다.
+ */
 @RestController
 @Validated
 @RequestMapping("/api/chat")
@@ -36,6 +39,12 @@ public class ChatRoomController {
         this.chatRedisPublisher = chatRedisPublisher;
     }
 
+    /**
+     * 요청한 동작을 처리한다.
+     * @param userDetails 입력 값
+     * @param productId 입력 값
+     * @return 처리 결과
+     */
     @PostMapping("/rooms/products/{productId}")
     public ApiResponse<ChatRoomResponse> openRoom(
         @AuthenticationPrincipal CustomUserDetails userDetails,
@@ -44,6 +53,12 @@ public class ChatRoomController {
         return openRoomResponse(userDetails, productId);
     }
 
+    /**
+     * 요청한 동작을 처리한다.
+     * @param userDetails 입력 값
+     * @param request 입력 값
+     * @return 처리 결과
+     */
     @PostMapping("/rooms")
     public ApiResponse<ChatRoomResponse> openRoomByRequest(
         @AuthenticationPrincipal CustomUserDetails userDetails,
@@ -52,6 +67,13 @@ public class ChatRoomController {
         return openRoomResponse(userDetails, request.productId());
     }
 
+    /**
+     * 요청한 동작을 처리한다.
+     * @param userDetails 입력 값
+     * @param chatRoomId 입력 값
+     * @param image 입력 값
+     * @return 처리 결과
+     */
     @PostMapping("/rooms/{chatRoomId}/images")
     public ApiResponse<ChatMessageResponse> sendImage(
         @AuthenticationPrincipal CustomUserDetails userDetails,
@@ -63,6 +85,12 @@ public class ChatRoomController {
         return ApiResponse.success("이미지 메시지를 전송했습니다.", response);
     }
 
+    /**
+     * 데이터를 반환한다.
+     * @param userDetails 입력 값
+     * @param chatRoomId 입력 값
+     * @return 처리 결과
+     */
     @GetMapping("/rooms/{chatRoomId}/messages")
     public ApiResponse<List<ChatMessageResponse>> getMessages(
         @AuthenticationPrincipal CustomUserDetails userDetails,
@@ -76,12 +104,23 @@ public class ChatRoomController {
         return ApiResponse.success("채팅 메시지 목록을 조회했습니다.", responses);
     }
 
+    /**
+     * 데이터를 반환한다.
+     * @param userDetails 입력 값
+     * @return 처리 결과
+     */
     @GetMapping("/rooms")
     public ApiResponse<List<ChatRoomResponse>> getMyRooms(@AuthenticationPrincipal CustomUserDetails userDetails) {
         List<ChatRoomResponse> responses = chatService.getMyRooms(userDetails.getUserId());
         return ApiResponse.success("채팅방 목록을 조회했습니다.", responses);
     }
 
+    /**
+     * 상태를 변경한다.
+     * @param userDetails 입력 값
+     * @param chatRoomId 입력 값
+     * @return 처리 결과
+     */
     @PatchMapping("/rooms/{chatRoomId}/read")
     public ApiResponse<ChatRoomResponse> markRead(
         @AuthenticationPrincipal CustomUserDetails userDetails,

@@ -22,6 +22,9 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+/**
+ * JPA 엔티티이다.
+ */
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
@@ -57,10 +60,18 @@ public class Settlement extends BaseTimeEntity {
         markCreatedNow();
     }
 
+    /**
+     * 요청한 동작을 처리한다.
+     * @param payment 입력 값
+     * @return 처리 결과
+     */
     public static Settlement pending(Payment payment) {
         return new Settlement(payment);
     }
 
+    /**
+     * 요청한 동작을 처리한다.
+     */
     public void complete() {
         if (status != SettlementStatus.HELD) {
             throw new IllegalStateException("보류 상태의 정산만 정산 가능 상태로 변경할 수 있습니다.");
@@ -68,6 +79,9 @@ public class Settlement extends BaseTimeEntity {
         status = SettlementStatus.READY;
     }
 
+    /**
+     * 요청한 동작을 처리한다.
+     */
     public void cancel() {
         if (status != SettlementStatus.HELD && status != SettlementStatus.READY) {
             throw new IllegalStateException("보류 또는 정산 가능 상태의 정산만 취소할 수 있습니다.");
@@ -75,6 +89,9 @@ public class Settlement extends BaseTimeEntity {
         status = SettlementStatus.FAILED;
     }
 
+    /**
+     * 요청한 동작을 처리한다.
+     */
     public void settle() {
         if (status != SettlementStatus.READY) {
             throw new IllegalStateException("정산 가능 상태의 정산만 완료할 수 있습니다.");

@@ -13,6 +13,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+/**
+ * 애플리케이션 유스케이스를 조정하는 서비스이다.
+ */
 @Service
 @Transactional(readOnly = true)
 public class ProductImageService {
@@ -21,6 +24,12 @@ public class ProductImageService {
     private final ProductImageRepository productImageRepository;
     private final ImageStorageClient imageStorageClient;
 
+    /**
+     * 의존성을 주입받아 인스턴스를 생성한다.
+     * @param productRepository 입력 값
+     * @param productImageRepository 입력 값
+     * @param imageStorageClient 입력 값
+     */
     public ProductImageService(
         ProductRepository productRepository,
         ProductImageRepository productImageRepository,
@@ -31,6 +40,13 @@ public class ProductImageService {
         this.imageStorageClient = imageStorageClient;
     }
 
+    /**
+     * 요청한 동작을 처리한다.
+     * @param sellerId 입력 값
+     * @param productId 입력 값
+     * @param file 입력 값
+     * @return 처리 결과
+     */
     @Transactional
     public ProductImageResponse upload(Long sellerId, Long productId, MultipartFile file) {
         Product product = productRepository.findByIdAndDeletedAtIsNull(productId)

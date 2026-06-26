@@ -19,6 +19,9 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+/**
+ * JPA 엔티티이다.
+ */
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
@@ -55,10 +58,24 @@ public class ChatMessage extends BaseTimeEntity {
         markCreatedNow();
     }
 
+    /**
+     * 요청한 동작을 처리한다.
+     * @param chatRoom 입력 값
+     * @param sender 입력 값
+     * @param content 입력 값
+     * @return 처리 결과
+     */
     public static ChatMessage send(ChatRoom chatRoom, User sender, String content) {
         return new ChatMessage(chatRoom, sender, content, ChatMessageType.TEXT);
     }
 
+    /**
+     * 요청한 동작을 처리한다.
+     * @param chatRoom 입력 값
+     * @param sender 입력 값
+     * @param imageUrl 입력 값
+     * @return 처리 결과
+     */
     public static ChatMessage sendImage(ChatRoom chatRoom, User sender, String imageUrl) {
         return new ChatMessage(chatRoom, sender, imageUrl, ChatMessageType.IMAGE);
     }

@@ -18,16 +18,29 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+/**
+ * REST 엔드포인트를 제공하는 컨트롤러이다.
+ */
 @RestController
 @RequestMapping("/api/payments")
 public class PaymentController {
 
     private final PaymentService paymentService;
 
+    /**
+     * 의존성을 주입받아 인스턴스를 생성한다.
+     * @param paymentService 입력 값
+     */
     public PaymentController(PaymentService paymentService) {
         this.paymentService = paymentService;
     }
 
+    /**
+     * 요청한 동작을 처리한다.
+     * @param userDetails 입력 값
+     * @param tradeId 입력 값
+     * @return 처리 결과
+     */
     @PostMapping("/trades/{tradeId}/prepare")
     public ApiResponse<PaymentResponse> prepare(
         @AuthenticationPrincipal CustomUserDetails userDetails,
@@ -36,6 +49,12 @@ public class PaymentController {
         return prepareResponse(userDetails, tradeId);
     }
 
+    /**
+     * 요청한 동작을 처리한다.
+     * @param userDetails 입력 값
+     * @param request 입력 값
+     * @return 처리 결과
+     */
     @PostMapping("/prepare")
     public ApiResponse<PaymentResponse> prepareByRequest(
         @AuthenticationPrincipal CustomUserDetails userDetails,
@@ -44,6 +63,13 @@ public class PaymentController {
         return prepareResponse(userDetails, request.tradeId());
     }
 
+    /**
+     * 요청한 동작을 처리한다.
+     * @param userDetails 입력 값
+     * @param paymentId 입력 값
+     * @param request 입력 값
+     * @return 처리 결과
+     */
     @PostMapping("/{paymentId}/confirm")
     public ApiResponse<PaymentResponse> confirm(
         @AuthenticationPrincipal CustomUserDetails userDetails,
@@ -53,6 +79,12 @@ public class PaymentController {
         return confirmResponse(userDetails, paymentId, request.paymentKey());
     }
 
+    /**
+     * 요청한 동작을 처리한다.
+     * @param userDetails 입력 값
+     * @param request 입력 값
+     * @return 처리 결과
+     */
     @PostMapping("/confirm")
     public ApiResponse<PaymentResponse> confirmByRequest(
         @AuthenticationPrincipal CustomUserDetails userDetails,
@@ -61,6 +93,13 @@ public class PaymentController {
         return confirmResponse(userDetails, request.paymentId(), request.paymentKey());
     }
 
+    /**
+     * 요청한 동작을 처리한다.
+     * @param userDetails 입력 값
+     * @param paymentId 입력 값
+     * @param request 입력 값
+     * @return 처리 결과
+     */
     @PostMapping("/{paymentId}/refund")
     public ApiResponse<PaymentResponse> refund(
         @AuthenticationPrincipal CustomUserDetails userDetails,
@@ -71,6 +110,12 @@ public class PaymentController {
         return ApiResponse.success("결제가 환불되었습니다.", response);
     }
 
+    /**
+     * 데이터를 반환한다.
+     * @param userDetails 입력 값
+     * @param paymentId 입력 값
+     * @return 처리 결과
+     */
     @GetMapping("/{paymentId}/refund")
     public ApiResponse<RefundStatusResponse> getRefundStatus(
         @AuthenticationPrincipal CustomUserDetails userDetails,

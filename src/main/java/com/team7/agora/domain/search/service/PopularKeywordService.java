@@ -11,6 +11,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
+/**
+ * 애플리케이션 유스케이스를 조정하는 서비스이다.
+ */
 @Service
 public class PopularKeywordService {
 
@@ -19,6 +22,10 @@ public class PopularKeywordService {
 
     private final PopularKeywordRepository popularKeywordRepository;
 
+    /**
+     * 의존성을 주입받아 인스턴스를 생성한다.
+     * @param popularKeywordRepository 입력 값
+     */
     public PopularKeywordService(PopularKeywordRepository popularKeywordRepository) {
         this.popularKeywordRepository = popularKeywordRepository;
     }
@@ -39,6 +46,11 @@ public class PopularKeywordService {
         });
     }
 
+    /**
+     * 데이터를 반환한다.
+     * @param limit 입력 값
+     * @return 처리 결과
+     */
     public List<PopularKeywordResponse> getTopKeywords(int limit) {
         return readWithoutRedisFailure(
             "read realtime popular keywords",
@@ -46,6 +58,11 @@ public class PopularKeywordService {
         );
     }
 
+    /**
+     * 데이터를 반환한다.
+     * @param limit 입력 값
+     * @return 처리 결과
+     */
     public List<PopularKeywordResponse> getTopDailyKeywords(int limit) {
         return readWithoutRedisFailure(
             "read daily popular keywords",
@@ -53,6 +70,11 @@ public class PopularKeywordService {
         );
     }
 
+    /**
+     * 데이터를 반환한다.
+     * @param limit 입력 값
+     * @return 처리 결과
+     */
     public List<PopularKeywordResponse> getTopWeeklyKeywords(int limit) {
         return readWithoutRedisFailure(
             "read weekly popular keywords",

@@ -17,6 +17,9 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+/**
+ * JPA 엔티티이다.
+ */
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
@@ -56,15 +59,30 @@ public class CouponEvent extends BaseTimeEntity {
         this.status = CouponEventStatus.ACTIVE;
     }
 
+    /**
+     * 도메인 객체를 생성한다.
+     * @param name 입력 값
+     * @param totalQuantity 입력 값
+     * @param startAt 입력 값
+     * @param endAt 입력 값
+     * @return 처리 결과
+     */
     public static CouponEvent create(String name, int totalQuantity, LocalDateTime startAt, LocalDateTime endAt) {
         return new CouponEvent(name, totalQuantity, startAt, endAt);
     }
 
+    /**
+     * 조건 충족 여부를 확인한다.
+     */
     public void issue() {
         validateIssueable(LocalDateTime.now());
         this.issuedQuantity++;
     }
 
+    /**
+     * 규칙을 검증한다.
+     * @param now 입력 값
+     */
     public void validateIssueable(LocalDateTime now) {
         if (status != CouponEventStatus.ACTIVE) {
             throw new BusinessException(ErrorCode.CONFLICT, "종료된 쿠폰 이벤트입니다.");

@@ -3,6 +3,14 @@ package com.team7.agora.domain.user.dto.response;
 
 import com.team7.agora.domain.user.entity.User;
 
+/**
+ * 응답 본문을 전달하는 DTO이다.
+ * @param id 입력 값
+ * @param email 입력 값
+ * @param nickname 입력 값
+ * @param role 입력 값
+ * @param status 입력 값
+ */
 public record UserMeResponse(
         Long id,
         String email,
@@ -11,6 +19,11 @@ public record UserMeResponse(
         String status
 ) {
 
+    /**
+     * 도메인 객체로부터 응답 객체를 생성한다.
+     * @param user 입력 값
+     * @return 처리 결과
+     */
     public static UserMeResponse from(User user) {
         return new UserMeResponse(
                 user.getId(),

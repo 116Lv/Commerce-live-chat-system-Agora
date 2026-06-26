@@ -15,6 +15,9 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+/**
+ * JPA 엔티티이다.
+ */
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
@@ -42,6 +45,13 @@ public class UserRegion {
         this.primaryRegion = primaryRegion;
     }
 
+    /**
+     * 요청한 동작을 처리한다.
+     * @param user 입력 값
+     * @param region 입력 값
+     * @param primaryRegion 입력 값
+     * @return 처리 결과
+     */
     public static UserRegion of(User user, Region region, boolean primaryRegion) {
         return new UserRegion(user, region, primaryRegion);
     }

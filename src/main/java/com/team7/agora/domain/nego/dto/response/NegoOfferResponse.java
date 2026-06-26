@@ -5,6 +5,17 @@ import com.team7.agora.domain.trade.entity.Trade;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
+/**
+ * 응답 본문을 전달하는 DTO이다.
+ * @param offerId 입력 값
+ * @param chatRoomId 입력 값
+ * @param requesterId 입력 값
+ * @param offerPrice 입력 값
+ * @param status 입력 값
+ * @param createdAt 입력 값
+ * @param expiresAt 입력 값
+ * @param respondedAt 입력 값
+ */
 public record NegoOfferResponse(
     Long offerId,
     Long tradeId,
@@ -17,6 +28,11 @@ public record NegoOfferResponse(
     LocalDateTime respondedAt
 ) {
 
+    /**
+     * 도메인 객체로부터 응답 객체를 생성한다.
+     * @param offer 입력 값
+     * @return 처리 결과
+     */
     public static NegoOfferResponse from(NegoOffer offer) {
         return from(offer, (Long) null);
     }

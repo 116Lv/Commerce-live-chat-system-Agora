@@ -12,6 +12,9 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+/**
+ * JPA 엔티티이다.
+ */
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
@@ -48,6 +51,15 @@ public class Region {
         this.eupmyeondong = eupmyeondong;
     }
 
+    /**
+     * 도메인 객체를 생성한다.
+     * @param name 입력 값
+     * @param code 입력 값
+     * @param sido 입력 값
+     * @param sigungu 입력 값
+     * @param eupmyeondong 입력 값
+     * @return 처리 결과
+     */
     public static Region create(String name, String code, String sido, String sigungu, String eupmyeondong) {
         return new Region(name, code, sido, sigungu, eupmyeondong);
     }

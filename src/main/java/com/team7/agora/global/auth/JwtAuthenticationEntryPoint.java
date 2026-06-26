@@ -9,9 +9,17 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.stereotype.Component;
 
+/**
+ * 인증 처리를 담당하는 컴포넌트이다.
+ */
 @Component
 public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
-
+    /**
+     * 요청한 동작을 처리한다.
+     * @param request 입력 값
+     * @param response 입력 값
+     * @param authException 입력 값
+     */
     @Override
     public void commence(
         HttpServletRequest request,

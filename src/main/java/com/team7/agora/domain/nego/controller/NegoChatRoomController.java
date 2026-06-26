@@ -14,16 +14,30 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+/**
+ * REST 엔드포인트를 제공하는 컨트롤러이다.
+ */
 @RestController
 @RequestMapping("/api/chat/rooms")
 public class NegoChatRoomController {
 
     private final NegoService negoService;
 
+    /**
+     * 의존성을 주입받아 인스턴스를 생성한다.
+     * @param negoService 입력 값
+     */
     public NegoChatRoomController(NegoService negoService) {
         this.negoService = negoService;
     }
 
+    /**
+     * 도메인 객체를 생성한다.
+     * @param userDetails 입력 값
+     * @param chatRoomId 입력 값
+     * @param request 입력 값
+     * @return 처리 결과
+     */
     @PostMapping("/{chatRoomId}/nego-offers")
     public ApiResponse<NegoOfferResponse> createOffer(
         @AuthenticationPrincipal CustomUserDetails userDetails,

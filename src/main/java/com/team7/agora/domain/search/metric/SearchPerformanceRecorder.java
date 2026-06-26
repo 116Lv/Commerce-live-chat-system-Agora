@@ -4,11 +4,20 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 import org.springframework.stereotype.Component;
 
+/**
+ * 검색 성능 측정을 담당하는 컴포넌트이다.
+ */
 @Component
 public class SearchPerformanceRecorder {
 
     private final ConcurrentHashMap<String, VersionCounters> countersByVersion = new ConcurrentHashMap<>();
 
+    /**
+     * 요청한 동작을 처리한다.
+     * @param version 입력 값
+     * @param elapsedNanos 입력 값
+     * @param dbQueried 입력 값
+     */
     public void record(String version, long elapsedNanos, boolean dbQueried) {
         countersByVersion
             .computeIfAbsent(version, key -> new VersionCounters())

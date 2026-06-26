@@ -31,6 +31,9 @@ import java.util.Optional;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+/**
+ * 애플리케이션 유스케이스를 조정하는 서비스이다.
+ */
 @Service
 @Transactional(readOnly = true)
 public class TradeService {
@@ -45,6 +48,17 @@ public class TradeService {
     private final ChatMessageRepository chatMessageRepository;
     private final ChatRedisPublisher chatRedisPublisher;
 
+    /**
+     * 의존성을 주입받아 인스턴스를 생성한다.
+     * @param tradeRepository 입력 값
+     * @param productRepository 입력 값
+     * @param userRepository 입력 값
+     * @param chatRoomRepository 입력 값
+     * @param negoOfferRepository 입력 값
+     * @param settlementRepository 입력 값
+     * @param paymentRepository 입력 값
+     * @param chatMessageRepository 입력 값
+     */
     public TradeService(
         TradeRepository tradeRepository,
         ProductRepository productRepository,
@@ -67,6 +81,12 @@ public class TradeService {
         this.chatRedisPublisher = chatRedisPublisher;
     }
 
+    /**
+     * 데이터를 반환한다.
+     * @param userId 입력 값
+     * @param tradeId 입력 값
+     * @return 처리 결과
+     */
     public TradeDetailResponse getTradeDetail(Long userId, Long tradeId) {
         Trade trade = tradeRepository.findById(tradeId)
             .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "거래를 찾을 수 없습니다."));
@@ -83,6 +103,12 @@ public class TradeService {
         return TradeDetailResponse.of(trade, payment, settlement);
     }
 
+    /**
+     * 요청한 동작을 처리한다.
+     * @param buyerId 입력 값
+     * @param productId 입력 값
+     * @return 처리 결과
+     */
     @Transactional
     public TradeResponse startTrade(Long buyerId, Long productId) {
         Product product = productRepository.findByIdAndDeletedAtIsNull(productId)
@@ -111,6 +137,12 @@ public class TradeService {
         return TradeResponse.from(trade);
     }
 
+    /**
+     * 도메인 객체를 생성한다.
+     * @param product 입력 값
+     * @param acceptedOffer 입력 값
+     * @return 처리 결과
+     */
     @Transactional
     public Trade createTradeFromAcceptedOffer(Product product, NegoOffer acceptedOffer) {
         if (product.getStatus() != ProductStatus.SELLING) {
@@ -125,6 +157,12 @@ public class TradeService {
         return tradeRepository.save(trade);
     }
 
+    /**
+     * 요청한 동작을 처리한다.
+     * @param buyerId 입력 값
+     * @param tradeId 입력 값
+     * @return 처리 결과
+     */
     @Transactional
     public TradeResponse completeTrade(Long buyerId, Long tradeId) {
         Trade trade = tradeRepository.findById(tradeId)
@@ -147,6 +185,12 @@ public class TradeService {
         return TradeResponse.from(trade);
     }
 
+    /**
+     * 요청한 동작을 처리한다.
+     * @param authUser 입력 값
+     * @param tradeId 입력 값
+     * @return 처리 결과
+     */
     @Transactional
     public TradeResponse expireReservation(AuthUser authUser, Long tradeId) {
         if (!isReservationExpiryAuthority(authUser)) {
@@ -168,6 +212,11 @@ public class TradeService {
             && ("ROOT_ADMIN".equals(authUser.role()) || "SETTLEMENT_ADMIN".equals(authUser.role()));
     }
 
+    /**
+     * 요청한 동작을 처리한다.
+     * @param authUser 입력 값
+     * @param tradeId 입력 값
+     */
     @Transactional
     public void sendRatingRequestMessage(AuthUser authUser, Long tradeId) {
         if (!isSystemAuthority(authUser)) {

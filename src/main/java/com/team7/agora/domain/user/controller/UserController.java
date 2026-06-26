@@ -15,21 +15,39 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+/**
+ * REST 엔드포인트를 제공하는 컨트롤러이다.
+ */
 @RestController
 @RequestMapping("/api/users/me")
 public class UserController {
 
     private final UserService userService;
 
+    /**
+     * 의존성을 주입받아 인스턴스를 생성한다.
+     * @param userService 입력 값
+     */
     public UserController(UserService userService) {
         this.userService = userService;
     }
 
+    /**
+     * 데이터를 반환한다.
+     * @param userDetails 입력 값
+     * @return 처리 결과
+     */
     @GetMapping
     public ApiResponse<UserMeResponse> getMe(@AuthenticationPrincipal CustomUserDetails userDetails) {
         return ApiResponse.success("내 정보를 조회했습니다.", userService.getMe(userDetails.getUserId()));
     }
 
+    /**
+     * 데이터를 수정한다.
+     * @param userDetails 입력 값
+     * @param request 입력 값
+     * @return 처리 결과
+     */
     @PatchMapping("/profile")
     public ApiResponse<UserMeResponse> updateProfile(
             @AuthenticationPrincipal CustomUserDetails userDetails,
@@ -39,6 +57,12 @@ public class UserController {
         return ApiResponse.success("프로필이 수정되었습니다.", response);
     }
 
+    /**
+     * 요청한 동작을 처리한다.
+     * @param userDetails 입력 값
+     * @param request 입력 값
+     * @return 처리 결과
+     */
     @PatchMapping("/password")
     public ApiResponse<Void> changePassword(
             @AuthenticationPrincipal CustomUserDetails userDetails,

@@ -12,6 +12,9 @@ import org.springframework.messaging.support.ChannelInterceptor;
 import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.stereotype.Component;
 
+/**
+ * STOMP 인증 처리를 담당하는 WebSocket 컴포넌트이다.
+ */
 @Component
 public class StompAuthInterceptor implements ChannelInterceptor {
 
@@ -19,10 +22,20 @@ public class StompAuthInterceptor implements ChannelInterceptor {
 
     private final JwtProvider jwtProvider;
 
+    /**
+     * 의존성을 주입받아 인스턴스를 생성한다.
+     * @param jwtProvider 입력 값
+     */
     public StompAuthInterceptor(JwtProvider jwtProvider) {
         this.jwtProvider = jwtProvider;
     }
 
+    /**
+     * 요청한 동작을 처리한다.
+     * @param message 입력 값
+     * @param channel 입력 값
+     * @return 처리 결과
+     */
     @Override
     public Message<?> preSend(Message<?> message, MessageChannel channel) {
         StompHeaderAccessor accessor = StompHeaderAccessor.wrap(message);

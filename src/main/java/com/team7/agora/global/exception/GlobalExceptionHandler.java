@@ -12,9 +12,16 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
+/**
+ * 도메인 예외이다.
+ */
 @RestControllerAdvice
 public class GlobalExceptionHandler {
-
+    /**
+     * 요청한 동작을 처리한다.
+     * @param exception 입력 값
+     * @return 처리 결과
+     */
     @ExceptionHandler(BusinessException.class)
     public ResponseEntity<ApiResponse<Void>> handleBusinessException(BusinessException exception) {
         return ResponseEntity
@@ -22,6 +29,11 @@ public class GlobalExceptionHandler {
                 .body(ApiResponse.error(exception.getMessage()));
     }
 
+    /**
+     * 요청한 동작을 처리한다.
+     * @param exception 입력 값
+     * @return 처리 결과
+     */
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiResponse<Void>> handleValidationException(MethodArgumentNotValidException exception) {
         String message = exception.getBindingResult().getFieldErrors().stream()
@@ -66,6 +78,11 @@ public class GlobalExceptionHandler {
                 .body(ApiResponse.error(ErrorCode.NOT_FOUND.getMessage()));
     }
 
+    /**
+     * 요청한 동작을 처리한다.
+     * @param exception 입력 값
+     * @return 처리 결과
+     */
     @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
     public ResponseEntity<ApiResponse<Void>> handleMethodNotSupportedException(
             HttpRequestMethodNotSupportedException exception) {
@@ -74,6 +91,11 @@ public class GlobalExceptionHandler {
                 .body(ApiResponse.error("지원하지 않는 HTTP 메서드입니다."));
     }
 
+    /**
+     * 요청한 동작을 처리한다.
+     * @param exception 입력 값
+     * @return 처리 결과
+     */
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse<Void>> handleUnexpectedException(Exception exception) {
         return ResponseEntity

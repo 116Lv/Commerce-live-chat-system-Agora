@@ -15,6 +15,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+/**
+ * 애플리케이션 유스케이스를 조정하는 서비스이다.
+ */
 @Service
 @Transactional(readOnly = true)
 public class AdminAuthService {
@@ -23,12 +26,23 @@ public class AdminAuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtProvider jwtProvider;
 
+    /**
+     * 의존성을 주입받아 인스턴스를 생성한다.
+     * @param userRepository 입력 값
+     * @param passwordEncoder 입력 값
+     * @param jwtProvider 입력 값
+     */
     public AdminAuthService(UserRepository userRepository, PasswordEncoder passwordEncoder, JwtProvider jwtProvider) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtProvider = jwtProvider;
     }
 
+    /**
+     * 요청한 동작을 처리한다.
+     * @param request 입력 값
+     * @return 처리 결과
+     */
     public AdminLoginResponse login(AdminLoginRequest request) {
         String email = normalizeEmail(request.email());
         User user = userRepository.findByEmailIgnoreCase(email)
@@ -53,6 +67,10 @@ public class AdminAuthService {
         return new AdminLoginResponse(accessToken);
     }
 
+    /**
+     * 요청한 동작을 처리한다.
+     * @param admin 입력 값
+     */
     public void logout(CustomUserDetails admin) {
         if (admin == null) {
             throw new BusinessException(ErrorCode.UNAUTHORIZED);

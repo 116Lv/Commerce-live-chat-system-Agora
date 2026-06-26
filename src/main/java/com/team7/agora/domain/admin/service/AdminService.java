@@ -13,16 +13,28 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+/**
+ * 애플리케이션 유스케이스를 조정하는 서비스이다.
+ */
 @Service
 @Transactional(readOnly = true)
 public class AdminService {
 
     private final UserRepository userRepository;
 
+    /**
+     * 의존성을 주입받아 인스턴스를 생성한다.
+     * @param userRepository 입력 값
+     */
     public AdminService(UserRepository userRepository) {
         this.userRepository = userRepository;
     }
 
+    /**
+     * 데이터를 반환한다.
+     * @param admin 입력 값
+     * @return 처리 결과
+     */
     public AdminMeResponse getMe(CustomUserDetails admin) {
         validateAdmin(admin);
         User user = userRepository.findById(admin.getUserId())
@@ -30,6 +42,11 @@ public class AdminService {
         return AdminMeResponse.from(user);
     }
 
+    /**
+     * 데이터를 반환한다.
+     * @param admin 입력 값
+     * @return 처리 결과
+     */
     public AdminDashboardResponse getDashboard(CustomUserDetails admin) {
         validateAdmin(admin);
         return new AdminDashboardResponse(admin.getRole().name(), accessibleMenusFor(admin.getRole()));

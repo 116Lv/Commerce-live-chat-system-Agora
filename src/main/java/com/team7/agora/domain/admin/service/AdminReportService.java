@@ -11,16 +11,28 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+/**
+ * 애플리케이션 유스케이스를 조정하는 서비스이다.
+ */
 @Service
 @Transactional(readOnly = true)
 public class AdminReportService {
 
     private final ReportRepository reportRepository;
 
+    /**
+     * 의존성을 주입받아 인스턴스를 생성한다.
+     * @param reportRepository 입력 값
+     */
     public AdminReportService(ReportRepository reportRepository) {
         this.reportRepository = reportRepository;
     }
 
+    /**
+     * 데이터를 반환한다.
+     * @param admin 입력 값
+     * @return 처리 결과
+     */
     public List<AdminReportListResponse> getUserReports(CustomUserDetails admin) {
         validateUserAdmin(admin);
         return reportRepository.findAllByProductIsNull().stream()
@@ -28,6 +40,13 @@ public class AdminReportService {
             .toList();
     }
 
+    /**
+     * 요청한 동작을 처리한다.
+     * @param admin 입력 값
+     * @param reportId 입력 값
+     * @param adminMemo 입력 값
+     * @return 처리 결과
+     */
     @Transactional
     public AdminReportResponse resolveUserReport(CustomUserDetails admin, Long reportId, String adminMemo) {
         validateUserAdmin(admin);
@@ -41,6 +60,11 @@ public class AdminReportService {
         return AdminReportResponse.from(report);
     }
 
+    /**
+     * 데이터를 반환한다.
+     * @param admin 입력 값
+     * @return 처리 결과
+     */
     public List<AdminReportListResponse> getProductReports(CustomUserDetails admin) {
         validateProductAdmin(admin);
         return reportRepository.findAllByProductIsNotNull().stream()
@@ -48,6 +72,13 @@ public class AdminReportService {
             .toList();
     }
 
+    /**
+     * 요청한 동작을 처리한다.
+     * @param admin 입력 값
+     * @param reportId 입력 값
+     * @param adminMemo 입력 값
+     * @return 처리 결과
+     */
     @Transactional
     public AdminReportResponse resolveProductReport(CustomUserDetails admin, Long reportId, String adminMemo) {
         validateProductAdmin(admin);

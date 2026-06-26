@@ -21,6 +21,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+/**
+ * 애플리케이션 유스케이스를 조정하는 서비스이다.
+ */
 @Service
 @Transactional(readOnly = true)
 public class ChatService {
@@ -31,6 +34,14 @@ public class ChatService {
     private final UserRepository userRepository;
     private final ImageStorageClient imageStorageClient;
 
+    /**
+     * 의존성을 주입받아 인스턴스를 생성한다.
+     * @param chatRoomRepository 입력 값
+     * @param chatMessageRepository 입력 값
+     * @param productRepository 입력 값
+     * @param userRepository 입력 값
+     * @param imageStorageClient 입력 값
+     */
     public ChatService(
         ChatRoomRepository chatRoomRepository,
         ChatMessageRepository chatMessageRepository,
@@ -45,6 +56,12 @@ public class ChatService {
         this.imageStorageClient = imageStorageClient;
     }
 
+    /**
+     * 요청한 동작을 처리한다.
+     * @param userId 입력 값
+     * @param productId 입력 값
+     * @return 처리 결과
+     */
     @Transactional
     public ChatRoomResponse openRoom(Long userId, Long productId) {
         Product product = productRepository.findByIdAndDeletedAtIsNull(productId)
@@ -61,6 +78,13 @@ public class ChatService {
         return ChatRoomResponse.from(chatRoom);
     }
 
+    /**
+     * 요청한 동작을 처리한다.
+     * @param userId 입력 값
+     * @param chatRoomId 입력 값
+     * @param content 입력 값
+     * @return 처리 결과
+     */
     @Transactional
     public ChatMessageResponse sendMessage(Long userId, Long chatRoomId, String content) {
         ChatRoom chatRoom = findActiveRoom(chatRoomId);
@@ -74,6 +98,13 @@ public class ChatService {
         return ChatMessageResponse.from(message);
     }
 
+    /**
+     * 요청한 동작을 처리한다.
+     * @param userId 입력 값
+     * @param chatRoomId 입력 값
+     * @param image 입력 값
+     * @return 처리 결과
+     */
     @Transactional
     public ChatMessageResponse sendImageMessage(Long userId, Long chatRoomId, MultipartFile image) {
         ChatRoom chatRoom = findActiveRoom(chatRoomId);
@@ -105,6 +136,11 @@ public class ChatService {
             .toList();
     }
 
+    /**
+     * 데이터를 반환한다.
+     * @param userId 입력 값
+     * @return 처리 결과
+     */
     public List<ChatRoomResponse> getMyRooms(Long userId) {
         User user = findUser(userId);
         return chatRoomRepository.findAllBySellerOrBuyer(user, user).stream()
@@ -112,6 +148,12 @@ public class ChatService {
             .toList();
     }
 
+    /**
+     * 상태를 변경한다.
+     * @param userId 입력 값
+     * @param chatRoomId 입력 값
+     * @return 처리 결과
+     */
     @Transactional
     public ChatRoomResponse markRead(Long userId, Long chatRoomId) {
         ChatRoom chatRoom = findActiveRoom(chatRoomId);

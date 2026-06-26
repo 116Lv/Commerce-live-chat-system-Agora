@@ -15,6 +15,9 @@ import java.time.LocalDateTime;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+/**
+ * 호출자가 분산 락을 보유한 상태에서 쿠폰 발급 트랜잭션을 실행한다.
+ */
 @Component
 public class CouponIssueTransactionExecutor {
 
@@ -35,6 +38,11 @@ public class CouponIssueTransactionExecutor {
         this.userRepository = userRepository;
     }
 
+    /**
+     * 쿠폰 이벤트에 대해 사용자에게 쿠폰을 발급한다.
+     * @param userId 사용자 ID
+     * @param couponEventId 쿠폰 이벤트 ID
+     */
     @Transactional
     public void issue(Long userId, Long couponEventId) {
         User user = userRepository.findById(userId)

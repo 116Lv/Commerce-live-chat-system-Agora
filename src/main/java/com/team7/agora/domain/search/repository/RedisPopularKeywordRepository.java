@@ -8,6 +8,9 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ZSetOperations;
 import org.springframework.stereotype.Repository;
 
+/**
+ * 영속성 작업을 구현하는 저장소 어댑터이다.
+ */
 @Repository
 public class RedisPopularKeywordRepository implements PopularKeywordRepository {
 
@@ -21,10 +24,18 @@ public class RedisPopularKeywordRepository implements PopularKeywordRepository {
 
     private final StringRedisTemplate redisTemplate;
 
+    /**
+     * 의존성을 주입받아 인스턴스를 생성한다.
+     * @param redisTemplate 입력 값
+     */
     public RedisPopularKeywordRepository(StringRedisTemplate redisTemplate) {
         this.redisTemplate = redisTemplate;
     }
 
+    /**
+     * 요청한 동작을 처리한다.
+     * @param keyword 입력 값
+     */
     @Override
     public boolean tryMarkSearched(Long userId, String keyword) {
         String key = DEDUP_KEY_PREFIX + userId + ":" + keyword;
@@ -37,11 +48,21 @@ public class RedisPopularKeywordRepository implements PopularKeywordRepository {
         redisTemplate.opsForZSet().incrementScore(KEY, keyword, 1);
     }
 
+    /**
+     * 데이터를 반환한다.
+     * @param limit 입력 값
+     * @return 처리 결과
+     */
     @Override
     public List<PopularKeywordResponse> getTopKeywords(int limit) {
         return getTopKeywords(KEY, limit);
     }
 
+    /**
+     * 요청한 동작을 처리한다.
+     * @param keyword 입력 값
+     * @param dateKey 입력 값
+     */
     @Override
     public void incrementDaily(String keyword, String dateKey) {
         String key = DAILY_KEY_PREFIX + dateKey;
@@ -49,11 +70,22 @@ public class RedisPopularKeywordRepository implements PopularKeywordRepository {
         redisTemplate.expire(key, DAILY_TTL);
     }
 
+    /**
+     * 데이터를 반환한다.
+     * @param dateKey 입력 값
+     * @param limit 입력 값
+     * @return 처리 결과
+     */
     @Override
     public List<PopularKeywordResponse> getTopDailyKeywords(String dateKey, int limit) {
         return getTopKeywords(DAILY_KEY_PREFIX + dateKey, limit);
     }
 
+    /**
+     * 요청한 동작을 처리한다.
+     * @param keyword 입력 값
+     * @param weekKey 입력 값
+     */
     @Override
     public void incrementWeekly(String keyword, String weekKey) {
         String key = WEEKLY_KEY_PREFIX + weekKey;
@@ -61,6 +93,12 @@ public class RedisPopularKeywordRepository implements PopularKeywordRepository {
         redisTemplate.expire(key, WEEKLY_TTL);
     }
 
+    /**
+     * 데이터를 반환한다.
+     * @param weekKey 입력 값
+     * @param limit 입력 값
+     * @return 처리 결과
+     */
     @Override
     public List<PopularKeywordResponse> getTopWeeklyKeywords(String weekKey, int limit) {
         return getTopKeywords(WEEKLY_KEY_PREFIX + weekKey, limit);

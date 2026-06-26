@@ -7,6 +7,9 @@ import com.team7.agora.domain.chat.dto.response.ChatMessageResponse;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
 
+/**
+ * 채팅 메시지를 Redis Pub/Sub 채널로 발행해 모든 애플리케이션 인스턴스가 전달받도록 한다.
+ */
 @Component
 public class ChatRedisPublisher {
 
@@ -20,6 +23,11 @@ public class ChatRedisPublisher {
         this.objectMapper = objectMapper;
     }
 
+    /**
+     * 채팅 메시지를 직렬화해 채팅방별 Redis 채널에 발행한다.
+     * @param roomId 채팅방 ID
+     * @param message 발행할 채팅 메시지
+     */
     public void publish(Long roomId, ChatMessageResponse message) {
         try {
             redisTemplate.convertAndSend(TOPIC_PREFIX + roomId, objectMapper.writeValueAsString(message));

@@ -16,12 +16,20 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
+/**
+ * 인증 처리를 담당하는 컴포넌트이다.
+ */
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtProvider jwtProvider;
     private final UserDetailsService userDetailsService;
 
+    /**
+     * 의존성을 주입받아 인스턴스를 생성한다.
+     * @param jwtProvider 입력 값
+     * @param userDetailsService 입력 값
+     */
     public JwtAuthenticationFilter(
         JwtProvider jwtProvider,
         UserDetailsService userDetailsService

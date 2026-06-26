@@ -10,6 +10,9 @@ import org.springframework.data.redis.connection.MessageListener;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Component;
 
+/**
+ * Redis Pub/Sub에서 수신한 채팅 메시지를 현재 서버의 STOMP 구독자에게 전달한다.
+ */
 @Slf4j
 @Component
 public class ChatRedisSubscriber implements MessageListener {
@@ -24,6 +27,11 @@ public class ChatRedisSubscriber implements MessageListener {
         this.objectMapper = objectMapper;
     }
 
+    /**
+     * Redis 메시지를 역직렬화해 채팅방 STOMP 목적지로 전송한다.
+     * @param message Redis에서 수신한 메시지
+     * @param pattern 구독 중인 Redis 패턴
+     */
     @Override
     public void onMessage(Message message, byte[] pattern) {
         try {

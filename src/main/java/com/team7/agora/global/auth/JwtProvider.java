@@ -13,6 +13,9 @@ import javax.crypto.spec.SecretKeySpec;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+/**
+ * 인증 처리를 담당하는 컴포넌트이다.
+ */
 @Component
 public class JwtProvider {
 
@@ -23,6 +26,11 @@ public class JwtProvider {
     private final String secretKey;
     private final long accessTokenValidTime;
 
+    /**
+     * 의존성을 주입받아 인스턴스를 생성한다.
+     * @param secretKey 입력 값
+     * @param accessTokenValidTime 입력 값
+     */
     public JwtProvider(
         @Value("${jwt.secret-key}") String secretKey,
         @Value("${jwt.access-token-valid-time}") long accessTokenValidTime
@@ -31,6 +39,14 @@ public class JwtProvider {
         this.accessTokenValidTime = accessTokenValidTime;
     }
 
+    /**
+     * 도메인 객체를 생성한다.
+     * @param userId 입력 값
+     * @param email 입력 값
+     * @param role 입력 값
+     * @param nickname 입력 값
+     * @return 처리 결과
+     */
     public String createToken(Long userId, String email, String role, String nickname) {
         long now = Instant.now().toEpochMilli();
         long expiresAt = now + accessTokenValidTime;
@@ -52,6 +68,11 @@ public class JwtProvider {
         return BEARER_PREFIX + unsignedToken + "." + sign(unsignedToken);
     }
 
+    /**
+     * 요청한 동작을 처리한다.
+     * @param token 입력 값
+     * @return 처리 결과
+     */
     public String substringBearer(String token) {
         if (token == null || !token.startsWith(BEARER_PREFIX)) {
             throw new BusinessException(ErrorCode.INVALID_TOKEN, "Bearer 토큰 형식이 아닙니다.");
@@ -59,6 +80,11 @@ public class JwtProvider {
         return token.substring(BEARER_PREFIX.length());
     }
 
+    /**
+     * 요청한 동작을 처리한다.
+     * @param token 입력 값
+     * @return 처리 결과
+     */
     public JwtClaims parse(String token) {
         String[] parts = token.split("\\.");
         if (parts.length != 3) {

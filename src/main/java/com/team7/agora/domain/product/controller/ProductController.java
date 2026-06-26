@@ -22,16 +22,29 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+/**
+ * REST 엔드포인트를 제공하는 컨트롤러이다.
+ */
 @RestController
 @RequestMapping("/api/products")
 public class ProductController {
 
     private final ProductService productService;
 
+    /**
+     * 의존성을 주입받아 인스턴스를 생성한다.
+     * @param productService 입력 값
+     */
     public ProductController(ProductService productService) {
         this.productService = productService;
     }
 
+    /**
+     * 도메인 객체를 생성한다.
+     * @param userDetails 입력 값
+     * @param request 입력 값
+     * @return 처리 결과
+     */
     @PostMapping
     public ResponseEntity<ApiResponse<ProductResponse>> create(
         @AuthenticationPrincipal CustomUserDetails userDetails,
@@ -43,12 +56,25 @@ public class ProductController {
             .body(ApiResponse.success("상품이 등록되었습니다.", response));
     }
 
+    /**
+     * 데이터를 반환한다.
+     * @param productId 입력 값
+     * @return 처리 결과
+     */
     @GetMapping("/{productId}")
     public ResponseEntity<ApiResponse<ProductResponse>> getProduct(@PathVariable Long productId) {
         ProductResponse response = productService.getProduct(productId);
         return ResponseEntity.ok(ApiResponse.success("상품을 조회했습니다.", response));
     }
 
+    /**
+     * 데이터를 반환한다.
+     * @param userDetails 입력 값
+     * @param regionId 입력 값
+     * @param page 입력 값
+     * @param size 입력 값
+     * @return 처리 결과
+     */
     @GetMapping
     public ResponseEntity<ApiResponse<List<ProductResponse>>> getProducts(
         @AuthenticationPrincipal CustomUserDetails userDetails,
@@ -61,6 +87,13 @@ public class ProductController {
         return ResponseEntity.ok(ApiResponse.success("상품 목록을 조회했습니다.", responses));
     }
 
+    /**
+     * 데이터를 수정한다.
+     * @param userDetails 입력 값
+     * @param productId 입력 값
+     * @param request 입력 값
+     * @return 처리 결과
+     */
     @PatchMapping("/{productId}")
     public ResponseEntity<ApiResponse<ProductResponse>> update(
         @AuthenticationPrincipal CustomUserDetails userDetails,
@@ -71,6 +104,12 @@ public class ProductController {
         return ResponseEntity.ok(ApiResponse.success("상품이 수정되었습니다.", response));
     }
 
+    /**
+     * 데이터를 삭제한다.
+     * @param userDetails 입력 값
+     * @param productId 입력 값
+     * @return 처리 결과
+     */
     @DeleteMapping("/{productId}")
     public ResponseEntity<ApiResponse<Void>> delete(
         @AuthenticationPrincipal CustomUserDetails userDetails,

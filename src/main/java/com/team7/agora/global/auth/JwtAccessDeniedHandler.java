@@ -9,9 +9,17 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.stereotype.Component;
 
+/**
+ * 인증 처리를 담당하는 컴포넌트이다.
+ */
 @Component
 public class JwtAccessDeniedHandler implements AccessDeniedHandler {
-
+    /**
+     * 요청한 동작을 처리한다.
+     * @param request 입력 값
+     * @param response 입력 값
+     * @param accessDeniedException 입력 값
+     */
     @Override
     public void handle(
         HttpServletRequest request,

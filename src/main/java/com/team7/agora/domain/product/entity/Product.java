@@ -32,6 +32,9 @@ import lombok.NoArgsConstructor;
         @Index(name = "idx_products_category_status_deleted", columnList = "category, status, deleted_at"),
         @Index(name = "idx_products_title", columnList = "title")
     }
+/**
+ * JPA 엔티티이다.
+ */
 )
 public class Product {
 
@@ -83,6 +86,16 @@ public class Product {
         this.likeCount = 0;
     }
 
+    /**
+     * 도메인 객체를 생성한다.
+     * @param seller 입력 값
+     * @param region 입력 값
+     * @param title 입력 값
+     * @param description 입력 값
+     * @param price 입력 값
+     * @param category 입력 값
+     * @return 처리 결과
+     */
     public static Product create(
         User seller,
         Region region,
@@ -94,10 +107,22 @@ public class Product {
         return new Product(seller, region, title, description, price, category);
     }
 
+    /**
+     * 조건 충족 여부를 확인한다.
+     * @param userId 입력 값
+     * @return 처리 결과
+     */
     public boolean isSeller(Long userId) {
         return seller.getId() != null && seller.getId().equals(userId);
     }
 
+    /**
+     * 데이터를 수정한다.
+     * @param title 입력 값
+     * @param description 입력 값
+     * @param price 입력 값
+     * @param category 입력 값
+     */
     public void update(String title, String description, BigDecimal price, String category) {
         this.title = title;
         this.description = description;
@@ -105,30 +130,51 @@ public class Product {
         this.category = category;
     }
 
+    /**
+     * 데이터를 삭제한다.
+     */
     public void delete() {
         this.deletedAt = LocalDateTime.now();
     }
 
+    /**
+     * 상태를 변경한다.
+     */
     public void markReserved() {
         this.status = ProductStatus.RESERVED;
     }
 
+    /**
+     * 요청한 동작을 처리한다.
+     */
     public void restoreSelling() {
         this.status = ProductStatus.SELLING;
     }
 
+    /**
+     * 상태를 변경한다.
+     */
     public void markSold() {
         this.status = ProductStatus.SOLD;
     }
 
+    /**
+     * 요청한 동작을 처리한다.
+     */
     public void hide() {
         this.status = ProductStatus.HIDDEN;
     }
 
+    /**
+     * 요청한 동작을 처리한다.
+     */
     public void increaseLikeCount() {
         this.likeCount++;
     }
 
+    /**
+     * 요청한 동작을 처리한다.
+     */
     public void decreaseLikeCount() {
         this.likeCount = Math.max(0, this.likeCount - 1);
     }

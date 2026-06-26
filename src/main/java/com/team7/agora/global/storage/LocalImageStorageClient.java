@@ -13,6 +13,9 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
+/**
+ * 로컬 이미지 파일 저장 구현체이다.
+ */
 @Component
 public class LocalImageStorageClient implements ImageStorageClient {
 
@@ -27,10 +30,20 @@ public class LocalImageStorageClient implements ImageStorageClient {
 
     private final Path baseUploadDir;
 
+    /**
+     * 의존성을 주입받아 인스턴스를 생성한다.
+     * @param baseUploadDir 입력 값
+     */
     public LocalImageStorageClient(@Value("${file.upload-dir:uploads}") String baseUploadDir) {
         this.baseUploadDir = Path.of(baseUploadDir);
     }
 
+    /**
+     * 요청한 동작을 처리한다.
+     * @param category 입력 값
+     * @param file 입력 값
+     * @return 처리 결과
+     */
     @Override
     public String store(String category, MultipartFile file) {
         if (file == null || file.isEmpty()) {

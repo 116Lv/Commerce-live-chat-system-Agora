@@ -9,6 +9,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+/**
+ * 애플리케이션 유스케이스를 조정하는 서비스이다.
+ */
 @Service
 @Transactional(readOnly = true)
 public class ProductSearchService {
@@ -28,6 +31,11 @@ public class ProductSearchService {
         this.searchPerformanceRecorder = searchPerformanceRecorder;
     }
 
+    /**
+     * 요청한 동작을 처리한다.
+     * @param condition 입력 값
+     * @return 처리 결과
+     */
     public List<ProductSearchResponse> searchV1(ProductSearchCondition condition) {
         long start = System.nanoTime();
         List<ProductSearchResponse> responses = productRepository.search(condition);
@@ -35,6 +43,11 @@ public class ProductSearchService {
         return responses;
     }
 
+    /**
+     * 요청한 동작을 처리한다.
+     * @param condition 입력 값
+     * @return 처리 결과
+     */
     public List<ProductSearchResponse> searchV2(ProductSearchCondition condition) {
         long start = System.nanoTime();
         List<ProductSearchResponse> responses = productSearchCacheLoader.load(condition);
@@ -42,6 +55,9 @@ public class ProductSearchService {
         return responses;
     }
 
+    /**
+     * 요청한 동작을 처리한다.
+     */
     public void evictSearchCache() {
         productSearchCacheLoader.evictAll();
     }

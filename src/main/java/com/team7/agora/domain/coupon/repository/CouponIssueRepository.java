@@ -6,6 +6,9 @@ import com.team7.agora.domain.coupon.entity.CouponIssue;
 import com.team7.agora.domain.user.entity.User;
 import java.util.List;
 
+/**
+ * 데이터 저장과 조회를 위한 저장소 계약이다.
+ */
 public interface CouponIssueRepository {
 
     CouponIssue save(CouponIssue couponIssue);

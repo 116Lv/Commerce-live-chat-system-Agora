@@ -12,6 +12,9 @@ import com.team7.agora.global.exception.ErrorCode;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+/**
+ * 애플리케이션 유스케이스를 조정하는 서비스이다.
+ */
 @Service
 @Transactional(readOnly = true)
 public class ReportService {
@@ -20,6 +23,12 @@ public class ReportService {
     private final UserRepository userRepository;
     private final ProductRepository productRepository;
 
+    /**
+     * 의존성을 주입받아 인스턴스를 생성한다.
+     * @param reportRepository 입력 값
+     * @param userRepository 입력 값
+     * @param productRepository 입력 값
+     */
     public ReportService(
         ReportRepository reportRepository,
         UserRepository userRepository,
@@ -30,6 +39,13 @@ public class ReportService {
         this.productRepository = productRepository;
     }
 
+    /**
+     * 도메인 객체를 생성한다.
+     * @param reporterId 입력 값
+     * @param productId 입력 값
+     * @param reason 입력 값
+     * @return 처리 결과
+     */
     @Transactional
     public ReportResponse createProductReport(Long reporterId, Long productId, String reason) {
         User reporter = userRepository.findById(reporterId)
@@ -45,6 +61,13 @@ public class ReportService {
         return ReportResponse.from(reportRepository.save(report));
     }
 
+    /**
+     * 도메인 객체를 생성한다.
+     * @param reporterId 입력 값
+     * @param reportedUserId 입력 값
+     * @param reason 입력 값
+     * @return 처리 결과
+     */
     @Transactional
     public ReportResponse createUserReport(Long reporterId, Long reportedUserId, String reason) {
         if (reporterId.equals(reportedUserId)) {

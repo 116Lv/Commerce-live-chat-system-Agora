@@ -14,16 +14,30 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+/**
+ * REST 엔드포인트를 제공하는 컨트롤러이다.
+ */
 @RestController
 @RequestMapping("/api/admin/accounts")
 public class AdminAccountController {
 
     private final AdminAccountService adminAccountService;
 
+    /**
+     * 의존성을 주입받아 인스턴스를 생성한다.
+     * @param adminAccountService 입력 값
+     */
     public AdminAccountController(AdminAccountService adminAccountService) {
         this.adminAccountService = adminAccountService;
     }
 
+    /**
+     * 요청한 동작을 처리한다.
+     * @param admin 입력 값
+     * @param userId 입력 값
+     * @param request 입력 값
+     * @return 처리 결과
+     */
     @PatchMapping("/{userId}/role")
     public ApiResponse<AdminUserResponse> changeRole(
             @AuthenticationPrincipal CustomUserDetails admin,

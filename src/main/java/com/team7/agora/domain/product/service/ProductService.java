@@ -21,6 +21,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+/**
+ * 애플리케이션 유스케이스를 조정하는 서비스이다.
+ */
 @Service
 @Transactional(readOnly = true)
 public class ProductService {
@@ -31,6 +34,14 @@ public class ProductService {
     private final UserRegionRepository userRegionRepository;
     private final ProductSearchService productSearchService;
 
+    /**
+     * 의존성을 주입받아 인스턴스를 생성한다.
+     * @param productRepository 입력 값
+     * @param userRepository 입력 값
+     * @param regionRepository 입력 값
+     * @param userRegionRepository 입력 값
+     * @param productSearchService 입력 값
+     */
     public ProductService(
         ProductRepository productRepository,
         UserRepository userRepository,
@@ -45,6 +56,12 @@ public class ProductService {
         this.productSearchService = productSearchService;
     }
 
+    /**
+     * 도메인 객체를 생성한다.
+     * @param sellerId 입력 값
+     * @param request 입력 값
+     * @return 처리 결과
+     */
     @Transactional
     public ProductResponse create(Long sellerId, ProductCreateRequest request) {
         User seller = getUser(sellerId);
@@ -63,6 +80,13 @@ public class ProductService {
         return ProductResponse.from(savedProduct);
     }
 
+    /**
+     * 데이터를 수정한다.
+     * @param requesterId 입력 값
+     * @param productId 입력 값
+     * @param request 입력 값
+     * @return 처리 결과
+     */
     @Transactional
     public ProductResponse update(Long requesterId, Long productId, ProductUpdateRequest request) {
         Product product = getActiveProduct(productId);
@@ -72,6 +96,11 @@ public class ProductService {
         return ProductResponse.from(product);
     }
 
+    /**
+     * 데이터를 삭제한다.
+     * @param requesterId 입력 값
+     * @param productId 입력 값
+     */
     @Transactional
     public void delete(Long requesterId, Long productId) {
         Product product = getActiveProduct(productId);
@@ -80,10 +109,22 @@ public class ProductService {
         productSearchService.evictSearchCache();
     }
 
+    /**
+     * 데이터를 반환한다.
+     * @param productId 입력 값
+     * @return 처리 결과
+     */
     public ProductResponse getProduct(Long productId) {
         return ProductResponse.from(getActiveProduct(productId));
     }
 
+    /**
+     * 데이터를 반환한다.
+     * @param viewerId 입력 값
+     * @param regionId 입력 값
+     * @param pageable 입력 값
+     * @return 처리 결과
+     */
     public List<ProductResponse> getProducts(Long viewerId, Long regionId, Pageable pageable) {
         List<Long> regionIds = resolveRegionIds(viewerId, regionId);
         Page<Product> products = (regionIds == null)
@@ -94,6 +135,11 @@ public class ProductService {
             .toList();
     }
 
+    /**
+     * 데이터를 반환한다.
+     * @param sellerId 입력 값
+     * @return 처리 결과
+     */
     public List<ProductResponse> getMyProducts(Long sellerId) {
         User seller = getUser(sellerId);
         return productRepository.findAllBySellerAndDeletedAtIsNull(seller).stream()

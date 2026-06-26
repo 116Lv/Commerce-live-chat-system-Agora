@@ -16,6 +16,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+/**
+ * REST 엔드포인트를 제공하는 컨트롤러이다.
+ */
 @RestController
 @RequestMapping("/api")
 public class SearchController {
@@ -23,11 +26,25 @@ public class SearchController {
     private final ProductSearchService productSearchService;
     private final PopularKeywordService popularKeywordService;
 
+    /**
+     * 의존성을 주입받아 인스턴스를 생성한다.
+     * @param productSearchService 입력 값
+     * @param popularKeywordService 입력 값
+     */
     public SearchController(ProductSearchService productSearchService, PopularKeywordService popularKeywordService) {
         this.productSearchService = productSearchService;
         this.popularKeywordService = popularKeywordService;
     }
 
+    /**
+     * 요청한 동작을 처리한다.
+     * @param keyword 입력 값
+     * @param regionId 입력 값
+     * @param category 입력 값
+     * @param page 입력 값
+     * @param size 입력 값
+     * @return 처리 결과
+     */
     @GetMapping("/v1/products/search")
     public ResponseEntity<ApiResponse<List<ProductSearchResponse>>> searchV1(
         @AuthenticationPrincipal CustomUserDetails userDetails,
@@ -44,6 +61,15 @@ public class SearchController {
         return ResponseEntity.ok(ApiResponse.success("상품 검색 결과입니다.", responses));
     }
 
+    /**
+     * 요청한 동작을 처리한다.
+     * @param keyword 입력 값
+     * @param regionId 입력 값
+     * @param category 입력 값
+     * @param page 입력 값
+     * @param size 입력 값
+     * @return 처리 결과
+     */
     @GetMapping("/v2/products/search")
     public ResponseEntity<ApiResponse<List<ProductSearchResponse>>> searchV2(
         @AuthenticationPrincipal CustomUserDetails userDetails,
@@ -71,6 +97,11 @@ public class SearchController {
         return ResponseEntity.ok(ApiResponse.success("인기 검색어 목록입니다.", popularKeywordService.getTopKeywords(limit)));
     }
 
+    /**
+     * 요청한 동작을 처리한다.
+     * @param limit 입력 값
+     * @return 처리 결과
+     */
     @GetMapping("/search/keywords/daily")
     public ResponseEntity<ApiResponse<List<PopularKeywordResponse>>> dailyPopularKeywords(
         @RequestParam(defaultValue = "10") int limit
@@ -78,6 +109,11 @@ public class SearchController {
         return ResponseEntity.ok(ApiResponse.success("일간 인기 검색어입니다.", popularKeywordService.getTopDailyKeywords(limit)));
     }
 
+    /**
+     * 요청한 동작을 처리한다.
+     * @param limit 입력 값
+     * @return 처리 결과
+     */
     @GetMapping("/search/keywords/weekly")
     public ResponseEntity<ApiResponse<List<PopularKeywordResponse>>> weeklyPopularKeywords(
         @RequestParam(defaultValue = "10") int limit

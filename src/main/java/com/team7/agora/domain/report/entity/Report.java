@@ -32,6 +32,9 @@ import lombok.NoArgsConstructor;
         @Index(name = "idx_reports_status_created", columnList = "status, created_at"),
         @Index(name = "idx_reports_reported_user", columnList = "reported_user_id")
     }
+/**
+ * JPA 엔티티이다.
+ */
 )
 public class Report extends BaseTimeEntity {
 
@@ -72,14 +75,33 @@ public class Report extends BaseTimeEntity {
         markCreatedNow();
     }
 
+    /**
+     * 요청한 동작을 처리한다.
+     * @param reporter 입력 값
+     * @param reportedUser 입력 값
+     * @param product 입력 값
+     * @param reason 입력 값
+     * @return 처리 결과
+     */
     public static Report product(User reporter, User reportedUser, Product product, String reason) {
         return new Report(reporter, reportedUser, product, reason);
     }
 
+    /**
+     * 요청한 동작을 처리한다.
+     * @param reporter 입력 값
+     * @param reportedUser 입력 값
+     * @param reason 입력 값
+     * @return 처리 결과
+     */
     public static Report user(User reporter, User reportedUser, String reason) {
         return new Report(reporter, reportedUser, null, reason);
     }
 
+    /**
+     * 요청한 동작을 처리한다.
+     * @param adminMemo 입력 값
+     */
     public void resolve(String adminMemo) {
         if (status != ReportStatus.PENDING) {
             throw new BusinessException(ErrorCode.CONFLICT, "이미 처리된 신고입니다.");

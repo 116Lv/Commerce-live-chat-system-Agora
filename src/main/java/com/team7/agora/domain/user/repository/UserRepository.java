@@ -8,6 +8,9 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+/**
+ * 데이터 저장과 조회를 위한 저장소 계약이다.
+ */
 public interface UserRepository extends JpaRepository<User, Long> {
 
     boolean existsByEmail(String email);

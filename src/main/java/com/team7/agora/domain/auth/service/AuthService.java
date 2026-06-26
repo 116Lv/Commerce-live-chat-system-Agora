@@ -25,6 +25,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+/**
+ * 애플리케이션 유스케이스를 조정하는 서비스이다.
+ */
 @Service
 @Transactional(readOnly = true)
 public class AuthService {
@@ -35,6 +38,14 @@ public class AuthService {
     private final JwtProvider jwtProvider;
     private final long refreshTokenValidTime;
 
+    /**
+     * 의존성을 주입받아 인스턴스를 생성한다.
+     * @param userRepository 입력 값
+     * @param refreshTokenRepository 입력 값
+     * @param passwordEncoder 입력 값
+     * @param jwtProvider 입력 값
+     * @param refreshTokenValidTime 입력 값
+     */
     public AuthService(
         UserRepository userRepository,
         RefreshTokenRepository refreshTokenRepository,
@@ -49,6 +60,11 @@ public class AuthService {
         this.refreshTokenValidTime = refreshTokenValidTime;
     }
 
+    /**
+     * 요청한 동작을 처리한다.
+     * @param request 입력 값
+     * @return 처리 결과
+     */
     @Transactional
     public SignupResponse signup(SignupRequest request) {
         String email = normalizeEmail(request.email());
@@ -90,11 +106,20 @@ public class AuthService {
         return new LoginResponse(accessToken, refreshToken);
     }
 
+    /**
+     * 요청한 동작을 처리한다.
+     * @param userId 입력 값
+     */
     @Transactional
     public void logout(Long userId) {
         refreshTokenRepository.deleteByUserId(userId);
     }
 
+    /**
+     * 요청한 동작을 처리한다.
+     * @param refreshTokenValue 입력 값
+     * @return 처리 결과
+     */
     @Transactional
     public ReissueResponse reissue(String refreshTokenValue) {
         RefreshToken refreshToken = refreshTokenRepository.findByToken(refreshTokenValue)

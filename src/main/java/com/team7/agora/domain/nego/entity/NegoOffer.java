@@ -23,6 +23,9 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+/**
+ * JPA 엔티티이다.
+ */
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
@@ -32,6 +35,9 @@ import lombok.NoArgsConstructor;
 )
 public class NegoOffer extends BaseTimeEntity {
 
+    /**
+     * 만료 검사에서 활성 상태로 판단할 네고 제안 상태를 정의한다.
+     */
     public static final List<NegoOfferStatus> ACTIVE_STATUSES = List.of(
         NegoOfferStatus.PENDING,
         NegoOfferStatus.EXTENSION_REQUESTED,
@@ -71,27 +77,46 @@ public class NegoOffer extends BaseTimeEntity {
         this.expiresAt = getCreatedAt().plusHours(24);
     }
 
+    /**
+     * 도메인 객체를 생성한다.
+     * @param chatRoom 입력 값
+     * @param requester 입력 값
+     * @param offerPrice 입력 값
+     * @return 처리 결과
+     */
     public static NegoOffer create(ChatRoom chatRoom, User requester, BigDecimal offerPrice) {
         return new NegoOffer(chatRoom, requester, offerPrice);
     }
 
+    /**
+     * 요청한 동작을 처리한다.
+     */
     public void accept() {
         validatePending();
         this.status = NegoOfferStatus.ACCEPTED;
         this.respondedAt = LocalDateTime.now();
     }
 
+    /**
+     * 요청한 동작을 처리한다.
+     */
     public void reject() {
         validatePending();
         this.status = NegoOfferStatus.REJECTED;
         this.respondedAt = LocalDateTime.now();
     }
 
+    /**
+     * 요청한 동작을 처리한다.
+     */
     public void requestExtension() {
         validatePending();
         this.status = NegoOfferStatus.EXTENSION_REQUESTED;
     }
 
+    /**
+     * 요청한 동작을 처리한다.
+     */
     public void approveExtension() {
         if (status != NegoOfferStatus.EXTENSION_REQUESTED) {
             throw new IllegalStateException("연장 요청 상태의 가격 제안만 연장 승인할 수 있습니다.");
@@ -100,6 +125,9 @@ public class NegoOffer extends BaseTimeEntity {
         this.status = NegoOfferStatus.EXTENDED;
     }
 
+    /**
+     * 요청한 동작을 처리한다.
+     */
     public void rejectExtension() {
         if (status != NegoOfferStatus.EXTENSION_REQUESTED) {
             throw new IllegalStateException("연장 요청 상태의 가격 제안만 연장 거절할 수 있습니다.");
@@ -107,10 +135,19 @@ public class NegoOffer extends BaseTimeEntity {
         this.status = NegoOfferStatus.PENDING;
     }
 
+    /**
+     * 조건 충족 여부를 확인한다.
+     * @param now 입력 값
+     * @return 처리 결과
+     */
     public boolean isExpired(LocalDateTime now) {
         return !expiresAt.isAfter(now);
     }
 
+    /**
+     * 요청한 동작을 처리한다.
+     * @param now 입력 값
+     */
     public void expire(LocalDateTime now) {
         if (this.status == NegoOfferStatus.ACCEPTED
             || this.status == NegoOfferStatus.REJECTED
@@ -125,6 +162,9 @@ public class NegoOffer extends BaseTimeEntity {
         this.respondedAt = now;
     }
 
+    /**
+     * 요청한 동작을 처리한다.
+     */
     public void cancel() {
         validatePending();
         this.status = NegoOfferStatus.CANCELLED;

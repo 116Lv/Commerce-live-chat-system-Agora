@@ -15,16 +15,31 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+/**
+ * REST 엔드포인트를 제공하는 컨트롤러이다.
+ */
 @RestController
 @RequestMapping("/api/admin/products")
 public class AdminProductController {
 
     private final AdminProductService adminProductService;
 
+    /**
+     * 의존성을 주입받아 인스턴스를 생성한다.
+     * @param adminProductService 입력 값
+     */
     public AdminProductController(AdminProductService adminProductService) {
         this.adminProductService = adminProductService;
     }
 
+    /**
+     * 데이터를 반환한다.
+     * @param admin 입력 값
+     * @param reportedOnly 입력 값
+     * @param page 입력 값
+     * @param size 입력 값
+     * @return 처리 결과
+     */
     @GetMapping
     public ApiResponse<PageResponse<AdminProductResponse>> getProducts(
             @AuthenticationPrincipal CustomUserDetails admin,
@@ -36,6 +51,12 @@ public class AdminProductController {
         return ApiResponse.success("상품 목록을 조회했습니다.", PageResponse.from(responses));
     }
 
+    /**
+     * 요청한 동작을 처리한다.
+     * @param admin 입력 값
+     * @param productId 입력 값
+     * @return 처리 결과
+     */
     @PatchMapping("/{productId}/hide")
     public ApiResponse<AdminProductResponse> hideProduct(
             @AuthenticationPrincipal CustomUserDetails admin,

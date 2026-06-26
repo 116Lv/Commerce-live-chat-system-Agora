@@ -5,6 +5,14 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import java.math.BigDecimal;
 
+/**
+ * 요청 본문을 전달하는 DTO이다.
+ * @param title 입력 값
+ * @param description 입력 값
+ * @param price 입력 값
+ * @param category 입력 값
+ * @param regionId 입력 값
+ */
 public record ProductCreateRequest(
     @NotBlank(message = "상품 제목은 필수입니다.")
     String title,

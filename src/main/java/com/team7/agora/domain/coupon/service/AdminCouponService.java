@@ -27,6 +27,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+/**
+ * 애플리케이션 유스케이스를 조정하는 서비스이다.
+ */
 @Service
 @Transactional(readOnly = true)
 public class AdminCouponService {
@@ -39,6 +42,14 @@ public class AdminCouponService {
     private final UserRepository userRepository;
     private final LockService lockService;
 
+    /**
+     * 의존성을 주입받아 인스턴스를 생성한다.
+     * @param couponRepository 입력 값
+     * @param couponEventRepository 입력 값
+     * @param couponIssueRepository 입력 값
+     * @param userRepository 입력 값
+     * @param lockService 입력 값
+     */
     public AdminCouponService(
         CouponRepository couponRepository,
         CouponEventRepository couponEventRepository,
@@ -53,6 +64,16 @@ public class AdminCouponService {
         this.lockService = lockService;
     }
 
+    /**
+     * 도메인 객체를 생성한다.
+     * @param admin 입력 값
+     * @param name 입력 값
+     * @param discountAmount 입력 값
+     * @param minOrderAmount 입력 값
+     * @param type 입력 값
+     * @param validDays 입력 값
+     * @return 처리 결과
+     */
     @Transactional
     public AdminCouponResponse create(
         CustomUserDetails admin,
@@ -67,6 +88,12 @@ public class AdminCouponService {
         return AdminCouponResponse.from(coupon);
     }
 
+    /**
+     * 데이터를 반환한다.
+     * @param admin 입력 값
+     * @param couponId 입력 값
+     * @return 처리 결과
+     */
     public AdminCouponResponse getDetail(CustomUserDetails admin, Long couponId) {
         validateAdminAuthority(admin);
         Coupon coupon = findCoupon(couponId);
@@ -98,6 +125,12 @@ public class AdminCouponService {
         return new CouponBroadcastResponse(couponId, result.issuedCount(), result.skippedCount());
     }
 
+    /**
+     * 요청한 동작을 처리한다.
+     * @param admin 입력 값
+     * @param couponId 입력 값
+     * @return 처리 결과
+     */
     @Transactional
     public CouponBroadcastResponse broadcast(CustomUserDetails admin, Long couponId) {
         validateAdminAuthority(admin);
@@ -173,6 +206,12 @@ public class AdminCouponService {
             .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "쿠폰 정책을 찾을 수 없습니다."));
     }
 
+    /**
+     * 데이터를 반환한다.
+     * @param admin 입력 값
+     * @param couponId 입력 값
+     * @return 처리 결과
+     */
     public CouponIssueHistoryResponse getIssueHistory(CustomUserDetails admin, Long couponId) {
         validateAdminAuthority(admin);
         Coupon coupon = couponRepository.findById(couponId)

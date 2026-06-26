@@ -5,6 +5,14 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
+/**
+ * 요청 본문을 전달하는 DTO이다.
+ * @param name 입력 값
+ * @param discountAmount 입력 값
+ * @param minOrderAmount 입력 값
+ * @param type 입력 값
+ * @param validDays 입력 값
+ */
 public record AdminCouponCreateRequest(
     @NotBlank(message = "쿠폰 이름은 필수입니다.")
     String name,

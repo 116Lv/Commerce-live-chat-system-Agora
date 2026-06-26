@@ -15,6 +15,9 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+/**
+ * REST 엔드포인트를 제공하는 컨트롤러이다.
+ */
 @RestController
 @RequestMapping("/api/payments")
 public class PaymentWebhookController {
@@ -22,6 +25,11 @@ public class PaymentWebhookController {
     private final PaymentWebhookService paymentWebhookService;
     private final PaymentWebhookVerifier paymentWebhookVerifier;
 
+    /**
+     * 의존성을 주입받아 인스턴스를 생성한다.
+     * @param paymentWebhookService 입력 값
+     * @param paymentWebhookVerifier 입력 값
+     */
     public PaymentWebhookController(
         PaymentWebhookService paymentWebhookService,
         PaymentWebhookVerifier paymentWebhookVerifier
@@ -30,6 +38,12 @@ public class PaymentWebhookController {
         this.paymentWebhookVerifier = paymentWebhookVerifier;
     }
 
+    /**
+     * 요청한 동작을 처리한다.
+     * @param webhookSecret 입력 값
+     * @param request 입력 값
+     * @return 처리 결과
+     */
     @PostMapping({"/webhook", "/webhooks/portone"})
     public ResponseEntity<ApiResponse<PaymentResponse>> portOneWebhook(
         @RequestHeader(name = "PortOne-Webhook-Secret", required = false) String webhookSecret,
