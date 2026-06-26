@@ -19,16 +19,28 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+/**
+ * REST controller that exposes auth endpoints.
+ */
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
 
     private final AuthService authService;
 
+    /**
+     * Creates a auth controller instance.
+     * @param authService the auth service value
+     */
     public AuthController(AuthService authService) {
         this.authService = authService;
     }
 
+    /**
+     * Handles signup behavior.
+     * @param request the request value
+     * @return the signup result
+     */
     @PostMapping("/signup")
     public ResponseEntity<ApiResponse<SignupResponse>> signup(@Valid @RequestBody SignupRequest request) {
         SignupResponse response = authService.signup(request);
@@ -37,18 +49,33 @@ public class AuthController {
                 .body(ApiResponse.success("회원가입이 완료되었습니다.", response));
     }
 
+    /**
+     * Handles login behavior.
+     * @param request the request value
+     * @return the login result
+     */
     @PostMapping("/login")
     public ResponseEntity<ApiResponse<LoginResponse>> login(@Valid @RequestBody LoginRequest request) {
         LoginResponse response = authService.login(request);
         return ResponseEntity.ok(ApiResponse.success("로그인에 성공했습니다.", response));
     }
 
+    /**
+     * Handles logout behavior.
+     * @param userDetails the user details value
+     * @return the logout result
+     */
     @PostMapping("/logout")
     public ResponseEntity<ApiResponse<Void>> logout(@AuthenticationPrincipal CustomUserDetails userDetails) {
         authService.logout(userDetails.getUserId());
         return ResponseEntity.ok(ApiResponse.success("로그아웃되었습니다.", null));
     }
 
+    /**
+     * Handles reissue behavior.
+     * @param request the request value
+     * @return the reissue result
+     */
     @PostMapping("/reissue")
     public ResponseEntity<ApiResponse<ReissueResponse>> reissue(@Valid @RequestBody ReissueRequest request) {
         ReissueResponse response = authService.reissue(request.refreshToken());

@@ -13,6 +13,9 @@ import javax.crypto.spec.SecretKeySpec;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+/**
+ * Authentication component for jwt behavior.
+ */
 @Component
 public class JwtProvider {
 
@@ -23,6 +26,11 @@ public class JwtProvider {
     private final String secretKey;
     private final long accessTokenValidTime;
 
+    /**
+     * Creates a jwt provider instance.
+     * @param secretKey the secret key value
+     * @param accessTokenValidTime the access token valid time value
+     */
     public JwtProvider(
         @Value("${jwt.secret-key}") String secretKey,
         @Value("${jwt.access-token-valid-time}") long accessTokenValidTime
@@ -31,6 +39,14 @@ public class JwtProvider {
         this.accessTokenValidTime = accessTokenValidTime;
     }
 
+    /**
+     * Creates token data.
+     * @param userId the user id value
+     * @param email the email value
+     * @param role the role value
+     * @param nickname the nickname value
+     * @return the create token result
+     */
     public String createToken(Long userId, String email, String role, String nickname) {
         long now = Instant.now().toEpochMilli();
         long expiresAt = now + accessTokenValidTime;
@@ -52,6 +68,11 @@ public class JwtProvider {
         return BEARER_PREFIX + unsignedToken + "." + sign(unsignedToken);
     }
 
+    /**
+     * Handles substring bearer behavior.
+     * @param token the token value
+     * @return the substring bearer result
+     */
     public String substringBearer(String token) {
         if (token == null || !token.startsWith(BEARER_PREFIX)) {
             throw new BusinessException(ErrorCode.INVALID_TOKEN, "Bearer 토큰 형식이 아닙니다.");
@@ -59,6 +80,11 @@ public class JwtProvider {
         return token.substring(BEARER_PREFIX.length());
     }
 
+    /**
+     * Handles parse behavior.
+     * @param token the token value
+     * @return the parse result
+     */
     public JwtClaims parse(String token) {
         String[] parts = token.split("\\.");
         if (parts.length != 3) {

@@ -15,6 +15,9 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+/**
+ * JPA entity that represents a product image record.
+ */
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
@@ -44,6 +47,13 @@ public class ProductImage {
         this.sortOrder = sortOrder;
     }
 
+    /**
+     * Creates create data.
+     * @param product the product value
+     * @param imageUrl the image url value
+     * @param sortOrder the sort order value
+     * @return the create result
+     */
     public static ProductImage create(Product product, String imageUrl, int sortOrder) {
         return new ProductImage(product, imageUrl, sortOrder);
     }

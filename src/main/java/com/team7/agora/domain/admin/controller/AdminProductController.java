@@ -15,16 +15,31 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+/**
+ * REST controller that exposes admin product endpoints.
+ */
 @RestController
 @RequestMapping("/api/admin/products")
 public class AdminProductController {
 
     private final AdminProductService adminProductService;
 
+    /**
+     * Creates a admin product controller instance.
+     * @param adminProductService the admin product service value
+     */
     public AdminProductController(AdminProductService adminProductService) {
         this.adminProductService = adminProductService;
     }
 
+    /**
+     * Returns products data.
+     * @param admin the admin value
+     * @param reportedOnly the reported only value
+     * @param page the page value
+     * @param size the size value
+     * @return the get products result
+     */
     @GetMapping
     public ApiResponse<PageResponse<AdminProductResponse>> getProducts(
             @AuthenticationPrincipal CustomUserDetails admin,
@@ -36,6 +51,12 @@ public class AdminProductController {
         return ApiResponse.success("상품 목록을 조회했습니다.", PageResponse.from(responses));
     }
 
+    /**
+     * Handles hide product behavior.
+     * @param admin the admin value
+     * @param productId the product id value
+     * @return the hide product result
+     */
     @PatchMapping("/{productId}/hide")
     public ApiResponse<AdminProductResponse> hideProduct(
             @AuthenticationPrincipal CustomUserDetails admin,

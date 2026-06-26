@@ -34,6 +34,9 @@ import lombok.NoArgsConstructor;
         @Index(name = "idx_coupon_issues_coupon_user", columnList = "coupon_id, user_id"),
         @Index(name = "idx_coupon_issues_user_status", columnList = "user_id, status")
     }
+/**
+ * JPA entity that represents a coupon issue record.
+ */
 )
 public class CouponIssue {
 
@@ -68,6 +71,13 @@ public class CouponIssue {
         this.issuedAt = LocalDateTime.now();
     }
 
+    /**
+     * Checks whether issue applies.
+     * @param coupon the coupon value
+     * @param couponEvent the coupon event value
+     * @param user the user value
+     * @return the issue result
+     */
     public static CouponIssue issue(Coupon coupon, CouponEvent couponEvent, User user) {
         return new CouponIssue(coupon, couponEvent, user);
     }

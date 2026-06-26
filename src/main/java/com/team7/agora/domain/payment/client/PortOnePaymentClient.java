@@ -11,6 +11,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
+/**
+ * Client implementation for integrating with PortOne payment providers.
+ */
 @Component
 @Profile("prod")
 public class PortOnePaymentClient implements PaymentClient {
@@ -19,6 +22,11 @@ public class PortOnePaymentClient implements PaymentClient {
     private final String apiBaseUrl;
     private final String apiSecret;
 
+    /**
+     * Creates a port one payment client instance.
+     * @param apiBaseUrl the api base url value
+     * @param apiSecret the api secret value
+     */
     public PortOnePaymentClient(
         @Value("${portone.api-base-url:https://api.portone.io}") String apiBaseUrl,
         @Value("${portone.api-secret}") String apiSecret
@@ -27,6 +35,13 @@ public class PortOnePaymentClient implements PaymentClient {
         this.apiSecret = apiSecret;
     }
 
+    /**
+     * Handles confirm behavior.
+     * @param paymentKey the payment key value
+     * @param orderId the order id value
+     * @param amount the amount value
+     * @return the confirm result
+     */
     @Override
     public boolean confirm(String paymentKey, String orderId, BigDecimal amount) {
         String accessToken = issueAccessToken();

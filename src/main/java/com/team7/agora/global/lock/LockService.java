@@ -11,6 +11,9 @@ import java.util.function.Supplier;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+/**
+ * Distributed locking component for lock behavior.
+ */
 @Component
 public class LockService {
 
@@ -20,6 +23,10 @@ public class LockService {
     private final RedisLockRepository redisLockRepository;
     private final Duration redisLockTtl;
 
+    /**
+     * Creates a lock service instance.
+     * @param redisLockRepository the redis lock repository value
+     */
     @Autowired
     public LockService(RedisLockRepository redisLockRepository) {
         this(redisLockRepository, REDIS_LOCK_TTL);
@@ -30,10 +37,20 @@ public class LockService {
         this.redisLockTtl = redisLockTtl;
     }
 
+    /**
+     * Handles local behavior.
+     * @return the local result
+     */
     public static LockService local() {
         return new LockService(null, REDIS_LOCK_TTL);
     }
 
+    /**
+     * Handles with lock behavior.
+     * @param key the key value
+     * @param supplier the supplier value
+     * @return the with lock result
+     */
     public <T> T withLock(String key, Supplier<T> supplier) {
         if (redisLockRepository != null) {
             return withRedisLock(key, supplier);

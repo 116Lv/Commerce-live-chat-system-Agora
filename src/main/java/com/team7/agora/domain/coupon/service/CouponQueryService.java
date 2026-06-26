@@ -13,6 +13,9 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+/**
+ * Application service that coordinates coupon query use cases.
+ */
 @Service
 @Transactional(readOnly = true)
 public class CouponQueryService {
@@ -21,6 +24,12 @@ public class CouponQueryService {
     private final CouponIssueRepository couponIssueRepository;
     private final UserRepository userRepository;
 
+    /**
+     * Creates a coupon query service instance.
+     * @param couponEventRepository the coupon event repository value
+     * @param couponIssueRepository the coupon issue repository value
+     * @param userRepository the user repository value
+     */
     public CouponQueryService(
         CouponEventRepository couponEventRepository,
         CouponIssueRepository couponIssueRepository,
@@ -31,12 +40,21 @@ public class CouponQueryService {
         this.userRepository = userRepository;
     }
 
+    /**
+     * Handles list active events behavior.
+     * @return the list active events result
+     */
     public List<CouponEventResponse> listActiveEvents() {
         return couponEventRepository.findAllByStatus(CouponEventStatus.ACTIVE).stream()
             .map(CouponEventResponse::from)
             .toList();
     }
 
+    /**
+     * Returns my coupons data.
+     * @param userId the user id value
+     * @return the get my coupons result
+     */
     public List<MyCouponResponse> getMyCoupons(Long userId) {
         User user = userRepository.findById(userId)
             .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "회원을 찾을 수 없습니다."));

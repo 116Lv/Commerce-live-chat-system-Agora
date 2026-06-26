@@ -18,16 +18,30 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+/**
+ * REST controller that exposes admin user endpoints.
+ */
 @RestController
 @RequestMapping("/api/admin/users")
 public class AdminUserController {
 
     private final AdminUserService adminUserService;
 
+    /**
+     * Creates a admin user controller instance.
+     * @param adminUserService the admin user service value
+     */
     public AdminUserController(AdminUserService adminUserService) {
         this.adminUserService = adminUserService;
     }
 
+    /**
+     * Returns users data.
+     * @param admin the admin value
+     * @param page the page value
+     * @param size the size value
+     * @return the get users result
+     */
     @GetMapping
     public ApiResponse<PageResponse<AdminUserResponse>> getUsers(
             @AuthenticationPrincipal CustomUserDetails admin,
@@ -38,6 +52,13 @@ public class AdminUserController {
         return ApiResponse.success("사용자 목록을 조회했습니다.", PageResponse.from(responses));
     }
 
+    /**
+     * Handles change status behavior.
+     * @param admin the admin value
+     * @param userId the user id value
+     * @param request the request value
+     * @return the change status result
+     */
     @PatchMapping("/{userId}/status")
     public ApiResponse<AdminUserResponse> changeStatus(
             @AuthenticationPrincipal CustomUserDetails admin,

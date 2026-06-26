@@ -9,16 +9,29 @@ import com.team7.agora.global.exception.ErrorCode;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+/**
+ * Application service that coordinates admin settlement use cases.
+ */
 @Service
 @Transactional(readOnly = true)
 public class AdminSettlementService {
 
     private final SettlementRepository settlementRepository;
 
+    /**
+     * Creates a admin settlement service instance.
+     * @param settlementRepository the settlement repository value
+     */
     public AdminSettlementService(SettlementRepository settlementRepository) {
         this.settlementRepository = settlementRepository;
     }
 
+    /**
+     * Handles settle behavior.
+     * @param admin the admin value
+     * @param settlementId the settlement id value
+     * @return the settle result
+     */
     @Transactional
     public AdminSettlementResponse settle(CustomUserDetails admin, Long settlementId) {
         validateSettlementAdmin(admin);

@@ -11,16 +11,28 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+/**
+ * Application service that coordinates admin report use cases.
+ */
 @Service
 @Transactional(readOnly = true)
 public class AdminReportService {
 
     private final ReportRepository reportRepository;
 
+    /**
+     * Creates a admin report service instance.
+     * @param reportRepository the report repository value
+     */
     public AdminReportService(ReportRepository reportRepository) {
         this.reportRepository = reportRepository;
     }
 
+    /**
+     * Returns user reports data.
+     * @param admin the admin value
+     * @return the get user reports result
+     */
     public List<AdminReportListResponse> getUserReports(CustomUserDetails admin) {
         validateUserAdmin(admin);
         return reportRepository.findAllByProductIsNull().stream()
@@ -28,6 +40,13 @@ public class AdminReportService {
             .toList();
     }
 
+    /**
+     * Handles resolve user report behavior.
+     * @param admin the admin value
+     * @param reportId the report id value
+     * @param adminMemo the admin memo value
+     * @return the resolve user report result
+     */
     @Transactional
     public AdminReportResponse resolveUserReport(CustomUserDetails admin, Long reportId, String adminMemo) {
         validateUserAdmin(admin);
@@ -41,6 +60,11 @@ public class AdminReportService {
         return AdminReportResponse.from(report);
     }
 
+    /**
+     * Returns product reports data.
+     * @param admin the admin value
+     * @return the get product reports result
+     */
     public List<AdminReportListResponse> getProductReports(CustomUserDetails admin) {
         validateProductAdmin(admin);
         return reportRepository.findAllByProductIsNotNull().stream()
@@ -48,6 +72,13 @@ public class AdminReportService {
             .toList();
     }
 
+    /**
+     * Handles resolve product report behavior.
+     * @param admin the admin value
+     * @param reportId the report id value
+     * @param adminMemo the admin memo value
+     * @return the resolve product report result
+     */
     @Transactional
     public AdminReportResponse resolveProductReport(CustomUserDetails admin, Long reportId, String adminMemo) {
         validateProductAdmin(admin);

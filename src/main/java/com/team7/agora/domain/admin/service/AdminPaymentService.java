@@ -13,6 +13,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+/**
+ * Application service that coordinates admin payment use cases.
+ */
 @Service
 @Transactional(readOnly = true)
 public class AdminPaymentService {
@@ -20,11 +23,23 @@ public class AdminPaymentService {
     private final PaymentRepository paymentRepository;
     private final PaymentClient paymentClient;
 
+    /**
+     * Creates a admin payment service instance.
+     * @param paymentRepository the payment repository value
+     * @param paymentClient the payment client value
+     */
     public AdminPaymentService(PaymentRepository paymentRepository, PaymentClient paymentClient) {
         this.paymentRepository = paymentRepository;
         this.paymentClient = paymentClient;
     }
 
+    /**
+     * Returns payments data.
+     * @param admin the admin value
+     * @param status the status value
+     * @param pageable the pageable value
+     * @return the get payments result
+     */
     public List<AdminPaymentResponse> getPayments(
         CustomUserDetails admin,
         PaymentStatus status,
@@ -41,6 +56,11 @@ public class AdminPaymentService {
             .toList();
     }
 
+    /**
+     * Returns refunds data.
+     * @param admin the admin value
+     * @return the get refunds result
+     */
     public List<AdminPaymentResponse> getRefunds(CustomUserDetails admin) {
         validateSettlementAdmin(admin);
         return paymentRepository.findAllByStatus(PaymentStatus.REFUNDED).stream()
@@ -48,6 +68,12 @@ public class AdminPaymentService {
             .toList();
     }
 
+    /**
+     * Handles verify payment behavior.
+     * @param admin the admin value
+     * @param paymentId the payment id value
+     * @return the verify payment result
+     */
     @Transactional
     public AdminPaymentResponse verifyPayment(CustomUserDetails admin, Long paymentId) {
         validateSettlementAdmin(admin);

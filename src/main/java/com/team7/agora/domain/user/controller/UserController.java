@@ -15,21 +15,39 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+/**
+ * REST controller that exposes user endpoints.
+ */
 @RestController
 @RequestMapping("/api/users/me")
 public class UserController {
 
     private final UserService userService;
 
+    /**
+     * Creates a user controller instance.
+     * @param userService the user service value
+     */
     public UserController(UserService userService) {
         this.userService = userService;
     }
 
+    /**
+     * Returns me data.
+     * @param userDetails the user details value
+     * @return the get me result
+     */
     @GetMapping
     public ApiResponse<UserMeResponse> getMe(@AuthenticationPrincipal CustomUserDetails userDetails) {
         return ApiResponse.success("내 정보를 조회했습니다.", userService.getMe(userDetails.getUserId()));
     }
 
+    /**
+     * Updates profile data.
+     * @param userDetails the user details value
+     * @param request the request value
+     * @return the update profile result
+     */
     @PatchMapping("/profile")
     public ApiResponse<UserMeResponse> updateProfile(
             @AuthenticationPrincipal CustomUserDetails userDetails,
@@ -39,6 +57,12 @@ public class UserController {
         return ApiResponse.success("프로필이 수정되었습니다.", response);
     }
 
+    /**
+     * Handles change password behavior.
+     * @param userDetails the user details value
+     * @param request the request value
+     * @return the change password result
+     */
     @PatchMapping("/password")
     public ApiResponse<Void> changePassword(
             @AuthenticationPrincipal CustomUserDetails userDetails,

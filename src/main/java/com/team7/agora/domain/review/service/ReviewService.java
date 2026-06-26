@@ -12,6 +12,9 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+/**
+ * Application service that coordinates review use cases.
+ */
 @Service
 @Transactional(readOnly = true)
 public class ReviewService {
@@ -19,11 +22,24 @@ public class ReviewService {
     private final ReviewRepository reviewRepository;
     private final TradeRepository tradeRepository;
 
+    /**
+     * Creates a review service instance.
+     * @param reviewRepository the review repository value
+     * @param tradeRepository the trade repository value
+     */
     public ReviewService(ReviewRepository reviewRepository, TradeRepository tradeRepository) {
         this.reviewRepository = reviewRepository;
         this.tradeRepository = tradeRepository;
     }
 
+    /**
+     * Creates create data.
+     * @param reviewerId the reviewer id value
+     * @param tradeId the trade id value
+     * @param rating the rating value
+     * @param content the content value
+     * @return the create result
+     */
     @Transactional
     public ReviewResponse create(Long reviewerId, Long tradeId, int rating, String content) {
         Trade trade = tradeRepository.findById(tradeId)
@@ -42,6 +58,12 @@ public class ReviewService {
         return ReviewResponse.from(reviewRepository.save(review));
     }
 
+    /**
+     * Returns trade reviews data.
+     * @param userId the user id value
+     * @param tradeId the trade id value
+     * @return the get trade reviews result
+     */
     public List<ReviewResponse> getTradeReviews(Long userId, Long tradeId) {
         Trade trade = tradeRepository.findById(tradeId)
             .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "거래를 찾을 수 없습니다."));

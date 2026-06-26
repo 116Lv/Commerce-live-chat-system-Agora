@@ -9,9 +9,17 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.stereotype.Component;
 
+/**
+ * Authentication component for jwt authentication entry point behavior.
+ */
 @Component
 public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
-
+    /**
+     * Handles commence behavior.
+     * @param request the request value
+     * @param response the response value
+     * @param authException the auth exception value
+     */
     @Override
     public void commence(
         HttpServletRequest request,

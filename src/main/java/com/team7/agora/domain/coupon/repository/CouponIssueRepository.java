@@ -6,6 +6,9 @@ import com.team7.agora.domain.coupon.entity.CouponIssue;
 import com.team7.agora.domain.user.entity.User;
 import java.util.List;
 
+/**
+ * Repository contract for storing and querying coupon issue data.
+ */
 public interface CouponIssueRepository {
 
     CouponIssue save(CouponIssue couponIssue);

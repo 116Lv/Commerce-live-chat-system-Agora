@@ -11,6 +11,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+/**
+ * Application service that coordinates product search use cases.
+ */
 @Service
 @Transactional(readOnly = true)
 public class ProductSearchService {
@@ -19,10 +22,20 @@ public class ProductSearchService {
     private final ProductSearchCache productSearchCache;
     private final SearchPerformanceRecorder searchPerformanceRecorder;
 
+    /**
+     * Creates a product search service instance.
+     * @param productRepository the product repository value
+     */
     public ProductSearchService(ProductRepository productRepository) {
         this(productRepository, new ProductSearchCache(1_000, 60_000L), new SearchPerformanceRecorder());
     }
 
+    /**
+     * Creates a product search service instance.
+     * @param productRepository the product repository value
+     * @param productSearchCache the product search cache value
+     * @param searchPerformanceRecorder the search performance recorder value
+     */
     @Autowired
     public ProductSearchService(
         ProductRepository productRepository,
@@ -34,6 +47,11 @@ public class ProductSearchService {
         this.searchPerformanceRecorder = searchPerformanceRecorder;
     }
 
+    /**
+     * Handles search v1 behavior.
+     * @param condition the condition value
+     * @return the search v1 result
+     */
     public List<ProductSearchResponse> searchV1(ProductSearchCondition condition) {
         long start = System.nanoTime();
         List<ProductSearchResponse> responses = productRepository.search(condition);
@@ -41,6 +59,11 @@ public class ProductSearchService {
         return responses;
     }
 
+    /**
+     * Handles search v2 behavior.
+     * @param condition the condition value
+     * @return the search v2 result
+     */
     public List<ProductSearchResponse> searchV2(ProductSearchCondition condition) {
         long start = System.nanoTime();
         AtomicBoolean dbQueried = new AtomicBoolean(false);
@@ -55,6 +78,9 @@ public class ProductSearchService {
         return responses;
     }
 
+    /**
+     * Handles evict search cache behavior.
+     */
     public void evictSearchCache() {
         productSearchCache.clear();
     }

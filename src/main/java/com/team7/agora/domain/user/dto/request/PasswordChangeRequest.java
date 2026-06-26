@@ -3,6 +3,11 @@ package com.team7.agora.domain.user.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
 
+/**
+ * Request payload for password change operations.
+ * @param currentPassword the current password value
+ * @param newPassword the new password value
+ */
 public record PasswordChangeRequest(
         @NotBlank(message = "현재 비밀번호를 입력해주세요.")
         String currentPassword,

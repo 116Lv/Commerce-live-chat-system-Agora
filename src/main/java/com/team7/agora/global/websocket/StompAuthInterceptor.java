@@ -12,6 +12,9 @@ import org.springframework.messaging.support.ChannelInterceptor;
 import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.stereotype.Component;
 
+/**
+ * WebSocket component for stomp auth behavior.
+ */
 @Component
 public class StompAuthInterceptor implements ChannelInterceptor {
 
@@ -19,10 +22,20 @@ public class StompAuthInterceptor implements ChannelInterceptor {
 
     private final JwtProvider jwtProvider;
 
+    /**
+     * Creates a stomp auth interceptor instance.
+     * @param jwtProvider the jwt provider value
+     */
     public StompAuthInterceptor(JwtProvider jwtProvider) {
         this.jwtProvider = jwtProvider;
     }
 
+    /**
+     * Handles pre send behavior.
+     * @param message the message value
+     * @param channel the channel value
+     * @return the pre send result
+     */
     @Override
     public Message<?> preSend(Message<?> message, MessageChannel channel) {
         StompHeaderAccessor accessor = StompHeaderAccessor.wrap(message);

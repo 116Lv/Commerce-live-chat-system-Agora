@@ -6,6 +6,9 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.stereotype.Repository;
 
+/**
+ * Distributed locking component for Redis lock behavior.
+ */
 @Repository
 public class RedisLockRepository {
 
@@ -18,15 +21,31 @@ public class RedisLockRepository {
 
     private final StringRedisTemplate redisTemplate;
 
+    /**
+     * Creates a redis lock repository instance.
+     * @param redisTemplate the redis template value
+     */
     public RedisLockRepository(StringRedisTemplate redisTemplate) {
         this.redisTemplate = redisTemplate;
     }
 
+    /**
+     * Handles try lock behavior.
+     * @param key the key value
+     * @param owner the owner value
+     * @param ttl the ttl value
+     * @return the try lock result
+     */
     public boolean tryLock(String key, String owner, Duration ttl) {
         Boolean acquired = redisTemplate.opsForValue().setIfAbsent(key, owner, ttl);
         return Boolean.TRUE.equals(acquired);
     }
 
+    /**
+     * Handles unlock behavior.
+     * @param key the key value
+     * @param owner the owner value
+     */
     public void unlock(String key, String owner) {
         redisTemplate.execute(UNLOCK_SCRIPT, List.of(key), owner);
     }

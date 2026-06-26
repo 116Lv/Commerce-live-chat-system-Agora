@@ -17,6 +17,9 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+/**
+ * Application service that coordinates nego use cases.
+ */
 @Service
 @Transactional(readOnly = true)
 public class NegoService {
@@ -25,6 +28,12 @@ public class NegoService {
     private final ChatRoomRepository chatRoomRepository;
     private final TradeService tradeService;
 
+    /**
+     * Creates a nego service instance.
+     * @param negoOfferRepository the nego offer repository value
+     * @param chatRoomRepository the chat room repository value
+     * @param tradeService the trade service value
+     */
     public NegoService(
         NegoOfferRepository negoOfferRepository,
         ChatRoomRepository chatRoomRepository,
@@ -35,6 +44,13 @@ public class NegoService {
         this.tradeService = tradeService;
     }
 
+    /**
+     * Creates offer data.
+     * @param requesterId the requester id value
+     * @param chatRoomId the chat room id value
+     * @param offerPrice the offer price value
+     * @return the create offer result
+     */
     @Transactional
     public NegoOfferResponse createOffer(Long requesterId, Long chatRoomId, BigDecimal offerPrice) {
         ChatRoom chatRoom = findActiveRoom(chatRoomId);
@@ -50,6 +66,12 @@ public class NegoService {
         return NegoOfferResponse.from(negoOfferRepository.save(offer));
     }
 
+    /**
+     * Handles accept offer behavior.
+     * @param sellerId the seller id value
+     * @param offerId the offer id value
+     * @return the accept offer result
+     */
     @Transactional
     public NegoOfferResponse acceptOffer(Long sellerId, Long offerId) {
         NegoOffer offer = findOffer(offerId);
@@ -76,6 +98,12 @@ public class NegoService {
         }
     }
 
+    /**
+     * Handles reject offer behavior.
+     * @param sellerId the seller id value
+     * @param offerId the offer id value
+     * @return the reject offer result
+     */
     @Transactional
     public NegoOfferResponse rejectOffer(Long sellerId, Long offerId) {
         NegoOffer offer = findOffer(offerId);
@@ -85,6 +113,12 @@ public class NegoService {
         return NegoOfferResponse.from(offer);
     }
 
+    /**
+     * Handles request extension behavior.
+     * @param sellerId the seller id value
+     * @param offerId the offer id value
+     * @return the request extension result
+     */
     @Transactional
     public NegoOfferResponse requestExtension(Long sellerId, Long offerId) {
         NegoOffer offer = findOffer(offerId);
@@ -94,6 +128,12 @@ public class NegoService {
         return NegoOfferResponse.from(offer);
     }
 
+    /**
+     * Handles approve extension behavior.
+     * @param buyerId the buyer id value
+     * @param offerId the offer id value
+     * @return the approve extension result
+     */
     @Transactional
     public NegoOfferResponse approveExtension(Long buyerId, Long offerId) {
         NegoOffer offer = findOffer(offerId);
@@ -103,6 +143,12 @@ public class NegoService {
         return NegoOfferResponse.from(offer);
     }
 
+    /**
+     * Handles reject extension behavior.
+     * @param buyerId the buyer id value
+     * @param offerId the offer id value
+     * @return the reject extension result
+     */
     @Transactional
     public NegoOfferResponse rejectExtension(Long buyerId, Long offerId) {
         NegoOffer offer = findOffer(offerId);
@@ -112,6 +158,12 @@ public class NegoService {
         return NegoOfferResponse.from(offer);
     }
 
+    /**
+     * Handles expire offer behavior.
+     * @param authUser the auth user value
+     * @param offerId the offer id value
+     * @return the expire offer result
+     */
     @Transactional
     public NegoOfferResponse expireOffer(AuthUser authUser, Long offerId) {
         if (!isExpiryAuthority(authUser)) {

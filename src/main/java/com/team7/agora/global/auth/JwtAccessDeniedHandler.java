@@ -9,9 +9,17 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.stereotype.Component;
 
+/**
+ * Authentication component for jwt access denied behavior.
+ */
 @Component
 public class JwtAccessDeniedHandler implements AccessDeniedHandler {
-
+    /**
+     * Handles handle behavior.
+     * @param request the request value
+     * @param response the response value
+     * @param accessDeniedException the access denied exception value
+     */
     @Override
     public void handle(
         HttpServletRequest request,

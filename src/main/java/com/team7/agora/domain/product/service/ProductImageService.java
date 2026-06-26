@@ -13,6 +13,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+/**
+ * Application service that coordinates product image use cases.
+ */
 @Service
 @Transactional(readOnly = true)
 public class ProductImageService {
@@ -21,6 +24,12 @@ public class ProductImageService {
     private final ProductImageRepository productImageRepository;
     private final ImageStorageClient imageStorageClient;
 
+    /**
+     * Creates a product image service instance.
+     * @param productRepository the product repository value
+     * @param productImageRepository the product image repository value
+     * @param imageStorageClient the image storage client value
+     */
     public ProductImageService(
         ProductRepository productRepository,
         ProductImageRepository productImageRepository,
@@ -31,6 +40,13 @@ public class ProductImageService {
         this.imageStorageClient = imageStorageClient;
     }
 
+    /**
+     * Handles upload behavior.
+     * @param sellerId the seller id value
+     * @param productId the product id value
+     * @param file the file value
+     * @return the upload result
+     */
     @Transactional
     public ProductImageResponse upload(Long sellerId, Long productId, MultipartFile file) {
         Product product = productRepository.findByIdAndDeletedAtIsNull(productId)

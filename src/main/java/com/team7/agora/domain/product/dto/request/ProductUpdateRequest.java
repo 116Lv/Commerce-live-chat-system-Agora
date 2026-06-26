@@ -5,6 +5,13 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import java.math.BigDecimal;
 
+/**
+ * Request payload for product update operations.
+ * @param title the title value
+ * @param description the description value
+ * @param price the price value
+ * @param category the category value
+ */
 public record ProductUpdateRequest(
     @NotBlank(message = "상품 제목은 필수입니다.")
     String title,

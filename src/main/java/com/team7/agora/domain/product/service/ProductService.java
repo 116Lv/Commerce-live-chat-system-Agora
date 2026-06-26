@@ -21,6 +21,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+/**
+ * Application service that coordinates product use cases.
+ */
 @Service
 @Transactional(readOnly = true)
 public class ProductService {
@@ -31,6 +34,14 @@ public class ProductService {
     private final UserRegionRepository userRegionRepository;
     private final ProductSearchService productSearchService;
 
+    /**
+     * Creates a product service instance.
+     * @param productRepository the product repository value
+     * @param userRepository the user repository value
+     * @param regionRepository the region repository value
+     * @param userRegionRepository the user region repository value
+     * @param productSearchService the product search service value
+     */
     public ProductService(
         ProductRepository productRepository,
         UserRepository userRepository,
@@ -45,6 +56,12 @@ public class ProductService {
         this.productSearchService = productSearchService;
     }
 
+    /**
+     * Creates create data.
+     * @param sellerId the seller id value
+     * @param request the request value
+     * @return the create result
+     */
     @Transactional
     public ProductResponse create(Long sellerId, ProductCreateRequest request) {
         User seller = getUser(sellerId);
@@ -63,6 +80,13 @@ public class ProductService {
         return ProductResponse.from(savedProduct);
     }
 
+    /**
+     * Updates update data.
+     * @param requesterId the requester id value
+     * @param productId the product id value
+     * @param request the request value
+     * @return the update result
+     */
     @Transactional
     public ProductResponse update(Long requesterId, Long productId, ProductUpdateRequest request) {
         Product product = getActiveProduct(productId);
@@ -72,6 +96,11 @@ public class ProductService {
         return ProductResponse.from(product);
     }
 
+    /**
+     * Deletes delete data.
+     * @param requesterId the requester id value
+     * @param productId the product id value
+     */
     @Transactional
     public void delete(Long requesterId, Long productId) {
         Product product = getActiveProduct(productId);
@@ -80,10 +109,22 @@ public class ProductService {
         productSearchService.evictSearchCache();
     }
 
+    /**
+     * Returns product data.
+     * @param productId the product id value
+     * @return the get product result
+     */
     public ProductResponse getProduct(Long productId) {
         return ProductResponse.from(getActiveProduct(productId));
     }
 
+    /**
+     * Returns products data.
+     * @param viewerId the viewer id value
+     * @param regionId the region id value
+     * @param pageable the pageable value
+     * @return the get products result
+     */
     public List<ProductResponse> getProducts(Long viewerId, Long regionId, Pageable pageable) {
         List<Long> regionIds = resolveRegionIds(viewerId, regionId);
         Page<Product> products = (regionIds == null)
@@ -94,6 +135,11 @@ public class ProductService {
             .toList();
     }
 
+    /**
+     * Returns my products data.
+     * @param sellerId the seller id value
+     * @return the get my products result
+     */
     public List<ProductResponse> getMyProducts(Long sellerId) {
         User seller = getUser(sellerId);
         return productRepository.findAllBySellerAndDeletedAtIsNull(seller).stream()

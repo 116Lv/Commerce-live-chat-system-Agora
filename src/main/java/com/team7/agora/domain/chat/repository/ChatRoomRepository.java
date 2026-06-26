@@ -8,6 +8,9 @@ import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+/**
+ * Repository contract for storing and querying chat room data.
+ */
 public interface ChatRoomRepository extends JpaRepository<ChatRoom, Long> {
 
     Optional<ChatRoom> findByProductAndSellerAndBuyer(Product product, User seller, User buyer);

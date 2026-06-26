@@ -22,16 +22,29 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+/**
+ * REST controller that exposes product endpoints.
+ */
 @RestController
 @RequestMapping("/api/products")
 public class ProductController {
 
     private final ProductService productService;
 
+    /**
+     * Creates a product controller instance.
+     * @param productService the product service value
+     */
     public ProductController(ProductService productService) {
         this.productService = productService;
     }
 
+    /**
+     * Creates create data.
+     * @param userDetails the auth user value
+     * @param request the request value
+     * @return the create result
+     */
     @PostMapping
     public ResponseEntity<ApiResponse<ProductResponse>> create(
         @AuthenticationPrincipal CustomUserDetails userDetails,
@@ -43,12 +56,25 @@ public class ProductController {
             .body(ApiResponse.success("상품이 등록되었습니다.", response));
     }
 
+    /**
+     * Returns product data.
+     * @param productId the product id value
+     * @return the get product result
+     */
     @GetMapping("/{productId}")
     public ResponseEntity<ApiResponse<ProductResponse>> getProduct(@PathVariable Long productId) {
         ProductResponse response = productService.getProduct(productId);
         return ResponseEntity.ok(ApiResponse.success("상품을 조회했습니다.", response));
     }
 
+    /**
+     * Returns products data.
+     * @param userDetails the auth user value
+     * @param regionId the region id value
+     * @param page the page value
+     * @param size the size value
+     * @return the get products result
+     */
     @GetMapping
     public ResponseEntity<ApiResponse<List<ProductResponse>>> getProducts(
         @AuthenticationPrincipal CustomUserDetails userDetails,
@@ -61,6 +87,13 @@ public class ProductController {
         return ResponseEntity.ok(ApiResponse.success("상품 목록을 조회했습니다.", responses));
     }
 
+    /**
+     * Updates update data.
+     * @param userDetails the auth user value
+     * @param productId the product id value
+     * @param request the request value
+     * @return the update result
+     */
     @PatchMapping("/{productId}")
     public ResponseEntity<ApiResponse<ProductResponse>> update(
         @AuthenticationPrincipal CustomUserDetails userDetails,
@@ -71,6 +104,12 @@ public class ProductController {
         return ResponseEntity.ok(ApiResponse.success("상품이 수정되었습니다.", response));
     }
 
+    /**
+     * Deletes delete data.
+     * @param userDetails the auth user value
+     * @param productId the product id value
+     * @return the delete result
+     */
     @DeleteMapping("/{productId}")
     public ResponseEntity<ApiResponse<Void>> delete(
         @AuthenticationPrincipal CustomUserDetails userDetails,

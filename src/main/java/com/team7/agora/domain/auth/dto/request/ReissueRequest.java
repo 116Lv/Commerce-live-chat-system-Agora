@@ -3,6 +3,10 @@ package com.team7.agora.domain.auth.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
 
+/**
+ * Request payload for reissue operations.
+ * @param refreshToken the refresh token value
+ */
 public record ReissueRequest(
         @NotBlank(message = "refreshToken은 필수입니다.")
         String refreshToken

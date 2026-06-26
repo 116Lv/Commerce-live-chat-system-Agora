@@ -9,6 +9,9 @@ import java.util.Map;
 import java.util.Optional;
 import org.springframework.stereotype.Component;
 
+/**
+ * Cache component for product search data.
+ */
 @Component
 public class ProductSearchCache {
 
@@ -17,10 +20,18 @@ public class ProductSearchCache {
     private final Clock clock;
     private final Map<String, CacheEntry> entries;
 
+    /**
+     * Creates a product search cache instance.
+     */
     public ProductSearchCache() {
         this(1_000, 60_000L);
     }
 
+    /**
+     * Creates a product search cache instance.
+     * @param maximumSize the maximum size value
+     * @param ttlMillis the ttl millis value
+     */
     public ProductSearchCache(int maximumSize, long ttlMillis) {
         this(maximumSize, ttlMillis, Clock.systemUTC());
     }
@@ -32,6 +43,11 @@ public class ProductSearchCache {
         this.entries = new LinkedHashMap<>(16, 0.75f, true);
     }
 
+    /**
+     * Returns get data.
+     * @param condition the condition value
+     * @return the get result
+     */
     public synchronized Optional<List<ProductSearchResponse>> get(ProductSearchCondition condition) {
         String key = keyOf(condition);
         CacheEntry entry = entries.get(key);
@@ -45,11 +61,19 @@ public class ProductSearchCache {
         return Optional.of(entry.responses());
     }
 
+    /**
+     * Handles put behavior.
+     * @param condition the condition value
+     * @param responses the responses value
+     */
     public synchronized void put(ProductSearchCondition condition, List<ProductSearchResponse> responses) {
         entries.put(keyOf(condition), new CacheEntry(List.copyOf(responses), clock.millis()));
         evictOverflow();
     }
 
+    /**
+     * Handles clear behavior.
+     */
     public synchronized void clear() {
         entries.clear();
     }

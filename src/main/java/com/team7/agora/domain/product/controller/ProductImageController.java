@@ -15,16 +15,30 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+/**
+ * REST controller that exposes product image endpoints.
+ */
 @RestController
 @RequestMapping("/api/products")
 public class ProductImageController {
 
     private final ProductImageService productImageService;
 
+    /**
+     * Creates a product image controller instance.
+     * @param productImageService the product image service value
+     */
     public ProductImageController(ProductImageService productImageService) {
         this.productImageService = productImageService;
     }
 
+    /**
+     * Handles upload behavior.
+     * @param userDetails the auth user value
+     * @param productId the product id value
+     * @param image the image value
+     * @return the upload result
+     */
     @PostMapping("/{productId}/images")
     public ResponseEntity<ApiResponse<ProductImageResponse>> upload(
         @AuthenticationPrincipal CustomUserDetails userDetails,

@@ -23,6 +23,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+/**
+ * Application service that coordinates auth use cases.
+ */
 @Service
 @Transactional(readOnly = true)
 public class AuthService {
@@ -33,6 +36,14 @@ public class AuthService {
     private final JwtProvider jwtProvider;
     private final long refreshTokenValidTime;
 
+    /**
+     * Creates a auth service instance.
+     * @param userRepository the user repository value
+     * @param refreshTokenRepository the refresh token repository value
+     * @param passwordEncoder the password encoder value
+     * @param jwtProvider the jwt provider value
+     * @param refreshTokenValidTime the refresh token valid time value
+     */
     public AuthService(
         UserRepository userRepository,
         RefreshTokenRepository refreshTokenRepository,
@@ -47,6 +58,11 @@ public class AuthService {
         this.refreshTokenValidTime = refreshTokenValidTime;
     }
 
+    /**
+     * Handles signup behavior.
+     * @param request the request value
+     * @return the signup result
+     */
     @Transactional
     public SignupResponse signup(SignupRequest request) {
         if (userRepository.existsByEmail(request.email())) {
@@ -62,6 +78,11 @@ public class AuthService {
         return new SignupResponse(savedUser.getEmail(), savedUser.getNickname());
     }
 
+    /**
+     * Handles login behavior.
+     * @param request the request value
+     * @return the login result
+     */
     @Transactional
     public LoginResponse login(LoginRequest request) {
         User user = userRepository.findByEmail(request.email())
@@ -77,11 +98,20 @@ public class AuthService {
         return new LoginResponse(accessToken, refreshToken);
     }
 
+    /**
+     * Handles logout behavior.
+     * @param userId the user id value
+     */
     @Transactional
     public void logout(Long userId) {
         refreshTokenRepository.deleteByUserId(userId);
     }
 
+    /**
+     * Handles reissue behavior.
+     * @param refreshTokenValue the refresh token value value
+     * @return the reissue result
+     */
     @Transactional
     public ReissueResponse reissue(String refreshTokenValue) {
         RefreshToken refreshToken = refreshTokenRepository.findByToken(refreshTokenValue)

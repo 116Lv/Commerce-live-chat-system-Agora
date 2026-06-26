@@ -15,6 +15,9 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+/**
+ * JPA entity that represents an user record.
+ */
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
@@ -60,35 +63,73 @@ public class User {
         this.status = UserStatus.ACTIVE;
     }
 
+    /**
+     * Handles signup behavior.
+     * @param email the email value
+     * @param encodedPassword the encoded password value
+     * @param nickname the nickname value
+     * @param phone the phone value
+     * @return the signup result
+     */
     public static User signup(String email, String encodedPassword, String nickname, String phone) {
         return new User(email, encodedPassword, nickname, phone);
     }
 
+    /**
+     * Creates create data.
+     * @param email the email value
+     * @param encodedPassword the encoded password value
+     * @param nickname the nickname value
+     * @return the create result
+     */
     public static User create(String email, String encodedPassword, String nickname) {
         return new User(email, encodedPassword, nickname, null);
     }
 
+    /**
+     * Updates smile score data.
+     * @param delta the delta value
+     */
     public void updateSmileScore(int delta) {
         int nextScore = this.smileScore + delta;
         this.smileScore = Math.max(0, Math.min(100, nextScore));
     }
 
+    /**
+     * Handles block behavior.
+     */
     public void block() {
         this.status = UserStatus.BLOCKED;
     }
 
+    /**
+     * Handles change status behavior.
+     * @param status the status value
+     */
     public void changeStatus(UserStatus status) {
         this.status = status;
     }
 
+    /**
+     * Handles change role behavior.
+     * @param role the role value
+     */
     public void changeRole(UserRole role) {
         this.role = role;
     }
 
+    /**
+     * Handles change password behavior.
+     * @param encodedPassword the encoded password value
+     */
     public void changePassword(String encodedPassword) {
         this.password = encodedPassword;
     }
 
+    /**
+     * Updates profile data.
+     * @param nickname the nickname value
+     */
     public void updateProfile(String nickname) {
         this.nickname = nickname;
     }

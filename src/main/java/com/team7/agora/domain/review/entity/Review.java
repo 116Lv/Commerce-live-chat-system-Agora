@@ -17,6 +17,9 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+/**
+ * JPA entity that represents a review record.
+ */
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
@@ -57,6 +60,15 @@ public class Review extends BaseTimeEntity {
         markCreatedNow();
     }
 
+    /**
+     * Creates create data.
+     * @param trade the trade value
+     * @param reviewer the reviewer value
+     * @param targetUser the target user value
+     * @param rating the rating value
+     * @param content the content value
+     * @return the create result
+     */
     public static Review create(Trade trade, User reviewer, User targetUser, int rating, String content) {
         targetUser.updateSmileScore(toSmileDelta(rating));
         return new Review(trade, reviewer, targetUser, rating, content);

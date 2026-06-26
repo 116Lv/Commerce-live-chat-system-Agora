@@ -8,6 +8,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
+/**
+ * Repository contract for storing and querying report data.
+ */
 public interface ReportRepository extends JpaRepository<Report, Long> {
 
     List<Report> findAllByProductIsNull();

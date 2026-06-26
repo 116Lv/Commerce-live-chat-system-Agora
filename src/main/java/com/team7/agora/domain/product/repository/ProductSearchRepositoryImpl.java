@@ -9,15 +9,27 @@ import java.util.ArrayList;
 import java.util.List;
 import org.springframework.stereotype.Repository;
 
+/**
+ * Repository adapter that implements persistence operations for product search repository impl data.
+ */
 @Repository
 public class ProductSearchRepositoryImpl implements ProductSearchRepository {
 
     private final EntityManager entityManager;
 
+    /**
+     * Creates a product search repository impl instance.
+     * @param entityManager the entity manager value
+     */
     public ProductSearchRepositoryImpl(EntityManager entityManager) {
         this.entityManager = entityManager;
     }
 
+    /**
+     * Handles search behavior.
+     * @param condition the condition value
+     * @return the search result
+     */
     @Override
     public List<ProductSearchResponse> search(ProductSearchCondition condition) {
         StringBuilder jpql = new StringBuilder("""

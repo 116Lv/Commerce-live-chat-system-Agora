@@ -11,15 +11,28 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
+/**
+ * Storage implementation for handling local image storage files.
+ */
 @Component
 public class LocalImageStorageClient implements ImageStorageClient {
 
     private final Path baseUploadDir;
 
+    /**
+     * Creates a local image storage client instance.
+     * @param baseUploadDir the base upload dir value
+     */
     public LocalImageStorageClient(@Value("${file.upload-dir:uploads}") String baseUploadDir) {
         this.baseUploadDir = Path.of(baseUploadDir);
     }
 
+    /**
+     * Handles store behavior.
+     * @param category the category value
+     * @param file the file value
+     * @return the store result
+     */
     @Override
     public String store(String category, MultipartFile file) {
         if (file == null || file.isEmpty()) {

@@ -6,6 +6,9 @@ import com.team7.agora.domain.user.entity.User;
 import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+/**
+ * Repository contract for storing and querying user region data.
+ */
 public interface UserRegionRepository extends JpaRepository<UserRegion, Long> {
 
     void deleteByUser(User user);

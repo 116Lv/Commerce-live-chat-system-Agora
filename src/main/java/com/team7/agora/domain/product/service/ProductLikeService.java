@@ -15,6 +15,9 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+/**
+ * Application service that coordinates product like use cases.
+ */
 @Service
 @Transactional(readOnly = true)
 public class ProductLikeService {
@@ -23,6 +26,12 @@ public class ProductLikeService {
     private final ProductLikeRepository productLikeRepository;
     private final UserRepository userRepository;
 
+    /**
+     * Creates a product like service instance.
+     * @param productRepository the product repository value
+     * @param productLikeRepository the product like repository value
+     * @param userRepository the user repository value
+     */
     public ProductLikeService(
         ProductRepository productRepository,
         ProductLikeRepository productLikeRepository,
@@ -33,6 +42,12 @@ public class ProductLikeService {
         this.userRepository = userRepository;
     }
 
+    /**
+     * Handles like behavior.
+     * @param userId the user id value
+     * @param productId the product id value
+     * @return the like result
+     */
     @Transactional
     public ProductLikeResponse like(Long userId, Long productId) {
         Product product = getActiveProduct(productId);
@@ -47,6 +62,12 @@ public class ProductLikeService {
         return ProductLikeResponse.of(product, true);
     }
 
+    /**
+     * Handles unlike behavior.
+     * @param userId the user id value
+     * @param productId the product id value
+     * @return the unlike result
+     */
     @Transactional
     public ProductLikeResponse unlike(Long userId, Long productId) {
         Product product = getActiveProduct(productId);
@@ -60,6 +81,11 @@ public class ProductLikeService {
         return ProductLikeResponse.of(product, false);
     }
 
+    /**
+     * Returns my liked products data.
+     * @param userId the user id value
+     * @return the get my liked products result
+     */
     public List<ProductResponse> getMyLikedProducts(Long userId) {
         User user = getUser(userId);
         return productLikeRepository.findAllByUser(user).stream()

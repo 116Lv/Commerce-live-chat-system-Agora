@@ -15,6 +15,9 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+/**
+ * REST controller that exposes coupon event endpoints.
+ */
 @RestController
 @RequestMapping("/api/coupon-events")
 public class CouponEventController {
@@ -22,16 +25,31 @@ public class CouponEventController {
     private final CouponIssueService couponIssueService;
     private final CouponQueryService couponQueryService;
 
+    /**
+     * Creates a coupon event controller instance.
+     * @param couponIssueService the coupon issue service value
+     * @param couponQueryService the coupon query service value
+     */
     public CouponEventController(CouponIssueService couponIssueService, CouponQueryService couponQueryService) {
         this.couponIssueService = couponIssueService;
         this.couponQueryService = couponQueryService;
     }
 
+    /**
+     * Handles list behavior.
+     * @return the list result
+     */
     @GetMapping
     public ApiResponse<List<CouponEventResponse>> list() {
         return ApiResponse.success("진행중인 쿠폰 이벤트 목록입니다.", couponQueryService.listActiveEvents());
     }
 
+    /**
+     * Checks whether issue applies.
+     * @param userDetails the user details value
+     * @param eventId the event id value
+     * @return the issue result
+     */
     @PreAuthorize("hasAuthority('ROLE_USER')")
     @PostMapping("/{eventId}/issue")
     public ResponseEntity<ApiResponse<Void>> issue(

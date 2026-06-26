@@ -11,6 +11,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
+/**
+ * Application service that coordinates popular keyword use cases.
+ */
 @Service
 public class PopularKeywordService {
 
@@ -19,10 +22,18 @@ public class PopularKeywordService {
 
     private final PopularKeywordRepository popularKeywordRepository;
 
+    /**
+     * Creates a popular keyword service instance.
+     * @param popularKeywordRepository the popular keyword repository value
+     */
     public PopularKeywordService(PopularKeywordRepository popularKeywordRepository) {
         this.popularKeywordRepository = popularKeywordRepository;
     }
 
+    /**
+     * Handles record search keyword behavior.
+     * @param keyword the keyword value
+     */
     public void recordSearchKeyword(String keyword) {
         String normalizedKeyword = normalize(keyword);
         if (normalizedKeyword.isBlank()) {
@@ -36,6 +47,11 @@ public class PopularKeywordService {
         });
     }
 
+    /**
+     * Returns top keywords data.
+     * @param limit the limit value
+     * @return the get top keywords result
+     */
     public List<PopularKeywordResponse> getTopKeywords(int limit) {
         return readWithoutRedisFailure(
             "read realtime popular keywords",
@@ -43,6 +59,11 @@ public class PopularKeywordService {
         );
     }
 
+    /**
+     * Returns top daily keywords data.
+     * @param limit the limit value
+     * @return the get top daily keywords result
+     */
     public List<PopularKeywordResponse> getTopDailyKeywords(int limit) {
         return readWithoutRedisFailure(
             "read daily popular keywords",
@@ -50,6 +71,11 @@ public class PopularKeywordService {
         );
     }
 
+    /**
+     * Returns top weekly keywords data.
+     * @param limit the limit value
+     * @return the get top weekly keywords result
+     */
     public List<PopularKeywordResponse> getTopWeeklyKeywords(int limit) {
         return readWithoutRedisFailure(
             "read weekly popular keywords",

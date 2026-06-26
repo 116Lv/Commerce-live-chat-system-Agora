@@ -15,6 +15,9 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+/**
+ * JPA entity that represents an user region record.
+ */
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
@@ -42,6 +45,13 @@ public class UserRegion {
         this.primaryRegion = primaryRegion;
     }
 
+    /**
+     * Handles of behavior.
+     * @param user the user value
+     * @param region the region value
+     * @param primaryRegion the primary region value
+     * @return the of result
+     */
     public static UserRegion of(User user, Region region, boolean primaryRegion) {
         return new UserRegion(user, region, primaryRegion);
     }

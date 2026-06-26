@@ -3,6 +3,11 @@ package com.team7.agora.domain.admin.dto.response;
 
 import java.util.List;
 
+/**
+ * Response payload for returning admin dashboard data.
+ * @param role the role value
+ * @param accessibleMenus the accessible menus value
+ */
 public record AdminDashboardResponse(
         String role,
         List<String> accessibleMenus

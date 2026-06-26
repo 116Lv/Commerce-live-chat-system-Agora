@@ -3,6 +3,9 @@ package com.team7.agora.domain.search.repository;
 import com.team7.agora.domain.search.dto.PopularKeywordResponse;
 import java.util.List;
 
+/**
+ * Repository contract for storing and querying popular keyword data.
+ */
 public interface PopularKeywordRepository {
 
     void increment(String keyword);

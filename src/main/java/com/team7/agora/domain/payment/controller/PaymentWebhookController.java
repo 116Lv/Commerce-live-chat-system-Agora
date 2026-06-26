@@ -15,6 +15,9 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+/**
+ * REST controller that exposes payment webhook endpoints.
+ */
 @RestController
 @RequestMapping("/api/payments")
 public class PaymentWebhookController {
@@ -22,6 +25,11 @@ public class PaymentWebhookController {
     private final PaymentWebhookService paymentWebhookService;
     private final PaymentWebhookVerifier paymentWebhookVerifier;
 
+    /**
+     * Creates a payment webhook controller instance.
+     * @param paymentWebhookService the payment webhook service value
+     * @param paymentWebhookVerifier the payment webhook verifier value
+     */
     public PaymentWebhookController(
         PaymentWebhookService paymentWebhookService,
         PaymentWebhookVerifier paymentWebhookVerifier
@@ -30,6 +38,12 @@ public class PaymentWebhookController {
         this.paymentWebhookVerifier = paymentWebhookVerifier;
     }
 
+    /**
+     * Handles port one webhook behavior.
+     * @param webhookSecret the webhook secret value
+     * @param request the request value
+     * @return the port one webhook result
+     */
     @PostMapping({"/webhook", "/webhooks/portone"})
     public ResponseEntity<ApiResponse<PaymentResponse>> portOneWebhook(
         @RequestHeader(name = "PortOne-Webhook-Secret", required = false) String webhookSecret,

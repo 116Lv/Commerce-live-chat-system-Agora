@@ -17,6 +17,9 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+/**
+ * JPA entity that represents a coupon event record.
+ */
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
@@ -56,15 +59,30 @@ public class CouponEvent extends BaseTimeEntity {
         this.status = CouponEventStatus.ACTIVE;
     }
 
+    /**
+     * Creates create data.
+     * @param name the name value
+     * @param totalQuantity the total quantity value
+     * @param startAt the start at value
+     * @param endAt the end at value
+     * @return the create result
+     */
     public static CouponEvent create(String name, int totalQuantity, LocalDateTime startAt, LocalDateTime endAt) {
         return new CouponEvent(name, totalQuantity, startAt, endAt);
     }
 
+    /**
+     * Checks whether issue applies.
+     */
     public void issue() {
         validateIssueable(LocalDateTime.now());
         this.issuedQuantity++;
     }
 
+    /**
+     * Validates issueable rules.
+     * @param now the now value
+     */
     public void validateIssueable(LocalDateTime now) {
         if (status != CouponEventStatus.ACTIVE) {
             throw new BusinessException(ErrorCode.CONFLICT, "종료된 쿠폰 이벤트입니다.");

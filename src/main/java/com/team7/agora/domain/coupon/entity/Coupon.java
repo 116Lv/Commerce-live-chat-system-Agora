@@ -14,6 +14,9 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+/**
+ * JPA entity that represents a coupon record.
+ */
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
@@ -53,10 +56,27 @@ public class Coupon {
         this.validDays = validDays;
     }
 
+    /**
+     * Handles first come behavior.
+     * @param name the name value
+     * @param discountAmount the discount amount value
+     * @param minOrderAmount the min order amount value
+     * @param validDays the valid days value
+     * @return the first come result
+     */
     public static Coupon firstCome(String name, int discountAmount, int minOrderAmount, int validDays) {
         return new Coupon(name, discountAmount, minOrderAmount, CouponType.FIRST_COME, validDays);
     }
 
+    /**
+     * Creates create data.
+     * @param name the name value
+     * @param discountAmount the discount amount value
+     * @param minOrderAmount the min order amount value
+     * @param type the type value
+     * @param validDays the valid days value
+     * @return the create result
+     */
     public static Coupon create(String name, int discountAmount, int minOrderAmount, CouponType type, int validDays) {
         return new Coupon(name, discountAmount, minOrderAmount, type, validDays);
     }
