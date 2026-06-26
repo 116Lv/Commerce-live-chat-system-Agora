@@ -109,12 +109,19 @@ public class Payment {
         if (status == PaymentStatus.PAID) {
             return;
         }
-        if (status != PaymentStatus.READY) {
+        if (status != PaymentStatus.READY && status != PaymentStatus.CONFIRMING) {
             throw new PaymentException(ErrorCode.CONFLICT, "결제 대기 상태에서만 승인할 수 있습니다.");
         }
         this.paymentKey = paymentKey;
         this.status = PaymentStatus.PAID;
         this.paidAt = AgoraClock.now();
+    }
+
+    public void markConfirming() {
+        if (status != PaymentStatus.READY) {
+            throw new PaymentException(ErrorCode.CONFLICT, "결제 대기 상태에서만 승인할 수 있습니다.");
+        }
+        this.status = PaymentStatus.CONFIRMING;
     }
 
     /**

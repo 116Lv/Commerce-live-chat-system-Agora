@@ -78,6 +78,7 @@ public class SecurityConfig {
                     "/ws"
                 ).permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/products", "/api/products/*").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/users/*/smile-score").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/coupon-events").permitAll()
                 .requestMatchers("/api/admin/**").hasAnyAuthority(
                     "ROOT_ADMIN",

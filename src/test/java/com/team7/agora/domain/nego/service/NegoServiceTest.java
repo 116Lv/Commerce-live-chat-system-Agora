@@ -75,7 +75,7 @@ class NegoServiceTest {
 
     @Test
     void createOfferAllowsBuyerParticipant() {
-        when(chatRoomRepository.findByIdAndStatus(100L, ChatRoomStatus.ACTIVE))
+        when(chatRoomRepository.findByIdAndStatusForUpdate(100L, ChatRoomStatus.ACTIVE))
             .thenReturn(Optional.of(chatRoom));
         when(negoOfferRepository.save(any(NegoOffer.class))).thenAnswer(invocation -> {
             NegoOffer offer = invocation.getArgument(0);
@@ -94,7 +94,7 @@ class NegoServiceTest {
 
     @Test
     void createOfferSetsExpirationAfter24Hours() {
-        when(chatRoomRepository.findByIdAndStatus(100L, ChatRoomStatus.ACTIVE))
+        when(chatRoomRepository.findByIdAndStatusForUpdate(100L, ChatRoomStatus.ACTIVE))
             .thenReturn(Optional.of(chatRoom));
         when(negoOfferRepository.save(any(NegoOffer.class))).thenAnswer(invocation -> {
             NegoOffer offer = invocation.getArgument(0);
@@ -113,7 +113,7 @@ class NegoServiceTest {
     @Test
     void createOfferRejectsWhenProductAlreadyReserved() {
         chatRoom.getProduct().markReserved();
-        when(chatRoomRepository.findByIdAndStatus(100L, ChatRoomStatus.ACTIVE))
+        when(chatRoomRepository.findByIdAndStatusForUpdate(100L, ChatRoomStatus.ACTIVE))
             .thenReturn(Optional.of(chatRoom));
 
         assertThatThrownBy(() -> negoService.createOffer(2L, 100L, BigDecimal.valueOf(45000)))
@@ -122,7 +122,7 @@ class NegoServiceTest {
 
     @Test
     void createOfferRejectsWhenRequesterAlreadyHasActiveOfferInRoom() {
-        when(chatRoomRepository.findByIdAndStatus(100L, ChatRoomStatus.ACTIVE))
+        when(chatRoomRepository.findByIdAndStatusForUpdate(100L, ChatRoomStatus.ACTIVE))
             .thenReturn(Optional.of(chatRoom));
         when(negoOfferRepository.existsByChatRoomAndRequesterAndStatusIn(chatRoom, buyer, NegoOffer.ACTIVE_STATUSES))
             .thenReturn(true);
@@ -133,7 +133,7 @@ class NegoServiceTest {
 
     @Test
     void createOfferRejectsSeller() {
-        when(chatRoomRepository.findByIdAndStatus(100L, ChatRoomStatus.ACTIVE))
+        when(chatRoomRepository.findByIdAndStatusForUpdate(100L, ChatRoomStatus.ACTIVE))
             .thenReturn(Optional.of(chatRoom));
 
         assertThatThrownBy(() -> negoService.createOffer(1L, 100L, BigDecimal.valueOf(45000)))

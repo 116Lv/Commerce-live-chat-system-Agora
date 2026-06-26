@@ -50,7 +50,7 @@ public class ReportService {
     public ReportResponse createProductReport(Long reporterId, Long productId, String reason) {
         User reporter = userRepository.findById(reporterId)
             .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "신고자를 찾을 수 없습니다."));
-        Product product = productRepository.findByIdAndDeletedAtIsNull(productId)
+        Product product = productRepository.findByIdForUpdateAndDeletedAtIsNull(productId)
             .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "상품을 찾을 수 없습니다."));
 
         if (product.isSeller(reporterId)) {
@@ -80,7 +80,7 @@ public class ReportService {
 
         User reporter = userRepository.findById(reporterId)
             .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "신고자를 찾을 수 없습니다."));
-        User reportedUser = userRepository.findById(reportedUserId)
+        User reportedUser = userRepository.findByIdForUpdate(reportedUserId)
             .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "신고 대상 회원을 찾을 수 없습니다."));
 
         if (reportRepository.existsByReporterAndReportedUserAndProductIsNull(reporter, reportedUser)) {

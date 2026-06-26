@@ -11,6 +11,7 @@ import static org.mockito.Mockito.when;
 import com.team7.agora.domain.payment.client.PaymentClient;
 import com.team7.agora.domain.payment.dto.response.PaymentResponse;
 import com.team7.agora.domain.payment.entity.Payment;
+import com.team7.agora.domain.payment.enums.PaymentStatus;
 import com.team7.agora.domain.payment.exception.PaymentException;
 import com.team7.agora.domain.payment.repository.PaymentRepository;
 import com.team7.agora.domain.product.entity.Product;
@@ -29,6 +30,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.transaction.support.TransactionCallback;
+import org.springframework.transaction.support.TransactionOperations;
 
 @ExtendWith(MockitoExtension.class)
 class PaymentServiceTest {
@@ -52,7 +55,19 @@ class PaymentServiceTest {
 
     @BeforeEach
     void setUp() {
-        paymentService = new PaymentService(paymentRepository, settlementRepository, tradeRepository, paymentClient);
+        TransactionOperations transactionOperations = new TransactionOperations() {
+            @Override
+            public <T> T execute(TransactionCallback<T> action) {
+                return action.doInTransaction(null);
+            }
+        };
+        paymentService = new PaymentService(
+            paymentRepository,
+            settlementRepository,
+            tradeRepository,
+            paymentClient,
+            transactionOperations
+        );
         seller = User.signup("seller@test.com", "password", "판매자", "01011112222");
         assignId(seller, 1L);
         buyer = User.signup("buyer@test.com", "password", "구매자", "01033334444");
@@ -107,8 +122,11 @@ class PaymentServiceTest {
     void confirmMarksPaidAndCreatesSettlement() {
         Payment payment = Payment.ready(trade, buyer, BigDecimal.valueOf(50000), "order-1");
         assignId(payment, 1000L);
-        when(paymentRepository.findByIdForUpdate(1000L)).thenReturn(Optional.of(payment));
-        when(paymentClient.confirm("payment-key", "order-1", BigDecimal.valueOf(50000))).thenReturn(true);
+        when(paymentRepository.findByIdForUpdate(1000L)).thenReturn(Optional.of(payment), Optional.of(payment));
+        when(paymentClient.confirm("payment-key", "order-1", BigDecimal.valueOf(50000))).thenAnswer(invocation -> {
+            assertThat(payment.getStatus()).isEqualTo(PaymentStatus.CONFIRMING);
+            return true;
+        });
         when(settlementRepository.save(any(Settlement.class))).thenAnswer(invocation -> {
             Settlement settlement = invocation.getArgument(0);
             assignId(settlement, 2000L);

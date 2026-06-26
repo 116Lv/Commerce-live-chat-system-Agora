@@ -222,7 +222,7 @@ public class NegoService {
     }
 
     private ChatRoom findActiveRoom(Long chatRoomId) {
-        return chatRoomRepository.findByIdAndStatus(chatRoomId, ChatRoomStatus.ACTIVE)
+        return chatRoomRepository.findByIdAndStatusForUpdate(chatRoomId, ChatRoomStatus.ACTIVE)
             .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "채팅방을 찾을 수 없습니다."));
     }
 

@@ -12,12 +12,10 @@ import org.springframework.security.access.prepost.PreAuthorize;
 class ControllerAuthorizationTest {
 
     @Test
-    void smileScoreRequiresOwnerOrUserAdminAuthorization() throws NoSuchMethodException {
+    void smileScoreIsPublicEndpointWithoutMethodAuthorization() throws NoSuchMethodException {
         Method method = SmileScoreController.class.getMethod("getSmileScore", Long.class);
 
-        assertThat(method.getAnnotation(PreAuthorize.class))
-                .extracting(PreAuthorize::value)
-                .isEqualTo("#userId == authentication.principal.userId or hasAnyAuthority('ROOT_ADMIN', 'USER_ADMIN')");
+        assertThat(method.getAnnotation(PreAuthorize.class)).isNull();
     }
 
     @Test

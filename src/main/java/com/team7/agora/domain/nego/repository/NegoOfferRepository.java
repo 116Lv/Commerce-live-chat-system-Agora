@@ -30,8 +30,6 @@ public interface NegoOfferRepository extends JpaRepository<NegoOffer, Long> {
         Collection<NegoOfferStatus> statuses
     );
 
-    List<NegoOffer> findAllByChatRoomProductIdAndStatusIn(Long productId, Collection<NegoOfferStatus> statuses);
-
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select n from NegoOffer n where n.chatRoom.product.id = :productId and n.status in :statuses")
     List<NegoOffer> findAllByChatRoomProductIdAndStatusInForUpdate(

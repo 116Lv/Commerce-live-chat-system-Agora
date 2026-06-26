@@ -15,10 +15,17 @@ import com.team7.agora.domain.trade.enums.TradeStatus;
 import com.team7.agora.domain.trade.repository.TradeRepository;
 import com.team7.agora.global.auth.AuthUser;
 import com.team7.agora.global.exception.ErrorCode;
+import java.math.BigDecimal;
 import java.util.UUID;
+import java.util.function.Consumer;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionOperations;
+import org.springframework.transaction.support.TransactionTemplate;
 
 /**
  * 결제 관련 비즈니스 유스케이스를 처리하는 서비스이다.
@@ -31,6 +38,7 @@ public class PaymentService {
     private final SettlementRepository settlementRepository;
     private final TradeRepository tradeRepository;
     private final PaymentClient paymentClient;
+    private final TransactionOperations transactionOperations;
 
     /**
      * 필요한 의존성을 주입받아 컴포넌트를 생성한다.
@@ -39,16 +47,29 @@ public class PaymentService {
      * @param tradeRepository 데이터를 조회하고 저장하는 리포지토리
      * @param paymentClient 외부 시스템 또는 저장소와 통신하는 클라이언트
      */
+    @Autowired
     public PaymentService(
         PaymentRepository paymentRepository,
         SettlementRepository settlementRepository,
         TradeRepository tradeRepository,
-        PaymentClient paymentClient
+        PaymentClient paymentClient,
+        PlatformTransactionManager transactionManager
+    ) {
+        this(paymentRepository, settlementRepository, tradeRepository, paymentClient, new TransactionTemplate(transactionManager));
+    }
+
+    PaymentService(
+        PaymentRepository paymentRepository,
+        SettlementRepository settlementRepository,
+        TradeRepository tradeRepository,
+        PaymentClient paymentClient,
+        TransactionOperations transactionOperations
     ) {
         this.paymentRepository = paymentRepository;
         this.settlementRepository = settlementRepository;
         this.tradeRepository = tradeRepository;
         this.paymentClient = paymentClient;
+        this.transactionOperations = transactionOperations;
     }
 
     /**
@@ -94,39 +115,83 @@ public class PaymentService {
      * @param paymentKey 결제 승인 키
      * @return 클라이언트에 반환할 API 응답
      */
-    @Transactional
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public PaymentResponse confirm(Long payerId, Long paymentId, String paymentKey) {
-        Payment payment = findPaymentForUpdate(paymentId);
-        payment.validatePayer(payerId);
-        return confirmPayment(payment, paymentKey);
+        ConfirmationAttempt attempt = reserveConfirmationById(paymentId, payment -> payment.validatePayer(payerId));
+        return confirmPayment(attempt, paymentKey);
     }
 
-    @Transactional
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public PaymentResponse confirmByPaymentId(Long paymentId, String paymentKey) {
-        return confirmPayment(findPaymentForUpdate(paymentId), paymentKey);
+        return confirmPayment(reserveConfirmationById(paymentId, payment -> { }), paymentKey);
     }
 
-    @Transactional
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public PaymentResponse confirmByOrderId(String orderId, String paymentKey) {
-        Payment payment = paymentRepository.findByOrderIdForUpdate(orderId)
-            .orElseThrow(() -> new PaymentException(ErrorCode.NOT_FOUND, "결제를 찾을 수 없습니다."));
-        return confirmPayment(payment, paymentKey);
+        return confirmPayment(reserveConfirmationByOrderId(orderId), paymentKey);
     }
 
-    private PaymentResponse confirmPayment(Payment payment, String paymentKey) {
-        if (payment.getStatus() == PaymentStatus.PAID) {
-            return PaymentResponse.from(payment);
+    private PaymentResponse confirmPayment(ConfirmationAttempt attempt, String paymentKey) {
+        if (attempt.alreadyConfirmed() != null) {
+            return attempt.alreadyConfirmed();
         }
 
-        boolean approved = paymentClient.confirm(paymentKey, payment.getOrderId(), payment.getAmount());
+        boolean approved = paymentClient.confirm(paymentKey, attempt.orderId(), attempt.amount());
         if (!approved) {
+            markConfirmationFailed(attempt.paymentId());
             throw new PaymentException(ErrorCode.INVALID_REQUEST, "결제 승인이 거절되었습니다.");
         }
 
-        payment.markPaid(paymentKey);
-        payment.getTrade().markPaid();
-        Settlement settlement = settlementRepository.save(Settlement.pending(payment));
-        return PaymentResponse.from(payment, settlement.getId());
+        return transactionOperations.execute(status -> {
+            Payment payment = findPaymentForUpdate(attempt.paymentId());
+            if (payment.getStatus() == PaymentStatus.PAID) {
+                return PaymentResponse.from(payment);
+            }
+            payment.markPaid(paymentKey);
+            payment.getTrade().markPaid();
+            Settlement settlement = settlementRepository.save(Settlement.pending(payment));
+            return PaymentResponse.from(payment, settlement.getId());
+        });
+    }
+
+    private ConfirmationAttempt reserveConfirmationById(Long paymentId, Consumer<Payment> validator) {
+        return transactionOperations.execute(status -> {
+            Payment payment = findPaymentForUpdate(paymentId);
+            validator.accept(payment);
+            return reserveConfirmation(payment);
+        });
+    }
+
+    private ConfirmationAttempt reserveConfirmationByOrderId(String orderId) {
+        return transactionOperations.execute(status -> {
+            Payment payment = paymentRepository.findByOrderIdForUpdate(orderId)
+                .orElseThrow(() -> new PaymentException(ErrorCode.NOT_FOUND, "결제를 찾을 수 없습니다."));
+            return reserveConfirmation(payment);
+        });
+    }
+
+    private ConfirmationAttempt reserveConfirmation(Payment payment) {
+        if (payment.getStatus() == PaymentStatus.PAID) {
+            return new ConfirmationAttempt(payment.getId(), payment.getOrderId(), payment.getAmount(), PaymentResponse.from(payment));
+        }
+        payment.markConfirming();
+        return new ConfirmationAttempt(payment.getId(), payment.getOrderId(), payment.getAmount(), null);
+    }
+
+    private void markConfirmationFailed(Long paymentId) {
+        transactionOperations.execute(status -> {
+            Payment payment = findPaymentForUpdate(paymentId);
+            payment.markFailed();
+            return null;
+        });
+    }
+
+    private record ConfirmationAttempt(
+        Long paymentId,
+        String orderId,
+        BigDecimal amount,
+        PaymentResponse alreadyConfirmed
+    ) {
     }
 
     /**
