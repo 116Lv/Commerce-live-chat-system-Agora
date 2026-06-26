@@ -107,7 +107,7 @@ class PaymentServiceTest {
     void confirmMarksPaidAndCreatesSettlement() {
         Payment payment = Payment.ready(trade, buyer, BigDecimal.valueOf(50000), "order-1");
         assignId(payment, 1000L);
-        when(paymentRepository.findById(1000L)).thenReturn(Optional.of(payment));
+        when(paymentRepository.findByIdForUpdate(1000L)).thenReturn(Optional.of(payment));
         when(paymentClient.confirm("payment-key", "order-1", BigDecimal.valueOf(50000))).thenReturn(true);
         when(settlementRepository.save(any(Settlement.class))).thenAnswer(invocation -> {
             Settlement settlement = invocation.getArgument(0);
@@ -128,7 +128,7 @@ class PaymentServiceTest {
         assignId(payment, 1000L);
         payment.markPaid("payment-key");
         trade.markPaid();
-        when(paymentRepository.findById(1000L)).thenReturn(Optional.of(payment));
+        when(paymentRepository.findByIdForUpdate(1000L)).thenReturn(Optional.of(payment));
 
         PaymentResponse response = paymentService.confirm(2L, 1000L, "payment-key");
 

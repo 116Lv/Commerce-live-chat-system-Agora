@@ -96,19 +96,19 @@ public class PaymentService {
      */
     @Transactional
     public PaymentResponse confirm(Long payerId, Long paymentId, String paymentKey) {
-        Payment payment = findPayment(paymentId);
+        Payment payment = findPaymentForUpdate(paymentId);
         payment.validatePayer(payerId);
         return confirmPayment(payment, paymentKey);
     }
 
     @Transactional
     public PaymentResponse confirmByPaymentId(Long paymentId, String paymentKey) {
-        return confirmPayment(findPayment(paymentId), paymentKey);
+        return confirmPayment(findPaymentForUpdate(paymentId), paymentKey);
     }
 
     @Transactional
     public PaymentResponse confirmByOrderId(String orderId, String paymentKey) {
-        Payment payment = paymentRepository.findByOrderId(orderId)
+        Payment payment = paymentRepository.findByOrderIdForUpdate(orderId)
             .orElseThrow(() -> new PaymentException(ErrorCode.NOT_FOUND, "결제를 찾을 수 없습니다."));
         return confirmPayment(payment, paymentKey);
     }
@@ -176,6 +176,11 @@ public class PaymentService {
 
     private Payment findPayment(Long paymentId) {
         return paymentRepository.findById(paymentId)
+            .orElseThrow(() -> new PaymentException(ErrorCode.NOT_FOUND, "결제를 찾을 수 없습니다."));
+    }
+
+    private Payment findPaymentForUpdate(Long paymentId) {
+        return paymentRepository.findByIdForUpdate(paymentId)
             .orElseThrow(() -> new PaymentException(ErrorCode.NOT_FOUND, "결제를 찾을 수 없습니다."));
     }
 
