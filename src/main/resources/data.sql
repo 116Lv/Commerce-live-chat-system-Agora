@@ -1,21 +1,21 @@
 INSERT INTO users (id, email, password, nickname, phone, smile_score, role, status, deleted_at)
 VALUES
-    (1, 'seller@test.com', '$2a$10$5XA3pQtBuOJfBIqcOZzcSeKMTBHqQpqFswCqh/fqLyxd5o7vmkY02', 'seller', '010-1111-1111', 82, 'ROLE_USER', 'ACTIVE', NULL),
-    (2, 'buyer@test.com', '$2a$10$5XA3pQtBuOJfBIqcOZzcSeKMTBHqQpqFswCqh/fqLyxd5o7vmkY02', 'buyer', '010-2222-2222', 75, 'ROLE_USER', 'ACTIVE', NULL),
-    (3, 'user2@test.com', '$2a$10$5XA3pQtBuOJfBIqcOZzcSeKMTBHqQpqFswCqh/fqLyxd5o7vmkY02', 'user2', '010-3333-3333', 91, 'ROLE_USER', 'ACTIVE', NULL),
-    (4, 'admin@test.com', '$2a$10$5XA3pQtBuOJfBIqcOZzcSeKMTBHqQpqFswCqh/fqLyxd5o7vmkY02', 'root-admin', '010-4444-4444', 60, 'ROOT_ADMIN', 'ACTIVE', NULL),
-    (5, 'blocked@test.com', '$2a$10$5XA3pQtBuOJfBIqcOZzcSeKMTBHqQpqFswCqh/fqLyxd5o7vmkY02', 'blocked', '010-5555-5555', 20, 'ROLE_USER', 'BLOCKED', NULL),
-    (6, 'useradmin@test.com', '$2a$10$5XA3pQtBuOJfBIqcOZzcSeKMTBHqQpqFswCqh/fqLyxd5o7vmkY02', 'user-admin', '010-6666-6666', 60, 'USER_ADMIN', 'ACTIVE', NULL),
-    (7, 'productadmin@test.com', '$2a$10$5XA3pQtBuOJfBIqcOZzcSeKMTBHqQpqFswCqh/fqLyxd5o7vmkY02', 'product-admin', '010-7777-7777', 60, 'PRODUCT_ADMIN', 'ACTIVE', NULL),
-    (8, 'settlementadmin@test.com', '$2a$10$5XA3pQtBuOJfBIqcOZzcSeKMTBHqQpqFswCqh/fqLyxd5o7vmkY02', 'settlement-admin', '010-8888-8888', 60, 'SETTLEMENT_ADMIN', 'ACTIVE', NULL);
+    (1, 'seller@test.com', '$2a$10$5XA3pQtBuOJfBIqcOZzcSeKMTBHqQpqFswCqh/fqLyxd5o7vmkY02', '판매자동네', '010-1111-1111', 82, 'ROLE_USER', 'ACTIVE', NULL),
+    (2, 'buyer@test.com', '$2a$10$5XA3pQtBuOJfBIqcOZzcSeKMTBHqQpqFswCqh/fqLyxd5o7vmkY02', '구매자동네', '010-2222-2222', 75, 'ROLE_USER', 'ACTIVE', NULL),
+    (3, 'user2@test.com', '$2a$10$5XA3pQtBuOJfBIqcOZzcSeKMTBHqQpqFswCqh/fqLyxd5o7vmkY02', '이웃사용자', '010-3333-3333', 91, 'ROLE_USER', 'ACTIVE', NULL),
+    (4, 'admin@test.com', '$2a$10$5XA3pQtBuOJfBIqcOZzcSeKMTBHqQpqFswCqh/fqLyxd5o7vmkY02', '최고관리자', '010-4444-4444', 60, 'ROOT_ADMIN', 'ACTIVE', NULL),
+    (5, 'blocked@test.com', '$2a$10$5XA3pQtBuOJfBIqcOZzcSeKMTBHqQpqFswCqh/fqLyxd5o7vmkY02', '차단회원', '010-5555-5555', 20, 'ROLE_USER', 'BLOCKED', NULL),
+    (6, 'useradmin@test.com', '$2a$10$5XA3pQtBuOJfBIqcOZzcSeKMTBHqQpqFswCqh/fqLyxd5o7vmkY02', '회원관리자', '010-6666-6666', 60, 'USER_ADMIN', 'ACTIVE', NULL),
+    (7, 'productadmin@test.com', '$2a$10$5XA3pQtBuOJfBIqcOZzcSeKMTBHqQpqFswCqh/fqLyxd5o7vmkY02', '상품관리자', '010-7777-7777', 60, 'PRODUCT_ADMIN', 'ACTIVE', NULL),
+    (8, 'settlementadmin@test.com', '$2a$10$5XA3pQtBuOJfBIqcOZzcSeKMTBHqQpqFswCqh/fqLyxd5o7vmkY02', '정산관리자', '010-8888-8888', 60, 'SETTLEMENT_ADMIN', 'ACTIVE', NULL);
 
 INSERT INTO regions (id, name, code, sido, sigungu, eupmyeondong)
 VALUES
-    (1, 'Seoul Gangnam Yeoksam', '1168010100', 'Seoul', 'Gangnam-gu', 'Yeoksam-dong'),
-    (2, 'Seoul Songpa Jamsil', '1171010100', 'Seoul', 'Songpa-gu', 'Jamsil-dong'),
-    (3, 'Gyeonggi Seongnam Bundang Jeongja', '4113510300', 'Gyeonggi-do', 'Seongnam-si Bundang-gu', 'Jeongja-dong'),
-    (4, 'Gyeonggi Suwon Yeongtong Gwanggyo', '4111710300', 'Gyeonggi-do', 'Suwon-si Yeongtong-gu', 'Gwanggyo-dong'),
-    (5, 'Incheon Yeonsu Songdo', '2818510600', 'Incheon', 'Yeonsu-gu', 'Songdo-dong');
+    (1, '서울특별시 강남구 역삼동', '1168010100', '서울특별시', '강남구', '역삼동'),
+    (2, '서울특별시 송파구 잠실동', '1171010100', '서울특별시', '송파구', '잠실동'),
+    (3, '경기도 성남시 분당구 정자동', '4113510300', '경기도', '성남시 분당구', '정자동'),
+    (4, '경기도 수원시 영통구 광교동', '4111710300', '경기도', '수원시 영통구', '광교동'),
+    (5, '인천광역시 연수구 송도동', '2818510600', '인천광역시', '연수구', '송도동');
 
 INSERT INTO user_regions (id, user_id, region_id, primary_region)
 VALUES
@@ -32,14 +32,14 @@ VALUES
 
 INSERT INTO products (id, seller_id, region_id, title, description, price, category, status, view_count, like_count, deleted_at)
 VALUES
-    (1, 1, 1, 'iPhone 15 128GB Black', 'Good condition battery 92 percent', 850000, 'Electronics', 'SELLING', 31, 2, NULL),
-    (2, 1, 1, 'MacBook Air M2 13 inch', 'Used for document work', 720000, 'Electronics', 'SOLD', 54, 1, NULL),
-    (3, 2, 3, 'Camping Chair Set', 'Light and compact chair set', 45000, 'Sports', 'SELLING', 12, 1, NULL),
-    (4, 3, 2, 'Wood Desk', 'Pickup required', 60000, 'Furniture', 'SOLD', 40, 1, NULL),
-    (5, 2, 4, 'Bicycle Helmet', 'Size M', 25000, 'Sports', 'RESERVED', 8, 0, NULL),
-    (6, 3, 5, 'Coffee Beans 1kg', 'Fresh beans', 18000, 'Food', 'HIDDEN', 5, 0, NULL),
-    (7, 1, 2, 'Wireless Keyboard', 'Low noise keyboard', 35000, 'Electronics', 'SELLING', 18, 0, NULL),
-    (8, 2, 3, 'Deleted Test Product', 'Deleted product for tests', 10000, 'Etc', 'DELETED', 0, 0, '2026-06-20 12:00:00');
+    (1, 1, 1, '아이폰 15 128GB 블랙', '상태 좋고 배터리 성능 92%입니다. 직거래 선호합니다.', 850000, '디지털기기', 'SELLING', 31, 2, NULL),
+    (2, 1, 1, '맥북 에어 M2 13인치', '문서 작업 위주로 사용했습니다. 생활 기스 조금 있습니다.', 720000, '디지털기기', 'SOLD', 54, 1, NULL),
+    (3, 2, 3, '캠핑 의자 2개 세트', '가볍고 접이식이라 캠핑 입문자에게 좋아요.', 45000, '스포츠/레저', 'SELLING', 12, 1, NULL),
+    (4, 3, 2, '원목 책상', '이사 정리로 내놓습니다. 직접 가져가셔야 합니다.', 60000, '가구/인테리어', 'SOLD', 40, 1, NULL),
+    (5, 2, 4, '자전거 헬멧', '사이즈 M, 사용감 적습니다.', 25000, '스포츠/레저', 'RESERVED', 8, 0, NULL),
+    (6, 3, 5, '커피 원두 1kg', '선물 받았는데 마시지 않아 판매합니다.', 18000, '생활/식품', 'HIDDEN', 5, 0, NULL),
+    (7, 1, 2, '무선 키보드', '저소음 무선 키보드입니다.', 35000, '디지털기기', 'SELLING', 18, 0, NULL),
+    (8, 2, 3, '삭제된 테스트 상품', '삭제 상품 조회 제외 테스트용입니다.', 10000, '기타', 'DELETED', 0, 0, '2026-06-20 12:00:00');
 
 INSERT INTO product_images (id, product_id, image_url, sort_order)
 VALUES
@@ -63,9 +63,9 @@ INSERT INTO coupon_events (
     discount_amount, min_order_amount, valid_days, status, created_at
 )
 VALUES
-    (1, 'FIRST_COME', 'First Trade Coupon', 100, 3, '2026-01-01 00:00:00', '2026-12-31 23:59:59', 5000, 10000, 30, 'ACTIVE', '2026-01-01 00:00:00'),
-    (2, 'NEW_SIGNUP', 'Smile Reward Coupon Event', 50, 1, '2026-01-01 00:00:00', '2026-12-31 23:59:59', 3000, 10000, 30, 'ACTIVE', '2026-01-01 00:00:00'),
-    (3, 'ADMIN_INDIVIDUAL', 'Admin Test Coupon Event', 10, 0, '2026-01-01 00:00:00', '2026-12-31 23:59:59', 7000, 30000, 14, 'ACTIVE', '2026-01-01 00:00:00');
+    (1, 'FIRST_COME', '동네 첫 거래 선착순 쿠폰', 100, 3, '2026-01-01 00:00:00', '2026-12-31 23:59:59', 5000, 10000, 30, 'ACTIVE', '2026-01-01 00:00:00'),
+    (2, 'NEW_SIGNUP', '스마일 리워드 쿠폰 이벤트', 50, 1, '2026-01-01 00:00:00', '2026-12-31 23:59:59', 3000, 10000, 30, 'ACTIVE', '2026-01-01 00:00:00'),
+    (3, 'ADMIN_INDIVIDUAL', '관리자 발급 테스트 쿠폰', 10, 0, '2026-01-01 00:00:00', '2026-12-31 23:59:59', 7000, 30000, 14, 'ACTIVE', '2026-01-01 00:00:00');
 
 INSERT INTO coupons (id, coupon_event_id, user_id, status, issued_at, expires_at)
 VALUES
@@ -85,12 +85,12 @@ VALUES
 
 INSERT INTO chat_messages (id, chat_room_id, sender_id, content, message_type, created_at)
 VALUES
-    (1, 1, 2, 'Is MacBook still available?', 'TEXT', '2026-06-23 09:11:00'),
-    (2, 1, 1, 'Yes it is available.', 'TEXT', '2026-06-23 09:12:00'),
-    (3, 1, 2, 'Can you do 580000?', 'TEXT', '2026-06-23 09:13:00'),
-    (4, 2, 3, 'Where can we meet for iPhone?', 'TEXT', '2026-06-23 09:21:00'),
+    (1, 1, 2, '맥북 아직 판매 중인가요?', 'TEXT', '2026-06-23 09:11:00'),
+    (2, 1, 1, '네, 아직 판매 중입니다.', 'TEXT', '2026-06-23 09:12:00'),
+    (3, 1, 2, '58만원 가능할까요?', 'TEXT', '2026-06-23 09:13:00'),
+    (4, 2, 3, '아이폰 직거래 위치가 어디인가요?', 'TEXT', '2026-06-23 09:21:00'),
     (5, 2, 1, '/uploads/chat/seed-chat-image.jpg', 'IMAGE', '2026-06-23 09:22:00'),
-    (6, 3, 1, 'Can we trade the helmet today?', 'TEXT', '2026-06-23 10:01:00');
+    (6, 3, 1, '헬멧 오늘 저녁 거래 가능할까요?', 'TEXT', '2026-06-23 10:01:00');
 
 INSERT INTO nego_offers (id, chat_room_id, requester_id, offer_price, expires_at, status, created_at, responded_at)
 VALUES
@@ -122,11 +122,11 @@ VALUES
 
 INSERT INTO reviews (id, trade_id, reviewer_id, target_user_id, rating, content, created_at)
 VALUES
-    (1, 2, 2, 3, 5, 'On time and kind.', '2026-06-22 18:10:00'),
-    (2, 2, 3, 2, 4, 'Fast trade.', '2026-06-22 18:12:00');
+    (1, 2, 2, 3, 5, '시간 약속을 잘 지켜주셨어요.', '2026-06-22 18:10:00'),
+    (2, 2, 3, 2, 4, '거래가 빠르게 끝났습니다.', '2026-06-22 18:12:00');
 
 INSERT INTO reports (id, reporter_id, reported_user_id, product_id, reason, status, admin_memo, created_at, resolved_at)
 VALUES
-    (1, 2, 1, 1, 'Product description differs.', 'PENDING', NULL, '2026-06-23 10:00:00', NULL),
-    (2, 3, 5, 5, 'Repeated inappropriate messages.', 'RESOLVED', 'Blocked user after review', '2026-06-22 16:00:00', '2026-06-22 16:30:00'),
-    (3, 1, 3, 4, 'No response after trade.', 'REJECTED', 'Insufficient evidence', '2026-06-21 13:00:00', '2026-06-21 14:00:00');
+    (1, 2, 1, 1, '상품 설명과 실제 상태가 다를 수 있어 신고합니다.', 'PENDING', NULL, '2026-06-23 10:00:00', NULL),
+    (2, 3, 5, 5, '반복적으로 부적절한 메시지를 보냅니다.', 'RESOLVED', '신고 확인 후 사용자 차단 처리', '2026-06-22 16:00:00', '2026-06-22 16:30:00'),
+    (3, 1, 3, 4, '거래 완료 후 연락이 원활하지 않았습니다.', 'REJECTED', '증거 부족으로 반려', '2026-06-21 13:00:00', '2026-06-21 14:00:00');
