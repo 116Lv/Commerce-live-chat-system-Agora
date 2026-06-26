@@ -7,6 +7,7 @@ import com.team7.agora.domain.search.service.PopularKeywordService;
 import com.team7.agora.domain.search.service.ProductSearchService;
 import com.team7.agora.global.auth.CustomUserDetails;
 import com.team7.agora.global.response.ApiResponse;
+import com.team7.agora.global.response.PageResponse;
 import java.util.List;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.ResponseEntity;
@@ -46,7 +47,7 @@ public class SearchController {
      * @return 클라이언트에 반환할 API 응답
      */
     @GetMapping("/v1/products/search")
-    public ResponseEntity<ApiResponse<List<ProductSearchResponse>>> searchV1(
+    public ResponseEntity<ApiResponse<PageResponse<ProductSearchResponse>>> searchV1(
         @AuthenticationPrincipal CustomUserDetails userDetails,
         @RequestParam(required = false) String keyword,
         @RequestParam(required = false) Long regionId,
@@ -55,10 +56,11 @@ public class SearchController {
         @RequestParam(defaultValue = "20") int size
     ) {
         popularKeywordService.recordSearchKeyword(viewerId(userDetails), keyword);
-        List<ProductSearchResponse> responses = productSearchService.searchV1(
-            new ProductSearchCondition(keyword, regionId, category, PageRequest.of(page, size))
-        );
-        return ResponseEntity.ok(ApiResponse.success("상품 검색 결과입니다.", responses));
+        return ResponseEntity.ok(ApiResponse.success("상품 검색 결과입니다.",
+            PageResponse.from(productSearchService.searchV1(
+                new ProductSearchCondition(keyword, regionId, category, PageRequest.of(page, size))
+            ))
+        ));
     }
 
     /**
@@ -71,7 +73,7 @@ public class SearchController {
      * @return 클라이언트에 반환할 API 응답
      */
     @GetMapping("/v2/products/search")
-    public ResponseEntity<ApiResponse<List<ProductSearchResponse>>> searchV2(
+    public ResponseEntity<ApiResponse<PageResponse<ProductSearchResponse>>> searchV2(
         @AuthenticationPrincipal CustomUserDetails userDetails,
         @RequestParam(required = false) String keyword,
         @RequestParam(required = false) Long regionId,
@@ -80,10 +82,11 @@ public class SearchController {
         @RequestParam(defaultValue = "20") int size
     ) {
         popularKeywordService.recordSearchKeyword(viewerId(userDetails), keyword);
-        List<ProductSearchResponse> responses = productSearchService.searchV2(
-            new ProductSearchCondition(keyword, regionId, category, PageRequest.of(page, size))
-        );
-        return ResponseEntity.ok(ApiResponse.success("캐시 적용 상품 검색 결과입니다.", responses));
+        return ResponseEntity.ok(ApiResponse.success("캐시 적용 상품 검색 결과입니다.",
+            productSearchService.searchV2(
+                new ProductSearchCondition(keyword, regionId, category, PageRequest.of(page, size))
+            )
+        ));
     }
 
     private Long viewerId(CustomUserDetails userDetails) {

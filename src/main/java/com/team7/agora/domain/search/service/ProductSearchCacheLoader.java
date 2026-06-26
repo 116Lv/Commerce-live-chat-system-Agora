@@ -1,4 +1,4 @@
-// Spring @Cacheable(AOP) 기반으로 상품 검색 결과를 캐싱하는 컴포넌트
+// Spring @Cacheable(AOP) 기반으로 상품 검색 결과를 Redis에 캐싱하는 컴포넌트
 package com.team7.agora.domain.search.service;
 
 import com.team7.agora.domain.product.repository.ProductRepository;
@@ -6,13 +6,13 @@ import com.team7.agora.domain.search.dto.ProductSearchCondition;
 import com.team7.agora.domain.search.dto.ProductSearchResponse;
 import com.team7.agora.domain.search.metric.SearchPerformanceRecorder;
 import com.team7.agora.global.config.CacheConfig;
-import java.util.List;
+import com.team7.agora.global.response.PageResponse;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Component;
 
 /**
- * Spring Cache AOP를 통해 상품 검색 결과를 조회하고 캐싱하는 경계 컴포넌트이다.
+ * Spring Cache AOP를 통해 상품 검색 결과를 조회하고 Redis에 캐싱하는 경계 컴포넌트이다.
  */
 @Component
 public class ProductSearchCacheLoader {
@@ -31,16 +31,16 @@ public class ProductSearchCacheLoader {
     /**
      * 정규화된 검색 조건을 기준으로 상품 검색 결과를 조회하고 캐싱한다.
      * @param condition 검색 조건
-     * @return 상품 검색 결과 목록
+     * @return 상품 검색 결과 페이지
      */
     @Cacheable(
         cacheNames = CacheConfig.PRODUCT_SEARCH_CACHE,
-        key = "'search:' + #condition.normalizedKeyword() + ':' + #condition.regionId() + ':' + #condition.category()"
+        key = "'search:' + #condition.normalizedKeyword() + ':' + #condition.regionId() + ':' + #condition.normalizedCategory()"
             + " + ':' + #condition.pageable().pageNumber + ':' + #condition.pageable().pageSize"
     )
-    public List<ProductSearchResponse> load(ProductSearchCondition condition) {
+    public PageResponse<ProductSearchResponse> load(ProductSearchCondition condition) {
         searchPerformanceRecorder.recordDbHit("v2");
-        return productRepository.search(condition);
+        return PageResponse.from(productRepository.search(condition));
     }
 
     /**
