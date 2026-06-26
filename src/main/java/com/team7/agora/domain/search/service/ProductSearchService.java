@@ -4,6 +4,7 @@ import com.team7.agora.domain.product.repository.ProductRepository;
 import com.team7.agora.domain.search.dto.ProductSearchCondition;
 import com.team7.agora.domain.search.dto.ProductSearchResponse;
 import com.team7.agora.domain.search.metric.SearchPerformanceRecorder;
+import com.team7.agora.global.response.PageResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
@@ -48,9 +49,9 @@ public class ProductSearchService {
      * @param condition 검색 조건
      * @return 클라이언트에 반환할 API 응답
      */
-    public Page<ProductSearchResponse> searchV2(ProductSearchCondition condition) {
+    public PageResponse<ProductSearchResponse> searchV2(ProductSearchCondition condition) {
         long start = System.nanoTime();
-        Page<ProductSearchResponse> responses = productSearchCacheLoader.load(condition);
+        PageResponse<ProductSearchResponse> responses = productSearchCacheLoader.load(condition);
         searchPerformanceRecorder.recordCall("v2", System.nanoTime() - start);
         return responses;
     }

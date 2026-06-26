@@ -83,9 +83,9 @@ public class SearchController {
     ) {
         popularKeywordService.recordSearchKeyword(viewerId(userDetails), keyword);
         return ResponseEntity.ok(ApiResponse.success("캐시 적용 상품 검색 결과입니다.",
-            PageResponse.from(productSearchService.searchV2(
+            productSearchService.searchV2(
                 new ProductSearchCondition(keyword, regionId, category, PageRequest.of(page, size))
-            ))
+            )
         ));
     }
 

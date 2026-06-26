@@ -62,9 +62,9 @@ class SearchControllerTest {
     @Test
     void searchV2_recordsKeywordAndReturnsCachedSearchResult() {
         SearchController controller = new SearchController(productSearchService, popularKeywordService);
-        when(productSearchService.searchV2(any())).thenReturn(new PageImpl<>(List.of(
+        when(productSearchService.searchV2(any())).thenReturn(PageResponse.from(new PageImpl<>(List.of(
             new ProductSearchResponse(1L, "자전거", BigDecimal.valueOf(73000), "서울 강남구 역삼동")
-        )));
+        ))));
 
         ResponseEntity<ApiResponse<PageResponse<ProductSearchResponse>>> response =
             controller.searchV2(null, "자전거", null, null, 0, 20);
