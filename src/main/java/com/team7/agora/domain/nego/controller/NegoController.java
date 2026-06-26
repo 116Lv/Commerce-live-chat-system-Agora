@@ -34,7 +34,7 @@ public class NegoController {
 
     /**
      * Creates offer data.
-     * @param authUser the auth user value
+     * @param userDetails the auth user value
      * @param chatRoomId the chat room id value
      * @param request the request value
      * @return the create offer result
@@ -55,7 +55,7 @@ public class NegoController {
 
     /**
      * Handles accept offer behavior.
-     * @param authUser the auth user value
+     * @param userDetails the auth user value
      * @param offerId the offer id value
      * @return the accept offer result
      */
@@ -69,7 +69,7 @@ public class NegoController {
 
     /**
      * Handles reject offer behavior.
-     * @param authUser the auth user value
+     * @param userDetails the auth user value
      * @param offerId the offer id value
      * @return the reject offer result
      */
@@ -83,7 +83,7 @@ public class NegoController {
 
     /**
      * Handles request extension behavior.
-     * @param authUser the auth user value
+     * @param userDetails the auth user value
      * @param offerId the offer id value
      * @return the request extension result
      */
@@ -97,7 +97,7 @@ public class NegoController {
 
     /**
      * Handles approve extension behavior.
-     * @param authUser the auth user value
+     * @param userDetails the auth user value
      * @param offerId the offer id value
      * @return the approve extension result
      */
@@ -111,7 +111,7 @@ public class NegoController {
 
     /**
      * Handles reject extension behavior.
-     * @param authUser the auth user value
+     * @param userDetails the auth user value
      * @param offerId the offer id value
      * @return the reject extension result
      */
@@ -125,7 +125,7 @@ public class NegoController {
 
     /**
      * Handles expire offer behavior.
-     * @param authUser the auth user value
+     * @param userDetails the auth user value
      * @param offerId the offer id value
      * @return the expire offer result
      */

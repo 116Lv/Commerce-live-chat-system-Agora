@@ -38,7 +38,7 @@ public class ChatRoomController {
 
     /**
      * Handles open room behavior.
-     * @param authUser the auth user value
+     * @param userDetails the auth user value
      * @param productId the product id value
      * @return the open room result
      */
@@ -52,7 +52,7 @@ public class ChatRoomController {
 
     /**
      * Handles open room by request behavior.
-     * @param authUser the auth user value
+     * @param userDetails the auth user value
      * @param request the request value
      * @return the open room by request result
      */
@@ -66,7 +66,7 @@ public class ChatRoomController {
 
     /**
      * Handles send image behavior.
-     * @param authUser the auth user value
+     * @param userDetails the auth user value
      * @param chatRoomId the chat room id value
      * @param image the image value
      * @return the send image result
@@ -83,7 +83,7 @@ public class ChatRoomController {
 
     /**
      * Returns messages data.
-     * @param authUser the auth user value
+     * @param userDetails the auth user value
      * @param chatRoomId the chat room id value
      * @return the get messages result
      */
@@ -98,7 +98,7 @@ public class ChatRoomController {
 
     /**
      * Returns my rooms data.
-     * @param authUser the auth user value
+     * @param userDetails the auth user value
      * @return the get my rooms result
      */
     @GetMapping("/rooms")
@@ -109,7 +109,7 @@ public class ChatRoomController {
 
     /**
      * Marks read state.
-     * @param authUser the auth user value
+     * @param userDetails the auth user value
      * @param chatRoomId the chat room id value
      * @return the mark read result
      */

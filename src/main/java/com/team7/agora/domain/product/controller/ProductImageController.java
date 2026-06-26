@@ -34,7 +34,7 @@ public class ProductImageController {
 
     /**
      * Handles upload behavior.
-     * @param authUser the auth user value
+     * @param userDetails the auth user value
      * @param productId the product id value
      * @param image the image value
      * @return the upload result

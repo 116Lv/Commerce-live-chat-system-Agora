@@ -37,7 +37,7 @@ public class PaymentController {
 
     /**
      * Handles prepare behavior.
-     * @param authUser the auth user value
+     * @param userDetails the auth user value
      * @param tradeId the trade id value
      * @return the prepare result
      */
@@ -51,7 +51,7 @@ public class PaymentController {
 
     /**
      * Handles prepare by request behavior.
-     * @param authUser the auth user value
+     * @param userDetails the auth user value
      * @param request the request value
      * @return the prepare by request result
      */
@@ -65,7 +65,7 @@ public class PaymentController {
 
     /**
      * Handles confirm behavior.
-     * @param authUser the auth user value
+     * @param userDetails the auth user value
      * @param paymentId the payment id value
      * @param request the request value
      * @return the confirm result
@@ -81,7 +81,7 @@ public class PaymentController {
 
     /**
      * Handles confirm by request behavior.
-     * @param authUser the auth user value
+     * @param userDetails the auth user value
      * @param request the request value
      * @return the confirm by request result
      */
@@ -95,7 +95,7 @@ public class PaymentController {
 
     /**
      * Handles refund behavior.
-     * @param authUser the auth user value
+     * @param userDetails the auth user value
      * @param paymentId the payment id value
      * @param request the request value
      * @return the refund result
@@ -112,7 +112,7 @@ public class PaymentController {
 
     /**
      * Returns refund status data.
-     * @param authUser the auth user value
+     * @param userDetails the auth user value
      * @param paymentId the payment id value
      * @return the get refund status result
      */

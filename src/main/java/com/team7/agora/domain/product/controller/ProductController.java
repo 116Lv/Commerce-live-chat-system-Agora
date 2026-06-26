@@ -41,7 +41,7 @@ public class ProductController {
 
     /**
      * Creates create data.
-     * @param authUser the auth user value
+     * @param userDetails the auth user value
      * @param request the request value
      * @return the create result
      */
@@ -69,7 +69,7 @@ public class ProductController {
 
     /**
      * Returns products data.
-     * @param authUser the auth user value
+     * @param userDetails the auth user value
      * @param regionId the region id value
      * @param page the page value
      * @param size the size value
@@ -89,7 +89,7 @@ public class ProductController {
 
     /**
      * Updates update data.
-     * @param authUser the auth user value
+     * @param userDetails the auth user value
      * @param productId the product id value
      * @param request the request value
      * @return the update result
@@ -106,7 +106,7 @@ public class ProductController {
 
     /**
      * Deletes delete data.
-     * @param authUser the auth user value
+     * @param userDetails the auth user value
      * @param productId the product id value
      * @return the delete result
      */

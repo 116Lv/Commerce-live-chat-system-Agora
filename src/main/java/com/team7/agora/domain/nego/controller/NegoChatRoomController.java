@@ -33,7 +33,7 @@ public class NegoChatRoomController {
 
     /**
      * Creates offer data.
-     * @param authUser the auth user value
+     * @param userDetails the auth user value
      * @param chatRoomId the chat room id value
      * @param request the request value
      * @return the create offer result

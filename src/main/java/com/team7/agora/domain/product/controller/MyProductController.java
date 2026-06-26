@@ -28,7 +28,7 @@ public class MyProductController {
 
     /**
      * Returns my products data.
-     * @param authUser the auth user value
+     * @param userDetails the auth user value
      * @return the get my products result
      */
     @GetMapping("/api/users/me/products")

@@ -31,7 +31,7 @@ public class TradeController {
 
     /**
      * Returns detail data.
-     * @param authUser the auth user value
+     * @param userDetails the auth user value
      * @param tradeId the trade id value
      * @return the get detail result
      */
@@ -46,7 +46,7 @@ public class TradeController {
 
     /**
      * Handles start behavior.
-     * @param authUser the auth user value
+     * @param userDetails the auth user value
      * @param productId the product id value
      * @return the start result
      */
@@ -61,7 +61,7 @@ public class TradeController {
 
     /**
      * Handles complete behavior.
-     * @param authUser the auth user value
+     * @param userDetails the auth user value
      * @param tradeId the trade id value
      * @return the complete result
      */
@@ -76,7 +76,7 @@ public class TradeController {
 
     /**
      * Handles expire reservation behavior.
-     * @param authUser the auth user value
+     * @param userDetails the auth user value
      * @param tradeId the trade id value
      * @return the expire reservation result
      */
@@ -91,7 +91,7 @@ public class TradeController {
 
     /**
      * Handles send rating request message behavior.
-     * @param authUser the auth user value
+     * @param userDetails the auth user value
      * @param tradeId the trade id value
      * @return the send rating request message result
      */

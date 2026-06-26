@@ -28,7 +28,7 @@ public class TradeReviewController {
 
     /**
      * Returns trade reviews data.
-     * @param authUser the auth user value
+     * @param userDetails the auth user value
      * @param tradeId the trade id value
      * @return the get trade reviews result
      */

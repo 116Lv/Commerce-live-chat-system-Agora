@@ -31,7 +31,7 @@ public class ProductLikeController {
 
     /**
      * Handles like behavior.
-     * @param authUser the auth user value
+     * @param userDetails the auth user value
      * @param productId the product id value
      * @return the like result
      */
@@ -46,7 +46,7 @@ public class ProductLikeController {
 
     /**
      * Handles unlike behavior.
-     * @param authUser the auth user value
+     * @param userDetails the auth user value
      * @param productId the product id value
      * @return the unlike result
      */

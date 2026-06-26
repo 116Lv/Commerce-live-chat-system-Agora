@@ -26,7 +26,7 @@ public class AdminSearchPerformanceController {
 
     /**
      * Returns performance comparison data.
-     * @param authUser the auth user value
+     * @param userDetails the auth user value
      * @return the get performance comparison result
      */
     @GetMapping("/api/admin/search/performance")
