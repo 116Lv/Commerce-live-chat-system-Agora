@@ -4,8 +4,8 @@ import com.team7.agora.domain.product.repository.ProductRepository;
 import com.team7.agora.domain.search.dto.ProductSearchCondition;
 import com.team7.agora.domain.search.dto.ProductSearchResponse;
 import com.team7.agora.domain.search.metric.SearchPerformanceRecorder;
-import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -36,9 +36,9 @@ public class ProductSearchService {
      * @param condition 검색 조건
      * @return 클라이언트에 반환할 API 응답
      */
-    public List<ProductSearchResponse> searchV1(ProductSearchCondition condition) {
+    public Page<ProductSearchResponse> searchV1(ProductSearchCondition condition) {
         long start = System.nanoTime();
-        List<ProductSearchResponse> responses = productRepository.search(condition);
+        Page<ProductSearchResponse> responses = productRepository.search(condition);
         searchPerformanceRecorder.record("v1", System.nanoTime() - start, true);
         return responses;
     }
@@ -48,9 +48,9 @@ public class ProductSearchService {
      * @param condition 검색 조건
      * @return 클라이언트에 반환할 API 응답
      */
-    public List<ProductSearchResponse> searchV2(ProductSearchCondition condition) {
+    public Page<ProductSearchResponse> searchV2(ProductSearchCondition condition) {
         long start = System.nanoTime();
-        List<ProductSearchResponse> responses = productSearchCacheLoader.load(condition);
+        Page<ProductSearchResponse> responses = productSearchCacheLoader.load(condition);
         searchPerformanceRecorder.recordCall("v2", System.nanoTime() - start);
         return responses;
     }

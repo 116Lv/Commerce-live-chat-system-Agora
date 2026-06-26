@@ -17,6 +17,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
@@ -48,12 +50,12 @@ class ProductSearchCacheLoaderTest {
     @Test
     void load_reusesCachedResultForSameCondition() {
         ProductSearchCondition condition = new ProductSearchCondition(" 자전거 ", 1L, "SPORTS", PageRequest.of(0, 20));
-        when(productRepository.search(condition)).thenReturn(List.of(
+        when(productRepository.search(condition)).thenReturn(new PageImpl<>(List.of(
             new ProductSearchResponse(1L, "자전거", BigDecimal.valueOf(73000), "서울 강남구 역삼동")
-        ));
+        )));
 
-        List<ProductSearchResponse> first = productSearchCacheLoader.load(condition);
-        List<ProductSearchResponse> second = productSearchCacheLoader.load(condition);
+        Page<ProductSearchResponse> first = productSearchCacheLoader.load(condition);
+        Page<ProductSearchResponse> second = productSearchCacheLoader.load(condition);
 
         assertThat(first).hasSize(1);
         assertThat(second).hasSize(1);
@@ -63,9 +65,9 @@ class ProductSearchCacheLoaderTest {
     @Test
     void evictAll_removesCachedResult() {
         ProductSearchCondition condition = new ProductSearchCondition("자전거", 1L, "SPORTS", PageRequest.of(0, 20));
-        when(productRepository.search(condition)).thenReturn(List.of(
+        when(productRepository.search(condition)).thenReturn(new PageImpl<>(List.of(
             new ProductSearchResponse(1L, "자전거", BigDecimal.valueOf(73000), "서울 강남구 역삼동")
-        ));
+        )));
 
         productSearchCacheLoader.load(condition);
         productSearchCacheLoader.evictAll();

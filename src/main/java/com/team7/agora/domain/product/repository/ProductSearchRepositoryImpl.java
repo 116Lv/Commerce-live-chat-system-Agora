@@ -9,6 +9,8 @@ import com.team7.agora.domain.region.entity.QRegion;
 import com.team7.agora.domain.search.dto.ProductSearchCondition;
 import com.team7.agora.domain.search.dto.ProductSearchResponse;
 import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.stereotype.Repository;
 
 /**
@@ -29,7 +31,7 @@ public class ProductSearchRepositoryImpl implements ProductSearchRepository {
      * @return 클라이언트에 반환할 API 응답
      */
     @Override
-    public List<ProductSearchResponse> search(ProductSearchCondition condition) {
+    public Page<ProductSearchResponse> search(ProductSearchCondition condition) {
         QProduct product = QProduct.product;
         QRegion region = QRegion.region;
 
@@ -44,11 +46,11 @@ public class ProductSearchRepositoryImpl implements ProductSearchRepository {
         if (condition.regionId() != null) {
             where.and(region.id.eq(condition.regionId()));
         }
-        if (condition.category() != null && !condition.category().isBlank()) {
-            where.and(product.category.eq(condition.category()));
+        if (!condition.normalizedCategory().isBlank()) {
+            where.and(product.category.eq(condition.normalizedCategory()));
         }
 
-        return queryFactory
+        List<ProductSearchResponse> content = queryFactory
             .select(Projections.constructor(
                 ProductSearchResponse.class,
                 product.id, product.title, product.price, region.name
@@ -60,5 +62,14 @@ public class ProductSearchRepositoryImpl implements ProductSearchRepository {
             .offset(condition.pageable().getOffset())
             .limit(condition.pageable().getPageSize())
             .fetch();
+
+        Long total = queryFactory
+            .select(product.count())
+            .from(product)
+            .join(product.region, region)
+            .where(where)
+            .fetchOne();
+
+        return new PageImpl<>(content, condition.pageable(), total == null ? 0 : total);
     }
 }

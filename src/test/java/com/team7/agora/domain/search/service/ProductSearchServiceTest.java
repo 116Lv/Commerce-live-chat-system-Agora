@@ -17,6 +17,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 
 @ExtendWith(MockitoExtension.class)
@@ -37,12 +39,12 @@ class ProductSearchServiceTest {
             productRepository, productSearchCacheLoader, searchPerformanceRecorder
         );
         ProductSearchCondition condition = new ProductSearchCondition(" 자전거 ", null, null, PageRequest.of(0, 20));
-        when(productRepository.search(condition)).thenReturn(List.of(
+        when(productRepository.search(condition)).thenReturn(new PageImpl<>(List.of(
             new ProductSearchResponse(1L, "자전거", BigDecimal.valueOf(73000), "서울 강남구 역삼동")
-        ));
+        )));
 
-        List<ProductSearchResponse> first = service.searchV1(condition);
-        List<ProductSearchResponse> second = service.searchV1(condition);
+        Page<ProductSearchResponse> first = service.searchV1(condition);
+        Page<ProductSearchResponse> second = service.searchV1(condition);
 
         assertThat(first).hasSize(1);
         assertThat(second).hasSize(1);
@@ -55,12 +57,12 @@ class ProductSearchServiceTest {
             productRepository, productSearchCacheLoader, searchPerformanceRecorder
         );
         ProductSearchCondition condition = new ProductSearchCondition("자전거", 1L, "SPORTS", PageRequest.of(0, 20));
-        List<ProductSearchResponse> cached = List.of(
+        Page<ProductSearchResponse> cached = new PageImpl<>(List.of(
             new ProductSearchResponse(1L, "자전거", BigDecimal.valueOf(73000), "서울 강남구 역삼동")
-        );
+        ));
         when(productSearchCacheLoader.load(condition)).thenReturn(cached);
 
-        List<ProductSearchResponse> result = service.searchV2(condition);
+        Page<ProductSearchResponse> result = service.searchV2(condition);
 
         assertThat(result).isEqualTo(cached);
         verify(productSearchCacheLoader, times(1)).load(condition);

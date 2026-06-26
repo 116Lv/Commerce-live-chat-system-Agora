@@ -26,4 +26,11 @@ public record ProductSearchCondition(
         }
         return keyword.trim().toLowerCase();
     }
+
+    public String normalizedCategory() {
+        if (category == null) {
+            return "";
+        }
+        return category.trim();
+    }
 }

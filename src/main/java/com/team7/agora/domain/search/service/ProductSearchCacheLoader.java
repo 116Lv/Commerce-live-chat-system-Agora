@@ -6,9 +6,9 @@ import com.team7.agora.domain.search.dto.ProductSearchCondition;
 import com.team7.agora.domain.search.dto.ProductSearchResponse;
 import com.team7.agora.domain.search.metric.SearchPerformanceRecorder;
 import com.team7.agora.global.config.CacheConfig;
-import java.util.List;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Component;
 
 /**
@@ -35,10 +35,10 @@ public class ProductSearchCacheLoader {
      */
     @Cacheable(
         cacheNames = CacheConfig.PRODUCT_SEARCH_CACHE,
-        key = "'search:' + #condition.normalizedKeyword() + ':' + #condition.regionId() + ':' + #condition.category()"
+        key = "'search:' + #condition.normalizedKeyword() + ':' + #condition.regionId() + ':' + #condition.normalizedCategory()"
             + " + ':' + #condition.pageable().pageNumber + ':' + #condition.pageable().pageSize"
     )
-    public List<ProductSearchResponse> load(ProductSearchCondition condition) {
+    public Page<ProductSearchResponse> load(ProductSearchCondition condition) {
         searchPerformanceRecorder.recordDbHit("v2");
         return productRepository.search(condition);
     }
