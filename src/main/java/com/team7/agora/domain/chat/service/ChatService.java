@@ -19,6 +19,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+/**
+ * Application service that coordinates chat use cases.
+ */
 @Service
 @Transactional(readOnly = true)
 public class ChatService {
@@ -29,6 +32,14 @@ public class ChatService {
     private final UserRepository userRepository;
     private final ImageStorageClient imageStorageClient;
 
+    /**
+     * Creates a chat service instance.
+     * @param chatRoomRepository the chat room repository value
+     * @param chatMessageRepository the chat message repository value
+     * @param productRepository the product repository value
+     * @param userRepository the user repository value
+     * @param imageStorageClient the image storage client value
+     */
     public ChatService(
         ChatRoomRepository chatRoomRepository,
         ChatMessageRepository chatMessageRepository,
@@ -43,6 +54,12 @@ public class ChatService {
         this.imageStorageClient = imageStorageClient;
     }
 
+    /**
+     * Handles open room behavior.
+     * @param userId the user id value
+     * @param productId the product id value
+     * @return the open room result
+     */
     @Transactional
     public ChatRoomResponse openRoom(Long userId, Long productId) {
         Product product = productRepository.findByIdAndDeletedAtIsNull(productId)
@@ -59,6 +76,13 @@ public class ChatService {
         return ChatRoomResponse.from(chatRoom);
     }
 
+    /**
+     * Handles send message behavior.
+     * @param userId the user id value
+     * @param chatRoomId the chat room id value
+     * @param content the content value
+     * @return the send message result
+     */
     @Transactional
     public ChatMessageResponse sendMessage(Long userId, Long chatRoomId, String content) {
         ChatRoom chatRoom = findActiveRoom(chatRoomId);
@@ -72,6 +96,13 @@ public class ChatService {
         return ChatMessageResponse.from(message);
     }
 
+    /**
+     * Handles send image message behavior.
+     * @param userId the user id value
+     * @param chatRoomId the chat room id value
+     * @param image the image value
+     * @return the send image message result
+     */
     @Transactional
     public ChatMessageResponse sendImageMessage(Long userId, Long chatRoomId, MultipartFile image) {
         ChatRoom chatRoom = findActiveRoom(chatRoomId);
@@ -86,6 +117,12 @@ public class ChatService {
         return ChatMessageResponse.from(message);
     }
 
+    /**
+     * Returns messages data.
+     * @param userId the user id value
+     * @param chatRoomId the chat room id value
+     * @return the get messages result
+     */
     public List<ChatMessageResponse> getMessages(Long userId, Long chatRoomId) {
         ChatRoom chatRoom = findActiveRoom(chatRoomId);
 
@@ -98,6 +135,11 @@ public class ChatService {
             .toList();
     }
 
+    /**
+     * Returns my rooms data.
+     * @param userId the user id value
+     * @return the get my rooms result
+     */
     public List<ChatRoomResponse> getMyRooms(Long userId) {
         User user = findUser(userId);
         return chatRoomRepository.findAllBySellerOrBuyer(user, user).stream()
@@ -105,6 +147,12 @@ public class ChatService {
             .toList();
     }
 
+    /**
+     * Marks read state.
+     * @param userId the user id value
+     * @param chatRoomId the chat room id value
+     * @return the mark read result
+     */
     @Transactional
     public ChatRoomResponse markRead(Long userId, Long chatRoomId) {
         ChatRoom chatRoom = findActiveRoom(chatRoomId);

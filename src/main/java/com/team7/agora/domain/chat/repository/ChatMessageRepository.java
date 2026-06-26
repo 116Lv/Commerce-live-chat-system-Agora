@@ -5,6 +5,9 @@ import com.team7.agora.domain.chat.entity.ChatRoom;
 import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+/**
+ * Repository contract for storing and querying chat message data.
+ */
 public interface ChatMessageRepository extends JpaRepository<ChatMessage, Long> {
 
     List<ChatMessage> findByChatRoomOrderByCreatedAtAsc(ChatRoom chatRoom);

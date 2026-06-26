@@ -11,16 +11,28 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+/**
+ * REST controller that exposes my coupon endpoints.
+ */
 @RestController
 @RequestMapping("/api/users/me/coupons")
 public class MyCouponController {
 
     private final CouponQueryService couponQueryService;
 
+    /**
+     * Creates a my coupon controller instance.
+     * @param couponQueryService the coupon query service value
+     */
     public MyCouponController(CouponQueryService couponQueryService) {
         this.couponQueryService = couponQueryService;
     }
 
+    /**
+     * Returns my coupons data.
+     * @param userDetails the user details value
+     * @return the get my coupons result
+     */
     @PreAuthorize("hasAuthority('ROLE_USER')")
     @GetMapping
     public ApiResponse<List<MyCouponResponse>> getMyCoupons(@AuthenticationPrincipal CustomUserDetails userDetails) {

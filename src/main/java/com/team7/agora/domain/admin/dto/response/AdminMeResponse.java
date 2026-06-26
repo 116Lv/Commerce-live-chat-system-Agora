@@ -3,6 +3,13 @@ package com.team7.agora.domain.admin.dto.response;
 
 import com.team7.agora.domain.user.entity.User;
 
+/**
+ * Response payload for returning admin me data.
+ * @param id the id value
+ * @param email the email value
+ * @param nickname the nickname value
+ * @param role the role value
+ */
 public record AdminMeResponse(
         Long id,
         String email,
@@ -10,6 +17,11 @@ public record AdminMeResponse(
         String role
 ) {
 
+    /**
+     * Creates a response from the given domain object.
+     * @param user the user value
+     * @return the from result
+     */
     public static AdminMeResponse from(User user) {
         return new AdminMeResponse(
                 user.getId(),

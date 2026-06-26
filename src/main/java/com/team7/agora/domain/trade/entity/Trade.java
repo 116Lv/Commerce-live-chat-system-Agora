@@ -31,6 +31,9 @@ import lombok.NoArgsConstructor;
         @Index(name = "idx_trades_buyer", columnList = "buyer_id"),
         @Index(name = "idx_trades_seller", columnList = "seller_id")
     }
+/**
+ * JPA entity that represents a trade record.
+ */
 )
 public class Trade {
 
@@ -72,10 +75,21 @@ public class Trade {
         this.paymentDueAt = LocalDateTime.now().plusHours(24);
     }
 
+    /**
+     * Handles start behavior.
+     * @param product the product value
+     * @param seller the seller value
+     * @param buyer the buyer value
+     * @param price the price value
+     * @return the start result
+     */
     public static Trade start(Product product, User seller, User buyer, BigDecimal price) {
         return new Trade(product, seller, buyer, price);
     }
 
+    /**
+     * Marks paid state.
+     */
     public void markPaid() {
         if (this.status != TradeStatus.PAYMENT_PENDING) {
             throw new IllegalStateException("결제 대기 상태인 거래만 결제 완료 처리할 수 있습니다.");
@@ -85,6 +99,9 @@ public class Trade {
         this.paymentDueAt = null;
     }
 
+    /**
+     * Handles complete behavior.
+     */
     public void complete() {
         if (this.status != TradeStatus.PAID) {
             throw new IllegalStateException("결제가 완료된 거래만 완료할 수 있습니다.");
@@ -93,6 +110,9 @@ public class Trade {
         this.completedAt = LocalDateTime.now();
     }
 
+    /**
+     * Handles cancel behavior.
+     */
     public void cancel() {
         if (this.status != TradeStatus.PAYMENT_PENDING && this.status != TradeStatus.PAID) {
             throw new IllegalStateException("취소 가능한 상태의 거래가 아닙니다.");
@@ -102,6 +122,9 @@ public class Trade {
         this.paymentDueAt = null;
     }
 
+    /**
+     * Handles expire behavior.
+     */
     public void expire() {
         if (this.status != TradeStatus.PAYMENT_PENDING) {
             throw new IllegalStateException("결제 대기 상태인 거래만 만료할 수 있습니다.");
@@ -111,10 +134,20 @@ public class Trade {
         this.paymentDueAt = null;
     }
 
+    /**
+     * Checks whether is participant applies.
+     * @param userId the user id value
+     * @return the is participant result
+     */
     public boolean isParticipant(Long userId) {
         return seller.getId().equals(userId) || buyer.getId().equals(userId);
     }
 
+    /**
+     * Returns counterpart data.
+     * @param userId the user id value
+     * @return the get counterpart result
+     */
     public User getCounterpart(Long userId) {
         if (seller.getId().equals(userId)) {
             return buyer;

@@ -29,6 +29,9 @@ import java.util.Optional;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+/**
+ * Application service that coordinates trade use cases.
+ */
 @Service
 @Transactional(readOnly = true)
 public class TradeService {
@@ -42,6 +45,17 @@ public class TradeService {
     private final PaymentRepository paymentRepository;
     private final ChatMessageRepository chatMessageRepository;
 
+    /**
+     * Creates a trade service instance.
+     * @param tradeRepository the trade repository value
+     * @param productRepository the product repository value
+     * @param userRepository the user repository value
+     * @param chatRoomRepository the chat room repository value
+     * @param negoOfferRepository the nego offer repository value
+     * @param settlementRepository the settlement repository value
+     * @param paymentRepository the payment repository value
+     * @param chatMessageRepository the chat message repository value
+     */
     public TradeService(
         TradeRepository tradeRepository,
         ProductRepository productRepository,
@@ -62,6 +76,12 @@ public class TradeService {
         this.chatMessageRepository = chatMessageRepository;
     }
 
+    /**
+     * Returns trade detail data.
+     * @param userId the user id value
+     * @param tradeId the trade id value
+     * @return the get trade detail result
+     */
     public TradeDetailResponse getTradeDetail(Long userId, Long tradeId) {
         Trade trade = tradeRepository.findById(tradeId)
             .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "거래를 찾을 수 없습니다."));
@@ -78,6 +98,12 @@ public class TradeService {
         return TradeDetailResponse.of(trade, payment, settlement);
     }
 
+    /**
+     * Handles start trade behavior.
+     * @param buyerId the buyer id value
+     * @param productId the product id value
+     * @return the start trade result
+     */
     @Transactional
     public TradeResponse startTrade(Long buyerId, Long productId) {
         Product product = productRepository.findByIdAndDeletedAtIsNull(productId)
@@ -106,6 +132,12 @@ public class TradeService {
         return TradeResponse.from(trade);
     }
 
+    /**
+     * Creates trade from accepted offer data.
+     * @param product the product value
+     * @param acceptedOffer the accepted offer value
+     * @return the create trade from accepted offer result
+     */
     @Transactional
     public Trade createTradeFromAcceptedOffer(Product product, NegoOffer acceptedOffer) {
         if (product.getStatus() != ProductStatus.SELLING && product.getStatus() != ProductStatus.NEGOTIATING) {
@@ -120,6 +152,12 @@ public class TradeService {
         return tradeRepository.save(trade);
     }
 
+    /**
+     * Handles complete trade behavior.
+     * @param buyerId the buyer id value
+     * @param tradeId the trade id value
+     * @return the complete trade result
+     */
     @Transactional
     public TradeResponse completeTrade(Long buyerId, Long tradeId) {
         Trade trade = tradeRepository.findById(tradeId)
@@ -138,6 +176,12 @@ public class TradeService {
         return TradeResponse.from(trade);
     }
 
+    /**
+     * Handles expire reservation behavior.
+     * @param authUser the auth user value
+     * @param tradeId the trade id value
+     * @return the expire reservation result
+     */
     @Transactional
     public TradeResponse expireReservation(AuthUser authUser, Long tradeId) {
         if (!isReservationExpiryAuthority(authUser)) {
@@ -155,6 +199,11 @@ public class TradeService {
             && ("ROOT_ADMIN".equals(authUser.role()) || "SETTLEMENT_ADMIN".equals(authUser.role()));
     }
 
+    /**
+     * Handles send rating request message behavior.
+     * @param authUser the auth user value
+     * @param tradeId the trade id value
+     */
     @Transactional
     public void sendRatingRequestMessage(AuthUser authUser, Long tradeId) {
         if (!isSystemAuthority(authUser)) {

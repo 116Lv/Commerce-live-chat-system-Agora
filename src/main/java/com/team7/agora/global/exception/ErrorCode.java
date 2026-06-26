@@ -4,6 +4,9 @@ package com.team7.agora.global.exception;
 import lombok.Getter;
 import org.springframework.http.HttpStatus;
 
+/**
+ * Domain exception used for error code failures.
+ */
 @Getter
 public enum ErrorCode {
     INVALID_REQUEST(HttpStatus.BAD_REQUEST, "잘못된 요청입니다."),

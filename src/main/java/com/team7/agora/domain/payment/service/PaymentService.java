@@ -19,6 +19,9 @@ import java.util.UUID;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+/**
+ * Application service that coordinates payment use cases.
+ */
 @Service
 @Transactional(readOnly = true)
 public class PaymentService {
@@ -28,6 +31,13 @@ public class PaymentService {
     private final TradeRepository tradeRepository;
     private final PaymentClient paymentClient;
 
+    /**
+     * Creates a payment service instance.
+     * @param paymentRepository the payment repository value
+     * @param settlementRepository the settlement repository value
+     * @param tradeRepository the trade repository value
+     * @param paymentClient the payment client value
+     */
     public PaymentService(
         PaymentRepository paymentRepository,
         SettlementRepository settlementRepository,
@@ -40,6 +50,12 @@ public class PaymentService {
         this.paymentClient = paymentClient;
     }
 
+    /**
+     * Handles prepare behavior.
+     * @param payerId the payer id value
+     * @param tradeId the trade id value
+     * @return the prepare result
+     */
     @Transactional
     public PaymentResponse prepare(Long payerId, Long tradeId) {
         Trade trade = findTrade(tradeId);
@@ -66,6 +82,13 @@ public class PaymentService {
         return PaymentResponse.from(paymentRepository.save(payment));
     }
 
+    /**
+     * Handles confirm behavior.
+     * @param payerId the payer id value
+     * @param paymentId the payment id value
+     * @param paymentKey the payment key value
+     * @return the confirm result
+     */
     @Transactional
     public PaymentResponse confirm(Long payerId, Long paymentId, String paymentKey) {
         Payment payment = findPayment(paymentId);
@@ -85,6 +108,13 @@ public class PaymentService {
         return PaymentResponse.from(payment, settlement.getId());
     }
 
+    /**
+     * Handles refund behavior.
+     * @param payerId the payer id value
+     * @param paymentId the payment id value
+     * @param reason the reason value
+     * @return the refund result
+     */
     @Transactional
     public PaymentResponse refund(Long payerId, Long paymentId, String reason) {
         Payment payment = findPayment(paymentId);
@@ -97,6 +127,12 @@ public class PaymentService {
         return PaymentResponse.from(payment);
     }
 
+    /**
+     * Returns refund status data.
+     * @param authUser the auth user value
+     * @param paymentId the payment id value
+     * @return the get refund status result
+     */
     public RefundStatusResponse getRefundStatus(AuthUser authUser, Long paymentId) {
         Payment payment = findPayment(paymentId);
 

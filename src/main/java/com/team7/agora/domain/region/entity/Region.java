@@ -12,6 +12,9 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+/**
+ * JPA entity that represents a region record.
+ */
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
@@ -48,6 +51,15 @@ public class Region {
         this.eupmyeondong = eupmyeondong;
     }
 
+    /**
+     * Creates create data.
+     * @param name the name value
+     * @param code the code value
+     * @param sido the sido value
+     * @param sigungu the sigungu value
+     * @param eupmyeondong the eupmyeondong value
+     * @return the create result
+     */
     public static Region create(String name, String code, String sido, String sigungu, String eupmyeondong) {
         return new Region(name, code, sido, sigungu, eupmyeondong);
     }

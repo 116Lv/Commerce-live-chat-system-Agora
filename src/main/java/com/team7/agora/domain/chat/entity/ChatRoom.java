@@ -32,6 +32,9 @@ import lombok.NoArgsConstructor;
         @Index(name = "idx_chat_rooms_buyer_status", columnList = "buyer_id, status"),
         @Index(name = "idx_chat_rooms_seller_status", columnList = "seller_id, status")
     }
+/**
+ * JPA entity that represents a chat room record.
+ */
 )
 public class ChatRoom extends BaseTimeEntity {
 
@@ -66,20 +69,39 @@ public class ChatRoom extends BaseTimeEntity {
         markCreatedNow();
     }
 
+    /**
+     * Handles open behavior.
+     * @param product the product value
+     * @param buyer the buyer value
+     * @return the open result
+     */
     public static ChatRoom open(Product product, User buyer) {
         return new ChatRoom(product, product.getSeller(), buyer);
     }
 
+    /**
+     * Validates participant rules.
+     * @param userId the user id value
+     */
     public void validateParticipant(Long userId) {
         if (!isParticipant(userId)) {
             throw new IllegalArgumentException("채팅방 참여자만 접근할 수 있습니다.");
         }
     }
 
+    /**
+     * Checks whether is participant applies.
+     * @param userId the user id value
+     * @return the is participant result
+     */
     public boolean isParticipant(Long userId) {
         return seller.getId().equals(userId) || buyer.getId().equals(userId);
     }
 
+    /**
+     * Marks read state.
+     * @param userId the user id value
+     */
     public void markRead(Long userId) {
         if (seller.getId().equals(userId)) {
             this.sellerLastReadAt = LocalDateTime.now();

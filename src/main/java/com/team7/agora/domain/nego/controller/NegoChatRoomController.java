@@ -14,16 +14,30 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+/**
+ * REST controller that exposes nego chat room endpoints.
+ */
 @RestController
 @RequestMapping("/api/chat/rooms")
 public class NegoChatRoomController {
 
     private final NegoService negoService;
 
+    /**
+     * Creates a nego chat room controller instance.
+     * @param negoService the nego service value
+     */
     public NegoChatRoomController(NegoService negoService) {
         this.negoService = negoService;
     }
 
+    /**
+     * Creates offer data.
+     * @param authUser the auth user value
+     * @param chatRoomId the chat room id value
+     * @param request the request value
+     * @return the create offer result
+     */
     @PostMapping("/{chatRoomId}/nego-offers")
     public ApiResponse<NegoOfferResponse> createOffer(
         @AuthenticationPrincipal AuthUser authUser,

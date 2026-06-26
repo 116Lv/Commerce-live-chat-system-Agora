@@ -11,16 +11,30 @@ import com.team7.agora.global.exception.ErrorCode;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+/**
+ * Application service that coordinates admin account use cases.
+ */
 @Service
 @Transactional(readOnly = true)
 public class AdminAccountService {
 
     private final UserRepository userRepository;
 
+    /**
+     * Creates a admin account service instance.
+     * @param userRepository the user repository value
+     */
     public AdminAccountService(UserRepository userRepository) {
         this.userRepository = userRepository;
     }
 
+    /**
+     * Handles change role behavior.
+     * @param admin the admin value
+     * @param userId the user id value
+     * @param role the role value
+     * @return the change role result
+     */
     @Transactional
     public AdminUserResponse changeRole(CustomUserDetails admin, Long userId, UserRole role) {
         validateRootAdmin(admin);

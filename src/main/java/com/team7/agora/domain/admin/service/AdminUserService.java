@@ -13,22 +13,42 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+/**
+ * Application service that coordinates admin user use cases.
+ */
 @Service
 @Transactional(readOnly = true)
 public class AdminUserService {
 
     private final UserRepository userRepository;
 
+    /**
+     * Creates a admin user service instance.
+     * @param userRepository the user repository value
+     */
     public AdminUserService(UserRepository userRepository) {
         this.userRepository = userRepository;
     }
 
+    /**
+     * Returns users data.
+     * @param admin the admin value
+     * @param pageable the pageable value
+     * @return the get users result
+     */
     public Page<AdminUserResponse> getUsers(CustomUserDetails admin, Pageable pageable) {
         validateUserAdmin(admin);
         return userRepository.findAll(pageable)
                 .map(AdminUserResponse::from);
     }
 
+    /**
+     * Handles change status behavior.
+     * @param admin the admin value
+     * @param userId the user id value
+     * @param status the status value
+     * @return the change status result
+     */
     @Transactional
     public AdminUserResponse changeStatus(CustomUserDetails admin, Long userId, UserStatus status) {
         validateUserAdmin(admin);

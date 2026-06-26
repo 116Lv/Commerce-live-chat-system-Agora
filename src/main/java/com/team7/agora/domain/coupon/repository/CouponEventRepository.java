@@ -5,6 +5,9 @@ import com.team7.agora.domain.coupon.enums.CouponEventStatus;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * Repository contract for storing and querying coupon event data.
+ */
 public interface CouponEventRepository {
 
     CouponEvent save(CouponEvent couponEvent);

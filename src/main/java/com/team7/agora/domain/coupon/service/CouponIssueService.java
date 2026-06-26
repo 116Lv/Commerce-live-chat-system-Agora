@@ -14,6 +14,9 @@ import com.team7.agora.global.lock.LockService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+/**
+ * Application service that coordinates coupon issue use cases.
+ */
 @Service
 @Transactional(readOnly = true)
 public class CouponIssueService {
@@ -24,6 +27,14 @@ public class CouponIssueService {
     private final UserRepository userRepository;
     private final LockService lockService;
 
+    /**
+     * Creates a coupon issue service instance.
+     * @param couponEventRepository the coupon event repository value
+     * @param couponRepository the coupon repository value
+     * @param couponIssueRepository the coupon issue repository value
+     * @param userRepository the user repository value
+     * @param lockService the lock service value
+     */
     public CouponIssueService(
         CouponEventRepository couponEventRepository,
         CouponRepository couponRepository,
@@ -38,6 +49,11 @@ public class CouponIssueService {
         this.lockService = lockService;
     }
 
+    /**
+     * Checks whether issue applies.
+     * @param userId the user id value
+     * @param couponEventId the coupon event id value
+     */
     @Transactional
     public void issue(Long userId, Long couponEventId) {
         User user = userRepository.findById(userId)

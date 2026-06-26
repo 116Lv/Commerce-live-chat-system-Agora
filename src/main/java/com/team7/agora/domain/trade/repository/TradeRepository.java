@@ -8,6 +8,9 @@ import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+/**
+ * Repository contract for storing and querying trade data.
+ */
 public interface TradeRepository extends JpaRepository<Trade, Long> {
 
     boolean existsByProduct(Product product);

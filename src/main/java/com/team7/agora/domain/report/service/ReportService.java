@@ -12,6 +12,9 @@ import com.team7.agora.global.exception.ErrorCode;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+/**
+ * Application service that coordinates report use cases.
+ */
 @Service
 @Transactional(readOnly = true)
 public class ReportService {
@@ -20,6 +23,12 @@ public class ReportService {
     private final UserRepository userRepository;
     private final ProductRepository productRepository;
 
+    /**
+     * Creates a report service instance.
+     * @param reportRepository the report repository value
+     * @param userRepository the user repository value
+     * @param productRepository the product repository value
+     */
     public ReportService(
         ReportRepository reportRepository,
         UserRepository userRepository,
@@ -30,6 +39,13 @@ public class ReportService {
         this.productRepository = productRepository;
     }
 
+    /**
+     * Creates product report data.
+     * @param reporterId the reporter id value
+     * @param productId the product id value
+     * @param reason the reason value
+     * @return the create product report result
+     */
     @Transactional
     public ReportResponse createProductReport(Long reporterId, Long productId, String reason) {
         User reporter = userRepository.findById(reporterId)
@@ -45,6 +61,13 @@ public class ReportService {
         return ReportResponse.from(reportRepository.save(report));
     }
 
+    /**
+     * Creates user report data.
+     * @param reporterId the reporter id value
+     * @param reportedUserId the reported user id value
+     * @param reason the reason value
+     * @return the create user report result
+     */
     @Transactional
     public ReportResponse createUserReport(Long reporterId, Long reportedUserId, String reason) {
         if (reporterId.equals(reportedUserId)) {

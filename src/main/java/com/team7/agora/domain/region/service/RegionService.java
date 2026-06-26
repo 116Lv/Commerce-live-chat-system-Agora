@@ -16,6 +16,9 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+/**
+ * Application service that coordinates region use cases.
+ */
 @Service
 @Transactional(readOnly = true)
 public class RegionService {
@@ -27,6 +30,12 @@ public class RegionService {
     private final RegionRepository regionRepository;
     private final UserRegionRepository userRegionRepository;
 
+    /**
+     * Creates a region service instance.
+     * @param userRepository the user repository value
+     * @param regionRepository the region repository value
+     * @param userRegionRepository the user region repository value
+     */
     public RegionService(
             UserRepository userRepository,
             RegionRepository regionRepository,
@@ -37,6 +46,11 @@ public class RegionService {
         this.userRegionRepository = userRegionRepository;
     }
 
+    /**
+     * Updates preferred regions data.
+     * @param userId the user id value
+     * @param request the request value
+     */
     @Transactional
     public void updatePreferredRegions(Long userId, PreferredRegionUpdateRequest request) {
         List<Long> regionIds = request.regionIds();
@@ -58,6 +72,11 @@ public class RegionService {
         userRegionRepository.saveAll(userRegions);
     }
 
+    /**
+     * Returns regions data.
+     * @param keyword the keyword value
+     * @return the find regions result
+     */
     public List<RegionResponse> findRegions(String keyword) {
         List<Region> regions = (keyword == null || keyword.isBlank())
                 ? regionRepository.findAll()

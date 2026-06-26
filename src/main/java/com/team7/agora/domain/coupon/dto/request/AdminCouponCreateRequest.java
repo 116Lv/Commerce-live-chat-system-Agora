@@ -5,6 +5,14 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
+/**
+ * Request payload for admin coupon create operations.
+ * @param name the name value
+ * @param discountAmount the discount amount value
+ * @param minOrderAmount the min order amount value
+ * @param type the type value
+ * @param validDays the valid days value
+ */
 public record AdminCouponCreateRequest(
     @NotBlank(message = "쿠폰 이름은 필수입니다.")
     String name,

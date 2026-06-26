@@ -12,6 +12,9 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
 import org.springframework.validation.annotation.Validated;
 
+/**
+ * REST controller that exposes chat stomp endpoints.
+ */
 @Controller
 @Validated
 public class ChatStompController {
@@ -19,11 +22,22 @@ public class ChatStompController {
     private final ChatService chatService;
     private final SimpMessagingTemplate messagingTemplate;
 
+    /**
+     * Creates a chat stomp controller instance.
+     * @param chatService the chat service value
+     * @param messagingTemplate the messaging template value
+     */
     public ChatStompController(ChatService chatService, SimpMessagingTemplate messagingTemplate) {
         this.chatService = chatService;
         this.messagingTemplate = messagingTemplate;
     }
 
+    /**
+     * Handles send behavior.
+     * @param chatRoomId the chat room id value
+     * @param request the request value
+     * @param principal the principal value
+     */
     @MessageMapping("/chat/{chatRoomId}/messages")
     public void send(
         @DestinationVariable Long chatRoomId,

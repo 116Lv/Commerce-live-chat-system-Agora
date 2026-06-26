@@ -19,6 +19,9 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+/**
+ * JPA entity that represents a chat message record.
+ */
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
@@ -55,10 +58,24 @@ public class ChatMessage extends BaseTimeEntity {
         markCreatedNow();
     }
 
+    /**
+     * Handles send behavior.
+     * @param chatRoom the chat room value
+     * @param sender the sender value
+     * @param content the content value
+     * @return the send result
+     */
     public static ChatMessage send(ChatRoom chatRoom, User sender, String content) {
         return new ChatMessage(chatRoom, sender, content, ChatMessageType.TEXT);
     }
 
+    /**
+     * Handles send image behavior.
+     * @param chatRoom the chat room value
+     * @param sender the sender value
+     * @param imageUrl the image url value
+     * @return the send image result
+     */
     public static ChatMessage sendImage(ChatRoom chatRoom, User sender, String imageUrl) {
         return new ChatMessage(chatRoom, sender, imageUrl, ChatMessageType.IMAGE);
     }

@@ -14,6 +14,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+/**
+ * Application service that coordinates admin auth use cases.
+ */
 @Service
 @Transactional(readOnly = true)
 public class AdminAuthService {
@@ -22,12 +25,23 @@ public class AdminAuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtProvider jwtProvider;
 
+    /**
+     * Creates a admin auth service instance.
+     * @param userRepository the user repository value
+     * @param passwordEncoder the password encoder value
+     * @param jwtProvider the jwt provider value
+     */
     public AdminAuthService(UserRepository userRepository, PasswordEncoder passwordEncoder, JwtProvider jwtProvider) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtProvider = jwtProvider;
     }
 
+    /**
+     * Handles login behavior.
+     * @param request the request value
+     * @return the login result
+     */
     public AdminLoginResponse login(AdminLoginRequest request) {
         User user = userRepository.findByEmail(request.email())
                 .orElseThrow(() -> new BusinessException(ErrorCode.UNAUTHORIZED, "이메일 또는 비밀번호가 올바르지 않습니다."));
@@ -51,6 +65,10 @@ public class AdminAuthService {
         return new AdminLoginResponse(accessToken);
     }
 
+    /**
+     * Handles logout behavior.
+     * @param admin the admin value
+     */
     public void logout(CustomUserDetails admin) {
         if (admin == null) {
             throw new BusinessException(ErrorCode.UNAUTHORIZED);

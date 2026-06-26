@@ -13,16 +13,28 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+/**
+ * Application service that coordinates admin use cases.
+ */
 @Service
 @Transactional(readOnly = true)
 public class AdminService {
 
     private final UserRepository userRepository;
 
+    /**
+     * Creates a admin service instance.
+     * @param userRepository the user repository value
+     */
     public AdminService(UserRepository userRepository) {
         this.userRepository = userRepository;
     }
 
+    /**
+     * Returns me data.
+     * @param admin the admin value
+     * @return the get me result
+     */
     public AdminMeResponse getMe(CustomUserDetails admin) {
         validateAdmin(admin);
         User user = userRepository.findById(admin.getUserId())
@@ -30,6 +42,11 @@ public class AdminService {
         return AdminMeResponse.from(user);
     }
 
+    /**
+     * Returns dashboard data.
+     * @param admin the admin value
+     * @return the get dashboard result
+     */
     public AdminDashboardResponse getDashboard(CustomUserDetails admin) {
         validateAdmin(admin);
         return new AdminDashboardResponse(admin.getRole().name(), accessibleMenusFor(admin.getRole()));

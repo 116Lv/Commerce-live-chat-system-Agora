@@ -4,6 +4,17 @@ import com.team7.agora.domain.nego.entity.NegoOffer;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
+/**
+ * Response payload for returning nego offer data.
+ * @param offerId the offer id value
+ * @param chatRoomId the chat room id value
+ * @param requesterId the requester id value
+ * @param offerPrice the offer price value
+ * @param status the status value
+ * @param createdAt the created at value
+ * @param expiresAt the expires at value
+ * @param respondedAt the responded at value
+ */
 public record NegoOfferResponse(
     Long offerId,
     Long chatRoomId,
@@ -15,6 +26,11 @@ public record NegoOfferResponse(
     LocalDateTime respondedAt
 ) {
 
+    /**
+     * Creates a response from the given domain object.
+     * @param offer the offer value
+     * @return the from result
+     */
     public static NegoOfferResponse from(NegoOffer offer) {
         return new NegoOfferResponse(
             offer.getId(),

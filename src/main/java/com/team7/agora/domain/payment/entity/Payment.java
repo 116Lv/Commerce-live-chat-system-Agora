@@ -32,6 +32,9 @@ import lombok.NoArgsConstructor;
         @Index(name = "idx_payments_payment_key", columnList = "payment_key"),
         @Index(name = "idx_payments_status_requested", columnList = "status, requested_at")
     }
+/**
+ * JPA entity that represents a payment record.
+ */
 )
 public class Payment {
 
@@ -75,16 +78,32 @@ public class Payment {
         this.requestedAt = LocalDateTime.now();
     }
 
+    /**
+     * Handles ready behavior.
+     * @param trade the trade value
+     * @param payer the payer value
+     * @param amount the amount value
+     * @param orderId the order id value
+     * @return the ready result
+     */
     public static Payment ready(Trade trade, User payer, BigDecimal amount, String orderId) {
         return new Payment(trade, payer, amount, orderId);
     }
 
+    /**
+     * Validates payer rules.
+     * @param userId the user id value
+     */
     public void validatePayer(Long userId) {
         if (!payer.getId().equals(userId)) {
             throw new PaymentException(ErrorCode.FORBIDDEN, "결제 당사자만 처리할 수 있습니다.");
         }
     }
 
+    /**
+     * Marks paid state.
+     * @param paymentKey the payment key value
+     */
     public void markPaid(String paymentKey) {
         if (status == PaymentStatus.PAID) {
             return;
@@ -97,6 +116,10 @@ public class Payment {
         this.paidAt = LocalDateTime.now();
     }
 
+    /**
+     * Handles refund behavior.
+     * @param reason the reason value
+     */
     public void refund(String reason) {
         if (status != PaymentStatus.PAID) {
             throw new PaymentException(ErrorCode.CONFLICT, "결제 완료 상태에서만 환불할 수 있습니다.");
@@ -105,6 +128,9 @@ public class Payment {
         this.refundedAt = LocalDateTime.now();
     }
 
+    /**
+     * Marks failed state.
+     */
     public void markFailed() {
         if (status == PaymentStatus.PAID) {
             throw new PaymentException(ErrorCode.CONFLICT, "결제완료 상태는 실패로 변경할 수 없습니다.");

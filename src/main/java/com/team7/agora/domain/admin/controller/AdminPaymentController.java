@@ -14,15 +14,30 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+/**
+ * REST controller that exposes admin payment endpoints.
+ */
 @RestController
 public class AdminPaymentController {
 
     private final AdminPaymentService adminPaymentService;
 
+    /**
+     * Creates a admin payment controller instance.
+     * @param adminPaymentService the admin payment service value
+     */
     public AdminPaymentController(AdminPaymentService adminPaymentService) {
         this.adminPaymentService = adminPaymentService;
     }
 
+    /**
+     * Returns payments data.
+     * @param userDetails the user details value
+     * @param status the status value
+     * @param page the page value
+     * @param size the size value
+     * @return the get payments result
+     */
     @GetMapping("/api/admin/payments")
     public ApiResponse<List<AdminPaymentResponse>> getPayments(
         @AuthenticationPrincipal CustomUserDetails userDetails,
@@ -38,6 +53,12 @@ public class AdminPaymentController {
         return ApiResponse.success("결제 목록을 조회했습니다.", responses);
     }
 
+    /**
+     * Handles verify payment behavior.
+     * @param userDetails the user details value
+     * @param paymentId the payment id value
+     * @return the verify payment result
+     */
     @PostMapping("/api/admin/payments/{paymentId}/verify")
     public ApiResponse<AdminPaymentResponse> verifyPayment(
         @AuthenticationPrincipal CustomUserDetails userDetails,
@@ -47,6 +68,11 @@ public class AdminPaymentController {
         return ApiResponse.success("결제 상태를 재검증했습니다.", response);
     }
 
+    /**
+     * Returns refunds data.
+     * @param userDetails the user details value
+     * @return the get refunds result
+     */
     @GetMapping("/api/admin/refunds")
     public ApiResponse<List<AdminPaymentResponse>> getRefunds(
         @AuthenticationPrincipal CustomUserDetails userDetails

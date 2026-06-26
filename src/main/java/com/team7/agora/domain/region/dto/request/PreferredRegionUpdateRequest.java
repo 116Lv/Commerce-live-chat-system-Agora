@@ -4,6 +4,11 @@ package com.team7.agora.domain.region.dto.request;
 import jakarta.validation.constraints.NotEmpty;
 import java.util.List;
 
+/**
+ * Request payload for preferred region update operations.
+ * @param regionIds the region ids value
+ * @param primaryRegionId the primary region id value
+ */
 public record PreferredRegionUpdateRequest(
         @NotEmpty(message = "관심 지역은 필수입니다.")
         List<Long> regionIds,

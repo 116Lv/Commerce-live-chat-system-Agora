@@ -10,15 +10,28 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
 
+/**
+ * REST controller that exposes trade review endpoints.
+ */
 @RestController
 public class TradeReviewController {
 
     private final ReviewService reviewService;
 
+    /**
+     * Creates a trade review controller instance.
+     * @param reviewService the review service value
+     */
     public TradeReviewController(ReviewService reviewService) {
         this.reviewService = reviewService;
     }
 
+    /**
+     * Returns trade reviews data.
+     * @param authUser the auth user value
+     * @param tradeId the trade id value
+     * @return the get trade reviews result
+     */
     @GetMapping("/api/trades/{tradeId}/reviews")
     public ApiResponse<List<ReviewResponse>> getTradeReviews(
         @AuthenticationPrincipal AuthUser authUser,

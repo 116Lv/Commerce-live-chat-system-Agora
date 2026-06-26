@@ -18,16 +18,29 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+/**
+ * REST controller that exposes payment endpoints.
+ */
 @RestController
 @RequestMapping("/api/payments")
 public class PaymentController {
 
     private final PaymentService paymentService;
 
+    /**
+     * Creates a payment controller instance.
+     * @param paymentService the payment service value
+     */
     public PaymentController(PaymentService paymentService) {
         this.paymentService = paymentService;
     }
 
+    /**
+     * Handles prepare behavior.
+     * @param authUser the auth user value
+     * @param tradeId the trade id value
+     * @return the prepare result
+     */
     @PostMapping("/trades/{tradeId}/prepare")
     public ApiResponse<PaymentResponse> prepare(
         @AuthenticationPrincipal AuthUser authUser,
@@ -36,6 +49,12 @@ public class PaymentController {
         return prepareResponse(authUser, tradeId);
     }
 
+    /**
+     * Handles prepare by request behavior.
+     * @param authUser the auth user value
+     * @param request the request value
+     * @return the prepare by request result
+     */
     @PostMapping("/prepare")
     public ApiResponse<PaymentResponse> prepareByRequest(
         @AuthenticationPrincipal AuthUser authUser,
@@ -44,6 +63,13 @@ public class PaymentController {
         return prepareResponse(authUser, request.tradeId());
     }
 
+    /**
+     * Handles confirm behavior.
+     * @param authUser the auth user value
+     * @param paymentId the payment id value
+     * @param request the request value
+     * @return the confirm result
+     */
     @PostMapping("/{paymentId}/confirm")
     public ApiResponse<PaymentResponse> confirm(
         @AuthenticationPrincipal AuthUser authUser,
@@ -53,6 +79,12 @@ public class PaymentController {
         return confirmResponse(authUser, paymentId, request.paymentKey());
     }
 
+    /**
+     * Handles confirm by request behavior.
+     * @param authUser the auth user value
+     * @param request the request value
+     * @return the confirm by request result
+     */
     @PostMapping("/confirm")
     public ApiResponse<PaymentResponse> confirmByRequest(
         @AuthenticationPrincipal AuthUser authUser,
@@ -61,6 +93,13 @@ public class PaymentController {
         return confirmResponse(authUser, request.paymentId(), request.paymentKey());
     }
 
+    /**
+     * Handles refund behavior.
+     * @param authUser the auth user value
+     * @param paymentId the payment id value
+     * @param request the request value
+     * @return the refund result
+     */
     @PostMapping("/{paymentId}/refund")
     public ApiResponse<PaymentResponse> refund(
         @AuthenticationPrincipal AuthUser authUser,
@@ -71,6 +110,12 @@ public class PaymentController {
         return ApiResponse.success("결제가 환불되었습니다.", response);
     }
 
+    /**
+     * Returns refund status data.
+     * @param authUser the auth user value
+     * @param paymentId the payment id value
+     * @return the get refund status result
+     */
     @GetMapping("/{paymentId}/refund")
     public ApiResponse<RefundStatusResponse> getRefundStatus(
         @AuthenticationPrincipal AuthUser authUser,

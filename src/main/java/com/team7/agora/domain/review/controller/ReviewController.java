@@ -12,16 +12,29 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+/**
+ * REST controller that exposes review endpoints.
+ */
 @RestController
 @RequestMapping("/api/reviews")
 public class ReviewController {
 
     private final ReviewService reviewService;
 
+    /**
+     * Creates a review controller instance.
+     * @param reviewService the review service value
+     */
     public ReviewController(ReviewService reviewService) {
         this.reviewService = reviewService;
     }
 
+    /**
+     * Creates create data.
+     * @param authUser the auth user value
+     * @param request the request value
+     * @return the create result
+     */
     @PostMapping
     public ApiResponse<ReviewResponse> create(
         @AuthenticationPrincipal AuthUser authUser,

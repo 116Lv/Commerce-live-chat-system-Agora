@@ -15,6 +15,9 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
+/**
+ * Spring configuration for security behavior.
+ */
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
@@ -22,15 +25,28 @@ public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
+    /**
+     * Creates a security config instance.
+     * @param jwtAuthenticationFilter the jwt authentication filter value
+     */
     public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter) {
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
     }
 
+    /**
+     * Handles password encoder behavior.
+     * @return the password encoder result
+     */
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
+    /**
+     * Handles security filter chain behavior.
+     * @param http the http value
+     * @return the security filter chain result
+     */
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         return http
@@ -73,6 +89,10 @@ public class SecurityConfig {
             .build();
     }
 
+    /**
+     * Handles unauthorized entry point behavior.
+     * @return the unauthorized entry point result
+     */
     @Bean
     public AuthenticationEntryPoint unauthorizedEntryPoint() {
         return (request, response, authException) -> response.sendError(401, "인증이 필요합니다.");

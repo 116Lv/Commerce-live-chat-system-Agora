@@ -12,6 +12,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+/**
+ * Application service that coordinates admin product use cases.
+ */
 @Service
 @Transactional(readOnly = true)
 public class AdminProductService {
@@ -19,11 +22,23 @@ public class AdminProductService {
     private final ProductRepository productRepository;
     private final ReportRepository reportRepository;
 
+    /**
+     * Creates a admin product service instance.
+     * @param productRepository the product repository value
+     * @param reportRepository the report repository value
+     */
     public AdminProductService(ProductRepository productRepository, ReportRepository reportRepository) {
         this.productRepository = productRepository;
         this.reportRepository = reportRepository;
     }
 
+    /**
+     * Returns products data.
+     * @param admin the admin value
+     * @param reportedOnly the reported only value
+     * @param pageable the pageable value
+     * @return the get products result
+     */
     public Page<AdminProductResponse> getProducts(CustomUserDetails admin, boolean reportedOnly, Pageable pageable) {
         validateProductAdmin(admin);
         Page<Product> products = reportedOnly
@@ -32,6 +47,12 @@ public class AdminProductService {
         return products.map(AdminProductResponse::from);
     }
 
+    /**
+     * Handles hide product behavior.
+     * @param admin the admin value
+     * @param productId the product id value
+     * @return the hide product result
+     */
     @Transactional
     public AdminProductResponse hideProduct(CustomUserDetails admin, Long productId) {
         validateProductAdmin(admin);

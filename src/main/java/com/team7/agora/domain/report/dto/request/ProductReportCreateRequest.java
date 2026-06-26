@@ -4,6 +4,11 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
+/**
+ * Request payload for product report create operations.
+ * @param productId the product id value
+ * @param reason the reason value
+ */
 public record ProductReportCreateRequest(
     @NotNull(message = "신고 대상 상품 ID는 필수입니다.")
     Long productId,

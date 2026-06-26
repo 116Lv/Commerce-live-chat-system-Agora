@@ -7,6 +7,9 @@ import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+/**
+ * Repository contract for storing and querying product like data.
+ */
 public interface ProductLikeRepository extends JpaRepository<ProductLike, Long> {
 
     boolean existsByProductAndUser(Product product, User user);

@@ -15,6 +15,9 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+/**
+ * JPA entity that represents a product like record.
+ */
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
@@ -41,6 +44,12 @@ public class ProductLike {
         this.user = user;
     }
 
+    /**
+     * Creates create data.
+     * @param product the product value
+     * @param user the user value
+     * @return the create result
+     */
     public static ProductLike create(Product product, User user) {
         return new ProductLike(product, user);
     }

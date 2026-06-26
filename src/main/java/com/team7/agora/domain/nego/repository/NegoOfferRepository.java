@@ -8,6 +8,9 @@ import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+/**
+ * Repository contract for storing and querying nego offer data.
+ */
 public interface NegoOfferRepository extends JpaRepository<NegoOffer, Long> {
     Optional<NegoOffer> findFirstByChatRoomIdAndStatusOrderByCreatedAtDesc(Long chatRoomId, NegoOfferStatus status);
     List<NegoOffer> findAllByChatRoomProductIdAndStatusIn(Long productId, Collection<NegoOfferStatus> statuses);

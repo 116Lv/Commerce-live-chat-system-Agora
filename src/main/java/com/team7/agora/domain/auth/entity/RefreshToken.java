@@ -16,6 +16,9 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+/**
+ * JPA entity that represents a refresh token record.
+ */
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
@@ -42,10 +45,22 @@ public class RefreshToken {
         this.expiresAt = expiresAt;
     }
 
+    /**
+     * Checks whether issue applies.
+     * @param user the user value
+     * @param token the token value
+     * @param expiresAt the expires at value
+     * @return the issue result
+     */
     public static RefreshToken issue(User user, String token, LocalDateTime expiresAt) {
         return new RefreshToken(user, token, expiresAt);
     }
 
+    /**
+     * Checks whether is expired applies.
+     * @param now the now value
+     * @return the is expired result
+     */
     public boolean isExpired(LocalDateTime now) {
         return !expiresAt.isAfter(now);
     }

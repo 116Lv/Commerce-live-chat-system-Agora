@@ -11,6 +11,9 @@ import com.team7.agora.global.exception.ErrorCode;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+/**
+ * Application service that coordinates payment webhook use cases.
+ */
 @Service
 @Transactional(readOnly = true)
 public class PaymentWebhookService {
@@ -18,11 +21,22 @@ public class PaymentWebhookService {
     private final PaymentRepository paymentRepository;
     private final SettlementRepository settlementRepository;
 
+    /**
+     * Creates a payment webhook service instance.
+     * @param paymentRepository the payment repository value
+     * @param settlementRepository the settlement repository value
+     */
     public PaymentWebhookService(PaymentRepository paymentRepository, SettlementRepository settlementRepository) {
         this.paymentRepository = paymentRepository;
         this.settlementRepository = settlementRepository;
     }
 
+    /**
+     * Handles handle paid behavior.
+     * @param orderId the order id value
+     * @param paymentKey the payment key value
+     * @return the handle paid result
+     */
     @Transactional
     public PaymentResponse handlePaid(String orderId, String paymentKey) {
         Payment payment = paymentRepository.findByOrderId(orderId)

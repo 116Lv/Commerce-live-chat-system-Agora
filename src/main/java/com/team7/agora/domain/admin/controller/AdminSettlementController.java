@@ -10,16 +10,29 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+/**
+ * REST controller that exposes admin settlement endpoints.
+ */
 @RestController
 @RequestMapping("/api/admin/settlements")
 public class AdminSettlementController {
 
     private final AdminSettlementService adminSettlementService;
 
+    /**
+     * Creates a admin settlement controller instance.
+     * @param adminSettlementService the admin settlement service value
+     */
     public AdminSettlementController(AdminSettlementService adminSettlementService) {
         this.adminSettlementService = adminSettlementService;
     }
 
+    /**
+     * Handles settle behavior.
+     * @param userDetails the user details value
+     * @param settlementId the settlement id value
+     * @return the settle result
+     */
     @PostMapping("/{settlementId}/settle")
     public ApiResponse<AdminSettlementResponse> settle(
         @AuthenticationPrincipal CustomUserDetails userDetails,

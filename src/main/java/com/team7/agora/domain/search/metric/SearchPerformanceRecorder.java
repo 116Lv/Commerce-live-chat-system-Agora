@@ -4,17 +4,31 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 import org.springframework.stereotype.Component;
 
+/**
+ * Component for search performance behavior.
+ */
 @Component
 public class SearchPerformanceRecorder {
 
     private final ConcurrentHashMap<String, VersionCounters> countersByVersion = new ConcurrentHashMap<>();
 
+    /**
+     * Handles record behavior.
+     * @param version the version value
+     * @param elapsedNanos the elapsed nanos value
+     * @param dbQueried the db queried value
+     */
     public void record(String version, long elapsedNanos, boolean dbQueried) {
         countersByVersion
             .computeIfAbsent(version, key -> new VersionCounters())
             .record(elapsedNanos, dbQueried);
     }
 
+    /**
+     * Returns stats data.
+     * @param version the version value
+     * @return the get stats result
+     */
     public SearchPerformanceStats getStats(String version) {
         VersionCounters counters = countersByVersion.get(version);
         if (counters == null) {

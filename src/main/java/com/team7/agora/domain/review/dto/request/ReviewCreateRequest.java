@@ -6,6 +6,12 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
+/**
+ * Request payload for review create operations.
+ * @param tradeId the trade id value
+ * @param rating the rating value
+ * @param content the content value
+ */
 public record ReviewCreateRequest(
     @NotNull(message = "거래 id는 필수입니다.")
     Long tradeId,

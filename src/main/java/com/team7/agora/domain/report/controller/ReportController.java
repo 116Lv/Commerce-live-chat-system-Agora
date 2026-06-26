@@ -13,16 +13,29 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+/**
+ * REST controller that exposes report endpoints.
+ */
 @RestController
 @RequestMapping("/api/reports")
 public class ReportController {
 
     private final ReportService reportService;
 
+    /**
+     * Creates a report controller instance.
+     * @param reportService the report service value
+     */
     public ReportController(ReportService reportService) {
         this.reportService = reportService;
     }
 
+    /**
+     * Creates product report data.
+     * @param userDetails the user details value
+     * @param request the request value
+     * @return the create product report result
+     */
     @PostMapping("/products")
     public ApiResponse<ReportResponse> createProductReport(
         @AuthenticationPrincipal CustomUserDetails userDetails,
@@ -36,6 +49,12 @@ public class ReportController {
         return ApiResponse.success("신고가 접수되었습니다.", response);
     }
 
+    /**
+     * Creates user report data.
+     * @param userDetails the user details value
+     * @param request the request value
+     * @return the create user report result
+     */
     @PostMapping("/users")
     public ApiResponse<ReportResponse> createUserReport(
         @AuthenticationPrincipal CustomUserDetails userDetails,

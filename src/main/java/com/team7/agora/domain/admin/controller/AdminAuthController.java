@@ -13,21 +13,38 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+/**
+ * REST controller that exposes admin auth endpoints.
+ */
 @RestController
 @RequestMapping("/api/admin/auth")
 public class AdminAuthController {
 
     private final AdminAuthService adminAuthService;
 
+    /**
+     * Creates a admin auth controller instance.
+     * @param adminAuthService the admin auth service value
+     */
     public AdminAuthController(AdminAuthService adminAuthService) {
         this.adminAuthService = adminAuthService;
     }
 
+    /**
+     * Handles login behavior.
+     * @param request the request value
+     * @return the login result
+     */
     @PostMapping("/login")
     public ApiResponse<AdminLoginResponse> login(@Valid @RequestBody AdminLoginRequest request) {
         return ApiResponse.success("관리자 로그인이 완료되었습니다.", adminAuthService.login(request));
     }
 
+    /**
+     * Handles logout behavior.
+     * @param admin the admin value
+     * @return the logout result
+     */
     @PostMapping("/logout")
     public ApiResponse<Void> logout(@AuthenticationPrincipal CustomUserDetails admin) {
         adminAuthService.logout(admin);

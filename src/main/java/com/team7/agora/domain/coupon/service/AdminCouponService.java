@@ -27,6 +27,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+/**
+ * Application service that coordinates admin coupon use cases.
+ */
 @Service
 @Transactional(readOnly = true)
 public class AdminCouponService {
@@ -39,6 +42,14 @@ public class AdminCouponService {
     private final UserRepository userRepository;
     private final LockService lockService;
 
+    /**
+     * Creates a admin coupon service instance.
+     * @param couponRepository the coupon repository value
+     * @param couponEventRepository the coupon event repository value
+     * @param couponIssueRepository the coupon issue repository value
+     * @param userRepository the user repository value
+     * @param lockService the lock service value
+     */
     public AdminCouponService(
         CouponRepository couponRepository,
         CouponEventRepository couponEventRepository,
@@ -53,6 +64,16 @@ public class AdminCouponService {
         this.lockService = lockService;
     }
 
+    /**
+     * Creates create data.
+     * @param admin the admin value
+     * @param name the name value
+     * @param discountAmount the discount amount value
+     * @param minOrderAmount the min order amount value
+     * @param type the type value
+     * @param validDays the valid days value
+     * @return the create result
+     */
     @Transactional
     public AdminCouponResponse create(
         CustomUserDetails admin,
@@ -67,12 +88,25 @@ public class AdminCouponService {
         return AdminCouponResponse.from(coupon);
     }
 
+    /**
+     * Returns detail data.
+     * @param admin the admin value
+     * @param couponId the coupon id value
+     * @return the get detail result
+     */
     public AdminCouponResponse getDetail(CustomUserDetails admin, Long couponId) {
         validateAdminAuthority(admin);
         Coupon coupon = findCoupon(couponId);
         return AdminCouponResponse.from(coupon);
     }
 
+    /**
+     * Checks whether issue to users applies.
+     * @param admin the admin value
+     * @param couponId the coupon id value
+     * @param userIds the user ids value
+     * @return the issue to users result
+     */
     @Transactional
     public CouponBroadcastResponse issueToUsers(CustomUserDetails admin, Long couponId, List<Long> userIds) {
         validateAdminAuthority(admin);
@@ -91,6 +125,12 @@ public class AdminCouponService {
         return new CouponBroadcastResponse(couponId, result.issuedCount(), result.skippedCount());
     }
 
+    /**
+     * Handles broadcast behavior.
+     * @param admin the admin value
+     * @param couponId the coupon id value
+     * @return the broadcast result
+     */
     @Transactional
     public CouponBroadcastResponse broadcast(CustomUserDetails admin, Long couponId) {
         validateAdminAuthority(admin);
@@ -166,6 +206,12 @@ public class AdminCouponService {
             .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "쿠폰 정책을 찾을 수 없습니다."));
     }
 
+    /**
+     * Returns issue history data.
+     * @param admin the admin value
+     * @param couponId the coupon id value
+     * @return the get issue history result
+     */
     public CouponIssueHistoryResponse getIssueHistory(CustomUserDetails admin, Long couponId) {
         validateAdminAuthority(admin);
         Coupon coupon = couponRepository.findById(couponId)

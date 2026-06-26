@@ -14,16 +14,30 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+/**
+ * REST controller that exposes admin account endpoints.
+ */
 @RestController
 @RequestMapping("/api/admin/accounts")
 public class AdminAccountController {
 
     private final AdminAccountService adminAccountService;
 
+    /**
+     * Creates a admin account controller instance.
+     * @param adminAccountService the admin account service value
+     */
     public AdminAccountController(AdminAccountService adminAccountService) {
         this.adminAccountService = adminAccountService;
     }
 
+    /**
+     * Handles change role behavior.
+     * @param admin the admin value
+     * @param userId the user id value
+     * @param request the request value
+     * @return the change role result
+     */
     @PatchMapping("/{userId}/role")
     public ApiResponse<AdminUserResponse> changeRole(
             @AuthenticationPrincipal CustomUserDetails admin,

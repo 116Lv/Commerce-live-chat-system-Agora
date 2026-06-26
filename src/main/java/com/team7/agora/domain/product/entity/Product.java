@@ -31,6 +31,9 @@ import lombok.NoArgsConstructor;
         @Index(name = "idx_products_category_status_deleted", columnList = "category, status, deleted_at"),
         @Index(name = "idx_products_title", columnList = "title")
     }
+/**
+ * JPA entity that represents a product record.
+ */
 )
 public class Product {
 
@@ -82,6 +85,16 @@ public class Product {
         this.likeCount = 0;
     }
 
+    /**
+     * Creates create data.
+     * @param seller the seller value
+     * @param region the region value
+     * @param title the title value
+     * @param description the description value
+     * @param price the price value
+     * @param category the category value
+     * @return the create result
+     */
     public static Product create(
         User seller,
         Region region,
@@ -93,10 +106,22 @@ public class Product {
         return new Product(seller, region, title, description, price, category);
     }
 
+    /**
+     * Checks whether is seller applies.
+     * @param userId the user id value
+     * @return the is seller result
+     */
     public boolean isSeller(Long userId) {
         return seller.getId() != null && seller.getId().equals(userId);
     }
 
+    /**
+     * Updates update data.
+     * @param title the title value
+     * @param description the description value
+     * @param price the price value
+     * @param category the category value
+     */
     public void update(String title, String description, BigDecimal price, String category) {
         this.title = title;
         this.description = description;
@@ -104,30 +129,51 @@ public class Product {
         this.category = category;
     }
 
+    /**
+     * Deletes delete data.
+     */
     public void delete() {
         this.deletedAt = LocalDateTime.now();
     }
 
+    /**
+     * Marks reserved state.
+     */
     public void markReserved() {
         this.status = ProductStatus.RESERVED;
     }
 
+    /**
+     * Handles restore selling behavior.
+     */
     public void restoreSelling() {
         this.status = ProductStatus.SELLING;
     }
 
+    /**
+     * Marks sold state.
+     */
     public void markSold() {
         this.status = ProductStatus.SOLD;
     }
 
+    /**
+     * Handles hide behavior.
+     */
     public void hide() {
         this.status = ProductStatus.HIDDEN;
     }
 
+    /**
+     * Handles increase like count behavior.
+     */
     public void increaseLikeCount() {
         this.likeCount++;
     }
 
+    /**
+     * Handles decrease like count behavior.
+     */
     public void decreaseLikeCount() {
         this.likeCount = Math.max(0, this.likeCount - 1);
     }

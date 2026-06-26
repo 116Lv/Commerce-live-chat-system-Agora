@@ -16,12 +16,20 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
+/**
+ * Authentication component for jwt authentication behavior.
+ */
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtProvider jwtProvider;
     private final UserDetailsService userDetailsService;
 
+    /**
+     * Creates a jwt authentication filter instance.
+     * @param jwtProvider the jwt provider value
+     * @param userDetailsService the user details service value
+     */
     public JwtAuthenticationFilter(
         JwtProvider jwtProvider,
         UserDetailsService userDetailsService
