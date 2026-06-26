@@ -3,6 +3,7 @@ package com.team7.agora.domain.chat.realtime;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
@@ -20,6 +21,11 @@ public class ChatRedisSubscriberConfig {
     }
 
     @Bean
+    @ConditionalOnProperty(
+        name = "agora.chat.redis-listener.enabled",
+        havingValue = "true",
+        matchIfMissing = true
+    )
     public RedisMessageListenerContainer redisMessageListenerContainer(
         RedisConnectionFactory connectionFactory,
         ChatRedisSubscriber chatRedisSubscriber
