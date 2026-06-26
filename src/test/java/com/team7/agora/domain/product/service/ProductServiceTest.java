@@ -138,6 +138,29 @@ class ProductServiceTest {
     }
 
     @Test
+    void update_rejectsReservedProduct() {
+        ProductService productService = new ProductService(productRepository, userRepository, regionRepository, userRegionRepository, productSearchService);
+        User seller = User.signup("seller@test.com", "encoded", "seller", "01011112222");
+        assignId(seller, 1L);
+        Product product = Product.create(
+            seller,
+            Region.create("서울 강남구 역삼동", "1168010100", "서울", "강남구", "역삼동"),
+            "자전거",
+            "상태 좋은 중고 자전거입니다.",
+            BigDecimal.valueOf(73000),
+            "SPORTS"
+        );
+        product.markReserved();
+        when(productRepository.findByIdAndDeletedAtIsNull(1L)).thenReturn(Optional.of(product));
+        ProductUpdateRequest request = new ProductUpdateRequest("수정 제목", "수정 설명", BigDecimal.valueOf(70000), "SPORTS");
+
+        assertThatThrownBy(() -> productService.update(1L, 1L, request))
+            .isInstanceOf(BusinessException.class)
+            .extracting("errorCode")
+            .isEqualTo(ErrorCode.CONFLICT);
+    }
+
+    @Test
     void delete_marksProductDeletedWhenRequesterIsSeller() {
         ProductService productService = new ProductService(productRepository, userRepository, regionRepository, userRegionRepository, productSearchService);
         User seller = User.signup("seller@test.com", "encoded", "판매자", "01011112222");

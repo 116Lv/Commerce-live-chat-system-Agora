@@ -32,6 +32,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Pageable;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -89,6 +90,25 @@ class ChatServiceTest {
             assignId(chatRoom, 100L);
             return chatRoom;
         });
+
+        ChatRoomResponse response = chatService.openRoom(2L, 10L);
+
+        assertThat(response.chatRoomId()).isEqualTo(100L);
+        assertThat(response.sellerId()).isEqualTo(1L);
+        assertThat(response.buyerId()).isEqualTo(2L);
+    }
+
+    @Test
+    void openRoomReturnsExistingRoomWhenConcurrentCreateConflicts() {
+        ChatRoom existingRoom = ChatRoom.open(product, buyer);
+        assignId(existingRoom, 100L);
+
+        when(productRepository.findByIdAndDeletedAtIsNull(10L)).thenReturn(Optional.of(product));
+        when(userRepository.findById(2L)).thenReturn(Optional.of(buyer));
+        when(chatRoomRepository.findByProductAndSellerAndBuyer(product, seller, buyer))
+            .thenReturn(Optional.empty(), Optional.of(existingRoom));
+        when(chatRoomRepository.save(any(ChatRoom.class)))
+            .thenThrow(new DataIntegrityViolationException("duplicate chat room"));
 
         ChatRoomResponse response = chatService.openRoom(2L, 10L);
 

@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Modifying;
@@ -27,10 +28,13 @@ public interface ProductRepository extends JpaRepository<Product, Long>, Product
     @Query("select p from Product p where p.id = :id and p.deletedAt is null")
     Optional<Product> findByIdForUpdateAndDeletedAtIsNull(@Param("id") Long id);
 
+    @EntityGraph(attributePaths = {"seller", "region"})
     Page<Product> findAllByDeletedAtIsNullAndStatusNot(ProductStatus status, Pageable pageable);
 
+    @EntityGraph(attributePaths = {"seller", "region"})
     Page<Product> findAllByRegionIdInAndDeletedAtIsNullAndStatusNot(List<Long> regionIds, ProductStatus status, Pageable pageable);
 
+    @EntityGraph(attributePaths = {"seller", "region"})
     List<Product> findAllBySellerAndDeletedAtIsNull(User seller);
 
     @Modifying(clearAutomatically = true, flushAutomatically = true)

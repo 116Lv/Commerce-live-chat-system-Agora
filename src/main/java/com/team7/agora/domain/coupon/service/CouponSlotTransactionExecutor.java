@@ -10,6 +10,7 @@ import com.team7.agora.domain.user.entity.User;
 import com.team7.agora.domain.user.repository.UserRepository;
 import com.team7.agora.global.exception.BusinessException;
 import com.team7.agora.global.exception.ErrorCode;
+import com.team7.agora.global.time.AgoraClock;
 import java.time.LocalDateTime;
 import java.util.List;
 import org.springframework.stereotype.Component;
@@ -71,7 +72,7 @@ public class CouponSlotTransactionExecutor {
     }
 
     private void assignSlot(CouponEvent event, User user) {
-        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime now = AgoraClock.now();
         event.validateIssueable(now);
         ensureNotIssuedToUser(event.getId(), user.getId());
 

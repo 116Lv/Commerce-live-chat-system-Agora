@@ -4,6 +4,9 @@ import com.team7.agora.domain.common.entity.BaseTimeEntity;
 import com.team7.agora.domain.payment.entity.Payment;
 import com.team7.agora.domain.settlement.enums.SettlementStatus;
 import com.team7.agora.domain.user.entity.User;
+import com.team7.agora.global.exception.BusinessException;
+import com.team7.agora.global.exception.ErrorCode;
+import com.team7.agora.global.time.AgoraClock;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -74,7 +77,7 @@ public class Settlement extends BaseTimeEntity {
      */
     public void complete() {
         if (status != SettlementStatus.HELD) {
-            throw new IllegalStateException("보류 상태의 정산만 정산 가능 상태로 변경할 수 있습니다.");
+            throw new BusinessException(ErrorCode.CONFLICT, "보류 상태의 정산만 정산 가능 상태로 변경할 수 있습니다.");
         }
         status = SettlementStatus.READY;
     }
@@ -84,7 +87,7 @@ public class Settlement extends BaseTimeEntity {
      */
     public void cancel() {
         if (status != SettlementStatus.HELD && status != SettlementStatus.READY) {
-            throw new IllegalStateException("보류 또는 정산 가능 상태의 정산만 취소할 수 있습니다.");
+            throw new BusinessException(ErrorCode.CONFLICT, "보류 또는 정산 가능 상태의 정산만 취소할 수 있습니다.");
         }
         status = SettlementStatus.FAILED;
     }
@@ -94,9 +97,9 @@ public class Settlement extends BaseTimeEntity {
      */
     public void settle() {
         if (status != SettlementStatus.READY) {
-            throw new IllegalStateException("정산 가능 상태의 정산만 완료할 수 있습니다.");
+            throw new BusinessException(ErrorCode.CONFLICT, "정산 가능 상태의 정산만 완료할 수 있습니다.");
         }
         status = SettlementStatus.SETTLED;
-        settledAt = LocalDateTime.now();
+        settledAt = AgoraClock.now();
     }
 }

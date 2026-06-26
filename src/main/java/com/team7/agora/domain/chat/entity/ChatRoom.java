@@ -4,6 +4,7 @@ import com.team7.agora.domain.chat.enums.ChatRoomStatus;
 import com.team7.agora.domain.common.entity.BaseTimeEntity;
 import com.team7.agora.domain.product.entity.Product;
 import com.team7.agora.domain.user.entity.User;
+import com.team7.agora.global.time.AgoraClock;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -104,9 +105,9 @@ public class ChatRoom extends BaseTimeEntity {
      */
     public void markRead(Long userId) {
         if (seller.getId().equals(userId)) {
-            this.sellerLastReadAt = LocalDateTime.now();
+            this.sellerLastReadAt = AgoraClock.now();
         } else if (buyer.getId().equals(userId)) {
-            this.buyerLastReadAt = LocalDateTime.now();
+            this.buyerLastReadAt = AgoraClock.now();
         } else {
             throw new IllegalArgumentException("채팅방 참여자만 읽음 처리를 할 수 있습니다.");
         }

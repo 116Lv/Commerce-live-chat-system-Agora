@@ -15,6 +15,7 @@ import com.team7.agora.global.exception.BusinessException;
 import com.team7.agora.global.exception.ErrorCode;
 import com.team7.agora.global.storage.ImageStorageClient;
 import java.util.List;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -73,9 +74,18 @@ public class ChatService {
 
         User buyer = findUser(userId);
         ChatRoom chatRoom = chatRoomRepository.findByProductAndSellerAndBuyer(product, product.getSeller(), buyer)
-            .orElseGet(() -> chatRoomRepository.save(ChatRoom.open(product, buyer)));
+            .orElseGet(() -> createRoomOrFindExisting(product, buyer));
 
         return ChatRoomResponse.from(chatRoom);
+    }
+
+    private ChatRoom createRoomOrFindExisting(Product product, User buyer) {
+        try {
+            return chatRoomRepository.save(ChatRoom.open(product, buyer));
+        } catch (DataIntegrityViolationException e) {
+            return chatRoomRepository.findByProductAndSellerAndBuyer(product, product.getSeller(), buyer)
+                .orElseThrow(() -> e);
+        }
     }
 
     /**

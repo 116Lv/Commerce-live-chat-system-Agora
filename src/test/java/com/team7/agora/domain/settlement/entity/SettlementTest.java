@@ -10,6 +10,7 @@ import com.team7.agora.domain.region.entity.Region;
 import com.team7.agora.domain.settlement.enums.SettlementStatus;
 import com.team7.agora.domain.trade.entity.Trade;
 import com.team7.agora.domain.user.entity.User;
+import com.team7.agora.global.exception.BusinessException;
 import jakarta.persistence.JoinColumn;
 import java.math.BigDecimal;
 import java.lang.reflect.Field;
@@ -82,6 +83,6 @@ class SettlementTest {
         Settlement settlement = Settlement.pending(payment);
 
         assertThatThrownBy(settlement::settle)
-            .isInstanceOf(IllegalStateException.class);
+            .isInstanceOf(BusinessException.class);
     }
 }

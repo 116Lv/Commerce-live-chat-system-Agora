@@ -55,7 +55,19 @@ public class ReviewService {
         User reviewer = reviewerId.equals(trade.getSeller().getId()) ? trade.getSeller() : trade.getBuyer();
         User targetUser = trade.getCounterpart(reviewerId);
         Review review = Review.create(trade, reviewer, targetUser, rating, content);
+        targetUser.updateSmileScore(toSmileDelta(rating));
         return ReviewResponse.from(reviewRepository.save(review));
+    }
+
+    private int toSmileDelta(int rating) {
+        return switch (rating) {
+            case 1 -> -4;
+            case 2 -> -2;
+            case 3 -> 0;
+            case 4 -> 2;
+            case 5 -> 4;
+            default -> throw new IllegalArgumentException("평점은 1점부터 5점까지 입력할 수 있습니다.");
+        };
     }
 
     /**

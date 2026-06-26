@@ -8,6 +8,7 @@ import com.team7.agora.domain.coupon.repository.CouponRepository;
 import com.team7.agora.domain.user.repository.UserRepository;
 import com.team7.agora.global.exception.BusinessException;
 import com.team7.agora.global.exception.ErrorCode;
+import com.team7.agora.global.time.AgoraClock;
 import java.time.LocalDateTime;
 import java.util.List;
 import org.springframework.stereotype.Service;
@@ -32,7 +33,7 @@ public class CouponQueryService {
     }
 
     public List<CouponEventResponse> listActiveEvents() {
-        return couponEventRepository.findPublicIssueableEvents(LocalDateTime.now()).stream()
+        return couponEventRepository.findPublicIssueableEvents(AgoraClock.now()).stream()
             .map(CouponEventResponse::from)
             .toList();
     }

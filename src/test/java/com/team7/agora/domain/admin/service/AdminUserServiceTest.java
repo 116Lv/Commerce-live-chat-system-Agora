@@ -33,7 +33,7 @@ class AdminUserServiceTest {
         AdminUserService service = new AdminUserService(userRepository);
         User user = User.signup("user@test.com", "encoded", "동네유저", "01011112222");
         assignId(user, 1L);
-        when(userRepository.findAll(PageRequest.of(0, 20)))
+        when(userRepository.findAllByDeletedAtIsNull(PageRequest.of(0, 20)))
                 .thenReturn(new PageImpl<>(List.of(user), PageRequest.of(0, 20), 42));
 
         Page<AdminUserResponse> responses = service.getUsers(principal(UserRole.USER_ADMIN), PageRequest.of(0, 20));

@@ -8,6 +8,7 @@ import com.team7.agora.global.auth.CustomUserDetails;
 import com.team7.agora.global.response.ApiResponse;
 import jakarta.validation.Valid;
 import java.util.List;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -39,6 +40,7 @@ public class AdminReportController {
      * @return 클라이언트에 반환할 API 응답
      */
     @GetMapping("/users")
+    @PreAuthorize("hasAnyAuthority('ROOT_ADMIN', 'USER_ADMIN')")
     public ApiResponse<List<AdminReportListResponse>> getUserReports(
         @AuthenticationPrincipal CustomUserDetails admin
     ) {
@@ -53,6 +55,7 @@ public class AdminReportController {
      * @return 클라이언트에 반환할 API 응답
      */
     @PostMapping("/users/{reportId}/resolve")
+    @PreAuthorize("hasAnyAuthority('ROOT_ADMIN', 'USER_ADMIN')")
     public ApiResponse<AdminReportResponse> resolveUserReport(
         @AuthenticationPrincipal CustomUserDetails admin,
         @PathVariable Long reportId,
@@ -68,6 +71,7 @@ public class AdminReportController {
      * @return 클라이언트에 반환할 API 응답
      */
     @GetMapping("/products")
+    @PreAuthorize("hasAnyAuthority('ROOT_ADMIN', 'PRODUCT_ADMIN')")
     public ApiResponse<List<AdminReportListResponse>> getProductReports(
         @AuthenticationPrincipal CustomUserDetails admin
     ) {
@@ -82,6 +86,7 @@ public class AdminReportController {
      * @return 클라이언트에 반환할 API 응답
      */
     @PostMapping("/products/{reportId}/resolve")
+    @PreAuthorize("hasAnyAuthority('ROOT_ADMIN', 'PRODUCT_ADMIN')")
     public ApiResponse<AdminReportResponse> resolveProductReport(
         @AuthenticationPrincipal CustomUserDetails admin,
         @PathVariable Long reportId,

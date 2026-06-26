@@ -14,11 +14,11 @@ import com.team7.agora.domain.user.repository.UserRepository;
 import com.team7.agora.global.auth.JwtProvider;
 import com.team7.agora.global.exception.BusinessException;
 import com.team7.agora.global.exception.ErrorCode;
+import com.team7.agora.global.time.AgoraClock;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.time.Duration;
 import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 import java.util.HexFormat;
 import java.util.Locale;
 import java.util.UUID;
@@ -125,7 +125,7 @@ public class AuthService {
      */
     @Transactional
     public ReissueResponse reissue(String refreshTokenValue) {
-        RefreshToken refreshToken = refreshTokenRepository.findByTokenHash(hashRefreshToken(refreshTokenValue))
+        RefreshToken refreshToken = refreshTokenRepository.findByTokenHashForUpdate(hashRefreshToken(refreshTokenValue))
                 .orElseThrow(() -> new BusinessException(ErrorCode.INVALID_TOKEN));
 
         if (refreshToken.isExpired(nowUtc())) {
@@ -181,6 +181,6 @@ public class AuthService {
     }
 
     private LocalDateTime nowUtc() {
-        return LocalDateTime.now(ZoneOffset.UTC);
+        return AgoraClock.now();
     }
 }

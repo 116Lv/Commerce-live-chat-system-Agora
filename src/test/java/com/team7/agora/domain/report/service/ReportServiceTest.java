@@ -58,7 +58,8 @@ class ReportServiceTest {
     @Test
     void createUserReport_storesPendingReport() {
         when(userRepository.findById(1L)).thenReturn(Optional.of(reporter));
-        when(userRepository.findById(3L)).thenReturn(Optional.of(reportedUser));
+        when(userRepository.findByIdForUpdate(3L)).thenReturn(Optional.of(reportedUser));
+        when(reportRepository.existsByReporterAndReportedUserAndProductIsNull(reporter, reportedUser)).thenReturn(false);
         when(reportRepository.save(any(Report.class))).thenAnswer(invocation -> {
             Report report = invocation.getArgument(0);
             assignId(report, 200L);
@@ -83,7 +84,8 @@ class ReportServiceTest {
     @Test
     void createProductReport_storesPendingReport() {
         when(userRepository.findById(1L)).thenReturn(Optional.of(reporter));
-        when(productRepository.findByIdAndDeletedAtIsNull(10L)).thenReturn(Optional.of(product));
+        when(productRepository.findByIdForUpdateAndDeletedAtIsNull(10L)).thenReturn(Optional.of(product));
+        when(reportRepository.existsByReporterAndProduct(reporter, product)).thenReturn(false);
         when(reportRepository.save(any(Report.class))).thenAnswer(invocation -> {
             Report report = invocation.getArgument(0);
             assignId(report, 100L);
@@ -102,9 +104,29 @@ class ReportServiceTest {
     @Test
     void createProductReport_rejectsOwnProduct() {
         when(userRepository.findById(2L)).thenReturn(Optional.of(seller));
-        when(productRepository.findByIdAndDeletedAtIsNull(10L)).thenReturn(Optional.of(product));
+        when(productRepository.findByIdForUpdateAndDeletedAtIsNull(10L)).thenReturn(Optional.of(product));
 
         assertThatThrownBy(() -> reportService.createProductReport(2L, 10L, "내 상품 신고 시도"))
+            .isInstanceOf(BusinessException.class);
+    }
+
+    @Test
+    void createUserReport_rejectsDuplicateReport() {
+        when(userRepository.findById(1L)).thenReturn(Optional.of(reporter));
+        when(userRepository.findByIdForUpdate(3L)).thenReturn(Optional.of(reportedUser));
+        when(reportRepository.existsByReporterAndReportedUserAndProductIsNull(reporter, reportedUser)).thenReturn(true);
+
+        assertThatThrownBy(() -> reportService.createUserReport(1L, 3L, "중복 신고"))
+            .isInstanceOf(BusinessException.class);
+    }
+
+    @Test
+    void createProductReport_rejectsDuplicateReport() {
+        when(userRepository.findById(1L)).thenReturn(Optional.of(reporter));
+        when(productRepository.findByIdForUpdateAndDeletedAtIsNull(10L)).thenReturn(Optional.of(product));
+        when(reportRepository.existsByReporterAndProduct(reporter, product)).thenReturn(true);
+
+        assertThatThrownBy(() -> reportService.createProductReport(1L, 10L, "중복 신고"))
             .isInstanceOf(BusinessException.class);
     }
 }

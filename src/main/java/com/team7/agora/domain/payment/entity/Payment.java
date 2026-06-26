@@ -5,6 +5,7 @@ import com.team7.agora.domain.payment.exception.PaymentException;
 import com.team7.agora.domain.trade.entity.Trade;
 import com.team7.agora.domain.user.entity.User;
 import com.team7.agora.global.exception.ErrorCode;
+import com.team7.agora.global.time.AgoraClock;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -68,6 +69,7 @@ public class Payment {
 
     private LocalDateTime paidAt;
     private LocalDateTime refundedAt;
+    private LocalDateTime confirmingAt;
 
     private Payment(Trade trade, User payer, BigDecimal amount, String orderId) {
         this.trade = trade;
@@ -75,7 +77,7 @@ public class Payment {
         this.amount = amount;
         this.orderId = orderId;
         this.status = PaymentStatus.READY;
-        this.requestedAt = LocalDateTime.now();
+        this.requestedAt = AgoraClock.now();
     }
 
     /**
@@ -108,12 +110,29 @@ public class Payment {
         if (status == PaymentStatus.PAID) {
             return;
         }
-        if (status != PaymentStatus.READY) {
+        if (status != PaymentStatus.READY && status != PaymentStatus.CONFIRMING) {
             throw new PaymentException(ErrorCode.CONFLICT, "결제 대기 상태에서만 승인할 수 있습니다.");
         }
         this.paymentKey = paymentKey;
         this.status = PaymentStatus.PAID;
-        this.paidAt = LocalDateTime.now();
+        this.paidAt = AgoraClock.now();
+        this.confirmingAt = null;
+    }
+
+    public void markConfirming() {
+        if (status != PaymentStatus.READY) {
+            throw new PaymentException(ErrorCode.CONFLICT, "결제 대기 상태에서만 승인할 수 있습니다.");
+        }
+        this.status = PaymentStatus.CONFIRMING;
+        this.confirmingAt = AgoraClock.now();
+    }
+
+    public void restoreReadyFromConfirming() {
+        if (status != PaymentStatus.CONFIRMING) {
+            throw new PaymentException(ErrorCode.CONFLICT, "결제 승인 중인 상태만 대기로 복구할 수 있습니다.");
+        }
+        this.status = PaymentStatus.READY;
+        this.confirmingAt = null;
     }
 
     /**
@@ -125,7 +144,7 @@ public class Payment {
             throw new PaymentException(ErrorCode.CONFLICT, "결제 완료 상태에서만 환불할 수 있습니다.");
         }
         this.status = PaymentStatus.REFUNDED;
-        this.refundedAt = LocalDateTime.now();
+        this.refundedAt = AgoraClock.now();
     }
 
     /**
@@ -136,5 +155,6 @@ public class Payment {
             throw new PaymentException(ErrorCode.CONFLICT, "결제완료 상태는 실패로 변경할 수 없습니다.");
         }
         this.status = PaymentStatus.FAILED;
+        this.confirmingAt = null;
     }
 }

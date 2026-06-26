@@ -91,6 +91,7 @@ public class ProductService {
     public ProductResponse update(Long requesterId, Long productId, ProductUpdateRequest request) {
         Product product = getActiveProduct(productId);
         validateSeller(product, requesterId);
+        validateEditable(product);
         product.update(request.title(), request.description(), request.price(), request.category());
         productSearchService.evictSearchCache();
         return ProductResponse.from(product);
@@ -181,6 +182,11 @@ public class ProductService {
     private void validateSeller(Product product, Long requesterId) {
         if (!product.isSeller(requesterId)) {
             throw new BusinessException(ErrorCode.FORBIDDEN, "상품 판매자만 수정하거나 삭제할 수 있습니다.");
+        }
+    }
+    private void validateEditable(Product product) {
+        if (product.getStatus() != ProductStatus.SELLING) {
+            throw new BusinessException(ErrorCode.CONFLICT, "판매 중인 상품만 수정할 수 있습니다.");
         }
     }
 }

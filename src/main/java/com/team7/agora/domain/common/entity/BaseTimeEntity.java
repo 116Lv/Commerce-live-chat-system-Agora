@@ -1,5 +1,6 @@
 package com.team7.agora.domain.common.entity;
 
+import com.team7.agora.global.time.AgoraClock;
 import jakarta.persistence.Column;
 import jakarta.persistence.MappedSuperclass;
 import java.time.LocalDateTime;
@@ -19,6 +20,6 @@ public abstract class BaseTimeEntity {
      * 생성 시각을 현재 시각으로 설정한다.
      */
     protected void markCreatedNow() {
-        this.createdAt = LocalDateTime.now();
+        this.createdAt = AgoraClock.now();
     }
 }

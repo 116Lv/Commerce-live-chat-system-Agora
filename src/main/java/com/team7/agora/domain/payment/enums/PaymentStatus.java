@@ -5,6 +5,7 @@ package com.team7.agora.domain.payment.enums;
  */
 public enum PaymentStatus {
     READY,
+    CONFIRMING,
     PAID,
     FAILED,
     CANCELLED,

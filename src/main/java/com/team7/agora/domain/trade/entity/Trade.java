@@ -3,6 +3,9 @@ package com.team7.agora.domain.trade.entity;
 import com.team7.agora.domain.product.entity.Product;
 import com.team7.agora.domain.trade.enums.TradeStatus;
 import com.team7.agora.domain.user.entity.User;
+import com.team7.agora.global.exception.BusinessException;
+import com.team7.agora.global.exception.ErrorCode;
+import com.team7.agora.global.time.AgoraClock;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -72,7 +75,7 @@ public class Trade {
         this.buyer = buyer;
         this.price = price;
         this.status = TradeStatus.PAYMENT_PENDING;
-        this.paymentDueAt = LocalDateTime.now().plusHours(24);
+        this.paymentDueAt = AgoraClock.now().plusHours(24);
     }
 
     /**
@@ -92,7 +95,7 @@ public class Trade {
      */
     public void markPaid() {
         if (this.status != TradeStatus.PAYMENT_PENDING) {
-            throw new IllegalStateException("결제 대기 상태인 거래만 결제 완료 처리할 수 있습니다.");
+            throw new BusinessException(ErrorCode.CONFLICT, "결제 대기 상태인 거래만 결제 완료 처리할 수 있습니다.");
         }
         this.status = TradeStatus.PAID;
         this.product.markSold();
@@ -104,10 +107,10 @@ public class Trade {
      */
     public void complete() {
         if (this.status != TradeStatus.PAID) {
-            throw new IllegalStateException("결제가 완료된 거래만 완료할 수 있습니다.");
+            throw new BusinessException(ErrorCode.CONFLICT, "결제가 완료된 거래만 완료할 수 있습니다.");
         }
         this.status = TradeStatus.COMPLETED;
-        this.completedAt = LocalDateTime.now();
+        this.completedAt = AgoraClock.now();
     }
 
     /**
@@ -115,7 +118,7 @@ public class Trade {
      */
     public void cancel() {
         if (this.status != TradeStatus.PAYMENT_PENDING && this.status != TradeStatus.PAID) {
-            throw new IllegalStateException("취소 가능한 상태의 거래가 아닙니다.");
+            throw new BusinessException(ErrorCode.CONFLICT, "취소 가능한 상태의 거래가 아닙니다.");
         }
         this.status = TradeStatus.CANCELLED;
         this.product.restoreSelling();
@@ -127,7 +130,7 @@ public class Trade {
      */
     public void expire() {
         if (this.status != TradeStatus.PAYMENT_PENDING) {
-            throw new IllegalStateException("결제 대기 상태인 거래만 만료할 수 있습니다.");
+            throw new BusinessException(ErrorCode.CONFLICT, "결제 대기 상태인 거래만 만료할 수 있습니다.");
         }
         this.status = TradeStatus.EXPIRED;
         this.product.restoreSelling();

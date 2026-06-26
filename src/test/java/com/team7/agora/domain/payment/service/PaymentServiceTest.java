@@ -11,6 +11,7 @@ import static org.mockito.Mockito.when;
 import com.team7.agora.domain.payment.client.PaymentClient;
 import com.team7.agora.domain.payment.dto.response.PaymentResponse;
 import com.team7.agora.domain.payment.entity.Payment;
+import com.team7.agora.domain.payment.enums.PaymentStatus;
 import com.team7.agora.domain.payment.exception.PaymentException;
 import com.team7.agora.domain.payment.repository.PaymentRepository;
 import com.team7.agora.domain.product.entity.Product;
@@ -21,13 +22,17 @@ import com.team7.agora.domain.trade.entity.Trade;
 import com.team7.agora.domain.trade.repository.TradeRepository;
 import com.team7.agora.domain.user.entity.User;
 import com.team7.agora.global.auth.AuthUser;
+import com.team7.agora.global.exception.ErrorCode;
 import java.math.BigDecimal;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.transaction.support.TransactionCallback;
+import org.springframework.transaction.support.TransactionOperations;
 
 @ExtendWith(MockitoExtension.class)
 class PaymentServiceTest {
@@ -51,7 +56,19 @@ class PaymentServiceTest {
 
     @BeforeEach
     void setUp() {
-        paymentService = new PaymentService(paymentRepository, settlementRepository, tradeRepository, paymentClient);
+        TransactionOperations transactionOperations = new TransactionOperations() {
+            @Override
+            public <T> T execute(TransactionCallback<T> action) {
+                return action.doInTransaction(null);
+            }
+        };
+        paymentService = new PaymentService(
+            paymentRepository,
+            settlementRepository,
+            tradeRepository,
+            paymentClient,
+            transactionOperations
+        );
         seller = User.signup("seller@test.com", "password", "판매자", "01011112222");
         assignId(seller, 1L);
         buyer = User.signup("buyer@test.com", "password", "구매자", "01033334444");
@@ -66,7 +83,7 @@ class PaymentServiceTest {
 
     @Test
     void prepareCreatesReadyPaymentForBuyer() {
-        when(tradeRepository.findById(100L)).thenReturn(Optional.of(trade));
+        when(tradeRepository.findByIdForUpdate(100L)).thenReturn(Optional.of(trade));
         when(paymentRepository.existsByTrade(trade)).thenReturn(false);
         when(paymentRepository.save(any(Payment.class))).thenAnswer(invocation -> {
             Payment payment = invocation.getArgument(0);
@@ -85,9 +102,20 @@ class PaymentServiceTest {
 
     @Test
     void prepareRejectsNonBuyer() {
-        when(tradeRepository.findById(100L)).thenReturn(Optional.of(trade));
+        when(tradeRepository.findByIdForUpdate(100L)).thenReturn(Optional.of(trade));
 
         assertThatThrownBy(() -> paymentService.prepare(1L, 100L))
+            .isInstanceOf(PaymentException.class);
+    }
+
+    @Test
+    void prepareRejectsDuplicatePaymentConstraintViolationAsConflict() {
+        when(tradeRepository.findByIdForUpdate(100L)).thenReturn(Optional.of(trade));
+        when(paymentRepository.existsByTrade(trade)).thenReturn(false);
+        when(paymentRepository.save(any(Payment.class)))
+            .thenThrow(new DataIntegrityViolationException("duplicate payment trade"));
+
+        assertThatThrownBy(() -> paymentService.prepare(2L, 100L))
             .isInstanceOf(PaymentException.class);
     }
 
@@ -95,8 +123,11 @@ class PaymentServiceTest {
     void confirmMarksPaidAndCreatesSettlement() {
         Payment payment = Payment.ready(trade, buyer, BigDecimal.valueOf(50000), "order-1");
         assignId(payment, 1000L);
-        when(paymentRepository.findById(1000L)).thenReturn(Optional.of(payment));
-        when(paymentClient.confirm("payment-key", "order-1", BigDecimal.valueOf(50000))).thenReturn(true);
+        when(paymentRepository.findByIdForUpdate(1000L)).thenReturn(Optional.of(payment), Optional.of(payment));
+        when(paymentClient.confirm("payment-key", "order-1", BigDecimal.valueOf(50000))).thenAnswer(invocation -> {
+            assertThat(payment.getStatus()).isEqualTo(PaymentStatus.CONFIRMING);
+            return true;
+        });
         when(settlementRepository.save(any(Settlement.class))).thenAnswer(invocation -> {
             Settlement settlement = invocation.getArgument(0);
             assignId(settlement, 2000L);
@@ -111,12 +142,27 @@ class PaymentServiceTest {
     }
 
     @Test
+    void confirmRestoresReadyWhenPaymentClientThrows() {
+        Payment payment = Payment.ready(trade, buyer, BigDecimal.valueOf(50000), "order-1");
+        assignId(payment, 1000L);
+        when(paymentRepository.findByIdForUpdate(1000L)).thenReturn(Optional.of(payment), Optional.of(payment));
+        when(paymentClient.confirm("payment-key", "order-1", BigDecimal.valueOf(50000)))
+            .thenThrow(new PaymentException(ErrorCode.INTERNAL_SERVER_ERROR, "PG confirm failed"));
+
+        assertThatThrownBy(() -> paymentService.confirm(2L, 1000L, "payment-key"))
+            .isInstanceOf(PaymentException.class);
+
+        assertThat(payment.getStatus()).isEqualTo(PaymentStatus.READY);
+        verify(settlementRepository, never()).save(any(Settlement.class));
+    }
+
+    @Test
     void confirmAlreadyPaidPaymentReturnsWithoutCallingPaymentClientAgain() {
         Payment payment = Payment.ready(trade, buyer, BigDecimal.valueOf(50000), "order-1");
         assignId(payment, 1000L);
         payment.markPaid("payment-key");
         trade.markPaid();
-        when(paymentRepository.findById(1000L)).thenReturn(Optional.of(payment));
+        when(paymentRepository.findByIdForUpdate(1000L)).thenReturn(Optional.of(payment));
 
         PaymentResponse response = paymentService.confirm(2L, 1000L, "payment-key");
 

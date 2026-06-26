@@ -4,6 +4,7 @@ import com.team7.agora.domain.chat.entity.ChatRoom;
 import com.team7.agora.domain.common.entity.BaseTimeEntity;
 import com.team7.agora.domain.nego.enums.NegoOfferStatus;
 import com.team7.agora.domain.user.entity.User;
+import com.team7.agora.global.time.AgoraClock;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -94,7 +95,7 @@ public class NegoOffer extends BaseTimeEntity {
     public void accept() {
         validatePending();
         this.status = NegoOfferStatus.ACCEPTED;
-        this.respondedAt = LocalDateTime.now();
+        this.respondedAt = AgoraClock.now();
     }
 
     /**
@@ -103,7 +104,7 @@ public class NegoOffer extends BaseTimeEntity {
     public void reject() {
         validatePending();
         this.status = NegoOfferStatus.REJECTED;
-        this.respondedAt = LocalDateTime.now();
+        this.respondedAt = AgoraClock.now();
     }
 
     /**
@@ -168,7 +169,7 @@ public class NegoOffer extends BaseTimeEntity {
     public void cancel() {
         validatePending();
         this.status = NegoOfferStatus.CANCELLED;
-        this.respondedAt = LocalDateTime.now();
+        this.respondedAt = AgoraClock.now();
     }
 
     private void validatePending() {

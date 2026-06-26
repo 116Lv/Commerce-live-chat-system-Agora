@@ -23,6 +23,7 @@ import com.team7.agora.domain.user.entity.User;
 import com.team7.agora.global.auth.AuthUser;
 import com.team7.agora.global.exception.BusinessException;
 import com.team7.agora.global.exception.ErrorCode;
+import com.team7.agora.global.time.AgoraClock;
 import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -74,7 +75,7 @@ class NegoServiceTest {
 
     @Test
     void createOfferAllowsBuyerParticipant() {
-        when(chatRoomRepository.findByIdAndStatus(100L, ChatRoomStatus.ACTIVE))
+        when(chatRoomRepository.findByIdAndStatusForUpdate(100L, ChatRoomStatus.ACTIVE))
             .thenReturn(Optional.of(chatRoom));
         when(negoOfferRepository.save(any(NegoOffer.class))).thenAnswer(invocation -> {
             NegoOffer offer = invocation.getArgument(0);
@@ -93,18 +94,18 @@ class NegoServiceTest {
 
     @Test
     void createOfferSetsExpirationAfter24Hours() {
-        when(chatRoomRepository.findByIdAndStatus(100L, ChatRoomStatus.ACTIVE))
+        when(chatRoomRepository.findByIdAndStatusForUpdate(100L, ChatRoomStatus.ACTIVE))
             .thenReturn(Optional.of(chatRoom));
         when(negoOfferRepository.save(any(NegoOffer.class))).thenAnswer(invocation -> {
             NegoOffer offer = invocation.getArgument(0);
             assignId(offer, 1000L);
             return offer;
         });
-        LocalDateTime before = LocalDateTime.now();
+        LocalDateTime before = AgoraClock.now();
 
         NegoOfferResponse response = negoService.createOffer(2L, 100L, BigDecimal.valueOf(45000));
 
-        LocalDateTime after = LocalDateTime.now();
+        LocalDateTime after = AgoraClock.now();
         assertThat(response.expiresAt()).isAfterOrEqualTo(before.plusHours(24));
         assertThat(response.expiresAt()).isBeforeOrEqualTo(after.plusHours(24));
     }
@@ -112,7 +113,7 @@ class NegoServiceTest {
     @Test
     void createOfferRejectsWhenProductAlreadyReserved() {
         chatRoom.getProduct().markReserved();
-        when(chatRoomRepository.findByIdAndStatus(100L, ChatRoomStatus.ACTIVE))
+        when(chatRoomRepository.findByIdAndStatusForUpdate(100L, ChatRoomStatus.ACTIVE))
             .thenReturn(Optional.of(chatRoom));
 
         assertThatThrownBy(() -> negoService.createOffer(2L, 100L, BigDecimal.valueOf(45000)))
@@ -120,8 +121,19 @@ class NegoServiceTest {
     }
 
     @Test
+    void createOfferRejectsWhenRequesterAlreadyHasActiveOfferInRoom() {
+        when(chatRoomRepository.findByIdAndStatusForUpdate(100L, ChatRoomStatus.ACTIVE))
+            .thenReturn(Optional.of(chatRoom));
+        when(negoOfferRepository.existsByChatRoomAndRequesterAndStatusIn(chatRoom, buyer, NegoOffer.ACTIVE_STATUSES))
+            .thenReturn(true);
+
+        assertThatThrownBy(() -> negoService.createOffer(2L, 100L, BigDecimal.valueOf(45000)))
+            .isInstanceOf(BusinessException.class);
+    }
+
+    @Test
     void createOfferRejectsSeller() {
-        when(chatRoomRepository.findByIdAndStatus(100L, ChatRoomStatus.ACTIVE))
+        when(chatRoomRepository.findByIdAndStatusForUpdate(100L, ChatRoomStatus.ACTIVE))
             .thenReturn(Optional.of(chatRoom));
 
         assertThatThrownBy(() -> negoService.createOffer(1L, 100L, BigDecimal.valueOf(45000)))
@@ -132,14 +144,14 @@ class NegoServiceTest {
     void acceptOfferAllowsSellerOnly() {
         NegoOffer offer = NegoOffer.create(chatRoom, buyer, BigDecimal.valueOf(45000));
         assignId(offer, 1000L);
-        when(negoOfferRepository.findById(1000L)).thenReturn(Optional.of(offer));
+        when(negoOfferRepository.findByIdForUpdate(1000L)).thenReturn(Optional.of(offer));
         when(tradeService.createTradeFromAcceptedOffer(any(Product.class), any(NegoOffer.class)))
             .thenAnswer(invocation -> {
                 Trade trade = Trade.start(chatRoom.getProduct(), seller, buyer, BigDecimal.valueOf(45000));
                 assignId(trade, 2000L);
                 return trade;
             });
-        when(negoOfferRepository.findAllByChatRoomProductIdAndStatusIn(
+        when(negoOfferRepository.findAllByChatRoomProductIdAndStatusInForUpdate(
             10L,
             NegoOffer.ACTIVE_STATUSES
         )).thenReturn(Collections.emptyList());
@@ -154,7 +166,7 @@ class NegoServiceTest {
     void acceptOfferRejectsNonSeller() {
         NegoOffer offer = NegoOffer.create(chatRoom, buyer, BigDecimal.valueOf(45000));
         assignId(offer, 1000L);
-        when(negoOfferRepository.findById(1000L)).thenReturn(Optional.of(offer));
+        when(negoOfferRepository.findByIdForUpdate(1000L)).thenReturn(Optional.of(offer));
 
         assertThatThrownBy(() -> negoService.acceptOffer(2L, 1000L))
             .isInstanceOf(BusinessException.class);
@@ -170,7 +182,7 @@ class NegoServiceTest {
         NegoOffer otherOffer = NegoOffer.create(otherChatRoom, stranger, BigDecimal.valueOf(48000));
         assignId(otherOffer, 1001L);
         
-        when(negoOfferRepository.findById(1000L)).thenReturn(Optional.of(offer));
+        when(negoOfferRepository.findByIdForUpdate(1000L)).thenReturn(Optional.of(offer));
         when(tradeService.createTradeFromAcceptedOffer(any(Product.class), any(NegoOffer.class)))
             .thenAnswer(invocation -> {
                 Product product = invocation.getArgument(0);
@@ -178,7 +190,7 @@ class NegoServiceTest {
                 product.markReserved();
                 return Trade.start(product, product.getSeller(), acceptedOffer.getRequester(), acceptedOffer.getOfferPrice());
             });
-        when(negoOfferRepository.findAllByChatRoomProductIdAndStatusIn(
+        when(negoOfferRepository.findAllByChatRoomProductIdAndStatusInForUpdate(
             10L,
             NegoOffer.ACTIVE_STATUSES
         )).thenReturn(java.util.Arrays.asList(offer, otherOffer));
@@ -197,7 +209,7 @@ class NegoServiceTest {
     void acceptOfferRejectsWhenProductAlreadyHasActiveTrade() {
         NegoOffer offer = NegoOffer.create(chatRoom, buyer, BigDecimal.valueOf(45000));
         assignId(offer, 1000L);
-        when(negoOfferRepository.findById(1000L)).thenReturn(Optional.of(offer));
+        when(negoOfferRepository.findByIdForUpdate(1000L)).thenReturn(Optional.of(offer));
         when(tradeService.createTradeFromAcceptedOffer(any(Product.class), any(NegoOffer.class)))
             .thenThrow(new BusinessException(ErrorCode.CONFLICT, "이미 진행 중이거나 완료된 거래입니다."));
 
@@ -279,7 +291,7 @@ class NegoServiceTest {
     void expireOfferAllowsRootAdminAndMarksExpiredWhenDue() {
         NegoOffer offer = NegoOffer.create(chatRoom, buyer, BigDecimal.valueOf(45000));
         assignId(offer, 1000L);
-        ReflectionTestUtils.setField(offer, "expiresAt", LocalDateTime.now().minusHours(1));
+        ReflectionTestUtils.setField(offer, "expiresAt", AgoraClock.now().minusHours(1));
         when(negoOfferRepository.findById(1000L)).thenReturn(Optional.of(offer));
         AuthUser rootAdmin = new AuthUser(99L, "root@admin.com", "ROOT_ADMIN", "최고관리자");
 

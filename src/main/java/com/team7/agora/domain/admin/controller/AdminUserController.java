@@ -9,6 +9,7 @@ import com.team7.agora.global.response.PageResponse;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -23,6 +24,7 @@ import org.springframework.web.bind.annotation.RestController;
  */
 @RestController
 @RequestMapping("/api/admin/users")
+@PreAuthorize("hasAnyAuthority('ROOT_ADMIN', 'USER_ADMIN')")
 public class AdminUserController {
 
     private final AdminUserService adminUserService;
