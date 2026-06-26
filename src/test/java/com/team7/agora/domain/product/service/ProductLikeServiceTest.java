@@ -23,6 +23,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.dao.DataIntegrityViolationException;
 
 @ExtendWith(MockitoExtension.class)
 class ProductLikeServiceTest {
@@ -72,6 +73,19 @@ class ProductLikeServiceTest {
         when(productRepository.findByIdAndDeletedAtIsNull(10L)).thenReturn(Optional.of(product));
         when(userRepository.findById(2L)).thenReturn(Optional.of(user));
         when(productLikeRepository.existsByProductAndUser(product, user)).thenReturn(true);
+
+        assertThatThrownBy(() -> service.like(2L, 10L))
+            .isInstanceOf(BusinessException.class);
+    }
+
+    @Test
+    void likeMapsDuplicateConstraintViolationToBusinessException() {
+        setUpFixtures();
+        when(productRepository.findByIdAndDeletedAtIsNull(10L)).thenReturn(Optional.of(product));
+        when(userRepository.findById(2L)).thenReturn(Optional.of(user));
+        when(productLikeRepository.existsByProductAndUser(product, user)).thenReturn(false);
+        when(productLikeRepository.save(org.mockito.ArgumentMatchers.any(ProductLike.class)))
+            .thenThrow(new DataIntegrityViolationException("duplicate product like"));
 
         assertThatThrownBy(() -> service.like(2L, 10L))
             .isInstanceOf(BusinessException.class);

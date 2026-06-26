@@ -12,6 +12,7 @@ import com.team7.agora.domain.user.entity.User;
 import com.team7.agora.domain.user.repository.UserRepository;
 import com.team7.agora.global.exception.ErrorCode;
 import java.util.List;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -57,7 +58,11 @@ public class ProductLikeService {
             throw new ProductException(ErrorCode.CONFLICT, "이미 찜한 상품입니다.");
         }
 
-        productLikeRepository.save(ProductLike.create(product, user));
+        try {
+            productLikeRepository.save(ProductLike.create(product, user));
+        } catch (DataIntegrityViolationException e) {
+            throw new ProductException(ErrorCode.CONFLICT, "이미 찜한 상품입니다.");
+        }
         productRepository.increaseLikeCount(productId);
         return ProductLikeResponse.of(product, true, productRepository.findLikeCountById(productId));
     }

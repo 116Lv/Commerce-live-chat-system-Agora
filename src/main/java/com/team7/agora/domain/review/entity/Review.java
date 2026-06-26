@@ -70,7 +70,6 @@ public class Review extends BaseTimeEntity {
      * @return 클라이언트에 반환할 API 응답
      */
     public static Review create(Trade trade, User reviewer, User targetUser, int rating, String content) {
-        targetUser.updateSmileScore(toSmileDelta(rating));
         return new Review(trade, reviewer, targetUser, rating, content);
     }
 
