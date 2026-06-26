@@ -2,38 +2,69 @@ package com.team7.agora.domain.payment.service;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
+import java.time.Duration;
+import javax.crypto.Mac;
+import javax.crypto.spec.SecretKeySpec;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
 /**
- * 결제 웹훅 관련 비즈니스 유스케이스를 처리하는 서비스이다.
+ * Verifies PortOne webhook signatures with a bounded timestamp tolerance.
  */
 @Component
 public class PaymentWebhookVerifier {
 
+    private static final Duration TIMESTAMP_TOLERANCE = Duration.ofMinutes(5);
+
     private final String webhookSecret;
 
-    /**
-     * 필요한 의존성을 주입받아 컴포넌트를 생성한다.
-     * @param webhookSecret 웹훅 서명 검증에 사용하는 비밀값
-     */
     public PaymentWebhookVerifier(@Value("${portone.webhook-secret:local-webhook-secret}") String webhookSecret) {
         this.webhookSecret = webhookSecret;
     }
 
-    /**
-     * 조건 충족 여부를 확인한다.
-     * @param providedSecret 요청 헤더로 전달된 웹훅 비밀값
-     * @return 클라이언트에 반환할 API 응답
-     */
-    public boolean isValid(String providedSecret) {
-        if (!StringUtils.hasText(providedSecret)) {
+    public boolean isValid(String body, String timestampHeader, String signatureHeader) {
+        return isValid(body, timestampHeader, signatureHeader, System.currentTimeMillis() / 1000);
+    }
+
+    public boolean isValid(String body, String timestampHeader, String signatureHeader, long nowEpochSeconds) {
+        if (!StringUtils.hasText(body)
+            || !StringUtils.hasText(timestampHeader)
+            || !StringUtils.hasText(signatureHeader)
+            || !StringUtils.hasText(webhookSecret)) {
             return false;
         }
+
+        long timestamp;
+        try {
+            timestamp = Long.parseLong(timestampHeader);
+        } catch (NumberFormatException e) {
+            return false;
+        }
+
+        if (Math.abs(nowEpochSeconds - timestamp) > TIMESTAMP_TOLERANCE.toSeconds()) {
+            return false;
+        }
+
+        String expected = createSignature(webhookSecret, timestamp, body);
         return MessageDigest.isEqual(
-            providedSecret.getBytes(StandardCharsets.UTF_8),
-            webhookSecret.getBytes(StandardCharsets.UTF_8)
+            expected.getBytes(StandardCharsets.UTF_8),
+            signatureHeader.getBytes(StandardCharsets.UTF_8)
         );
+    }
+
+    public static String createSignature(String secret, long timestamp, String body) {
+        try {
+            Mac mac = Mac.getInstance("HmacSHA256");
+            mac.init(new SecretKeySpec(secret.getBytes(StandardCharsets.UTF_8), "HmacSHA256"));
+            byte[] digest = mac.doFinal((timestamp + "." + body).getBytes(StandardCharsets.UTF_8));
+            StringBuilder builder = new StringBuilder(digest.length * 2);
+            for (byte b : digest) {
+                builder.append(String.format("%02x", b));
+            }
+            return builder.toString();
+        } catch (Exception e) {
+            throw new IllegalStateException("Failed to create webhook signature.", e);
+        }
     }
 }

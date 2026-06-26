@@ -33,15 +33,15 @@ public class RefreshToken {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @Column(nullable = false, unique = true, length = 100)
-    private String token;
+    @Column(nullable = false, unique = true, length = 64)
+    private String tokenHash;
 
     @Column(nullable = false)
     private LocalDateTime expiresAt;
 
-    private RefreshToken(User user, String token, LocalDateTime expiresAt) {
+    private RefreshToken(User user, String tokenHash, LocalDateTime expiresAt) {
         this.user = user;
-        this.token = token;
+        this.tokenHash = tokenHash;
         this.expiresAt = expiresAt;
     }
 
@@ -52,8 +52,8 @@ public class RefreshToken {
      * @param expiresAt 토큰 또는 제안이 만료되는 시각
      * @return 클라이언트에 반환할 API 응답
      */
-    public static RefreshToken issue(User user, String token, LocalDateTime expiresAt) {
-        return new RefreshToken(user, token, expiresAt);
+    public static RefreshToken issue(User user, String tokenHash, LocalDateTime expiresAt) {
+        return new RefreshToken(user, tokenHash, expiresAt);
     }
 
     /**

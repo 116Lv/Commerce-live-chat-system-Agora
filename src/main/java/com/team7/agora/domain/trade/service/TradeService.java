@@ -111,7 +111,7 @@ public class TradeService {
      */
     @Transactional
     public TradeResponse startTrade(Long buyerId, Long productId) {
-        Product product = productRepository.findByIdAndDeletedAtIsNull(productId)
+        Product product = productRepository.findByIdForUpdateAndDeletedAtIsNull(productId)
             .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "상품을 찾을 수 없습니다."));
 
         if (product.isSeller(buyerId)) {
@@ -133,7 +133,7 @@ public class TradeService {
             .findFirstByChatRoomIdAndStatusOrderByCreatedAtDesc(chatRoomOpt.get().getId(), NegoOfferStatus.ACCEPTED)
             .orElseThrow(() -> new BusinessException(ErrorCode.FORBIDDEN, "판매자가 승인한 네고가 있어야 거래를 시작할 수 있습니다."));
 
-        Trade trade = createTradeFromAcceptedOffer(product, acceptedOffer);
+        Trade trade = createTradeFromLockedProduct(product, acceptedOffer);
         return TradeResponse.from(trade);
     }
 
@@ -145,15 +145,21 @@ public class TradeService {
      */
     @Transactional
     public Trade createTradeFromAcceptedOffer(Product product, NegoOffer acceptedOffer) {
-        if (product.getStatus() != ProductStatus.SELLING) {
+        Product lockedProduct = productRepository.findByIdForUpdateAndDeletedAtIsNull(product.getId())
+            .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "상품을 찾을 수 없습니다."));
+        return createTradeFromLockedProduct(lockedProduct, acceptedOffer);
+    }
+
+    private Trade createTradeFromLockedProduct(Product lockedProduct, NegoOffer acceptedOffer) {
+        if (lockedProduct.getStatus() != ProductStatus.SELLING) {
             throw new BusinessException(ErrorCode.CONFLICT, "거래 가능한 상태의 상품이 아닙니다.");
         }
-        if (tradeRepository.existsByProductAndStatusNot(product, TradeStatus.CANCELLED)) {
+        if (tradeRepository.existsByProductAndStatusNot(lockedProduct, TradeStatus.CANCELLED)) {
             throw new BusinessException(ErrorCode.CONFLICT, "이미 진행 중이거나 완료된 거래입니다.");
         }
 
-        Trade trade = Trade.start(product, product.getSeller(), acceptedOffer.getRequester(), acceptedOffer.getOfferPrice());
-        product.markReserved();
+        Trade trade = Trade.start(lockedProduct, lockedProduct.getSeller(), acceptedOffer.getRequester(), acceptedOffer.getOfferPrice());
+        lockedProduct.markReserved();
         return tradeRepository.save(trade);
     }
 

@@ -1,0 +1,2 @@
+-- Baseline migration for production schema management.
+-- Existing production databases should be baselined before switching Hibernate to validate.

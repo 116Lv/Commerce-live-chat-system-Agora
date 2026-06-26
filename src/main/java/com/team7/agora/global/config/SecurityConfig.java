@@ -3,6 +3,7 @@ package com.team7.agora.global.config;
 import com.team7.agora.global.auth.JwtAuthenticationFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.Customizer;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -52,6 +53,7 @@ public class SecurityConfig {
         return http
             .csrf(AbstractHttpConfigurer::disable)
             .httpBasic(AbstractHttpConfigurer::disable)
+            .cors(Customizer.withDefaults())
             .formLogin(AbstractHttpConfigurer::disable)
             .logout(AbstractHttpConfigurer::disable)
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
