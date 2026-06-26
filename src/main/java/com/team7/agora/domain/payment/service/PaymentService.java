@@ -93,6 +93,22 @@ public class PaymentService {
     public PaymentResponse confirm(Long payerId, Long paymentId, String paymentKey) {
         Payment payment = findPayment(paymentId);
         payment.validatePayer(payerId);
+        return confirmPayment(payment, paymentKey);
+    }
+
+    @Transactional
+    public PaymentResponse confirmByPaymentId(Long paymentId, String paymentKey) {
+        return confirmPayment(findPayment(paymentId), paymentKey);
+    }
+
+    @Transactional
+    public PaymentResponse confirmByOrderId(String orderId, String paymentKey) {
+        Payment payment = paymentRepository.findByOrderId(orderId)
+            .orElseThrow(() -> new PaymentException(ErrorCode.NOT_FOUND, "결제를 찾을 수 없습니다."));
+        return confirmPayment(payment, paymentKey);
+    }
+
+    private PaymentResponse confirmPayment(Payment payment, String paymentKey) {
         if (payment.getStatus() == PaymentStatus.PAID) {
             return PaymentResponse.from(payment);
         }

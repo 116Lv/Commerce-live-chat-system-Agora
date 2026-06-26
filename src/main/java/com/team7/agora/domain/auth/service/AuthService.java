@@ -14,9 +14,12 @@ import com.team7.agora.domain.user.repository.UserRepository;
 import com.team7.agora.global.auth.JwtProvider;
 import com.team7.agora.global.exception.BusinessException;
 import com.team7.agora.global.exception.ErrorCode;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.util.HexFormat;
 import java.util.Locale;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Value;
@@ -122,7 +125,7 @@ public class AuthService {
      */
     @Transactional
     public ReissueResponse reissue(String refreshTokenValue) {
-        RefreshToken refreshToken = refreshTokenRepository.findByToken(refreshTokenValue)
+        RefreshToken refreshToken = refreshTokenRepository.findByTokenHash(hashRefreshToken(refreshTokenValue))
                 .orElseThrow(() -> new BusinessException(ErrorCode.INVALID_TOKEN));
 
         if (refreshToken.isExpired(nowUtc())) {
@@ -154,8 +157,17 @@ public class AuthService {
     private String issueRefreshToken(User user) {
         String token = UUID.randomUUID().toString();
         LocalDateTime expiresAt = nowUtc().plus(Duration.ofMillis(refreshTokenValidTime));
-        refreshTokenRepository.save(RefreshToken.issue(user, token, expiresAt));
+        refreshTokenRepository.save(RefreshToken.issue(user, hashRefreshToken(token), expiresAt));
         return token;
+    }
+
+    public static String hashRefreshToken(String refreshToken) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            return HexFormat.of().formatHex(digest.digest(refreshToken.getBytes(StandardCharsets.UTF_8)));
+        } catch (Exception e) {
+            throw new IllegalStateException("Failed to hash refresh token.", e);
+        }
     }
 
     private void validateActiveUser(User user) {
