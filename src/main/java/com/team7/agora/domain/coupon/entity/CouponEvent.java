@@ -2,6 +2,7 @@ package com.team7.agora.domain.coupon.entity;
 
 import com.team7.agora.domain.common.entity.BaseTimeEntity;
 import com.team7.agora.domain.coupon.enums.CouponEventStatus;
+import com.team7.agora.domain.coupon.enums.CouponEventType;
 import com.team7.agora.global.exception.BusinessException;
 import com.team7.agora.global.exception.ErrorCode;
 import jakarta.persistence.Column;
@@ -17,9 +18,6 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-/**
- * 쿠폰 이벤트 도메인 정보를 영속화하는 JPA 엔티티이다.
- */
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
@@ -29,6 +27,10 @@ public class CouponEvent extends BaseTimeEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 30)
+    private CouponEventType type;
 
     @Column(nullable = false, length = 100)
     private String name;
@@ -45,44 +47,60 @@ public class CouponEvent extends BaseTimeEntity {
     @Column(nullable = false)
     private LocalDateTime endAt;
 
+    @Column(nullable = false)
+    private int discountAmount;
+
+    @Column(nullable = false)
+    private int minOrderAmount;
+
+    @Column(nullable = false)
+    private int validDays;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private CouponEventStatus status;
 
-    private CouponEvent(String name, int totalQuantity, LocalDateTime startAt, LocalDateTime endAt) {
+    private CouponEvent(
+        CouponEventType type,
+        String name,
+        int totalQuantity,
+        LocalDateTime startAt,
+        LocalDateTime endAt,
+        int discountAmount,
+        int minOrderAmount,
+        int validDays
+    ) {
         markCreatedNow();
+        this.type = type;
         this.name = name;
         this.totalQuantity = totalQuantity;
         this.issuedQuantity = 0;
         this.startAt = startAt;
         this.endAt = endAt;
+        this.discountAmount = discountAmount;
+        this.minOrderAmount = minOrderAmount;
+        this.validDays = validDays;
         this.status = CouponEventStatus.ACTIVE;
     }
 
-    /**
-     * 쿠폰과 이벤트 기간, 발급 수량을 기준으로 새 쿠폰 이벤트 엔티티를 생성한다.
-     * @param name 이름 또는 제목
-     * @param totalQuantity 이벤트 전체 발급 수량
-     * @param startAt 이벤트 시작 시각
-     * @param endAt 이벤트 종료 시각
-     * @return 클라이언트에 반환할 API 응답
-     */
-    public static CouponEvent create(String name, int totalQuantity, LocalDateTime startAt, LocalDateTime endAt) {
-        return new CouponEvent(name, totalQuantity, startAt, endAt);
+    public static CouponEvent create(
+        CouponEventType type,
+        String name,
+        int totalQuantity,
+        LocalDateTime startAt,
+        LocalDateTime endAt,
+        int discountAmount,
+        int minOrderAmount,
+        int validDays
+    ) {
+        return new CouponEvent(type, name, totalQuantity, startAt, endAt, discountAmount, minOrderAmount, validDays);
     }
 
-    /**
-     * 조건 충족 여부를 확인한다.
-     */
     public void issue() {
         validateIssueable(LocalDateTime.now());
         this.issuedQuantity++;
     }
 
-    /**
-     * 규칙을 검증한다.
-     * @param now 현재 시각
-     */
     public void validateIssueable(LocalDateTime now) {
         if (status != CouponEventStatus.ACTIVE) {
             throw new BusinessException(ErrorCode.CONFLICT, "종료된 쿠폰 이벤트입니다.");
@@ -93,5 +111,13 @@ public class CouponEvent extends BaseTimeEntity {
         if (issuedQuantity >= totalQuantity) {
             throw new BusinessException(ErrorCode.CONFLICT, "쿠폰이 모두 소진되었습니다.");
         }
+    }
+
+    public boolean isPublic() {
+        return type != CouponEventType.ADMIN_INDIVIDUAL;
+    }
+
+    public void end() {
+        this.status = CouponEventStatus.ENDED;
     }
 }
