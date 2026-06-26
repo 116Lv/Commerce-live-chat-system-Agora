@@ -14,11 +14,8 @@ public class CouponIssueService {
 
     /**
      * 필요한 의존성을 주입받아 컴포넌트를 생성한다.
-     * @param couponEventRepository 데이터를 조회하고 저장하는 리포지토리
-     * @param couponRepository 데이터를 조회하고 저장하는 리포지토리
-     * @param couponIssueRepository 데이터를 조회하고 저장하는 리포지토리
-     * @param userRepository 데이터를 조회하고 저장하는 리포지토리
-     * @param lockService 해당 기능의 비즈니스 로직을 처리하는 서비스
+     * @param lockService 쿠폰 발급 중복 실행을 막기 위해 락을 거는 서비스
+     * @param couponIssueTransactionExecutor 쿠폰 발급 트랜잭션을 실제로 수행하는 실행기
      */
     public CouponIssueService(
         LockService lockService,

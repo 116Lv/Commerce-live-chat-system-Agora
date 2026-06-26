@@ -9,6 +9,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Supplier;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -26,11 +27,12 @@ public class LockService {
 
     /**
      * Redisson 분산 락을 사용하는 락 서비스를 생성한다.
-     * @param redissonClient Redisson 클라이언트
+     * RedissonClient 빈이 없는 테스트/로컬 컨텍스트에서는 인메모리 로컬 락으로 대체된다.
+     * @param redissonClientProvider Redisson 클라이언트 빈을 선택적으로 제공하는 객체
      */
     @Autowired
-    public LockService(RedissonClient redissonClient) {
-        this(redissonClient, WAIT_TIME_SECONDS);
+    public LockService(ObjectProvider<RedissonClient> redissonClientProvider) {
+        this(redissonClientProvider.getIfAvailable(), WAIT_TIME_SECONDS);
     }
 
     LockService(RedissonClient redissonClient, long waitTimeSeconds) {

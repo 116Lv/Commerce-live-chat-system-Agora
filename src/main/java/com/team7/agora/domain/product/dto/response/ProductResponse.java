@@ -6,7 +6,7 @@ import java.math.BigDecimal;
 
 /**
  * 상품 응답 본문을 표현하는 DTO이다.
- * @param id 식별자
+ * @param productId 상품 ID
  * @param title 상품 제목 또는 화면에 표시할 제목
  * @param description 상품 설명 또는 상세 내용
  * @param price 가격

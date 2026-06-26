@@ -39,6 +39,7 @@ public class NegoService {
      * @param negoOfferRepository 데이터를 조회하고 저장하는 리포지토리
      * @param chatRoomRepository 데이터를 조회하고 저장하는 리포지토리
      * @param tradeService 거래 비즈니스 로직을 처리하는 서비스
+     * @param chatSystemMessageService 채팅방에 네고 진행 상황을 시스템 메시지로 남기는 서비스
      */
     public NegoService(
         NegoOfferRepository negoOfferRepository,

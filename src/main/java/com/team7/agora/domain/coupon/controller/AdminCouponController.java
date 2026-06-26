@@ -60,9 +60,8 @@ public class AdminCouponController {
     }
 
     /**
-     * 'getList' 메서드는 필요한 데이터를 조회해 호출한 쪽에 반환한다.
+     * 관리자 쿠폰 정책 목록 조회 요청을 처리한다.
      * @param admin 인증된 관리자 정보
-     * @param couponId 쿠폰 ID
      * @return 클라이언트에 반환할 API 응답
      */
     @PreAuthorize("hasAnyAuthority('USER_ADMIN', 'ROOT_ADMIN')")
@@ -114,6 +113,7 @@ public class AdminCouponController {
         CouponBroadcastResponse response = adminCouponService.broadcast(admin, couponId);
         return ApiResponse.success("전체 사용자에게 쿠폰을 발송했습니다.", response);
     }
+
     @PreAuthorize("hasAnyAuthority('USER_ADMIN', 'ROOT_ADMIN')")
     @GetMapping("/{couponId}/issues")
     public ApiResponse<CouponIssueHistoryResponse> getIssueHistory(

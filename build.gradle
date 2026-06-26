@@ -52,4 +52,5 @@ dependencies {
 tasks.named('test') {
     useJUnitPlatform()
     systemProperty 'agora.chat.redis-listener.enabled', 'false'
+    systemProperty 'agora.redisson.enabled', 'false'
 }
