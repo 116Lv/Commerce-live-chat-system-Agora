@@ -6,6 +6,7 @@ import com.team7.agora.domain.product.entity.Product;
 import com.team7.agora.domain.user.entity.User;
 import java.util.List;
 import java.util.Optional;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 /**
@@ -17,5 +18,6 @@ public interface ChatRoomRepository extends JpaRepository<ChatRoom, Long> {
 
     Optional<ChatRoom> findByIdAndStatus(Long id, ChatRoomStatus status);
 
+    @EntityGraph(attributePaths = {"seller", "buyer", "product"})
     List<ChatRoom> findAllBySellerOrBuyer(User seller, User buyer);
 }
