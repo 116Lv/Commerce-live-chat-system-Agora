@@ -15,12 +15,14 @@ import com.team7.agora.global.exception.BusinessException;
 import com.team7.agora.global.exception.ErrorCode;
 import com.team7.agora.global.storage.ImageStorageClient;
 import java.util.List;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 /**
- * Application service that coordinates chat use cases.
+ * Chat 관련 비즈니스 유스케이스를 처리하는 서비스이다.
  */
 @Service
 @Transactional(readOnly = true)
@@ -33,12 +35,12 @@ public class ChatService {
     private final ImageStorageClient imageStorageClient;
 
     /**
-     * Creates a chat service instance.
-     * @param chatRoomRepository the chat room repository value
-     * @param chatMessageRepository the chat message repository value
-     * @param productRepository the product repository value
-     * @param userRepository the user repository value
-     * @param imageStorageClient the image storage client value
+     * 필요한 의존성을 주입받아 컴포넌트를 생성한다.
+     * @param chatRoomRepository 데이터를 조회하고 저장하는 리포지토리
+     * @param chatMessageRepository 데이터를 조회하고 저장하는 리포지토리
+     * @param productRepository 데이터를 조회하고 저장하는 리포지토리
+     * @param userRepository 데이터를 조회하고 저장하는 리포지토리
+     * @param imageStorageClient 외부 시스템 또는 저장소와 통신하는 클라이언트
      */
     public ChatService(
         ChatRoomRepository chatRoomRepository,
@@ -55,10 +57,10 @@ public class ChatService {
     }
 
     /**
-     * Handles open room behavior.
-     * @param userId the user id value
-     * @param productId the product id value
-     * @return the open room result
+     * 상품 구매자가 판매자와 대화할 채팅방을 찾거나 새로 생성한다.
+     * @param userId 회원 ID
+     * @param productId 상품 ID
+     * @return 클라이언트에 반환할 API 응답
      */
     @Transactional
     public ChatRoomResponse openRoom(Long userId, Long productId) {
@@ -77,11 +79,11 @@ public class ChatService {
     }
 
     /**
-     * Handles send message behavior.
-     * @param userId the user id value
-     * @param chatRoomId the chat room id value
-     * @param content the content value
-     * @return the send message result
+     * 채팅방 참여자인지 확인한 뒤 텍스트 채팅 메시지를 저장한다.
+     * @param userId 회원 ID
+     * @param chatRoomId 채팅방 ID
+     * @param content 내용
+     * @return 클라이언트에 반환할 API 응답
      */
     @Transactional
     public ChatMessageResponse sendMessage(Long userId, Long chatRoomId, String content) {
@@ -97,11 +99,11 @@ public class ChatService {
     }
 
     /**
-     * Handles send image message behavior.
-     * @param userId the user id value
-     * @param chatRoomId the chat room id value
-     * @param image the image value
-     * @return the send image message result
+     * 채팅방 참여자인지 확인한 뒤 이미지를 저장하고 이미지 메시지를 생성한다.
+     * @param userId 회원 ID
+     * @param chatRoomId 채팅방 ID
+     * @param image 업로드할 이미지 파일
+     * @return 클라이언트에 반환할 API 응답
      */
     @Transactional
     public ChatMessageResponse sendImageMessage(Long userId, Long chatRoomId, MultipartFile image) {
@@ -117,28 +119,27 @@ public class ChatService {
         return ChatMessageResponse.from(message);
     }
 
-    /**
-     * Returns messages data.
-     * @param userId the user id value
-     * @param chatRoomId the chat room id value
-     * @return the get messages result
-     */
-    public List<ChatMessageResponse> getMessages(Long userId, Long chatRoomId) {
+    public List<ChatMessageResponse> getMessages(Long userId, Long chatRoomId, Long lastMessageId, int size) {
         ChatRoom chatRoom = findActiveRoom(chatRoomId);
 
         if (!chatRoom.isParticipant(userId)) {
             throw new BusinessException(ErrorCode.FORBIDDEN, "채팅방 참여자만 메시지를 조회할 수 있습니다.");
         }
 
-        return chatMessageRepository.findByChatRoomOrderByCreatedAtAsc(chatRoom).stream()
+        Pageable pageable = PageRequest.of(0, size);
+        List<ChatMessage> messages = lastMessageId == null
+            ? chatMessageRepository.findLatestByChatRoom(chatRoom, pageable)
+            : chatMessageRepository.findByChatRoomBeforeMessageId(chatRoom, lastMessageId, pageable);
+
+        return messages.stream()
             .map(ChatMessageResponse::from)
             .toList();
     }
 
     /**
-     * Returns my rooms data.
-     * @param userId the user id value
-     * @return the get my rooms result
+     * 사용자가 판매자 또는 구매자로 참여 중인 채팅방 목록을 조회한다.
+     * @param userId 회원 ID
+     * @return 클라이언트에 반환할 API 응답
      */
     public List<ChatRoomResponse> getMyRooms(Long userId) {
         User user = findUser(userId);
@@ -148,10 +149,10 @@ public class ChatService {
     }
 
     /**
-     * Marks read state.
-     * @param userId the user id value
-     * @param chatRoomId the chat room id value
-     * @return the mark read result
+     * 사용자가 채팅방 메시지를 읽은 시각을 갱신해 읽음 상태로 표시한다.
+     * @param userId 회원 ID
+     * @param chatRoomId 채팅방 ID
+     * @return 클라이언트에 반환할 API 응답
      */
     @Transactional
     public ChatRoomResponse markRead(Long userId, Long chatRoomId) {

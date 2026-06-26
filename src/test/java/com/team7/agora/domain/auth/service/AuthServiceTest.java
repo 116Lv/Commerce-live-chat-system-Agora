@@ -30,6 +30,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -70,7 +71,7 @@ class AuthServiceTest {
         // given
         AuthService authService = createService();
         SignupRequest request = new SignupRequest("user@test.com", "password123!", "동네유저");
-        when(userRepository.existsByEmail("user@test.com")).thenReturn(false);
+        when(userRepository.existsByEmailIgnoreCase("user@test.com")).thenReturn(false);
         when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         // when
@@ -95,7 +96,7 @@ class AuthServiceTest {
         // given
         AuthService authService = createService();
         SignupRequest request = new SignupRequest("user@test.com", "password123!", "동네유저");
-        when(userRepository.existsByEmail("user@test.com")).thenReturn(true);
+        when(userRepository.existsByEmailIgnoreCase("user@test.com")).thenReturn(true);
 
         // when & then
         assertThatThrownBy(() -> authService.signup(request))
@@ -106,11 +107,59 @@ class AuthServiceTest {
     }
 
     @Test
+    void signup_throwsDuplicateEmailIgnoringCase() {
+        // given
+        AuthService authService = createService();
+        SignupRequest request = new SignupRequest("USER@test.com", "password123!", "동네유저");
+        when(userRepository.existsByEmailIgnoreCase("user@test.com")).thenReturn(true);
+
+        // when & then
+        assertThatThrownBy(() -> authService.signup(request))
+                .isInstanceOf(BusinessException.class)
+                .extracting("errorCode")
+                .isEqualTo(ErrorCode.DUPLICATE_EMAIL);
+        verify(userRepository, never()).save(any(User.class));
+    }
+
+    @Test
+    void signup_mapsUniqueConstraintViolationToDuplicateEmail() {
+        // given
+        AuthService authService = createService();
+        SignupRequest request = new SignupRequest("user@test.com", "password123!", "동네유저");
+        when(userRepository.existsByEmailIgnoreCase("user@test.com")).thenReturn(false);
+        when(userRepository.save(any(User.class))).thenThrow(new DataIntegrityViolationException("users.email"));
+
+        // when & then
+        assertThatThrownBy(() -> authService.signup(request))
+                .isInstanceOf(BusinessException.class)
+                .extracting("errorCode")
+                .isEqualTo(ErrorCode.DUPLICATE_EMAIL);
+    }
+
+    @Test
+    void signup_savesNormalizedLowercaseEmail() {
+        // given
+        AuthService authService = createService();
+        SignupRequest request = new SignupRequest("  USER@test.com  ", "password123!", "동네유저");
+        when(userRepository.existsByEmailIgnoreCase("user@test.com")).thenReturn(false);
+        when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        // when
+        SignupResponse response = authService.signup(request);
+
+        // then
+        ArgumentCaptor<User> captor = ArgumentCaptor.forClass(User.class);
+        verify(userRepository).save(captor.capture());
+        assertThat(captor.getValue().getEmail()).isEqualTo("user@test.com");
+        assertThat(response.email()).isEqualTo("user@test.com");
+    }
+
+    @Test
     void login_issuesAccessAndRefreshTokenWhenCredentialsMatch() {
         // given
         AuthService authService = createService();
         User user = userWithId(1L, "user@test.com", "password123!");
-        when(userRepository.findByEmail("user@test.com")).thenReturn(Optional.of(user));
+        when(userRepository.findByEmailIgnoreCase("user@test.com")).thenReturn(Optional.of(user));
         when(refreshTokenRepository.save(any(RefreshToken.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
 
@@ -124,10 +173,27 @@ class AuthServiceTest {
     }
 
     @Test
+    void login_findsUserByNormalizedEmail() {
+        // given
+        AuthService authService = createService();
+        User user = userWithId(1L, "user@test.com", "password123!");
+        when(userRepository.findByEmailIgnoreCase("user@test.com")).thenReturn(Optional.of(user));
+        when(refreshTokenRepository.save(any(RefreshToken.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        // when
+        LoginResponse response = authService.login(new LoginRequest("  USER@test.com  ", "password123!"));
+
+        // then
+        assertThat(response.accessToken()).startsWith("Bearer ");
+        verify(refreshTokenRepository).save(any(RefreshToken.class));
+    }
+
+    @Test
     void login_throwsInvalidCredentialsWhenEmailNotFound() {
         // given
         AuthService authService = createService();
-        when(userRepository.findByEmail("none@test.com")).thenReturn(Optional.empty());
+        when(userRepository.findByEmailIgnoreCase("none@test.com")).thenReturn(Optional.empty());
 
         // when & then
         assertThatThrownBy(() -> authService.login(new LoginRequest("none@test.com", "password123!")))
@@ -142,7 +208,7 @@ class AuthServiceTest {
         // given
         AuthService authService = createService();
         User user = userWithId(1L, "user@test.com", "password123!");
-        when(userRepository.findByEmail("user@test.com")).thenReturn(Optional.of(user));
+        when(userRepository.findByEmailIgnoreCase("user@test.com")).thenReturn(Optional.of(user));
 
         // when & then
         assertThatThrownBy(() -> authService.login(new LoginRequest("user@test.com", "wrongpassword!")))
@@ -158,7 +224,7 @@ class AuthServiceTest {
         AuthService authService = createService();
         User user = userWithId(1L, "user@test.com", "password123!");
         user.changeStatus(UserStatus.SUSPENDED);
-        when(userRepository.findByEmail("user@test.com")).thenReturn(Optional.of(user));
+        when(userRepository.findByEmailIgnoreCase("user@test.com")).thenReturn(Optional.of(user));
 
         // when & then
         assertThatThrownBy(() -> authService.login(new LoginRequest("user@test.com", "password123!")))
@@ -205,7 +271,7 @@ class AuthServiceTest {
         // given
         AuthService authService = createService();
         User user = userWithId(1L, "user@test.com", "password123!");
-        when(userRepository.findByEmail("user@test.com")).thenReturn(Optional.of(user));
+        when(userRepository.findByEmailIgnoreCase("user@test.com")).thenReturn(Optional.of(user));
         when(refreshTokenRepository.save(any(RefreshToken.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
 

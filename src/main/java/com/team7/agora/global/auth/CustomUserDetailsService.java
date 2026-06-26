@@ -3,6 +3,7 @@ package com.team7.agora.global.auth;
 
 import com.team7.agora.domain.user.entity.User;
 import com.team7.agora.domain.user.repository.UserRepository;
+import java.util.Locale;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -10,7 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Authentication component for custom user details behavior.
+ * 인증 처리를 담당하는 컴포넌트이다.
  */
 @Service
 public class CustomUserDetailsService implements UserDetailsService {
@@ -18,22 +19,22 @@ public class CustomUserDetailsService implements UserDetailsService {
     private final UserRepository userRepository;
 
     /**
-     * Creates a custom user details service instance.
-     * @param userRepository the user repository value
+     * 필요한 의존성을 주입받아 컴포넌트를 생성한다.
+     * @param userRepository 데이터를 조회하고 저장하는 리포지토리
      */
     public CustomUserDetailsService(UserRepository userRepository) {
         this.userRepository = userRepository;
     }
 
     /**
-     * Returns user by username data.
-     * @param email the email value
-     * @return the load user by username result
+     * 'loadUserByUsername' 메서드는 필요한 데이터를 조회해 호출한 쪽에 반환한다.
+     * @param email 이메일
+     * @return 클라이언트에 반환할 API 응답
      */
     @Override
     @Transactional(readOnly = true)
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
-        User user = userRepository.findByEmail(email)
+        User user = userRepository.findByEmailIgnoreCase(email.trim().toLowerCase(Locale.ROOT))
             .orElseThrow(() -> new UsernameNotFoundException(email));
         return CustomUserDetails.from(user);
     }

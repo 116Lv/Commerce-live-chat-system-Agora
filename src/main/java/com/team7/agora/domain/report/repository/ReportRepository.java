@@ -9,7 +9,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
 /**
- * Repository contract for storing and querying report data.
+ * 신고 데이터 저장과 조회를 담당하는 저장소 인터페이스이다.
  */
 public interface ReportRepository extends JpaRepository<Report, Long> {
 

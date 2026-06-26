@@ -1,4 +1,3 @@
-// 인증/회원가입 REST 엔드포인트를 제공하는 컨트롤러
 package com.team7.agora.domain.auth.controller;
 
 import com.team7.agora.domain.auth.dto.request.LoginRequest;
@@ -20,7 +19,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * REST controller that exposes auth endpoints.
+ * 인증 기능에서 클라이언트의 HTTP 요청을 받아 서비스 계층으로 전달하는 컨트롤러이다.
  */
 @RestController
 @RequestMapping("/api/auth")
@@ -29,17 +28,17 @@ public class AuthController {
     private final AuthService authService;
 
     /**
-     * Creates a auth controller instance.
-     * @param authService the auth service value
+     * 필요한 의존성을 주입받아 컴포넌트를 생성한다.
+     * @param authService 해당 기능의 비즈니스 로직을 처리하는 서비스
      */
     public AuthController(AuthService authService) {
         this.authService = authService;
     }
 
     /**
-     * Handles signup behavior.
-     * @param request the request value
-     * @return the signup result
+     * 인증 정보를 생성하거나 준비하는 POST /api/auth/signup 요청을 처리한다.
+     * @param request 클라이언트가 전달한 요청 본문
+     * @return 클라이언트에 반환할 API 응답
      */
     @PostMapping("/signup")
     public ResponseEntity<ApiResponse<SignupResponse>> signup(@Valid @RequestBody SignupRequest request) {
@@ -50,9 +49,9 @@ public class AuthController {
     }
 
     /**
-     * Handles login behavior.
-     * @param request the request value
-     * @return the login result
+     * 인증 로그인을 처리하는 POST /api/auth/login 요청을 처리한다.
+     * @param request 클라이언트가 전달한 요청 본문
+     * @return 클라이언트에 반환할 API 응답
      */
     @PostMapping("/login")
     public ResponseEntity<ApiResponse<LoginResponse>> login(@Valid @RequestBody LoginRequest request) {
@@ -61,9 +60,9 @@ public class AuthController {
     }
 
     /**
-     * Handles logout behavior.
-     * @param userDetails the user details value
-     * @return the logout result
+     * 인증 로그아웃을 처리하는 POST /api/auth/logout 요청을 처리한다.
+     * @param userDetails 현재 로그인한 사용자 정보
+     * @return 클라이언트에 반환할 API 응답
      */
     @PostMapping("/logout")
     public ResponseEntity<ApiResponse<Void>> logout(@AuthenticationPrincipal CustomUserDetails userDetails) {
@@ -72,9 +71,9 @@ public class AuthController {
     }
 
     /**
-     * Handles reissue behavior.
-     * @param request the request value
-     * @return the reissue result
+     * 인증 토큰을 재발급하는 POST /api/auth/reissue 요청을 처리한다.
+     * @param request 클라이언트가 전달한 요청 본문
+     * @return 클라이언트에 반환할 API 응답
      */
     @PostMapping("/reissue")
     public ResponseEntity<ApiResponse<ReissueResponse>> reissue(@Valid @RequestBody ReissueRequest request) {

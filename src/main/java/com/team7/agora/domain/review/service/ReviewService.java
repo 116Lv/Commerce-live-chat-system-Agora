@@ -13,7 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Application service that coordinates review use cases.
+ * 리뷰 관련 비즈니스 유스케이스를 처리하는 서비스이다.
  */
 @Service
 @Transactional(readOnly = true)
@@ -23,9 +23,9 @@ public class ReviewService {
     private final TradeRepository tradeRepository;
 
     /**
-     * Creates a review service instance.
-     * @param reviewRepository the review repository value
-     * @param tradeRepository the trade repository value
+     * 필요한 의존성을 주입받아 컴포넌트를 생성한다.
+     * @param reviewRepository 데이터를 조회하고 저장하는 리포지토리
+     * @param tradeRepository 데이터를 조회하고 저장하는 리포지토리
      */
     public ReviewService(ReviewRepository reviewRepository, TradeRepository tradeRepository) {
         this.reviewRepository = reviewRepository;
@@ -33,12 +33,12 @@ public class ReviewService {
     }
 
     /**
-     * Creates create data.
-     * @param reviewerId the reviewer id value
-     * @param tradeId the trade id value
-     * @param rating the rating value
-     * @param content the content value
-     * @return the create result
+     * 거래 완료 여부를 검증한 뒤 상대방에게 남길 후기를 생성한다.
+     * @param reviewerId 후기를 작성한 회원 ID
+     * @param tradeId 거래 ID
+     * @param rating 후기 평점
+     * @param content 내용
+     * @return 클라이언트에 반환할 API 응답
      */
     @Transactional
     public ReviewResponse create(Long reviewerId, Long tradeId, int rating, String content) {
@@ -59,10 +59,10 @@ public class ReviewService {
     }
 
     /**
-     * Returns trade reviews data.
-     * @param userId the user id value
-     * @param tradeId the trade id value
-     * @return the get trade reviews result
+     * 'getTradeReviews' 메서드는 필요한 데이터를 조회해 호출한 쪽에 반환한다.
+     * @param userId 회원 ID
+     * @param tradeId 거래 ID
+     * @return 클라이언트에 반환할 API 응답
      */
     public List<ReviewResponse> getTradeReviews(Long userId, Long tradeId) {
         Trade trade = tradeRepository.findById(tradeId)

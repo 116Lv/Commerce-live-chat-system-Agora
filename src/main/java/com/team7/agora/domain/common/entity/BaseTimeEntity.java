@@ -6,7 +6,7 @@ import java.time.LocalDateTime;
 import lombok.Getter;
 
 /**
- * Base JPA superclass that stores entity creation timestamps.
+ * 엔티티 생성 시간을 저장하는 JPA 공통 상위 클래스이다.
  */
 @Getter
 @MappedSuperclass
@@ -16,7 +16,7 @@ public abstract class BaseTimeEntity {
     private LocalDateTime createdAt;
 
     /**
-     * Updates the creation timestamp to the current time.
+     * 생성 시각을 현재 시각으로 설정한다.
      */
     protected void markCreatedNow() {
         this.createdAt = LocalDateTime.now();

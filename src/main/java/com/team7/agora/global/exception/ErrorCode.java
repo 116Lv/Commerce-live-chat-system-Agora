@@ -5,7 +5,7 @@ import lombok.Getter;
 import org.springframework.http.HttpStatus;
 
 /**
- * Domain exception used for error code failures.
+ * 도메인 예외이다.
  */
 @Getter
 public enum ErrorCode {

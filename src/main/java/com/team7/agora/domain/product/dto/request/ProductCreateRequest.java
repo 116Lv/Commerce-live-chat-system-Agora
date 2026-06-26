@@ -6,12 +6,12 @@ import jakarta.validation.constraints.Positive;
 import java.math.BigDecimal;
 
 /**
- * Request payload for product create operations.
- * @param title the title value
- * @param description the description value
- * @param price the price value
- * @param category the category value
- * @param regionId the region id value
+ * Product Create 요청 본문을 표현하는 DTO이다.
+ * @param title 상품 제목 또는 화면에 표시할 제목
+ * @param description 상품 설명 또는 상세 내용
+ * @param price 가격
+ * @param category 업로드 카테고리
+ * @param regionId 지역 ID
  */
 public record ProductCreateRequest(
     @NotBlank(message = "상품 제목은 필수입니다.")

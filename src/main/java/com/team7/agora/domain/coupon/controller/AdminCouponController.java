@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * REST controller that exposes admin coupon endpoints.
+ * Admin Coupon 기능에서 클라이언트의 HTTP 요청을 받아 서비스 계층으로 전달하는 컨트롤러이다.
  */
 @RestController
 @RequestMapping("/api/admin/coupons")
@@ -29,18 +29,18 @@ public class AdminCouponController {
     private final AdminCouponService adminCouponService;
 
     /**
-     * Creates a admin coupon controller instance.
-     * @param adminCouponService the admin coupon service value
+     * 필요한 의존성을 주입받아 컴포넌트를 생성한다.
+     * @param adminCouponService 해당 기능의 비즈니스 로직을 처리하는 서비스
      */
     public AdminCouponController(AdminCouponService adminCouponService) {
         this.adminCouponService = adminCouponService;
     }
 
     /**
-     * Creates create data.
-     * @param admin the admin value
-     * @param request the request value
-     * @return the create result
+     * 관리자 쿠폰 생성 요청을 받아 쿠폰 생성 서비스로 전달한다.
+     * @param admin 인증된 관리자 정보
+     * @param request 요청 본문
+     * @return 클라이언트에 반환할 API 응답
      */
     @PreAuthorize("hasAnyAuthority('USER_ADMIN', 'ROOT_ADMIN')")
     @PostMapping
@@ -60,11 +60,16 @@ public class AdminCouponController {
     }
 
     /**
-     * Returns detail data.
-     * @param admin the admin value
-     * @param couponId the coupon id value
-     * @return the get detail result
+     * 관리자 쿠폰 정책 목록 조회 요청을 처리한다.
+     * @param admin 인증된 관리자 정보
+     * @return 클라이언트에 반환할 API 응답
      */
+    @PreAuthorize("hasAnyAuthority('USER_ADMIN', 'ROOT_ADMIN')")
+    @GetMapping
+    public ApiResponse<List<AdminCouponResponse>> getList(@AuthenticationPrincipal CustomUserDetails admin) {
+        List<AdminCouponResponse> response = adminCouponService.getList(admin);
+        return ApiResponse.success("쿠폰 정책 목록을 조회했습니다.", response);
+    }
     @PreAuthorize("hasAnyAuthority('USER_ADMIN', 'ROOT_ADMIN')")
     @GetMapping("/{couponId}")
     public ApiResponse<AdminCouponResponse> getDetail(
@@ -76,11 +81,11 @@ public class AdminCouponController {
     }
 
     /**
-     * Checks whether issue applies.
-     * @param admin the admin value
-     * @param couponId the coupon id value
-     * @param request the request value
-     * @return the issue result
+     * 조건 충족 여부를 확인한다.
+     * @param admin 인증된 관리자 정보
+     * @param couponId 쿠폰 ID
+     * @param request 요청 본문
+     * @return 클라이언트에 반환할 API 응답
      */
     @PreAuthorize("hasAnyAuthority('USER_ADMIN', 'ROOT_ADMIN')")
     @PostMapping("/{couponId}/issue")
@@ -94,11 +99,21 @@ public class AdminCouponController {
     }
 
     /**
-     * Returns issue history data.
-     * @param admin the admin value
-     * @param couponId the coupon id value
-     * @return the get issue history result
+     * 쿠폰 이벤트에 참여한 사용자들에게 쿠폰 발급 결과를 반환한다.
+     * @param admin 인증된 관리자 정보
+     * @param couponId 쿠폰 ID
+     * @return 클라이언트에 반환할 API 응답
      */
+    @PreAuthorize("hasAnyAuthority('USER_ADMIN', 'ROOT_ADMIN')")
+    @PostMapping("/{couponId}/broadcast")
+    public ApiResponse<CouponBroadcastResponse> broadcast(
+        @AuthenticationPrincipal CustomUserDetails admin,
+        @PathVariable Long couponId
+    ) {
+        CouponBroadcastResponse response = adminCouponService.broadcast(admin, couponId);
+        return ApiResponse.success("전체 사용자에게 쿠폰을 발송했습니다.", response);
+    }
+
     @PreAuthorize("hasAnyAuthority('USER_ADMIN', 'ROOT_ADMIN')")
     @GetMapping("/{couponId}/issues")
     public ApiResponse<CouponIssueHistoryResponse> getIssueHistory(

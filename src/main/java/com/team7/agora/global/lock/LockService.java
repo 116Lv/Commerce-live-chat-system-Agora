@@ -2,58 +2,61 @@ package com.team7.agora.global.lock;
 
 import com.team7.agora.global.exception.BusinessException;
 import com.team7.agora.global.exception.ErrorCode;
-import java.time.Duration;
 import java.util.Map;
-import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Supplier;
+import org.redisson.api.RLock;
+import org.redisson.api.RedissonClient;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 /**
- * Distributed locking component for lock behavior.
+ * Redisson 분산 락을 통해 작업을 실행하고, 테스트에서는 로컬 락 대체 구현을 제공한다.
  */
 @Component
 public class LockService {
 
-    private static final Duration REDIS_LOCK_TTL = Duration.ofSeconds(3);
+    private static final long WAIT_TIME_SECONDS = 2;
 
     private final Map<String, ReentrantLock> locks = new ConcurrentHashMap<>();
-    private final RedisLockRepository redisLockRepository;
-    private final Duration redisLockTtl;
+    private final RedissonClient redissonClient;
+    private final long waitTimeSeconds;
 
     /**
-     * Creates a lock service instance.
-     * @param redisLockRepository the redis lock repository value
+     * Redisson 분산 락을 사용하는 락 서비스를 생성한다.
+     * RedissonClient 빈이 없는 테스트/로컬 컨텍스트에서는 인메모리 로컬 락으로 대체된다.
+     * @param redissonClientProvider Redisson 클라이언트 빈을 선택적으로 제공하는 객체
      */
     @Autowired
-    public LockService(RedisLockRepository redisLockRepository) {
-        this(redisLockRepository, REDIS_LOCK_TTL);
+    public LockService(ObjectProvider<RedissonClient> redissonClientProvider) {
+        this(redissonClientProvider.getIfAvailable(), WAIT_TIME_SECONDS);
     }
 
-    LockService(RedisLockRepository redisLockRepository, Duration redisLockTtl) {
-        this.redisLockRepository = redisLockRepository;
-        this.redisLockTtl = redisLockTtl;
+    LockService(RedissonClient redissonClient, long waitTimeSeconds) {
+        this.redissonClient = redissonClient;
+        this.waitTimeSeconds = waitTimeSeconds;
     }
 
     /**
-     * Handles local behavior.
-     * @return the local result
+     * 인메모리 로컬 락을 사용하는 락 서비스를 생성한다.
+     * @return 로컬 락 서비스
      */
     public static LockService local() {
-        return new LockService(null, REDIS_LOCK_TTL);
+        return new LockService(null, WAIT_TIME_SECONDS);
     }
 
     /**
-     * Handles with lock behavior.
-     * @param key the key value
-     * @param supplier the supplier value
-     * @return the with lock result
+     * 지정한 키의 락을 획득한 상태에서 작업을 실행한다.
+     * @param key 락 키
+     * @param supplier 락으로 보호할 작업
+     * @return 작업 실행 결과
      */
     public <T> T withLock(String key, Supplier<T> supplier) {
-        if (redisLockRepository != null) {
-            return withRedisLock(key, supplier);
+        if (redissonClient != null) {
+            return withRedissonLock(key, supplier);
         }
         return withLocalLock(key, supplier);
     }
@@ -68,16 +71,22 @@ public class LockService {
         }
     }
 
-    private <T> T withRedisLock(String key, Supplier<T> supplier) {
-        String lockOwner = UUID.randomUUID().toString();
-        if (!redisLockRepository.tryLock(key, lockOwner, redisLockTtl)) {
-            throw new BusinessException(ErrorCode.CONFLICT, "잠시 후 다시 시도해 주세요.");
-        }
-
+    private <T> T withRedissonLock(String key, Supplier<T> supplier) {
+        RLock lock = redissonClient.getLock(key);
+        boolean acquired = false;
         try {
+            acquired = lock.tryLock(waitTimeSeconds, TimeUnit.SECONDS);
+            if (!acquired) {
+                throw new BusinessException(ErrorCode.CONFLICT, "요청이 많습니다. 다시 시도해주세요.");
+            }
             return supplier.get();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new BusinessException(ErrorCode.CONFLICT, "요청이 많습니다. 다시 시도해주세요.");
         } finally {
-            redisLockRepository.unlock(key, lockOwner);
+            if (acquired && lock.isHeldByCurrentThread()) {
+                lock.unlock();
+            }
         }
     }
 }

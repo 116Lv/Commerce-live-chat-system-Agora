@@ -44,13 +44,10 @@ class CouponIssueConcurrencyTest {
                 Optional.of(User.signup("user" + i + "@test.com", "encoded", "유저" + i, "01012345678"))
             );
         }
-        CouponIssueService service = new CouponIssueService(
-            eventRepository,
-            couponRepository,
-            issueRepository,
-            userRepository,
-            LockService.local()
+        CouponIssueTransactionExecutor executor = new CouponIssueTransactionExecutor(
+            eventRepository, couponRepository, issueRepository, userRepository
         );
+        CouponIssueService service = new CouponIssueService(LockService.local(), executor);
         ExecutorService executorService = Executors.newFixedThreadPool(30);
         CountDownLatch start = new CountDownLatch(1);
         CountDownLatch done = new CountDownLatch(30);

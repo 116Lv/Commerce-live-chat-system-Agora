@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * REST controller that exposes nego chat room endpoints.
+ * 채팅방 가격 제안 기능에서 클라이언트의 HTTP 요청을 받아 서비스 계층으로 전달하는 컨트롤러이다.
  */
 @RestController
 @RequestMapping("/api/chat/rooms")
@@ -24,19 +24,19 @@ public class NegoChatRoomController {
     private final NegoService negoService;
 
     /**
-     * Creates a nego chat room controller instance.
-     * @param negoService the nego service value
+     * 필요한 의존성을 주입받아 컴포넌트를 생성한다.
+     * @param negoService 가격 제안 비즈니스 로직을 처리하는 서비스
      */
     public NegoChatRoomController(NegoService negoService) {
         this.negoService = negoService;
     }
 
     /**
-     * Creates offer data.
-     * @param userDetails the auth user value
-     * @param chatRoomId the chat room id value
-     * @param request the request value
-     * @return the create offer result
+     * 채팅방 가격 제안 정보를 생성하거나 준비하는 POST /api/chat/rooms/{chatRoomId}/nego-offers 요청을 처리한다.
+     * @param userDetails 현재 로그인한 사용자 정보
+     * @param chatRoomId 대상 채팅방 ID
+     * @param request 클라이언트가 전달한 요청 본문
+     * @return 클라이언트에 반환할 API 응답
      */
     @PostMapping("/{chatRoomId}/nego-offers")
     public ApiResponse<NegoOfferResponse> createOffer(

@@ -14,7 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 /**
- * Application service that coordinates product image use cases.
+ * 상품 이미지 관련 비즈니스 유스케이스를 처리하는 서비스이다.
  */
 @Service
 @Transactional(readOnly = true)
@@ -25,10 +25,10 @@ public class ProductImageService {
     private final ImageStorageClient imageStorageClient;
 
     /**
-     * Creates a product image service instance.
-     * @param productRepository the product repository value
-     * @param productImageRepository the product image repository value
-     * @param imageStorageClient the image storage client value
+     * 필요한 의존성을 주입받아 컴포넌트를 생성한다.
+     * @param productRepository 데이터를 조회하고 저장하는 리포지토리
+     * @param productImageRepository 데이터를 조회하고 저장하는 리포지토리
+     * @param imageStorageClient 외부 시스템 또는 저장소와 통신하는 클라이언트
      */
     public ProductImageService(
         ProductRepository productRepository,
@@ -41,11 +41,11 @@ public class ProductImageService {
     }
 
     /**
-     * Handles upload behavior.
-     * @param sellerId the seller id value
-     * @param productId the product id value
-     * @param file the file value
-     * @return the upload result
+     * 상품 이미지 파일을 저장하고 상품 이미지 정보를 등록한다.
+     * @param sellerId 상품 판매자 ID
+     * @param productId 상품 ID
+     * @param file 업로드 파일
+     * @return 클라이언트에 반환할 API 응답
      */
     @Transactional
     public ProductImageResponse upload(Long sellerId, Long productId, MultipartFile file) {

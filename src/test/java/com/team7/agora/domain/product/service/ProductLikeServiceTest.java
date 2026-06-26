@@ -114,6 +114,6 @@ class ProductLikeServiceTest {
         var responses = service.getMyLikedProducts(2L);
 
         assertThat(responses).hasSize(1);
-        assertThat(responses.get(0).id()).isEqualTo(10L);
+        assertThat(responses.get(0).productId()).isEqualTo(10L);
     }
 }

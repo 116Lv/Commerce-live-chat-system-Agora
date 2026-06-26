@@ -1,11 +1,11 @@
 package com.team7.agora.global.auth;
 
 /**
- * Authentication component for auth user behavior.
- * @param userId the user id value
- * @param email the email value
- * @param role the role value
- * @param nickname the nickname value
+ * 인증 처리를 담당하는 컴포넌트이다.
+ * @param userId 회원 ID
+ * @param email 이메일
+ * @param role 권한
+ * @param nickname 닉네임
  */
 public record AuthUser(
     Long userId,

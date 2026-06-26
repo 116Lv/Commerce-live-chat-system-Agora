@@ -3,11 +3,11 @@ package com.team7.agora.domain.search.dto;
 import org.springframework.data.domain.Pageable;
 
 /**
- * Data transfer object for product search condition data.
- * @param keyword the keyword value
- * @param regionId the region id value
- * @param category the category value
- * @param pageable the pageable value
+ * 상품 검색 조건 데이터를 전달하는 DTO이다.
+ * @param keyword 검색어
+ * @param regionId 지역 ID
+ * @param category 업로드 카테고리
+ * @param pageable 페이지 요청 정보
  */
 public record ProductSearchCondition(
     String keyword,
@@ -17,8 +17,8 @@ public record ProductSearchCondition(
 ) {
 
     /**
-     * Handles normalized keyword behavior.
-     * @return the normalized keyword result
+     * 'normalizedKeyword' 메서드가 맡은 기능을 수행하고 필요한 결과를 반환한다.
+     * @return 클라이언트에 반환할 API 응답
      */
     public String normalizedKeyword() {
         if (keyword == null) {

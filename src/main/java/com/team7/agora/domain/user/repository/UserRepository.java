@@ -9,13 +9,17 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 /**
- * Repository contract for storing and querying user data.
+ * 회원 데이터 저장과 조회를 담당하는 저장소 인터페이스이다.
  */
 public interface UserRepository extends JpaRepository<User, Long> {
 
     boolean existsByEmail(String email);
 
+    boolean existsByEmailIgnoreCase(String email);
+
     Optional<User> findByEmail(String email);
+
+    Optional<User> findByEmailIgnoreCase(String email);
 
     List<User> findBySmileScoreGreaterThanEqualAndStatus(int smileScore, UserStatus status);
 

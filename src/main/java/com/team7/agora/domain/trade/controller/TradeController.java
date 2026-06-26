@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * REST controller that exposes trade endpoints.
+ * 거래 기능에서 클라이언트의 HTTP 요청을 받아 서비스 계층으로 전달하는 컨트롤러이다.
  */
 @RestController
 @RequestMapping("/api/trades")
@@ -22,18 +22,18 @@ public class TradeController {
     private final TradeService tradeService;
 
     /**
-     * Creates a trade controller instance.
-     * @param tradeService the trade service value
+     * 필요한 의존성을 주입받아 컴포넌트를 생성한다.
+     * @param tradeService 거래 비즈니스 로직을 처리하는 서비스
      */
     public TradeController(TradeService tradeService) {
         this.tradeService = tradeService;
     }
 
     /**
-     * Returns detail data.
-     * @param userDetails the auth user value
-     * @param tradeId the trade id value
-     * @return the get detail result
+     * 거래 정보를 조회하는 GET /api/trades/{tradeId} 요청을 처리한다.
+     * @param userDetails 현재 로그인한 사용자 정보
+     * @param tradeId 대상 거래 ID
+     * @return 클라이언트에 반환할 API 응답
      */
     @GetMapping("/{tradeId}")
     public ApiResponse<TradeDetailResponse> getDetail(
@@ -45,10 +45,10 @@ public class TradeController {
     }
 
     /**
-     * Handles start behavior.
-     * @param userDetails the auth user value
-     * @param productId the product id value
-     * @return the start result
+     * 거래을 확정하거나 진행하는 POST /api/trades/products/{productId} 요청을 처리한다.
+     * @param userDetails 현재 로그인한 사용자 정보
+     * @param productId 대상 상품 ID
+     * @return 클라이언트에 반환할 API 응답
      */
     @PostMapping("/products/{productId}")
     public ApiResponse<TradeResponse> start(
@@ -60,10 +60,10 @@ public class TradeController {
     }
 
     /**
-     * Handles complete behavior.
-     * @param userDetails the auth user value
-     * @param tradeId the trade id value
-     * @return the complete result
+     * 거래을 확정하거나 진행하는 POST /api/trades/{tradeId}/complete 요청을 처리한다.
+     * @param userDetails 현재 로그인한 사용자 정보
+     * @param tradeId 대상 거래 ID
+     * @return 클라이언트에 반환할 API 응답
      */
     @PostMapping("/{tradeId}/complete")
     public ApiResponse<TradeResponse> complete(
@@ -75,10 +75,10 @@ public class TradeController {
     }
 
     /**
-     * Handles expire reservation behavior.
-     * @param userDetails the auth user value
-     * @param tradeId the trade id value
-     * @return the expire reservation result
+     * 거래 기능을 처리하는 POST /api/trades/{tradeId}/expire-reservation 요청을 처리한다.
+     * @param userDetails 현재 로그인한 사용자 정보
+     * @param tradeId 대상 거래 ID
+     * @return 클라이언트에 반환할 API 응답
      */
     @PostMapping("/{tradeId}/expire-reservation")
     public ApiResponse<TradeResponse> expireReservation(
@@ -90,10 +90,10 @@ public class TradeController {
     }
 
     /**
-     * Handles send rating request message behavior.
-     * @param userDetails the auth user value
-     * @param tradeId the trade id value
-     * @return the send rating request message result
+     * 거래 메시지를 전송하는 POST /api/trades/{tradeId}/rating-request-message 요청을 처리한다.
+     * @param userDetails 현재 로그인한 사용자 정보
+     * @param tradeId 대상 거래 ID
+     * @return 클라이언트에 반환할 API 응답
      */
     @PostMapping("/{tradeId}/rating-request-message")
     public ApiResponse<Void> sendRatingRequestMessage(

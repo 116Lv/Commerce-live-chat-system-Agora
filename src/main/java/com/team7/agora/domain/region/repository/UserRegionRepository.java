@@ -7,7 +7,7 @@ import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 /**
- * Repository contract for storing and querying user region data.
+ * 사용자 선호 지역 데이터 저장과 조회를 담당하는 저장소 인터페이스이다.
  */
 public interface UserRegionRepository extends JpaRepository<UserRegion, Long> {
 

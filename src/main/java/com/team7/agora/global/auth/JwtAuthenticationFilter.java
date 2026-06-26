@@ -17,7 +17,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 /**
- * Authentication component for jwt authentication behavior.
+ * 인증 처리를 담당하는 컴포넌트이다.
  */
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
@@ -26,9 +26,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final UserDetailsService userDetailsService;
 
     /**
-     * Creates a jwt authentication filter instance.
-     * @param jwtProvider the jwt provider value
-     * @param userDetailsService the user details service value
+     * 필요한 의존성을 주입받아 컴포넌트를 생성한다.
+     * @param jwtProvider JWT 생성과 검증을 담당하는 컴포넌트
+     * @param userDetailsService 해당 기능의 비즈니스 로직을 처리하는 서비스
      */
     public JwtAuthenticationFilter(
         JwtProvider jwtProvider,

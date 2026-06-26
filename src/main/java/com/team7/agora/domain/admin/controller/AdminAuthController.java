@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * REST controller that exposes admin auth endpoints.
+ * 관리자 인증 기능에서 클라이언트의 HTTP 요청을 받아 서비스 계층으로 전달하는 컨트롤러이다.
  */
 @RestController
 @RequestMapping("/api/admin/auth")
@@ -23,17 +23,17 @@ public class AdminAuthController {
     private final AdminAuthService adminAuthService;
 
     /**
-     * Creates a admin auth controller instance.
-     * @param adminAuthService the admin auth service value
+     * 필요한 의존성을 주입받아 컴포넌트를 생성한다.
+     * @param adminAuthService 해당 기능의 비즈니스 로직을 처리하는 서비스
      */
     public AdminAuthController(AdminAuthService adminAuthService) {
         this.adminAuthService = adminAuthService;
     }
 
     /**
-     * Handles login behavior.
-     * @param request the request value
-     * @return the login result
+     * 관리자 인증 로그인을 처리하는 POST /api/admin/auth/login 요청을 처리한다.
+     * @param request 클라이언트가 전달한 요청 본문
+     * @return 클라이언트에 반환할 API 응답
      */
     @PostMapping("/login")
     public ApiResponse<AdminLoginResponse> login(@Valid @RequestBody AdminLoginRequest request) {
@@ -41,9 +41,9 @@ public class AdminAuthController {
     }
 
     /**
-     * Handles logout behavior.
-     * @param admin the admin value
-     * @return the logout result
+     * 관리자 인증 로그아웃을 처리하는 POST /api/admin/auth/logout 요청을 처리한다.
+     * @param admin 현재 로그인한 관리자 정보
+     * @return 클라이언트에 반환할 API 응답
      */
     @PostMapping("/logout")
     public ApiResponse<Void> logout(@AuthenticationPrincipal CustomUserDetails admin) {

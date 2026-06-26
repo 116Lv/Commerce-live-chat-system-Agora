@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * Repository contract for storing and querying coupon data.
+ * Coupon 데이터 저장과 조회를 담당하는 저장소 인터페이스이다.
  */
 public interface CouponRepository {
 
@@ -14,4 +14,6 @@ public interface CouponRepository {
     Optional<Coupon> findById(Long couponId);
 
     Optional<Coupon> findFirstComeCoupon();
+
+    List<Coupon> findAll();
 }

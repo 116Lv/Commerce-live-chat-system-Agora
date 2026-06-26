@@ -7,7 +7,7 @@ import com.team7.agora.domain.user.entity.User;
 import java.util.List;
 
 /**
- * Repository contract for storing and querying coupon issue data.
+ * Coupon Issue 데이터 저장과 조회를 담당하는 저장소 인터페이스이다.
  */
 public interface CouponIssueRepository {
 

@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * REST controller that exposes admin product endpoints.
+ * 관리자 상품 기능에서 클라이언트의 HTTP 요청을 받아 서비스 계층으로 전달하는 컨트롤러이다.
  */
 @RestController
 @RequestMapping("/api/admin/products")
@@ -25,20 +25,20 @@ public class AdminProductController {
     private final AdminProductService adminProductService;
 
     /**
-     * Creates a admin product controller instance.
-     * @param adminProductService the admin product service value
+     * 필요한 의존성을 주입받아 컴포넌트를 생성한다.
+     * @param adminProductService 해당 기능의 비즈니스 로직을 처리하는 서비스
      */
     public AdminProductController(AdminProductService adminProductService) {
         this.adminProductService = adminProductService;
     }
 
     /**
-     * Returns products data.
-     * @param admin the admin value
-     * @param reportedOnly the reported only value
-     * @param page the page value
-     * @param size the size value
-     * @return the get products result
+     * 관리자 상품 정보를 조회하는 GET /api/admin/products 요청을 처리한다.
+     * @param admin 현재 로그인한 관리자 정보
+     * @param reportedOnly 신고된 상품만 조회할지 여부
+     * @param page 조회할 페이지 번호
+     * @param size 한 번에 조회할 항목 개수
+     * @return 클라이언트에 반환할 API 응답
      */
     @GetMapping
     public ApiResponse<PageResponse<AdminProductResponse>> getProducts(
@@ -52,10 +52,10 @@ public class AdminProductController {
     }
 
     /**
-     * Handles hide product behavior.
-     * @param admin the admin value
-     * @param productId the product id value
-     * @return the hide product result
+     * 관리자 상품 상태를 변경하는 PATCH /api/admin/products/{productId}/hide 요청을 처리한다.
+     * @param admin 현재 로그인한 관리자 정보
+     * @param productId 대상 상품 ID
+     * @return 클라이언트에 반환할 API 응답
      */
     @PatchMapping("/{productId}/hide")
     public ApiResponse<AdminProductResponse> hideProduct(

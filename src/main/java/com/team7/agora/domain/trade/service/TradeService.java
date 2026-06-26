@@ -1,7 +1,9 @@
 package com.team7.agora.domain.trade.service;
 
+import com.team7.agora.domain.chat.dto.response.ChatMessageResponse;
 import com.team7.agora.domain.chat.entity.ChatMessage;
 import com.team7.agora.domain.chat.entity.ChatRoom;
+import com.team7.agora.domain.chat.realtime.ChatRedisPublisher;
 import com.team7.agora.domain.chat.repository.ChatMessageRepository;
 import com.team7.agora.domain.chat.repository.ChatRoomRepository;
 import com.team7.agora.domain.nego.entity.NegoOffer;
@@ -30,7 +32,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Application service that coordinates trade use cases.
+ * 거래 관련 비즈니스 유스케이스를 처리하는 서비스이다.
  */
 @Service
 @Transactional(readOnly = true)
@@ -44,17 +46,18 @@ public class TradeService {
     private final SettlementRepository settlementRepository;
     private final PaymentRepository paymentRepository;
     private final ChatMessageRepository chatMessageRepository;
+    private final ChatRedisPublisher chatRedisPublisher;
 
     /**
-     * Creates a trade service instance.
-     * @param tradeRepository the trade repository value
-     * @param productRepository the product repository value
-     * @param userRepository the user repository value
-     * @param chatRoomRepository the chat room repository value
-     * @param negoOfferRepository the nego offer repository value
-     * @param settlementRepository the settlement repository value
-     * @param paymentRepository the payment repository value
-     * @param chatMessageRepository the chat message repository value
+     * 필요한 의존성을 주입받아 컴포넌트를 생성한다.
+     * @param tradeRepository 데이터를 조회하고 저장하는 리포지토리
+     * @param productRepository 데이터를 조회하고 저장하는 리포지토리
+     * @param userRepository 데이터를 조회하고 저장하는 리포지토리
+     * @param chatRoomRepository 데이터를 조회하고 저장하는 리포지토리
+     * @param negoOfferRepository 데이터를 조회하고 저장하는 리포지토리
+     * @param settlementRepository 데이터를 조회하고 저장하는 리포지토리
+     * @param paymentRepository 데이터를 조회하고 저장하는 리포지토리
+     * @param chatMessageRepository 데이터를 조회하고 저장하는 리포지토리
      */
     public TradeService(
         TradeRepository tradeRepository,
@@ -64,7 +67,8 @@ public class TradeService {
         NegoOfferRepository negoOfferRepository,
         SettlementRepository settlementRepository,
         PaymentRepository paymentRepository,
-        ChatMessageRepository chatMessageRepository
+        ChatMessageRepository chatMessageRepository,
+        ChatRedisPublisher chatRedisPublisher
     ) {
         this.tradeRepository = tradeRepository;
         this.productRepository = productRepository;
@@ -74,13 +78,14 @@ public class TradeService {
         this.settlementRepository = settlementRepository;
         this.paymentRepository = paymentRepository;
         this.chatMessageRepository = chatMessageRepository;
+        this.chatRedisPublisher = chatRedisPublisher;
     }
 
     /**
-     * Returns trade detail data.
-     * @param userId the user id value
-     * @param tradeId the trade id value
-     * @return the get trade detail result
+     * 'getTradeDetail' 메서드는 필요한 데이터를 조회해 호출한 쪽에 반환한다.
+     * @param userId 회원 ID
+     * @param tradeId 거래 ID
+     * @return 클라이언트에 반환할 API 응답
      */
     public TradeDetailResponse getTradeDetail(Long userId, Long tradeId) {
         Trade trade = tradeRepository.findById(tradeId)
@@ -99,10 +104,10 @@ public class TradeService {
     }
 
     /**
-     * Handles start trade behavior.
-     * @param buyerId the buyer id value
-     * @param productId the product id value
-     * @return the start trade result
+     * 'startTrade' 메서드가 맡은 기능을 수행하고 필요한 결과를 반환한다.
+     * @param buyerId 구매자 ID
+     * @param productId 상품 ID
+     * @return 클라이언트에 반환할 API 응답
      */
     @Transactional
     public TradeResponse startTrade(Long buyerId, Long productId) {
@@ -133,14 +138,14 @@ public class TradeService {
     }
 
     /**
-     * Creates trade from accepted offer data.
-     * @param product the product value
-     * @param acceptedOffer the accepted offer value
-     * @return the create trade from accepted offer result
+     * 수락된 네고 제안을 기준으로 결제 대기 거래를 생성한다.
+     * @param product 상품 엔티티
+     * @param acceptedOffer 판매자가 수락한 네고 제안
+     * @return 클라이언트에 반환할 API 응답
      */
     @Transactional
     public Trade createTradeFromAcceptedOffer(Product product, NegoOffer acceptedOffer) {
-        if (product.getStatus() != ProductStatus.SELLING && product.getStatus() != ProductStatus.NEGOTIATING) {
+        if (product.getStatus() != ProductStatus.SELLING) {
             throw new BusinessException(ErrorCode.CONFLICT, "거래 가능한 상태의 상품이 아닙니다.");
         }
         if (tradeRepository.existsByProductAndStatusNot(product, TradeStatus.CANCELLED)) {
@@ -153,10 +158,10 @@ public class TradeService {
     }
 
     /**
-     * Handles complete trade behavior.
-     * @param buyerId the buyer id value
-     * @param tradeId the trade id value
-     * @return the complete trade result
+     * 구매 확정 요청을 검증하고 거래를 완료 상태로 변경한다.
+     * @param buyerId 구매자 ID
+     * @param tradeId 거래 ID
+     * @return 클라이언트에 반환할 API 응답
      */
     @Transactional
     public TradeResponse completeTrade(Long buyerId, Long tradeId) {
@@ -166,21 +171,25 @@ public class TradeService {
         if (!trade.getBuyer().getId().equals(buyerId)) {
             throw new BusinessException(ErrorCode.FORBIDDEN, "구매자만 구매 확정을 할 수 있습니다.");
         }
+        if (trade.getStatus() != TradeStatus.PAID) {
+            throw new BusinessException(ErrorCode.INVALID_REQUEST, "결제가 완료된 거래만 구매 확정할 수 있습니다.");
+        }
 
         trade.complete();
 
         Settlement settlement = settlementRepository.findByPaymentTradeId(tradeId)
             .orElseThrow(() -> new BusinessException(ErrorCode.INVALID_REQUEST, "결제가 완료되지 않은 거래는 구매 확정할 수 없습니다."));
         settlement.complete();
+        sendRatingRequestMessage(trade);
 
         return TradeResponse.from(trade);
     }
 
     /**
-     * Handles expire reservation behavior.
-     * @param authUser the auth user value
-     * @param tradeId the trade id value
-     * @return the expire reservation result
+     * 'expireReservation' 메서드가 맡은 기능을 수행하고 필요한 결과를 반환한다.
+     * @param authUser 인증 사용자 정보
+     * @param tradeId 거래 ID
+     * @return 클라이언트에 반환할 API 응답
      */
     @Transactional
     public TradeResponse expireReservation(AuthUser authUser, Long tradeId) {
@@ -189,6 +198,10 @@ public class TradeService {
         }
         Trade trade = tradeRepository.findById(tradeId)
             .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "거래를 찾을 수 없습니다."));
+
+        if (trade.getStatus() != TradeStatus.PAYMENT_PENDING) {
+            throw new BusinessException(ErrorCode.INVALID_REQUEST, "결제 대기 중인 거래만 예약 만료 처리할 수 있습니다.");
+        }
 
         trade.expire();
         return TradeResponse.from(trade);
@@ -200,9 +213,9 @@ public class TradeService {
     }
 
     /**
-     * Handles send rating request message behavior.
-     * @param authUser the auth user value
-     * @param tradeId the trade id value
+     * 'sendRatingRequestMessage' 메서드가 맡은 기능을 수행하고 필요한 결과를 반환한다.
+     * @param authUser 인증 사용자 정보
+     * @param tradeId 거래 ID
      */
     @Transactional
     public void sendRatingRequestMessage(AuthUser authUser, Long tradeId) {
@@ -216,13 +229,18 @@ public class TradeService {
             throw new BusinessException(ErrorCode.INVALID_REQUEST, "거래가 완료된 경우에만 평가 요청 메시지를 보낼 수 있습니다.");
         }
 
+        sendRatingRequestMessage(trade);
+    }
+
+    private void sendRatingRequestMessage(Trade trade) {
         ChatRoom chatRoom = chatRoomRepository
             .findByProductAndSellerAndBuyer(trade.getProduct(), trade.getSeller(), trade.getBuyer())
             .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "거래에 연결된 채팅방을 찾을 수 없습니다."));
 
-        chatMessageRepository.save(
+        ChatMessage message = chatMessageRepository.save(
             ChatMessage.send(chatRoom, trade.getSeller(), "거래가 완료되었습니다. 상대방에 대한 후기를 남겨주세요!")
         );
+        chatRedisPublisher.publish(chatRoom.getId(), ChatMessageResponse.from(message));
     }
 
     private boolean isSystemAuthority(AuthUser authUser) {

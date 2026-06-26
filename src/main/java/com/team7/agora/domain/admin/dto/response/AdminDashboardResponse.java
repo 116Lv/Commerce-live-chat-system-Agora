@@ -4,9 +4,9 @@ package com.team7.agora.domain.admin.dto.response;
 import java.util.List;
 
 /**
- * Response payload for returning admin dashboard data.
- * @param role the role value
- * @param accessibleMenus the accessible menus value
+ * Admin Dashboard 응답 본문을 표현하는 DTO이다.
+ * @param role 권한
+ * @param accessibleMenus 관리자가 접근할 수 있는 메뉴 목록
  */
 public record AdminDashboardResponse(
         String role,

@@ -2,23 +2,25 @@
 package com.team7.agora.global.exception;
 
 import com.team7.agora.global.response.ApiResponse;
+import jakarta.validation.ConstraintViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 /**
- * Domain exception used for global exception failures.
+ * 도메인 예외이다.
  */
 @RestControllerAdvice
 public class GlobalExceptionHandler {
     /**
-     * Handles handle business exception behavior.
-     * @param exception the exception value
-     * @return the handle business exception result
+     * 'handleBusinessException' 메서드가 맡은 기능을 수행하고 필요한 결과를 반환한다.
+     * @param exception 발생한 예외
+     * @return 클라이언트에 반환할 API 응답
      */
     @ExceptionHandler(BusinessException.class)
     public ResponseEntity<ApiResponse<Void>> handleBusinessException(BusinessException exception) {
@@ -28,9 +30,9 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * Handles handle validation exception behavior.
-     * @param exception the exception value
-     * @return the handle validation exception result
+     * 'handleValidationException' 메서드가 맡은 기능을 수행하고 필요한 결과를 반환한다.
+     * @param exception 발생한 예외
+     * @return 클라이언트에 반환할 API 응답
      */
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiResponse<Void>> handleValidationException(MethodArgumentNotValidException exception) {
@@ -46,11 +48,29 @@ public class GlobalExceptionHandler {
                 .body(ApiResponse.error(message));
     }
 
-    /**
-     * Handles handle no resource found exception behavior.
-     * @param exception the exception value
-     * @return the handle no resource found exception result
-     */
+    @ExceptionHandler(ConstraintViolationException.class)
+    public ResponseEntity<ApiResponse<Void>> handleConstraintViolationException(ConstraintViolationException exception) {
+        String message = exception.getConstraintViolations().stream()
+                .findFirst()
+                .map(violation -> violation.getMessage() == null
+                        ? ErrorCode.INVALID_REQUEST.getMessage()
+                        : violation.getMessage())
+                .orElse(ErrorCode.INVALID_REQUEST.getMessage());
+
+        return ResponseEntity
+                .status(ErrorCode.INVALID_REQUEST.getStatus())
+                .body(ApiResponse.error(message));
+    }
+
+    @SuppressWarnings("deprecation")
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ResponseEntity<ApiResponse<Void>> handleMaxUploadSizeExceededException(
+            MaxUploadSizeExceededException exception) {
+        return ResponseEntity
+                .status(HttpStatus.PAYLOAD_TOO_LARGE)
+                .body(ApiResponse.error("업로드 가능한 파일 크기를 초과했습니다."));
+    }
+
     @ExceptionHandler(NoResourceFoundException.class)
     public ResponseEntity<ApiResponse<Void>> handleNoResourceFoundException(NoResourceFoundException exception) {
         return ResponseEntity
@@ -59,9 +79,9 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * Handles handle method not supported exception behavior.
-     * @param exception the exception value
-     * @return the handle method not supported exception result
+     * 'handleMethodNotSupportedException' 메서드가 맡은 기능을 수행하고 필요한 결과를 반환한다.
+     * @param exception 발생한 예외
+     * @return 클라이언트에 반환할 API 응답
      */
     @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
     public ResponseEntity<ApiResponse<Void>> handleMethodNotSupportedException(
@@ -72,9 +92,9 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * Handles handle unexpected exception behavior.
-     * @param exception the exception value
-     * @return the handle unexpected exception result
+     * 'handleUnexpectedException' 메서드가 맡은 기능을 수행하고 필요한 결과를 반환한다.
+     * @param exception 발생한 예외
+     * @return 클라이언트에 반환할 API 응답
      */
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse<Void>> handleUnexpectedException(Exception exception) {

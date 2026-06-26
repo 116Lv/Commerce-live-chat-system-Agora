@@ -4,8 +4,8 @@ package com.team7.agora.domain.user.dto.request;
 import jakarta.validation.constraints.NotBlank;
 
 /**
- * Request payload for profile update operations.
- * @param nickname the nickname value
+ * Profile Update 요청 본문을 표현하는 DTO이다.
+ * @param nickname 닉네임
  */
 public record ProfileUpdateRequest(
         @NotBlank(message = "닉네임은 필수입니다.")

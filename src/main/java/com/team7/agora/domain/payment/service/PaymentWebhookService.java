@@ -12,7 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Application service that coordinates payment webhook use cases.
+ * 결제 웹훅 관련 비즈니스 유스케이스를 처리하는 서비스이다.
  */
 @Service
 @Transactional(readOnly = true)
@@ -22,9 +22,9 @@ public class PaymentWebhookService {
     private final SettlementRepository settlementRepository;
 
     /**
-     * Creates a payment webhook service instance.
-     * @param paymentRepository the payment repository value
-     * @param settlementRepository the settlement repository value
+     * 필요한 의존성을 주입받아 컴포넌트를 생성한다.
+     * @param paymentRepository 데이터를 조회하고 저장하는 리포지토리
+     * @param settlementRepository 데이터를 조회하고 저장하는 리포지토리
      */
     public PaymentWebhookService(PaymentRepository paymentRepository, SettlementRepository settlementRepository) {
         this.paymentRepository = paymentRepository;
@@ -32,10 +32,10 @@ public class PaymentWebhookService {
     }
 
     /**
-     * Handles handle paid behavior.
-     * @param orderId the order id value
-     * @param paymentKey the payment key value
-     * @return the handle paid result
+     * 'handlePaid' 메서드가 맡은 기능을 수행하고 필요한 결과를 반환한다.
+     * @param orderId 주문 ID
+     * @param paymentKey 결제 승인 키
+     * @return 클라이언트에 반환할 API 응답
      */
     @Transactional
     public PaymentResponse handlePaid(String orderId, String paymentKey) {

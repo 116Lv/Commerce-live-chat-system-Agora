@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * REST controller that exposes admin user endpoints.
+ * 관리자 회원 기능에서 클라이언트의 HTTP 요청을 받아 서비스 계층으로 전달하는 컨트롤러이다.
  */
 @RestController
 @RequestMapping("/api/admin/users")
@@ -28,19 +28,19 @@ public class AdminUserController {
     private final AdminUserService adminUserService;
 
     /**
-     * Creates a admin user controller instance.
-     * @param adminUserService the admin user service value
+     * 필요한 의존성을 주입받아 컴포넌트를 생성한다.
+     * @param adminUserService 해당 기능의 비즈니스 로직을 처리하는 서비스
      */
     public AdminUserController(AdminUserService adminUserService) {
         this.adminUserService = adminUserService;
     }
 
     /**
-     * Returns users data.
-     * @param admin the admin value
-     * @param page the page value
-     * @param size the size value
-     * @return the get users result
+     * 관리자 회원 정보를 조회하는 GET /api/admin/users 요청을 처리한다.
+     * @param admin 현재 로그인한 관리자 정보
+     * @param page 조회할 페이지 번호
+     * @param size 한 번에 조회할 항목 개수
+     * @return 클라이언트에 반환할 API 응답
      */
     @GetMapping
     public ApiResponse<PageResponse<AdminUserResponse>> getUsers(
@@ -53,11 +53,11 @@ public class AdminUserController {
     }
 
     /**
-     * Handles change status behavior.
-     * @param admin the admin value
-     * @param userId the user id value
-     * @param request the request value
-     * @return the change status result
+     * 관리자 회원 상태를 변경하는 PATCH /api/admin/users/{userId}/status 요청을 처리한다.
+     * @param admin 현재 로그인한 관리자 정보
+     * @param userId 대상 회원 ID
+     * @param request 클라이언트가 전달한 요청 본문
+     * @return 클라이언트에 반환할 API 응답
      */
     @PatchMapping("/{userId}/status")
     public ApiResponse<AdminUserResponse> changeStatus(

@@ -10,15 +10,15 @@ import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.stereotype.Component;
 
 /**
- * Authentication component for jwt access denied behavior.
+ * 인증 처리를 담당하는 컴포넌트이다.
  */
 @Component
 public class JwtAccessDeniedHandler implements AccessDeniedHandler {
     /**
-     * Handles handle behavior.
-     * @param request the request value
-     * @param response the response value
-     * @param accessDeniedException the access denied exception value
+     * 접근 권한이 없는 사용자가 보호된 API에 접근했을 때 403 응답을 반환한다.
+     * @param request 요청 본문
+     * @param response HTTP 응답
+     * @param accessDeniedException 접근 거부 예외
      */
     @Override
     public void handle(

@@ -13,7 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Application service that coordinates report use cases.
+ * 신고 관련 비즈니스 유스케이스를 처리하는 서비스이다.
  */
 @Service
 @Transactional(readOnly = true)
@@ -24,10 +24,10 @@ public class ReportService {
     private final ProductRepository productRepository;
 
     /**
-     * Creates a report service instance.
-     * @param reportRepository the report repository value
-     * @param userRepository the user repository value
-     * @param productRepository the product repository value
+     * 필요한 의존성을 주입받아 컴포넌트를 생성한다.
+     * @param reportRepository 데이터를 조회하고 저장하는 리포지토리
+     * @param userRepository 데이터를 조회하고 저장하는 리포지토리
+     * @param productRepository 데이터를 조회하고 저장하는 리포지토리
      */
     public ReportService(
         ReportRepository reportRepository,
@@ -40,11 +40,11 @@ public class ReportService {
     }
 
     /**
-     * Creates product report data.
-     * @param reporterId the reporter id value
-     * @param productId the product id value
-     * @param reason the reason value
-     * @return the create product report result
+     * 사용자가 상품에 대한 신고 내용을 등록한다.
+     * @param reporterId 신고를 등록한 회원 ID
+     * @param productId 상품 ID
+     * @param reason 처리 사유
+     * @return 클라이언트에 반환할 API 응답
      */
     @Transactional
     public ReportResponse createProductReport(Long reporterId, Long productId, String reason) {
@@ -62,11 +62,11 @@ public class ReportService {
     }
 
     /**
-     * Creates user report data.
-     * @param reporterId the reporter id value
-     * @param reportedUserId the reported user id value
-     * @param reason the reason value
-     * @return the create user report result
+     * 사용자가 다른 회원에 대한 신고 내용을 등록한다.
+     * @param reporterId 신고를 등록한 회원 ID
+     * @param reportedUserId 신고 대상 회원 ID
+     * @param reason 처리 사유
+     * @return 클라이언트에 반환할 API 응답
      */
     @Transactional
     public ReportResponse createUserReport(Long reporterId, Long reportedUserId, String reason) {

@@ -5,7 +5,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.springframework.stereotype.Component;
 
 /**
- * Component for search performance behavior.
+ * 검색 성능 측정을 담당하는 컴포넌트이다.
  */
 @Component
 public class SearchPerformanceRecorder {
@@ -13,10 +13,10 @@ public class SearchPerformanceRecorder {
     private final ConcurrentHashMap<String, VersionCounters> countersByVersion = new ConcurrentHashMap<>();
 
     /**
-     * Handles record behavior.
-     * @param version the version value
-     * @param elapsedNanos the elapsed nanos value
-     * @param dbQueried the db queried value
+     * 검색 요청의 처리 시간과 결과 수를 성능 통계에 기록한다.
+     * @param version 검색 로직 버전
+     * @param elapsedNanos 검색 처리에 걸린 시간
+     * @param dbQueried DB 조회 발생 여부
      */
     public void record(String version, long elapsedNanos, boolean dbQueried) {
         countersByVersion
@@ -24,11 +24,18 @@ public class SearchPerformanceRecorder {
             .record(elapsedNanos, dbQueried);
     }
 
-    /**
-     * Returns stats data.
-     * @param version the version value
-     * @return the get stats result
-     */
+    public void recordCall(String version, long elapsedNanos) {
+        countersByVersion
+            .computeIfAbsent(version, key -> new VersionCounters())
+            .recordCall(elapsedNanos);
+    }
+
+    public void recordDbHit(String version) {
+        countersByVersion
+            .computeIfAbsent(version, key -> new VersionCounters())
+            .recordDbHit();
+    }
+
     public SearchPerformanceStats getStats(String version) {
         VersionCounters counters = countersByVersion.get(version);
         if (counters == null) {
@@ -46,6 +53,13 @@ public class SearchPerformanceRecorder {
         private volatile long lastCallNanos = -1;
 
         void record(long elapsedNanos, boolean dbQueried) {
+            recordCall(elapsedNanos);
+            if (dbQueried) {
+                recordDbHit();
+            }
+        }
+
+        void recordCall(long elapsedNanos) {
             long now = System.nanoTime();
             if (firstCallNanos < 0) {
                 firstCallNanos = now;
@@ -53,9 +67,10 @@ public class SearchPerformanceRecorder {
             lastCallNanos = now;
             callCount.incrementAndGet();
             totalElapsedNanos.addAndGet(elapsedNanos);
-            if (dbQueried) {
-                dbQueryCount.incrementAndGet();
-            }
+        }
+
+        void recordDbHit() {
+            dbQueryCount.incrementAndGet();
         }
 
         SearchPerformanceStats toStats() {

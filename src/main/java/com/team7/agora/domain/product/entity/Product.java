@@ -27,12 +27,13 @@ import lombok.NoArgsConstructor;
 @Table(
     name = "products",
     indexes = {
+        @Index(name = "idx_products_status_deleted", columnList = "status, deleted_at"),
         @Index(name = "idx_products_region_status_deleted", columnList = "region_id, status, deleted_at"),
         @Index(name = "idx_products_category_status_deleted", columnList = "category, status, deleted_at"),
         @Index(name = "idx_products_title", columnList = "title")
     }
 /**
- * JPA entity that represents a product record.
+ * 상품 도메인 정보를 영속화하는 JPA 엔티티이다.
  */
 )
 public class Product {
@@ -86,14 +87,14 @@ public class Product {
     }
 
     /**
-     * Creates create data.
-     * @param seller the seller value
-     * @param region the region value
-     * @param title the title value
-     * @param description the description value
-     * @param price the price value
-     * @param category the category value
-     * @return the create result
+     * 판매자, 지역, 상품 제목과 가격 정보로 새 상품 엔티티를 생성한다.
+     * @param seller 판매자 엔티티
+     * @param region 거래 지역 엔티티
+     * @param title 상품 제목 또는 화면에 표시할 제목
+     * @param description 상품 설명 또는 상세 내용
+     * @param price 가격
+     * @param category 업로드 카테고리
+     * @return 클라이언트에 반환할 API 응답
      */
     public static Product create(
         User seller,
@@ -107,20 +108,20 @@ public class Product {
     }
 
     /**
-     * Checks whether is seller applies.
-     * @param userId the user id value
-     * @return the is seller result
+     * 조건 충족 여부를 확인한다.
+     * @param userId 회원 ID
+     * @return 클라이언트에 반환할 API 응답
      */
     public boolean isSeller(Long userId) {
         return seller.getId() != null && seller.getId().equals(userId);
     }
 
     /**
-     * Updates update data.
-     * @param title the title value
-     * @param description the description value
-     * @param price the price value
-     * @param category the category value
+     * 데이터를 수정한다.
+     * @param title 상품 제목 또는 화면에 표시할 제목
+     * @param description 상품 설명 또는 상세 내용
+     * @param price 가격
+     * @param category 업로드 카테고리
      */
     public void update(String title, String description, BigDecimal price, String category) {
         this.title = title;
@@ -130,49 +131,49 @@ public class Product {
     }
 
     /**
-     * Deletes delete data.
+     * 데이터를 삭제한다.
      */
     public void delete() {
         this.deletedAt = LocalDateTime.now();
     }
 
     /**
-     * Marks reserved state.
+     * 예약 가능한 상품 또는 거래를 예약 상태로 변경한다.
      */
     public void markReserved() {
         this.status = ProductStatus.RESERVED;
     }
 
     /**
-     * Handles restore selling behavior.
+     * 관리자가 숨겨진 상품을 다시 판매 중 상태로 되돌린다.
      */
     public void restoreSelling() {
         this.status = ProductStatus.SELLING;
     }
 
     /**
-     * Marks sold state.
+     * 상품 또는 거래를 판매 완료 상태로 변경한다.
      */
     public void markSold() {
         this.status = ProductStatus.SOLD;
     }
 
     /**
-     * Handles hide behavior.
+     * 'hide' 메서드가 맡은 기능을 수행하고 필요한 결과를 반환한다.
      */
     public void hide() {
         this.status = ProductStatus.HIDDEN;
     }
 
     /**
-     * Handles increase like count behavior.
+     * 상품 좋아요 수를 1 증가시킨다.
      */
     public void increaseLikeCount() {
         this.likeCount++;
     }
 
     /**
-     * Handles decrease like count behavior.
+     * 상품 좋아요 수를 1 감소시킨다.
      */
     public void decreaseLikeCount() {
         this.likeCount = Math.max(0, this.likeCount - 1);

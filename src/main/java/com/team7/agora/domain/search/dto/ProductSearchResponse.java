@@ -3,11 +3,11 @@ package com.team7.agora.domain.search.dto;
 import java.math.BigDecimal;
 
 /**
- * Data transfer object for product search data.
- * @param id the id value
- * @param title the title value
- * @param price the price value
- * @param regionName the region name value
+ * 상품 검색 데이터를 전달하는 DTO이다.
+ * @param id 식별자
+ * @param title 상품 제목 또는 화면에 표시할 제목
+ * @param price 가격
+ * @param regionName 거래 지역 이름
  */
 public record ProductSearchResponse(
     Long id,

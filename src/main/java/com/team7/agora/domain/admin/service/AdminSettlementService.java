@@ -10,7 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Application service that coordinates admin settlement use cases.
+ * 관리자 정산 관련 비즈니스 유스케이스를 처리하는 서비스이다.
  */
 @Service
 @Transactional(readOnly = true)
@@ -19,18 +19,18 @@ public class AdminSettlementService {
     private final SettlementRepository settlementRepository;
 
     /**
-     * Creates a admin settlement service instance.
-     * @param settlementRepository the settlement repository value
+     * 필요한 의존성을 주입받아 컴포넌트를 생성한다.
+     * @param settlementRepository 데이터를 조회하고 저장하는 리포지토리
      */
     public AdminSettlementService(SettlementRepository settlementRepository) {
         this.settlementRepository = settlementRepository;
     }
 
     /**
-     * Handles settle behavior.
-     * @param admin the admin value
-     * @param settlementId the settlement id value
-     * @return the settle result
+     * 'settle' 메서드가 맡은 기능을 수행하고 필요한 결과를 반환한다.
+     * @param admin 인증된 관리자 정보
+     * @param settlementId 정산 ID
+     * @return 클라이언트에 반환할 API 응답
      */
     @Transactional
     public AdminSettlementResponse settle(CustomUserDetails admin, Long settlementId) {

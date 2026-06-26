@@ -1,11 +1,10 @@
 package com.team7.agora.domain.product.enums;
 
 /**
- * Enumerates the supported product values.
+ * 지원하는 상태 또는 유형 값을 정의한다.
  */
 public enum ProductStatus {
     SELLING,
-    NEGOTIATING,
     RESERVED,
     SOLD,
     HIDDEN,

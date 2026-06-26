@@ -14,7 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Application service that coordinates coupon query use cases.
+ * Coupon Query 관련 비즈니스 유스케이스를 처리하는 서비스이다.
  */
 @Service
 @Transactional(readOnly = true)
@@ -25,10 +25,10 @@ public class CouponQueryService {
     private final UserRepository userRepository;
 
     /**
-     * Creates a coupon query service instance.
-     * @param couponEventRepository the coupon event repository value
-     * @param couponIssueRepository the coupon issue repository value
-     * @param userRepository the user repository value
+     * 필요한 의존성을 주입받아 컴포넌트를 생성한다.
+     * @param couponEventRepository 데이터를 조회하고 저장하는 리포지토리
+     * @param couponIssueRepository 데이터를 조회하고 저장하는 리포지토리
+     * @param userRepository 데이터를 조회하고 저장하는 리포지토리
      */
     public CouponQueryService(
         CouponEventRepository couponEventRepository,
@@ -41,8 +41,8 @@ public class CouponQueryService {
     }
 
     /**
-     * Handles list active events behavior.
-     * @return the list active events result
+     * 'listActiveEvents' 메서드가 맡은 기능을 수행하고 필요한 결과를 반환한다.
+     * @return 클라이언트에 반환할 API 응답
      */
     public List<CouponEventResponse> listActiveEvents() {
         return couponEventRepository.findAllByStatus(CouponEventStatus.ACTIVE).stream()
@@ -51,9 +51,9 @@ public class CouponQueryService {
     }
 
     /**
-     * Returns my coupons data.
-     * @param userId the user id value
-     * @return the get my coupons result
+     * 'getMyCoupons' 메서드는 필요한 데이터를 조회해 호출한 쪽에 반환한다.
+     * @param userId 회원 ID
+     * @return 클라이언트에 반환할 API 응답
      */
     public List<MyCouponResponse> getMyCoupons(Long userId) {
         User user = userRepository.findById(userId)

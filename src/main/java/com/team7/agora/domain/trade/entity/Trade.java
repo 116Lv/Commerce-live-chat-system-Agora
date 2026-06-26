@@ -32,7 +32,7 @@ import lombok.NoArgsConstructor;
         @Index(name = "idx_trades_seller", columnList = "seller_id")
     }
 /**
- * JPA entity that represents a trade record.
+ * 거래 도메인 정보를 영속화하는 JPA 엔티티이다.
  */
 )
 public class Trade {
@@ -76,19 +76,19 @@ public class Trade {
     }
 
     /**
-     * Handles start behavior.
-     * @param product the product value
-     * @param seller the seller value
-     * @param buyer the buyer value
-     * @param price the price value
-     * @return the start result
+     * 'start' 메서드가 맡은 기능을 수행하고 필요한 결과를 반환한다.
+     * @param product 상품 엔티티
+     * @param seller 판매자 엔티티
+     * @param buyer 구매자 엔티티
+     * @param price 가격
+     * @return 클라이언트에 반환할 API 응답
      */
     public static Trade start(Product product, User seller, User buyer, BigDecimal price) {
         return new Trade(product, seller, buyer, price);
     }
 
     /**
-     * Marks paid state.
+     * 결제 승인 정보를 반영해 결제를 완료 상태로 변경한다.
      */
     public void markPaid() {
         if (this.status != TradeStatus.PAYMENT_PENDING) {
@@ -100,7 +100,7 @@ public class Trade {
     }
 
     /**
-     * Handles complete behavior.
+     * 도메인 객체를 완료 상태로 변경한다.
      */
     public void complete() {
         if (this.status != TradeStatus.PAID) {
@@ -111,7 +111,7 @@ public class Trade {
     }
 
     /**
-     * Handles cancel behavior.
+     * 도메인 객체를 취소 상태로 변경한다.
      */
     public void cancel() {
         if (this.status != TradeStatus.PAYMENT_PENDING && this.status != TradeStatus.PAID) {
@@ -123,7 +123,7 @@ public class Trade {
     }
 
     /**
-     * Handles expire behavior.
+     * 도메인 객체를 만료 상태로 변경한다.
      */
     public void expire() {
         if (this.status != TradeStatus.PAYMENT_PENDING) {
@@ -135,18 +135,18 @@ public class Trade {
     }
 
     /**
-     * Checks whether is participant applies.
-     * @param userId the user id value
-     * @return the is participant result
+     * 조건 충족 여부를 확인한다.
+     * @param userId 회원 ID
+     * @return 클라이언트에 반환할 API 응답
      */
     public boolean isParticipant(Long userId) {
         return seller.getId().equals(userId) || buyer.getId().equals(userId);
     }
 
     /**
-     * Returns counterpart data.
-     * @param userId the user id value
-     * @return the get counterpart result
+     * 'getCounterpart' 메서드는 필요한 데이터를 조회해 호출한 쪽에 반환한다.
+     * @param userId 회원 ID
+     * @return 클라이언트에 반환할 API 응답
      */
     public User getCounterpart(Long userId) {
         if (seller.getId().equals(userId)) {

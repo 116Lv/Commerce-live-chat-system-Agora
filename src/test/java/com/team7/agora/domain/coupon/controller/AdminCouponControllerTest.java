@@ -91,6 +91,37 @@ class AdminCouponControllerTest {
     }
 
     @Test
+    void getListUsesAuthenticatedAdminAndReturnsCoupons() throws Exception {
+        authenticate(UserRole.ROOT_ADMIN);
+        when(adminCouponService.getList(any(CustomUserDetails.class))).thenReturn(
+            List.of(new AdminCouponResponse(1L, "신규 쿠폰", 5000, 10000, "FIRST_COME", "ACTIVE", 30))
+        );
+
+        mockMvc.perform(get("/api/admin/coupons"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.status").value("SUCCESS"))
+            .andExpect(jsonPath("$.data[0].couponId").value(1L));
+
+        verify(adminCouponService).getList(any(CustomUserDetails.class));
+    }
+
+    @Test
+    void broadcastUsesAuthenticatedAdminAndReturnsBroadcastResult() throws Exception {
+        authenticate(UserRole.ROOT_ADMIN);
+        when(adminCouponService.broadcast(any(CustomUserDetails.class), any(Long.class)))
+            .thenReturn(new CouponBroadcastResponse(1L, 10, 2));
+
+        mockMvc.perform(post("/api/admin/coupons/{couponId}/broadcast", 1L))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.status").value("SUCCESS"))
+            .andExpect(jsonPath("$.data.couponId").value(1L))
+            .andExpect(jsonPath("$.data.issuedCount").value(10))
+            .andExpect(jsonPath("$.data.skippedCount").value(2));
+
+        verify(adminCouponService).broadcast(any(CustomUserDetails.class), any(Long.class));
+    }
+
+    @Test
     void getDetailUsesAuthenticatedAdminAndReturnsCoupon() throws Exception {
         authenticate(UserRole.ROOT_ADMIN);
         when(adminCouponService.getDetail(any(CustomUserDetails.class), any(Long.class)))

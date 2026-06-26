@@ -1,77 +1,64 @@
 package com.team7.agora.domain.product.repository;
 
-import com.team7.agora.domain.product.entity.Product;
+import com.querydsl.core.BooleanBuilder;
+import com.querydsl.core.types.Projections;
+import com.querydsl.jpa.impl.JPAQueryFactory;
+import com.team7.agora.domain.product.entity.QProduct;
+import com.team7.agora.domain.product.enums.ProductStatus;
+import com.team7.agora.domain.region.entity.QRegion;
 import com.team7.agora.domain.search.dto.ProductSearchCondition;
 import com.team7.agora.domain.search.dto.ProductSearchResponse;
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.TypedQuery;
-import java.util.ArrayList;
 import java.util.List;
 import org.springframework.stereotype.Repository;
 
 /**
- * Repository adapter that implements persistence operations for product search repository impl data.
+ * 상품 검색 영속성 작업을 구현하는 저장소 어댑터이다.
  */
 @Repository
 public class ProductSearchRepositoryImpl implements ProductSearchRepository {
 
-    private final EntityManager entityManager;
+    private final JPAQueryFactory queryFactory;
 
-    /**
-     * Creates a product search repository impl instance.
-     * @param entityManager the entity manager value
-     */
-    public ProductSearchRepositoryImpl(EntityManager entityManager) {
-        this.entityManager = entityManager;
+    public ProductSearchRepositoryImpl(JPAQueryFactory queryFactory) {
+        this.queryFactory = queryFactory;
     }
 
     /**
-     * Handles search behavior.
-     * @param condition the condition value
-     * @return the search result
+     * 검색 조건과 정렬 조건에 맞는 상품 목록을 조회한다.
+     * @param condition 검색 조건
+     * @return 클라이언트에 반환할 API 응답
      */
     @Override
     public List<ProductSearchResponse> search(ProductSearchCondition condition) {
-        StringBuilder jpql = new StringBuilder("""
-            select p
-            from Product p
-            join fetch p.region r
-            where p.deletedAt is null
-            and p.status <> com.team7.agora.domain.product.enums.ProductStatus.HIDDEN
-            """);
-        List<Object> parameters = new ArrayList<>();
+        QProduct product = QProduct.product;
+        QRegion region = QRegion.region;
+
+        BooleanBuilder where = new BooleanBuilder()
+            .and(product.deletedAt.isNull())
+            .and(product.status.ne(ProductStatus.HIDDEN));
 
         if (!condition.normalizedKeyword().isBlank()) {
-            jpql.append(" and (lower(p.title) like ?1 or lower(p.description) like ?1)");
-            parameters.add("%" + condition.normalizedKeyword() + "%");
+            String pattern = "%" + condition.normalizedKeyword() + "%";
+            where.and(product.title.lower().like(pattern).or(product.description.lower().like(pattern)));
         }
-
         if (condition.regionId() != null) {
-            jpql.append(" and r.id = ?").append(parameters.size() + 1);
-            parameters.add(condition.regionId());
+            where.and(region.id.eq(condition.regionId()));
         }
-
         if (condition.category() != null && !condition.category().isBlank()) {
-            jpql.append(" and p.category = ?").append(parameters.size() + 1);
-            parameters.add(condition.category());
+            where.and(product.category.eq(condition.category()));
         }
 
-        jpql.append(" order by p.id desc");
-
-        TypedQuery<Product> query = entityManager.createQuery(jpql.toString(), Product.class);
-        for (int i = 0; i < parameters.size(); i++) {
-            query.setParameter(i + 1, parameters.get(i));
-        }
-        query.setFirstResult((int) condition.pageable().getOffset());
-        query.setMaxResults(condition.pageable().getPageSize());
-
-        return query.getResultList().stream()
-            .map(product -> new ProductSearchResponse(
-                product.getId(),
-                product.getTitle(),
-                product.getPrice(),
-                product.getRegion().getName()
+        return queryFactory
+            .select(Projections.constructor(
+                ProductSearchResponse.class,
+                product.id, product.title, product.price, region.name
             ))
-            .toList();
+            .from(product)
+            .join(product.region, region)
+            .where(where)
+            .orderBy(product.id.desc())
+            .offset(condition.pageable().getOffset())
+            .limit(condition.pageable().getPageSize())
+            .fetch();
     }
 }

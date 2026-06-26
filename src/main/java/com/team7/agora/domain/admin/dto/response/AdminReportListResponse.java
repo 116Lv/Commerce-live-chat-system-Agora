@@ -3,13 +3,13 @@ package com.team7.agora.domain.admin.dto.response;
 import com.team7.agora.domain.report.entity.Report;
 
 /**
- * Response payload for returning admin report list data.
- * @param reportId the report id value
- * @param reporterId the reporter id value
- * @param reportedUserId the reported user id value
- * @param productId the product id value
- * @param reason the reason value
- * @param status the status value
+ * Admin Report List 응답 본문을 표현하는 DTO이다.
+ * @param reportId 신고 ID
+ * @param reporterId 신고를 등록한 회원 ID
+ * @param reportedUserId 신고 대상 회원 ID
+ * @param productId 상품 ID
+ * @param reason 처리 사유
+ * @param status 조회 또는 변경할 상태
  */
 public record AdminReportListResponse(
     Long reportId,
@@ -21,9 +21,9 @@ public record AdminReportListResponse(
 ) {
 
     /**
-     * Creates a response from the given domain object.
-     * @param report the report value
-     * @return the from result
+     * 도메인 객체로부터 응답 객체를 생성한다.
+     * @param report 응답으로 변환할 신고 엔티티
+     * @return 클라이언트에 반환할 API 응답
      */
     public static AdminReportListResponse from(Report report) {
         Long productId = report.getProduct() == null ? null : report.getProduct().getId();

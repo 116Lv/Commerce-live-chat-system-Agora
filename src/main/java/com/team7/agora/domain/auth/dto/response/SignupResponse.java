@@ -2,9 +2,9 @@
 package com.team7.agora.domain.auth.dto.response;
 
 /**
- * Response payload for returning signup data.
- * @param email the email value
- * @param nickname the nickname value
+ * Signup 응답 본문을 표현하는 DTO이다.
+ * @param email 이메일
+ * @param nickname 닉네임
  */
 public record SignupResponse(
         String email,

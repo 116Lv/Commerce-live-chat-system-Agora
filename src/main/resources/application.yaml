@@ -10,11 +10,20 @@ spring:
   config:
     activate:
       on-profile: local
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 30MB
   datasource:
     url: jdbc:h2:mem:agora_db;MODE=MySQL;DB_CLOSE_DELAY=-1
     driver-class-name: org.h2.Driver
     username: sa
     password:
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
   h2:
     console:
       enabled: true
@@ -54,6 +63,10 @@ spring:
     activate:
       on-profile: prod
     import: aws-parameterstore:/config/agora/
+  servlet:
+    multipart:
+      max-file-size: ${MAX_FILE_SIZE:10MB}
+      max-request-size: ${MAX_REQUEST_SIZE:30MB}
   cloud:
     aws:
       region:
@@ -62,6 +75,11 @@ spring:
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
     # url, username, password는 aws-parameterstore를 통해 로드되도록 설정
+  data:
+    redis:
+      host: ${REDIS_HOST}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
 
   jpa:
     database-platform: org.hibernate.dialect.MySQL8Dialect

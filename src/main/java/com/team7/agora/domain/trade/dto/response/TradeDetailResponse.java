@@ -7,16 +7,16 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 /**
- * Response payload for returning trade detail data.
- * @param tradeId the trade id value
- * @param productId the product id value
- * @param sellerId the seller id value
- * @param buyerId the buyer id value
- * @param price the price value
- * @param tradeStatus the trade status value
- * @param completedAt the completed at value
- * @param paymentStatus the payment status value
- * @param settlementStatus the settlement status value
+ * Trade Detail 응답 본문을 표현하는 DTO이다.
+ * @param tradeId 거래 ID
+ * @param productId 상품 ID
+ * @param sellerId 상품 판매자 ID
+ * @param buyerId 구매자 ID
+ * @param price 가격
+ * @param tradeStatus 거래 진행 상태
+ * @param completedAt 거래가 완료된 시각
+ * @param paymentStatus 결제 진행 상태
+ * @param settlementStatus 정산 진행 상태
  */
 public record TradeDetailResponse(
     Long tradeId,
@@ -31,11 +31,11 @@ public record TradeDetailResponse(
 ) {
 
     /**
-     * Handles of behavior.
-     * @param trade the trade value
-     * @param payment the payment value
-     * @param settlement the settlement value
-     * @return the of result
+     * 도메인 객체를 클라이언트 응답 DTO로 변환한다.
+     * @param trade 거래 엔티티 또는 거래 응답 변환 대상
+     * @param payment 결제 엔티티 또는 결제 응답 변환 대상
+     * @param settlement 정산 엔티티 또는 정산 응답 변환 대상
+     * @return 클라이언트에 반환할 API 응답
      */
     public static TradeDetailResponse of(Trade trade, Payment payment, Settlement settlement) {
         return new TradeDetailResponse(

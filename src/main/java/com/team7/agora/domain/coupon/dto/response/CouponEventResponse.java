@@ -4,14 +4,14 @@ import com.team7.agora.domain.coupon.entity.CouponEvent;
 import java.time.LocalDateTime;
 
 /**
- * Response payload for returning coupon event data.
- * @param eventId the event id value
- * @param name the name value
- * @param totalQuantity the total quantity value
- * @param issuedQuantity the issued quantity value
- * @param startAt the start at value
- * @param endAt the end at value
- * @param status the status value
+ * 쿠폰 이벤트 응답 본문을 표현하는 DTO이다.
+ * @param eventId 이벤트 ID
+ * @param name 이름 또는 제목
+ * @param totalQuantity 이벤트 전체 발급 수량
+ * @param issuedQuantity 이미 발급된 쿠폰 수량
+ * @param startAt 이벤트 시작 시각
+ * @param endAt 이벤트 종료 시각
+ * @param status 조회 또는 변경할 상태
  */
 public record CouponEventResponse(
     Long eventId,
@@ -24,9 +24,9 @@ public record CouponEventResponse(
 ) {
 
     /**
-     * Creates a response from the given domain object.
-     * @param couponEvent the coupon event value
-     * @return the from result
+     * 도메인 객체로부터 응답 객체를 생성한다.
+     * @param couponEvent 쿠폰 이벤트 엔티티
+     * @return 클라이언트에 반환할 API 응답
      */
     public static CouponEventResponse from(CouponEvent couponEvent) {
         return new CouponEventResponse(

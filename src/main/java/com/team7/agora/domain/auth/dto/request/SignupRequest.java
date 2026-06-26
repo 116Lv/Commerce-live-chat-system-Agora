@@ -5,10 +5,10 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 
 /**
- * Request payload for signup operations.
- * @param email the email value
- * @param password the password value
- * @param nickname the nickname value
+ * Signup 요청 본문을 표현하는 DTO이다.
+ * @param email 이메일
+ * @param password 비밀번호
+ * @param nickname 닉네임
  */
 public record SignupRequest(
         @Email(message = "이메일 형식이 올바르지 않습니다.")

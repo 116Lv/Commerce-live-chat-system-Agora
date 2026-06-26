@@ -16,7 +16,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 /**
- * JPA entity that represents a product like record.
+ * 상품 좋아요 도메인 정보를 영속화하는 JPA 엔티티이다.
  */
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -45,10 +45,10 @@ public class ProductLike {
     }
 
     /**
-     * Creates create data.
-     * @param product the product value
-     * @param user the user value
-     * @return the create result
+     * 회원과 상품 정보를 묶어 새 상품 좋아요 엔티티를 생성한다.
+     * @param product 상품 엔티티
+     * @param user 회원 엔티티
+     * @return 클라이언트에 반환할 API 응답
      */
     public static ProductLike create(Product product, User user) {
         return new ProductLike(product, user);

@@ -5,17 +5,17 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 /**
- * Client implementation for integrating with local payment providers.
+ * 로컬 결제 제공자 연동 구현체이다.
  */
 @Component
 @Profile("local")
 public class LocalPaymentClient implements PaymentClient {
     /**
-     * Handles confirm behavior.
-     * @param paymentKey the payment key value
-     * @param orderId the order id value
-     * @param amount the amount value
-     * @return the confirm result
+     * 외부 결제 승인 결과를 검증하고 결제를 완료 상태로 변경한다.
+     * @param paymentKey 결제 승인 키
+     * @param orderId 주문 ID
+     * @param amount 금액
+     * @return 클라이언트에 반환할 API 응답
      */
     @Override
     public boolean confirm(String paymentKey, String orderId, BigDecimal amount) {

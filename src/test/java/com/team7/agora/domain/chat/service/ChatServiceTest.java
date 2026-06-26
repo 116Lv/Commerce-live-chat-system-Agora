@@ -4,6 +4,7 @@ import static com.team7.agora.support.TestEntityIds.assignId;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -30,6 +31,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Pageable;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -160,6 +162,49 @@ class ChatServiceTest {
             .thenReturn(Optional.of(chatRoom));
 
         assertThatThrownBy(() -> chatService.sendImageMessage(3L, 100L, image))
+            .isInstanceOf(BusinessException.class);
+    }
+
+    @Test
+    void getMessagesWithoutCursorFetchesLatestPage() {
+        ChatRoom chatRoom = ChatRoom.open(product, buyer);
+        assignId(chatRoom, 100L);
+        ChatMessage message = ChatMessage.send(chatRoom, buyer, "안녕하세요");
+        when(chatRoomRepository.findByIdAndStatus(100L, ChatRoomStatus.ACTIVE))
+            .thenReturn(Optional.of(chatRoom));
+        when(chatMessageRepository.findLatestByChatRoom(eq(chatRoom), any(Pageable.class)))
+            .thenReturn(List.of(message));
+
+        List<ChatMessageResponse> responses = chatService.getMessages(2L, 100L, null, 20);
+
+        assertThat(responses).hasSize(1);
+        assertThat(responses.get(0).content()).isEqualTo("안녕하세요");
+    }
+
+    @Test
+    void getMessagesWithCursorFetchesMessagesBeforeLastMessageId() {
+        ChatRoom chatRoom = ChatRoom.open(product, buyer);
+        assignId(chatRoom, 100L);
+        ChatMessage message = ChatMessage.send(chatRoom, buyer, "이전 메시지");
+        when(chatRoomRepository.findByIdAndStatus(100L, ChatRoomStatus.ACTIVE))
+            .thenReturn(Optional.of(chatRoom));
+        when(chatMessageRepository.findByChatRoomBeforeMessageId(eq(chatRoom), eq(50L), any(Pageable.class)))
+            .thenReturn(List.of(message));
+
+        List<ChatMessageResponse> responses = chatService.getMessages(2L, 100L, 50L, 20);
+
+        assertThat(responses).hasSize(1);
+        assertThat(responses.get(0).content()).isEqualTo("이전 메시지");
+    }
+
+    @Test
+    void getMessagesRejectsNonParticipant() {
+        ChatRoom chatRoom = ChatRoom.open(product, buyer);
+        assignId(chatRoom, 100L);
+        when(chatRoomRepository.findByIdAndStatus(100L, ChatRoomStatus.ACTIVE))
+            .thenReturn(Optional.of(chatRoom));
+
+        assertThatThrownBy(() -> chatService.getMessages(3L, 100L, null, 20))
             .isInstanceOf(BusinessException.class);
     }
 

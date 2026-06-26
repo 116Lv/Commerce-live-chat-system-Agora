@@ -4,15 +4,15 @@ import com.team7.agora.domain.payment.entity.Payment;
 import java.math.BigDecimal;
 
 /**
- * Response payload for returning payment data.
- * @param paymentId the payment id value
- * @param tradeId the trade id value
- * @param payerId the payer id value
- * @param amount the amount value
- * @param orderId the order id value
- * @param paymentKey the payment key value
- * @param status the status value
- * @param settlementId the settlement id value
+ * 결제 응답 본문을 표현하는 DTO이다.
+ * @param paymentId 결제 ID
+ * @param tradeId 거래 ID
+ * @param payerId 결제자 ID
+ * @param amount 금액
+ * @param orderId 주문 ID
+ * @param paymentKey 결제 승인 키
+ * @param status 조회 또는 변경할 상태
+ * @param settlementId 정산 ID
  */
 public record PaymentResponse(
     Long paymentId,
@@ -26,19 +26,19 @@ public record PaymentResponse(
 ) {
 
     /**
-     * Creates a response from the given domain object.
-     * @param payment the payment value
-     * @return the from result
+     * 도메인 객체로부터 응답 객체를 생성한다.
+     * @param payment 결제 엔티티 또는 결제 응답 변환 대상
+     * @return 클라이언트에 반환할 API 응답
      */
     public static PaymentResponse from(Payment payment) {
         return from(payment, null);
     }
 
     /**
-     * Creates a response from the given domain object.
-     * @param payment the payment value
-     * @param settlementId the settlement id value
-     * @return the from result
+     * 도메인 객체로부터 응답 객체를 생성한다.
+     * @param payment 결제 엔티티 또는 결제 응답 변환 대상
+     * @param settlementId 정산 ID
+     * @return 클라이언트에 반환할 API 응답
      */
     public static PaymentResponse from(Payment payment, Long settlementId) {
         return new PaymentResponse(

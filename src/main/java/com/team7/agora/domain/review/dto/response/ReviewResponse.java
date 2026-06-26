@@ -4,14 +4,14 @@ import com.team7.agora.domain.review.entity.Review;
 import java.time.LocalDateTime;
 
 /**
- * Response payload for returning review data.
- * @param reviewId the review id value
- * @param tradeId the trade id value
- * @param reviewerId the reviewer id value
- * @param targetUserId the target user id value
- * @param rating the rating value
- * @param content the content value
- * @param createdAt the created at value
+ * 리뷰 응답 본문을 표현하는 DTO이다.
+ * @param reviewId 후기 ID
+ * @param tradeId 거래 ID
+ * @param reviewerId 후기를 작성한 회원 ID
+ * @param targetUserId 후기를 받는 회원 ID
+ * @param rating 후기 평점
+ * @param content 내용
+ * @param createdAt 데이터가 생성된 시각
  */
 public record ReviewResponse(
     Long reviewId,
@@ -24,9 +24,9 @@ public record ReviewResponse(
 ) {
 
     /**
-     * Creates a response from the given domain object.
-     * @param review the review value
-     * @return the from result
+     * 도메인 객체로부터 응답 객체를 생성한다.
+     * @param review 후기 엔티티
+     * @return 클라이언트에 반환할 API 응답
      */
     public static ReviewResponse from(Review review) {
         return new ReviewResponse(

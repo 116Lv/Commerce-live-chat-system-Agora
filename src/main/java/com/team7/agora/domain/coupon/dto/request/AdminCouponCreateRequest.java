@@ -6,12 +6,12 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
 /**
- * Request payload for admin coupon create operations.
- * @param name the name value
- * @param discountAmount the discount amount value
- * @param minOrderAmount the min order amount value
- * @param type the type value
- * @param validDays the valid days value
+ * Admin Coupon Create 요청 본문을 표현하는 DTO이다.
+ * @param name 이름 또는 제목
+ * @param discountAmount 쿠폰 할인 금액
+ * @param minOrderAmount 쿠폰 사용을 위한 최소 주문 금액
+ * @param type 쿠폰 유형
+ * @param validDays 쿠폰 유효 일수
  */
 public record AdminCouponCreateRequest(
     @NotBlank(message = "쿠폰 이름은 필수입니다.")

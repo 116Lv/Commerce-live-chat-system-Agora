@@ -12,7 +12,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 /**
- * Authentication component for custom user behavior.
+ * 인증 처리를 담당하는 컴포넌트이다.
  */
 @Getter
 public class CustomUserDetails implements UserDetails {
@@ -25,13 +25,13 @@ public class CustomUserDetails implements UserDetails {
     private final String nickname;
 
     /**
-     * Creates a custom user details instance.
-     * @param userId the user id value
-     * @param email the email value
-     * @param password the password value
-     * @param role the role value
-     * @param status the status value
-     * @param nickname the nickname value
+     * 필요한 의존성을 주입받아 컴포넌트를 생성한다.
+     * @param userId 회원 ID
+     * @param email 이메일
+     * @param password 비밀번호
+     * @param role 권한
+     * @param status 조회 또는 변경할 상태
+     * @param nickname 닉네임
      */
     public CustomUserDetails(
         Long userId,
@@ -50,9 +50,9 @@ public class CustomUserDetails implements UserDetails {
     }
 
     /**
-     * Creates a response from the given domain object.
-     * @param user the user value
-     * @return the from result
+     * 도메인 객체로부터 응답 객체를 생성한다.
+     * @param user 회원 엔티티
+     * @return 클라이언트에 반환할 API 응답
      */
     public static CustomUserDetails from(User user) {
         return new CustomUserDetails(
@@ -66,8 +66,8 @@ public class CustomUserDetails implements UserDetails {
     }
 
     /**
-     * Returns authorities data.
-     * @return the get authorities result
+     * 'getAuthorities' 메서드는 필요한 데이터를 조회해 호출한 쪽에 반환한다.
+     * @return 클라이언트에 반환할 API 응답
      */
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
@@ -75,8 +75,8 @@ public class CustomUserDetails implements UserDetails {
     }
 
     /**
-     * Returns password data.
-     * @return the get password result
+     * 'getPassword' 메서드는 필요한 데이터를 조회해 호출한 쪽에 반환한다.
+     * @return 클라이언트에 반환할 API 응답
      */
     @Override
     public String getPassword() {
@@ -84,8 +84,8 @@ public class CustomUserDetails implements UserDetails {
     }
 
     /**
-     * Returns username data.
-     * @return the get username result
+     * 'getUsername' 메서드는 필요한 데이터를 조회해 호출한 쪽에 반환한다.
+     * @return 클라이언트에 반환할 API 응답
      */
     @Override
     public String getUsername() {
@@ -93,8 +93,8 @@ public class CustomUserDetails implements UserDetails {
     }
 
     /**
-     * Checks whether is account non expired applies.
-     * @return the is account non expired result
+     * 조건 충족 여부를 확인한다.
+     * @return 클라이언트에 반환할 API 응답
      */
     @Override
     public boolean isAccountNonExpired() {
@@ -102,8 +102,8 @@ public class CustomUserDetails implements UserDetails {
     }
 
     /**
-     * Checks whether is account non locked applies.
-     * @return the is account non locked result
+     * 조건 충족 여부를 확인한다.
+     * @return 클라이언트에 반환할 API 응답
      */
     @Override
     public boolean isAccountNonLocked() {
@@ -111,8 +111,8 @@ public class CustomUserDetails implements UserDetails {
     }
 
     /**
-     * Checks whether is credentials non expired applies.
-     * @return the is credentials non expired result
+     * 조건 충족 여부를 확인한다.
+     * @return 클라이언트에 반환할 API 응답
      */
     @Override
     public boolean isCredentialsNonExpired() {
@@ -120,8 +120,8 @@ public class CustomUserDetails implements UserDetails {
     }
 
     /**
-     * Checks whether is enabled applies.
-     * @return the is enabled result
+     * 조건 충족 여부를 확인한다.
+     * @return 클라이언트에 반환할 API 응답
      */
     @Override
     public boolean isEnabled() {

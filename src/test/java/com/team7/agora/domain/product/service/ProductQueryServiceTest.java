@@ -61,7 +61,7 @@ class ProductQueryServiceTest {
 
         ProductResponse response = service.getProduct(10L);
 
-        assertThat(response.id()).isEqualTo(10L);
+        assertThat(response.productId()).isEqualTo(10L);
         assertThat(response.title()).isEqualTo("자전거");
     }
 
@@ -142,6 +142,6 @@ class ProductQueryServiceTest {
         List<ProductResponse> responses = service.getMyProducts(1L);
 
         assertThat(responses).hasSize(1);
-        assertThat(responses.get(0).id()).isEqualTo(10L);
+        assertThat(responses.get(0).productId()).isEqualTo(10L);
     }
 }

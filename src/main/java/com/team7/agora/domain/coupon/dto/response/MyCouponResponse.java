@@ -4,14 +4,14 @@ import com.team7.agora.domain.coupon.entity.CouponIssue;
 import java.time.LocalDateTime;
 
 /**
- * Response payload for returning my coupon data.
- * @param issueId the issue id value
- * @param couponId the coupon id value
- * @param couponName the coupon name value
- * @param discountAmount the discount amount value
- * @param minOrderAmount the min order amount value
- * @param status the status value
- * @param issuedAt the issued at value
+ * 내 쿠폰 응답 본문을 표현하는 DTO이다.
+ * @param issueId 쿠폰 발급 이력 ID
+ * @param couponId 쿠폰 ID
+ * @param couponName 쿠폰 이름
+ * @param discountAmount 쿠폰 할인 금액
+ * @param minOrderAmount 쿠폰 사용을 위한 최소 주문 금액
+ * @param status 조회 또는 변경할 상태
+ * @param issuedAt 쿠폰이 발급된 시각
  */
 public record MyCouponResponse(
     Long issueId,
@@ -24,9 +24,9 @@ public record MyCouponResponse(
 ) {
 
     /**
-     * Creates a response from the given domain object.
-     * @param couponIssue the coupon issue value
-     * @return the from result
+     * 도메인 객체로부터 응답 객체를 생성한다.
+     * @param couponIssue 쿠폰 발급 이력 엔티티
+     * @return 클라이언트에 반환할 API 응답
      */
     public static MyCouponResponse from(CouponIssue couponIssue) {
         return new MyCouponResponse(

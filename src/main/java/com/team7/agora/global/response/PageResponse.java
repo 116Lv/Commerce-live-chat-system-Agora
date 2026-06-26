@@ -4,13 +4,13 @@ import java.util.List;
 import org.springframework.data.domain.Page;
 
 /**
- * Response payload for returning page data.
- * @param <T> the payload type carried by this component
- * @param content the content value
- * @param page the page value
- * @param size the size value
- * @param totalElements the total elements value
- * @param totalPages the total pages value
+ * 페이지 응답 응답 본문을 표현하는 DTO이다.
+ * @param <T> 이 컴포넌트가 전달하는 페이로드 타입
+ * @param content 내용
+ * @param page 페이지 번호
+ * @param size 조회할 메시지 개수
+ * @param totalElements 전체 데이터 개수
+ * @param totalPages 전체 페이지 수
  */
 public record PageResponse<T>(
         List<T> content,
@@ -21,9 +21,9 @@ public record PageResponse<T>(
 ) {
 
     /**
-     * Creates a response from the given domain object.
-     * @param page the page value
-     * @return the from result
+     * 도메인 객체로부터 응답 객체를 생성한다.
+     * @param page 페이지 번호
+     * @return 클라이언트에 반환할 API 응답
      */
     public static <T> PageResponse<T> from(Page<T> page) {
         return new PageResponse<>(

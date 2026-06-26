@@ -5,10 +5,10 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 /**
- * Response payload for returning coupon issue history data.
- * @param couponId the coupon id value
- * @param totalIssued the total issued value
- * @param issues the issues value
+ * Coupon Issue History 응답 본문을 표현하는 DTO이다.
+ * @param couponId 쿠폰 ID
+ * @param totalIssued 전체 발급 건수
+ * @param issues 쿠폰 발급 이력 목록
  */
 public record CouponIssueHistoryResponse(
     Long couponId,
@@ -17,10 +17,10 @@ public record CouponIssueHistoryResponse(
 ) {
 
     /**
-     * Handles of behavior.
-     * @param couponId the coupon id value
-     * @param couponIssues the coupon issues value
-     * @return the of result
+     * 도메인 객체를 클라이언트 응답 DTO로 변환한다.
+     * @param couponId 쿠폰 ID
+     * @param couponIssues 응답으로 변환할 쿠폰 발급 엔티티 목록
+     * @return 클라이언트에 반환할 API 응답
      */
     public static CouponIssueHistoryResponse of(Long couponId, List<CouponIssue> couponIssues) {
         List<IssueRecord> records = couponIssues.stream()

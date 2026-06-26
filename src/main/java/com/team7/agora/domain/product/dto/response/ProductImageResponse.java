@@ -4,11 +4,11 @@ package com.team7.agora.domain.product.dto.response;
 import com.team7.agora.domain.product.entity.ProductImage;
 
 /**
- * Response payload for returning product image data.
- * @param imageId the image id value
- * @param productId the product id value
- * @param imageUrl the image url value
- * @param sortOrder the sort order value
+ * 상품 이미지 응답 본문을 표현하는 DTO이다.
+ * @param imageId 상품 이미지 ID
+ * @param productId 상품 ID
+ * @param imageUrl 저장된 이미지 접근 URL
+ * @param sortOrder 이미지 표시 순서
  */
 public record ProductImageResponse(
     Long imageId,
@@ -18,9 +18,9 @@ public record ProductImageResponse(
 ) {
 
     /**
-     * Creates a response from the given domain object.
-     * @param productImage the product image value
-     * @return the from result
+     * 도메인 객체로부터 응답 객체를 생성한다.
+     * @param productImage 상품 이미지 엔티티
+     * @return 클라이언트에 반환할 API 응답
      */
     public static ProductImageResponse from(ProductImage productImage) {
         return new ProductImageResponse(

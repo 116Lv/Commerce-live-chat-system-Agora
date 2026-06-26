@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * REST controller that exposes review endpoints.
+ * 리뷰 기능에서 클라이언트의 HTTP 요청을 받아 서비스 계층으로 전달하는 컨트롤러이다.
  */
 @RestController
 @RequestMapping("/api/reviews")
@@ -22,18 +22,18 @@ public class ReviewController {
     private final ReviewService reviewService;
 
     /**
-     * Creates a review controller instance.
-     * @param reviewService the review service value
+     * 필요한 의존성을 주입받아 컴포넌트를 생성한다.
+     * @param reviewService 리뷰 비즈니스 로직을 처리하는 서비스
      */
     public ReviewController(ReviewService reviewService) {
         this.reviewService = reviewService;
     }
 
     /**
-     * Creates create data.
-     * @param userDetails the auth user value
-     * @param request the request value
-     * @return the create result
+     * 리뷰 정보를 생성하거나 준비하는 POST /api/reviews 요청을 처리한다.
+     * @param userDetails 현재 로그인한 사용자 정보
+     * @param request 클라이언트가 전달한 요청 본문
+     * @return 클라이언트에 반환할 API 응답
      */
     @PostMapping
     public ApiResponse<ReviewResponse> create(

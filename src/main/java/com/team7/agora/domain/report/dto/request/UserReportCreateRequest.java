@@ -5,9 +5,9 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 /**
- * Request payload for user report create operations.
- * @param reportedUserId the reported user id value
- * @param reason the reason value
+ * User Report Create 요청 본문을 표현하는 DTO이다.
+ * @param reportedUserId 신고 대상 회원 ID
+ * @param reason 처리 사유
  */
 public record UserReportCreateRequest(
     @NotNull(message = "신고 대상 회원 ID는 필수입니다.")

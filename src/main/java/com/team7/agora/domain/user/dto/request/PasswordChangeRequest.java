@@ -4,9 +4,9 @@ package com.team7.agora.domain.user.dto.request;
 import jakarta.validation.constraints.NotBlank;
 
 /**
- * Request payload for password change operations.
- * @param currentPassword the current password value
- * @param newPassword the new password value
+ * Password Change 요청 본문을 표현하는 DTO이다.
+ * @param currentPassword 현재 비밀번호
+ * @param newPassword 새 비밀번호
  */
 public record PasswordChangeRequest(
         @NotBlank(message = "현재 비밀번호를 입력해주세요.")

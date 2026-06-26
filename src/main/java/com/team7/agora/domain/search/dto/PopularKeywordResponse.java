@@ -1,9 +1,9 @@
 package com.team7.agora.domain.search.dto;
 
 /**
- * Data transfer object for popular keyword data.
- * @param keyword the keyword value
- * @param count the count value
+ * 인기 검색어 데이터를 전달하는 DTO이다.
+ * @param keyword 검색어
+ * @param count 조회 또는 집계된 개수
  */
 public record PopularKeywordResponse(
     String keyword,

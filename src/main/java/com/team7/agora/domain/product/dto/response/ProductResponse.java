@@ -5,16 +5,16 @@ import com.team7.agora.domain.product.enums.ProductStatus;
 import java.math.BigDecimal;
 
 /**
- * Response payload for returning product data.
- * @param id the id value
- * @param title the title value
- * @param description the description value
- * @param price the price value
- * @param category the category value
- * @param status the status value
+ * 상품 응답 본문을 표현하는 DTO이다.
+ * @param productId 상품 ID
+ * @param title 상품 제목 또는 화면에 표시할 제목
+ * @param description 상품 설명 또는 상세 내용
+ * @param price 가격
+ * @param category 업로드 카테고리
+ * @param status 조회 또는 변경할 상태
  */
 public record ProductResponse(
-    Long id,
+    Long productId,
     String title,
     String description,
     BigDecimal price,
@@ -23,9 +23,9 @@ public record ProductResponse(
 ) {
 
     /**
-     * Creates a response from the given domain object.
-     * @param product the product value
-     * @return the from result
+     * 도메인 객체로부터 응답 객체를 생성한다.
+     * @param product 상품 엔티티
+     * @return 클라이언트에 반환할 API 응답
      */
     public static ProductResponse from(Product product) {
         return new ProductResponse(

@@ -10,15 +10,15 @@ import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.stereotype.Component;
 
 /**
- * Authentication component for jwt authentication entry point behavior.
+ * 인증 처리를 담당하는 컴포넌트이다.
  */
 @Component
 public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
     /**
-     * Handles commence behavior.
-     * @param request the request value
-     * @param response the response value
-     * @param authException the auth exception value
+     * 인증되지 않은 사용자가 보호된 API에 접근했을 때 401 응답을 반환한다.
+     * @param request 요청 본문
+     * @param response HTTP 응답
+     * @param authException 인증 예외
      */
     @Override
     public void commence(

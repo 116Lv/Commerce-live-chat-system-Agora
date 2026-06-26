@@ -23,7 +23,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * REST controller that exposes product endpoints.
+ * 상품 기능에서 클라이언트의 HTTP 요청을 받아 서비스 계층으로 전달하는 컨트롤러이다.
  */
 @RestController
 @RequestMapping("/api/products")
@@ -32,18 +32,18 @@ public class ProductController {
     private final ProductService productService;
 
     /**
-     * Creates a product controller instance.
-     * @param productService the product service value
+     * 필요한 의존성을 주입받아 컴포넌트를 생성한다.
+     * @param productService 상품 비즈니스 로직을 처리하는 서비스
      */
     public ProductController(ProductService productService) {
         this.productService = productService;
     }
 
     /**
-     * Creates create data.
-     * @param userDetails the auth user value
-     * @param request the request value
-     * @return the create result
+     * 상품 정보를 생성하거나 준비하는 POST /api/products 요청을 처리한다.
+     * @param userDetails 현재 로그인한 사용자 정보
+     * @param request 클라이언트가 전달한 요청 본문
+     * @return 클라이언트에 반환할 API 응답
      */
     @PostMapping
     public ResponseEntity<ApiResponse<ProductResponse>> create(
@@ -57,9 +57,9 @@ public class ProductController {
     }
 
     /**
-     * Returns product data.
-     * @param productId the product id value
-     * @return the get product result
+     * 상품 정보를 조회하는 GET /api/products/{productId} 요청을 처리한다.
+     * @param productId 대상 상품 ID
+     * @return 클라이언트에 반환할 API 응답
      */
     @GetMapping("/{productId}")
     public ResponseEntity<ApiResponse<ProductResponse>> getProduct(@PathVariable Long productId) {
@@ -68,12 +68,12 @@ public class ProductController {
     }
 
     /**
-     * Returns products data.
-     * @param userDetails the auth user value
-     * @param regionId the region id value
-     * @param page the page value
-     * @param size the size value
-     * @return the get products result
+     * 상품 정보를 조회하는 GET /api/products 요청을 처리한다.
+     * @param userDetails 현재 로그인한 사용자 정보
+     * @param regionId 지역 ID
+     * @param page 조회할 페이지 번호
+     * @param size 한 번에 조회할 항목 개수
+     * @return 클라이언트에 반환할 API 응답
      */
     @GetMapping
     public ResponseEntity<ApiResponse<List<ProductResponse>>> getProducts(
@@ -88,11 +88,11 @@ public class ProductController {
     }
 
     /**
-     * Updates update data.
-     * @param userDetails the auth user value
-     * @param productId the product id value
-     * @param request the request value
-     * @return the update result
+     * 상품 상태를 변경하는 PATCH /api/products/{productId} 요청을 처리한다.
+     * @param userDetails 현재 로그인한 사용자 정보
+     * @param productId 대상 상품 ID
+     * @param request 클라이언트가 전달한 요청 본문
+     * @return 클라이언트에 반환할 API 응답
      */
     @PatchMapping("/{productId}")
     public ResponseEntity<ApiResponse<ProductResponse>> update(
@@ -105,10 +105,10 @@ public class ProductController {
     }
 
     /**
-     * Deletes delete data.
-     * @param userDetails the auth user value
-     * @param productId the product id value
-     * @return the delete result
+     * 상품 상태를 변경하는 DELETE /api/products/{productId} 요청을 처리한다.
+     * @param userDetails 현재 로그인한 사용자 정보
+     * @param productId 대상 상품 ID
+     * @return 클라이언트에 반환할 API 응답
      */
     @DeleteMapping("/{productId}")
     public ResponseEntity<ApiResponse<Void>> delete(

@@ -16,7 +16,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 /**
- * JPA entity that represents a product image record.
+ * 상품 이미지 도메인 정보를 영속화하는 JPA 엔티티이다.
  */
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -48,11 +48,11 @@ public class ProductImage {
     }
 
     /**
-     * Creates create data.
-     * @param product the product value
-     * @param imageUrl the image url value
-     * @param sortOrder the sort order value
-     * @return the create result
+     * 상품에 연결할 이미지 URL과 표시 순서로 상품 이미지 엔티티를 생성한다.
+     * @param product 상품 엔티티
+     * @param imageUrl 저장된 이미지 접근 URL
+     * @param sortOrder 이미지 표시 순서
+     * @return 클라이언트에 반환할 API 응답
      */
     public static ProductImage create(Product product, String imageUrl, int sortOrder) {
         return new ProductImage(product, imageUrl, sortOrder);

@@ -7,10 +7,10 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 /**
- * Request payload for review create operations.
- * @param tradeId the trade id value
- * @param rating the rating value
- * @param content the content value
+ * Review Create 요청 본문을 표현하는 DTO이다.
+ * @param tradeId 거래 ID
+ * @param rating 후기 평점
+ * @param content 내용
  */
 public record ReviewCreateRequest(
     @NotNull(message = "거래 id는 필수입니다.")

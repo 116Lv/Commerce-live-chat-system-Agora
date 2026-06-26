@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 /**
- * REST controller that exposes product image endpoints.
+ * 상품 이미지 기능에서 클라이언트의 HTTP 요청을 받아 서비스 계층으로 전달하는 컨트롤러이다.
  */
 @RestController
 @RequestMapping("/api/products")
@@ -25,19 +25,19 @@ public class ProductImageController {
     private final ProductImageService productImageService;
 
     /**
-     * Creates a product image controller instance.
-     * @param productImageService the product image service value
+     * 필요한 의존성을 주입받아 컴포넌트를 생성한다.
+     * @param productImageService 해당 기능의 비즈니스 로직을 처리하는 서비스
      */
     public ProductImageController(ProductImageService productImageService) {
         this.productImageService = productImageService;
     }
 
     /**
-     * Handles upload behavior.
-     * @param userDetails the auth user value
-     * @param productId the product id value
-     * @param image the image value
-     * @return the upload result
+     * 상품 이미지 정보를 생성하거나 준비하는 POST /api/products/{productId}/images 요청을 처리한다.
+     * @param userDetails 현재 로그인한 사용자 정보
+     * @param productId 대상 상품 ID
+     * @param image 업로드할 이미지 파일
+     * @return 클라이언트에 반환할 API 응답
      */
     @PostMapping("/{productId}/images")
     public ResponseEntity<ApiResponse<ProductImageResponse>> upload(

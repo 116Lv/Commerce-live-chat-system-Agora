@@ -1,11 +1,11 @@
 package com.team7.agora.domain.search.metric;
 
 /**
- * Immutable data carrier for search performance stats data.
- * @param callCount the call count value
- * @param avgResponseTimeMs the avg response time ms value
- * @param tps the tps value
- * @param dbQueryCount the db query count value
+ * 불변 데이터를 전달하는 객체이다.
+ * @param callCount 검색 API 호출 횟수
+ * @param avgResponseTimeMs 평균 응답 시간 밀리초
+ * @param tps 초당 처리 요청 수
+ * @param dbQueryCount DB 조회 발생 횟수
  */
 public record SearchPerformanceStats(
     long callCount,

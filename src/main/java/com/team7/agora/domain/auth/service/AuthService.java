@@ -17,14 +17,16 @@ import com.team7.agora.global.exception.ErrorCode;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.util.Locale;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Application service that coordinates auth use cases.
+ * 인증 관련 비즈니스 유스케이스를 처리하는 서비스이다.
  */
 @Service
 @Transactional(readOnly = true)
@@ -37,12 +39,12 @@ public class AuthService {
     private final long refreshTokenValidTime;
 
     /**
-     * Creates a auth service instance.
-     * @param userRepository the user repository value
-     * @param refreshTokenRepository the refresh token repository value
-     * @param passwordEncoder the password encoder value
-     * @param jwtProvider the jwt provider value
-     * @param refreshTokenValidTime the refresh token valid time value
+     * 필요한 의존성을 주입받아 컴포넌트를 생성한다.
+     * @param userRepository 데이터를 조회하고 저장하는 리포지토리
+     * @param refreshTokenRepository 데이터를 조회하고 저장하는 리포지토리
+     * @param passwordEncoder 비밀번호 해시와 검증에 사용하는 인코더
+     * @param jwtProvider JWT 생성과 검증을 담당하는 컴포넌트
+     * @param refreshTokenValidTime 리프레시 토큰 유효 시간
      */
     public AuthService(
         UserRepository userRepository,
@@ -59,33 +61,39 @@ public class AuthService {
     }
 
     /**
-     * Handles signup behavior.
-     * @param request the request value
-     * @return the signup result
+     * 회원가입 요청 정보를 검증하고 새 회원을 등록한다.
+     * @param request 요청 본문
+     * @return 클라이언트에 반환할 API 응답
      */
     @Transactional
     public SignupResponse signup(SignupRequest request) {
-        if (userRepository.existsByEmail(request.email())) {
+        String email = normalizeEmail(request.email());
+
+        if (userRepository.existsByEmailIgnoreCase(email)) {
             throw new BusinessException(ErrorCode.DUPLICATE_EMAIL);
         }
 
         User user = User.create(
-                request.email(),
+                email,
                 passwordEncoder.encode(request.password()),
                 request.nickname()
         );
-        User savedUser = userRepository.save(user);
+        User savedUser = saveUserOrThrowDuplicateEmail(user);
         return new SignupResponse(savedUser.getEmail(), savedUser.getNickname());
     }
 
-    /**
-     * Handles login behavior.
-     * @param request the request value
-     * @return the login result
-     */
+    private User saveUserOrThrowDuplicateEmail(User user) {
+        try {
+            return userRepository.save(user);
+        } catch (DataIntegrityViolationException e) {
+            throw new BusinessException(ErrorCode.DUPLICATE_EMAIL);
+        }
+    }
+
     @Transactional
     public LoginResponse login(LoginRequest request) {
-        User user = userRepository.findByEmail(request.email())
+        String email = normalizeEmail(request.email());
+        User user = userRepository.findByEmailIgnoreCase(email)
                 .orElseThrow(() -> new BusinessException(ErrorCode.INVALID_CREDENTIALS));
 
         if (!passwordEncoder.matches(request.password(), user.getPassword())) {
@@ -99,8 +107,8 @@ public class AuthService {
     }
 
     /**
-     * Handles logout behavior.
-     * @param userId the user id value
+     * 사용자의 리프레시 토큰을 삭제해 로그아웃 상태로 만든다.
+     * @param userId 회원 ID
      */
     @Transactional
     public void logout(Long userId) {
@@ -108,9 +116,9 @@ public class AuthService {
     }
 
     /**
-     * Handles reissue behavior.
-     * @param refreshTokenValue the refresh token value value
-     * @return the reissue result
+     * 리프레시 토큰을 검증하고 새 액세스 토큰과 리프레시 토큰을 발급한다.
+     * @param refreshTokenValue 재발급에 사용할 리프레시 토큰 문자열
+     * @return 클라이언트에 반환할 API 응답
      */
     @Transactional
     public ReissueResponse reissue(String refreshTokenValue) {
@@ -154,6 +162,10 @@ public class AuthService {
         if (user.getStatus() != UserStatus.ACTIVE) {
             throw new BusinessException(ErrorCode.INACTIVE_USER);
         }
+    }
+
+    private String normalizeEmail(String email) {
+        return email.trim().toLowerCase(Locale.ROOT);
     }
 
     private LocalDateTime nowUtc() {

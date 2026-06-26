@@ -28,7 +28,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Application service that coordinates admin coupon use cases.
+ * Admin Coupon 관련 비즈니스 유스케이스를 처리하는 서비스이다.
  */
 @Service
 @Transactional(readOnly = true)
@@ -43,12 +43,12 @@ public class AdminCouponService {
     private final LockService lockService;
 
     /**
-     * Creates a admin coupon service instance.
-     * @param couponRepository the coupon repository value
-     * @param couponEventRepository the coupon event repository value
-     * @param couponIssueRepository the coupon issue repository value
-     * @param userRepository the user repository value
-     * @param lockService the lock service value
+     * 필요한 의존성을 주입받아 컴포넌트를 생성한다.
+     * @param couponRepository 데이터를 조회하고 저장하는 리포지토리
+     * @param couponEventRepository 데이터를 조회하고 저장하는 리포지토리
+     * @param couponIssueRepository 데이터를 조회하고 저장하는 리포지토리
+     * @param userRepository 데이터를 조회하고 저장하는 리포지토리
+     * @param lockService 해당 기능의 비즈니스 로직을 처리하는 서비스
      */
     public AdminCouponService(
         CouponRepository couponRepository,
@@ -65,14 +65,14 @@ public class AdminCouponService {
     }
 
     /**
-     * Creates create data.
-     * @param admin the admin value
-     * @param name the name value
-     * @param discountAmount the discount amount value
-     * @param minOrderAmount the min order amount value
-     * @param type the type value
-     * @param validDays the valid days value
-     * @return the create result
+     * 관리자가 전달한 쿠폰 정책 요청으로 새 쿠폰을 생성한다.
+     * @param admin 인증된 관리자 정보
+     * @param name 이름 또는 제목
+     * @param discountAmount 쿠폰 할인 금액
+     * @param minOrderAmount 쿠폰 사용을 위한 최소 주문 금액
+     * @param type 쿠폰 유형
+     * @param validDays 쿠폰 유효 일수
+     * @return 클라이언트에 반환할 API 응답
      */
     @Transactional
     public AdminCouponResponse create(
@@ -89,10 +89,10 @@ public class AdminCouponService {
     }
 
     /**
-     * Returns detail data.
-     * @param admin the admin value
-     * @param couponId the coupon id value
-     * @return the get detail result
+     * 'getDetail' 메서드는 필요한 데이터를 조회해 호출한 쪽에 반환한다.
+     * @param admin 인증된 관리자 정보
+     * @param couponId 쿠폰 ID
+     * @return 클라이언트에 반환할 API 응답
      */
     public AdminCouponResponse getDetail(CustomUserDetails admin, Long couponId) {
         validateAdminAuthority(admin);
@@ -100,13 +100,13 @@ public class AdminCouponService {
         return AdminCouponResponse.from(coupon);
     }
 
-    /**
-     * Checks whether issue to users applies.
-     * @param admin the admin value
-     * @param couponId the coupon id value
-     * @param userIds the user ids value
-     * @return the issue to users result
-     */
+    public List<AdminCouponResponse> getList(CustomUserDetails admin) {
+        validateAdminAuthority(admin);
+        return couponRepository.findAll().stream()
+            .map(AdminCouponResponse::from)
+            .toList();
+    }
+
     @Transactional
     public CouponBroadcastResponse issueToUsers(CustomUserDetails admin, Long couponId, List<Long> userIds) {
         validateAdminAuthority(admin);
@@ -126,10 +126,10 @@ public class AdminCouponService {
     }
 
     /**
-     * Handles broadcast behavior.
-     * @param admin the admin value
-     * @param couponId the coupon id value
-     * @return the broadcast result
+     * 쿠폰 이벤트에 참여한 사용자들에게 쿠폰 발급 결과를 반환한다.
+     * @param admin 인증된 관리자 정보
+     * @param couponId 쿠폰 ID
+     * @return 클라이언트에 반환할 API 응답
      */
     @Transactional
     public CouponBroadcastResponse broadcast(CustomUserDetails admin, Long couponId) {
@@ -207,10 +207,10 @@ public class AdminCouponService {
     }
 
     /**
-     * Returns issue history data.
-     * @param admin the admin value
-     * @param couponId the coupon id value
-     * @return the get issue history result
+     * 'getIssueHistory' 메서드는 필요한 데이터를 조회해 호출한 쪽에 반환한다.
+     * @param admin 인증된 관리자 정보
+     * @param couponId 쿠폰 ID
+     * @return 클라이언트에 반환할 API 응답
      */
     public CouponIssueHistoryResponse getIssueHistory(CustomUserDetails admin, Long couponId) {
         validateAdminAuthority(admin);

@@ -4,8 +4,8 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
 /**
- * Request payload for chat message operations.
- * @param content the content value
+ * Chat Message 요청 본문을 표현하는 DTO이다.
+ * @param content 내용
  */
 public record ChatMessageRequest(
     @NotBlank(message = "메시지를 입력해 주세요.")

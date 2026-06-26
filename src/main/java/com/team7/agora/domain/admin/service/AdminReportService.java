@@ -12,7 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Application service that coordinates admin report use cases.
+ * 관리자 신고 관련 비즈니스 유스케이스를 처리하는 서비스이다.
  */
 @Service
 @Transactional(readOnly = true)
@@ -21,17 +21,17 @@ public class AdminReportService {
     private final ReportRepository reportRepository;
 
     /**
-     * Creates a admin report service instance.
-     * @param reportRepository the report repository value
+     * 필요한 의존성을 주입받아 컴포넌트를 생성한다.
+     * @param reportRepository 데이터를 조회하고 저장하는 리포지토리
      */
     public AdminReportService(ReportRepository reportRepository) {
         this.reportRepository = reportRepository;
     }
 
     /**
-     * Returns user reports data.
-     * @param admin the admin value
-     * @return the get user reports result
+     * 'getUserReports' 메서드는 필요한 데이터를 조회해 호출한 쪽에 반환한다.
+     * @param admin 인증된 관리자 정보
+     * @return 클라이언트에 반환할 API 응답
      */
     public List<AdminReportListResponse> getUserReports(CustomUserDetails admin) {
         validateUserAdmin(admin);
@@ -41,11 +41,11 @@ public class AdminReportService {
     }
 
     /**
-     * Handles resolve user report behavior.
-     * @param admin the admin value
-     * @param reportId the report id value
-     * @param adminMemo the admin memo value
-     * @return the resolve user report result
+     * 'resolveUserReport' 메서드가 맡은 기능을 수행하고 필요한 결과를 반환한다.
+     * @param admin 인증된 관리자 정보
+     * @param reportId 신고 ID
+     * @param adminMemo 관리자가 신고 처리 시 남기는 메모
+     * @return 클라이언트에 반환할 API 응답
      */
     @Transactional
     public AdminReportResponse resolveUserReport(CustomUserDetails admin, Long reportId, String adminMemo) {
@@ -61,9 +61,9 @@ public class AdminReportService {
     }
 
     /**
-     * Returns product reports data.
-     * @param admin the admin value
-     * @return the get product reports result
+     * 'getProductReports' 메서드는 필요한 데이터를 조회해 호출한 쪽에 반환한다.
+     * @param admin 인증된 관리자 정보
+     * @return 클라이언트에 반환할 API 응답
      */
     public List<AdminReportListResponse> getProductReports(CustomUserDetails admin) {
         validateProductAdmin(admin);
@@ -73,11 +73,11 @@ public class AdminReportService {
     }
 
     /**
-     * Handles resolve product report behavior.
-     * @param admin the admin value
-     * @param reportId the report id value
-     * @param adminMemo the admin memo value
-     * @return the resolve product report result
+     * 'resolveProductReport' 메서드가 맡은 기능을 수행하고 필요한 결과를 반환한다.
+     * @param admin 인증된 관리자 정보
+     * @param reportId 신고 ID
+     * @param adminMemo 관리자가 신고 처리 시 남기는 메모
+     * @return 클라이언트에 반환할 API 응답
      */
     @Transactional
     public AdminReportResponse resolveProductReport(CustomUserDetails admin, Long reportId, String adminMemo) {

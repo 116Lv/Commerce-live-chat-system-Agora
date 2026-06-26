@@ -20,14 +20,14 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 /**
- * JPA entity that represents a chat message record.
+ * Chat Message 도메인 정보를 영속화하는 JPA 엔티티이다.
  */
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
 @Table(
     name = "chat_messages",
-    indexes = @Index(name = "idx_chat_messages_room_created", columnList = "chat_room_id, created_at")
+    indexes = @Index(name = "idx_chat_messages_room_id", columnList = "chat_room_id, id")
 )
 public class ChatMessage extends BaseTimeEntity {
 
@@ -59,24 +59,28 @@ public class ChatMessage extends BaseTimeEntity {
     }
 
     /**
-     * Handles send behavior.
-     * @param chatRoom the chat room value
-     * @param sender the sender value
-     * @param content the content value
-     * @return the send result
+     * 시스템 알림 메시지를 채팅방 메시지로 저장해 대화 흐름에 남긴다.
+     * @param chatRoom 채팅방 엔티티
+     * @param sender 메시지를 보낸 회원
+     * @param content 내용
+     * @return 클라이언트에 반환할 API 응답
      */
     public static ChatMessage send(ChatRoom chatRoom, User sender, String content) {
         return new ChatMessage(chatRoom, sender, content, ChatMessageType.TEXT);
     }
 
     /**
-     * Handles send image behavior.
-     * @param chatRoom the chat room value
-     * @param sender the sender value
-     * @param imageUrl the image url value
-     * @return the send image result
+     * 'sendImage' 메서드가 맡은 기능을 수행하고 필요한 결과를 반환한다.
+     * @param chatRoom 채팅방 엔티티
+     * @param sender 메시지를 보낸 회원
+     * @param imageUrl 저장된 이미지 접근 URL
+     * @return 클라이언트에 반환할 API 응답
      */
     public static ChatMessage sendImage(ChatRoom chatRoom, User sender, String imageUrl) {
         return new ChatMessage(chatRoom, sender, imageUrl, ChatMessageType.IMAGE);
+    }
+
+    public static ChatMessage system(ChatRoom chatRoom, User actor, String content) {
+        return new ChatMessage(chatRoom, actor, content, ChatMessageType.SYSTEM);
     }
 }

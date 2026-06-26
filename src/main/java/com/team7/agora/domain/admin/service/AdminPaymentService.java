@@ -14,7 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Application service that coordinates admin payment use cases.
+ * 관리자 결제 관련 비즈니스 유스케이스를 처리하는 서비스이다.
  */
 @Service
 @Transactional(readOnly = true)
@@ -24,9 +24,9 @@ public class AdminPaymentService {
     private final PaymentClient paymentClient;
 
     /**
-     * Creates a admin payment service instance.
-     * @param paymentRepository the payment repository value
-     * @param paymentClient the payment client value
+     * 필요한 의존성을 주입받아 컴포넌트를 생성한다.
+     * @param paymentRepository 데이터를 조회하고 저장하는 리포지토리
+     * @param paymentClient 외부 시스템 또는 저장소와 통신하는 클라이언트
      */
     public AdminPaymentService(PaymentRepository paymentRepository, PaymentClient paymentClient) {
         this.paymentRepository = paymentRepository;
@@ -34,11 +34,11 @@ public class AdminPaymentService {
     }
 
     /**
-     * Returns payments data.
-     * @param admin the admin value
-     * @param status the status value
-     * @param pageable the pageable value
-     * @return the get payments result
+     * 'getPayments' 메서드는 필요한 데이터를 조회해 호출한 쪽에 반환한다.
+     * @param admin 인증된 관리자 정보
+     * @param status 조회 또는 변경할 상태
+     * @param pageable 페이지 요청 정보
+     * @return 클라이언트에 반환할 API 응답
      */
     public List<AdminPaymentResponse> getPayments(
         CustomUserDetails admin,
@@ -57,9 +57,9 @@ public class AdminPaymentService {
     }
 
     /**
-     * Returns refunds data.
-     * @param admin the admin value
-     * @return the get refunds result
+     * 'getRefunds' 메서드는 필요한 데이터를 조회해 호출한 쪽에 반환한다.
+     * @param admin 인증된 관리자 정보
+     * @return 클라이언트에 반환할 API 응답
      */
     public List<AdminPaymentResponse> getRefunds(CustomUserDetails admin) {
         validateSettlementAdmin(admin);
@@ -69,10 +69,10 @@ public class AdminPaymentService {
     }
 
     /**
-     * Handles verify payment behavior.
-     * @param admin the admin value
-     * @param paymentId the payment id value
-     * @return the verify payment result
+     * 'verifyPayment' 메서드가 맡은 기능을 수행하고 필요한 결과를 반환한다.
+     * @param admin 인증된 관리자 정보
+     * @param paymentId 결제 ID
+     * @return 클라이언트에 반환할 API 응답
      */
     @Transactional
     public AdminPaymentResponse verifyPayment(CustomUserDetails admin, Long paymentId) {

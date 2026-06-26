@@ -4,9 +4,11 @@ import com.team7.agora.domain.search.dto.PopularKeywordResponse;
 import java.util.List;
 
 /**
- * Repository contract for storing and querying popular keyword data.
+ * 인기 검색어 데이터 저장과 조회를 담당하는 저장소 인터페이스이다.
  */
 public interface PopularKeywordRepository {
+
+    boolean tryMarkSearched(Long userId, String keyword);
 
     void increment(String keyword);
 

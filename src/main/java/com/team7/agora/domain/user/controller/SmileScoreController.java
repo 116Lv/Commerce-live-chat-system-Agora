@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * REST controller that exposes smile score endpoints.
+ * 스마일 점수 기능에서 클라이언트의 HTTP 요청을 받아 서비스 계층으로 전달하는 컨트롤러이다.
  */
 @RestController
 public class SmileScoreController {
@@ -17,17 +17,17 @@ public class SmileScoreController {
     private final UserService userService;
 
     /**
-     * Creates a smile score controller instance.
-     * @param userService the user service value
+     * 필요한 의존성을 주입받아 컴포넌트를 생성한다.
+     * @param userService 회원 비즈니스 로직을 처리하는 서비스
      */
     public SmileScoreController(UserService userService) {
         this.userService = userService;
     }
 
     /**
-     * Returns smile score data.
-     * @param userId the user id value
-     * @return the get smile score result
+     * 스마일 점수 정보를 조회하는 GET /api/users/{userId}/smile-score 요청을 처리한다.
+     * @param userId 대상 회원 ID
+     * @return 클라이언트에 반환할 API 응답
      */
     @GetMapping("/api/users/{userId}/smile-score")
     public ApiResponse<SmileScoreResponse> getSmileScore(@PathVariable Long userId) {

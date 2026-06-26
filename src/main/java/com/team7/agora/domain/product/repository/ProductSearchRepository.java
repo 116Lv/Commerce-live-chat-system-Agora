@@ -5,7 +5,7 @@ import com.team7.agora.domain.search.dto.ProductSearchResponse;
 import java.util.List;
 
 /**
- * Repository contract for storing and querying product search data.
+ * 상품 검색 데이터 저장과 조회를 담당하는 저장소 인터페이스이다.
  */
 public interface ProductSearchRepository {
 

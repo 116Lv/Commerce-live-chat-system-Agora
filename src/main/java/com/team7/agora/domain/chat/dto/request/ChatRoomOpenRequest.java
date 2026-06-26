@@ -4,8 +4,8 @@ package com.team7.agora.domain.chat.dto.request;
 import jakarta.validation.constraints.NotNull;
 
 /**
- * Request payload for chat room open operations.
- * @param productId the product id value
+ * Chat Room Open 요청 본문을 표현하는 DTO이다.
+ * @param productId 상품 ID
  */
 public record ChatRoomOpenRequest(
     @NotNull(message = "상품 ID는 필수입니다.")

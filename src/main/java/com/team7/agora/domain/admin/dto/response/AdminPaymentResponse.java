@@ -5,13 +5,13 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 /**
- * Response payload for returning admin payment data.
- * @param paymentId the payment id value
- * @param amount the amount value
- * @param orderId the order id value
- * @param paymentKey the payment key value
- * @param status the status value
- * @param requestedAt the requested at value
+ * 관리자 결제 응답 본문을 표현하는 DTO이다.
+ * @param paymentId 결제 ID
+ * @param amount 금액
+ * @param orderId 주문 ID
+ * @param paymentKey 결제 승인 키
+ * @param status 조회 또는 변경할 상태
+ * @param requestedAt 요청이 생성된 시각
  */
 public record AdminPaymentResponse(
     Long paymentId,
@@ -23,9 +23,9 @@ public record AdminPaymentResponse(
 ) {
 
     /**
-     * Creates a response from the given domain object.
-     * @param payment the payment value
-     * @return the from result
+     * 도메인 객체로부터 응답 객체를 생성한다.
+     * @param payment 결제 엔티티 또는 결제 응답 변환 대상
+     * @return 클라이언트에 반환할 API 응답
      */
     public static AdminPaymentResponse from(Payment payment) {
         return new AdminPaymentResponse(

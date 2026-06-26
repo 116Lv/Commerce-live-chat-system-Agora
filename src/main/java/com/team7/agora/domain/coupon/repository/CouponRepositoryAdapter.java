@@ -30,4 +30,9 @@ class CouponRepositoryAdapter implements CouponRepository {
     public Optional<Coupon> findFirstComeCoupon() {
         return repository.findFirstByTypeAndStatus(CouponType.FIRST_COME, CouponStatus.ACTIVE);
     }
+
+    @Override
+    public List<Coupon> findAll() {
+        return repository.findAll();
+    }
 }

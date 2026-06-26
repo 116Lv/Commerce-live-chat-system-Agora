@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * REST controller that exposes my coupon endpoints.
+ * 내 쿠폰 기능에서 클라이언트의 HTTP 요청을 받아 서비스 계층으로 전달하는 컨트롤러이다.
  */
 @RestController
 @RequestMapping("/api/users/me/coupons")
@@ -21,17 +21,17 @@ public class MyCouponController {
     private final CouponQueryService couponQueryService;
 
     /**
-     * Creates a my coupon controller instance.
-     * @param couponQueryService the coupon query service value
+     * 필요한 의존성을 주입받아 컴포넌트를 생성한다.
+     * @param couponQueryService 해당 기능의 비즈니스 로직을 처리하는 서비스
      */
     public MyCouponController(CouponQueryService couponQueryService) {
         this.couponQueryService = couponQueryService;
     }
 
     /**
-     * Returns my coupons data.
-     * @param userDetails the user details value
-     * @return the get my coupons result
+     * 'getMyCoupons' 메서드는 필요한 데이터를 조회해 호출한 쪽에 반환한다.
+     * @param userDetails 인증된 사용자 정보
+     * @return 클라이언트에 반환할 API 응답
      */
     @PreAuthorize("hasAuthority('ROLE_USER')")
     @GetMapping

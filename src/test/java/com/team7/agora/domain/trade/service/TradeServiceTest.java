@@ -4,10 +4,14 @@ import static com.team7.agora.support.TestEntityIds.assignId;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.team7.agora.domain.chat.entity.ChatRoom;
+import com.team7.agora.domain.chat.realtime.ChatRedisPublisher;
 import com.team7.agora.domain.chat.repository.ChatRoomRepository;
 import com.team7.agora.domain.nego.entity.NegoOffer;
 import com.team7.agora.domain.nego.enums.NegoOfferStatus;
@@ -62,6 +66,9 @@ class TradeServiceTest {
     @Mock
     private com.team7.agora.domain.chat.repository.ChatMessageRepository chatMessageRepository;
 
+    @Mock
+    private ChatRedisPublisher chatRedisPublisher;
+
     private TradeService tradeService;
     private User seller;
     private User buyer;
@@ -77,7 +84,8 @@ class TradeServiceTest {
             negoOfferRepository,
             settlementRepository,
             paymentRepository,
-            chatMessageRepository
+            chatMessageRepository,
+            chatRedisPublisher
         );
         seller = User.signup("seller@test.com", "password", "판매자", "01011112222");
         assignId(seller, 1L);
@@ -129,22 +137,41 @@ class TradeServiceTest {
         Trade trade = Trade.start(product, seller, buyer, BigDecimal.valueOf(45000));
         assignId(trade, 100L);
         trade.markPaid(); // Set trade status to PAID and product to SOLD
-        
+
         com.team7.agora.domain.payment.entity.Payment payment = mock(com.team7.agora.domain.payment.entity.Payment.class);
         when(payment.getTrade()).thenReturn(trade);
         when(payment.getAmount()).thenReturn(BigDecimal.valueOf(45000));
 
         Settlement settlement = Settlement.pending(payment);
         assignId(settlement, 200L);
+        ChatRoom chatRoom = ChatRoom.open(product, buyer);
+        assignId(chatRoom, 50L);
 
         when(tradeRepository.findById(100L)).thenReturn(Optional.of(trade));
         when(settlementRepository.findByPaymentTradeId(100L)).thenReturn(Optional.of(settlement));
+        when(chatRoomRepository.findByProductAndSellerAndBuyer(product, seller, buyer)).thenReturn(Optional.of(chatRoom));
+        when(chatMessageRepository.save(any(com.team7.agora.domain.chat.entity.ChatMessage.class)))
+            .thenAnswer(invocation -> invocation.getArgument(0));
 
         TradeResponse response = tradeService.completeTrade(2L, 100L);
 
         assertThat(response.status()).isEqualTo("COMPLETED");
         assertThat(product.getStatus()).isEqualTo(ProductStatus.SOLD);
         assertThat(settlement.getStatus()).isEqualTo(SettlementStatus.READY);
+        verify(chatMessageRepository, times(1)).save(any(com.team7.agora.domain.chat.entity.ChatMessage.class));
+        verify(chatRedisPublisher, times(1)).publish(eq(50L), any());
+    }
+
+    @Test
+    void completeTradeRejectsAlreadyCompletedTradeAsBusinessException() {
+        Trade trade = Trade.start(product, seller, buyer, BigDecimal.valueOf(45000));
+        assignId(trade, 100L);
+        trade.markPaid();
+        trade.complete();
+        when(tradeRepository.findById(100L)).thenReturn(Optional.of(trade));
+
+        assertThatThrownBy(() -> tradeService.completeTrade(2L, 100L))
+            .isInstanceOf(BusinessException.class);
     }
 
     @Test
@@ -161,6 +188,19 @@ class TradeServiceTest {
 
         assertThat(response.status()).isEqualTo("EXPIRED");
         assertThat(product.getStatus()).isEqualTo(ProductStatus.SELLING);
+    }
+
+    @Test
+    void expireReservationRejectsNonPaymentPendingTrade() {
+        Trade trade = Trade.start(product, seller, buyer, BigDecimal.valueOf(45000));
+        assignId(trade, 100L);
+        trade.markPaid();
+        when(tradeRepository.findById(100L)).thenReturn(Optional.of(trade));
+
+        AuthUser admin = new AuthUser(99L, "admin@test.com", "ROOT_ADMIN", "admin");
+
+        assertThatThrownBy(() -> tradeService.expireReservation(admin, 100L))
+            .isInstanceOf(BusinessException.class);
     }
 
     @Test
@@ -219,12 +259,15 @@ class TradeServiceTest {
 
         when(tradeRepository.findById(100L)).thenReturn(Optional.of(trade));
         when(chatRoomRepository.findByProductAndSellerAndBuyer(product, seller, buyer)).thenReturn(Optional.of(chatRoom));
+        when(chatMessageRepository.save(any(com.team7.agora.domain.chat.entity.ChatMessage.class)))
+            .thenAnswer(invocation -> invocation.getArgument(0));
 
         AuthUser system = new AuthUser(0L, "system@test.com", "ROOT_ADMIN", "시스템");
 
         tradeService.sendRatingRequestMessage(system, 100L);
 
-        org.mockito.Mockito.verify(chatMessageRepository).save(any(com.team7.agora.domain.chat.entity.ChatMessage.class));
+        verify(chatMessageRepository).save(any(com.team7.agora.domain.chat.entity.ChatMessage.class));
+        verify(chatRedisPublisher, times(1)).publish(eq(50L), any());
     }
 
     @Test

@@ -15,7 +15,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 /**
- * JPA entity that represents a coupon record.
+ * Coupon 도메인 정보를 영속화하는 JPA 엔티티이다.
  */
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -57,25 +57,25 @@ public class Coupon {
     }
 
     /**
-     * Handles first come behavior.
-     * @param name the name value
-     * @param discountAmount the discount amount value
-     * @param minOrderAmount the min order amount value
-     * @param validDays the valid days value
-     * @return the first come result
+     * 'firstCome' 메서드가 맡은 기능을 수행하고 필요한 결과를 반환한다.
+     * @param name 이름 또는 제목
+     * @param discountAmount 쿠폰 할인 금액
+     * @param minOrderAmount 쿠폰 사용을 위한 최소 주문 금액
+     * @param validDays 쿠폰 유효 일수
+     * @return 클라이언트에 반환할 API 응답
      */
     public static Coupon firstCome(String name, int discountAmount, int minOrderAmount, int validDays) {
         return new Coupon(name, discountAmount, minOrderAmount, CouponType.FIRST_COME, validDays);
     }
 
     /**
-     * Creates create data.
-     * @param name the name value
-     * @param discountAmount the discount amount value
-     * @param minOrderAmount the min order amount value
-     * @param type the type value
-     * @param validDays the valid days value
-     * @return the create result
+     * 관리자가 입력한 쿠폰 정책으로 새 쿠폰 엔티티를 생성한다.
+     * @param name 이름 또는 제목
+     * @param discountAmount 쿠폰 할인 금액
+     * @param minOrderAmount 쿠폰 사용을 위한 최소 주문 금액
+     * @param type 쿠폰 유형
+     * @param validDays 쿠폰 유효 일수
+     * @return 클라이언트에 반환할 API 응답
      */
     public static Coupon create(String name, int discountAmount, int minOrderAmount, CouponType type, int validDays) {
         return new Coupon(name, discountAmount, minOrderAmount, type, validDays);

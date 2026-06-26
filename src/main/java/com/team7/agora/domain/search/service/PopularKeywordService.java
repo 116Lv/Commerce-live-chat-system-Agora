@@ -12,7 +12,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 /**
- * Application service that coordinates popular keyword use cases.
+ * 인기 검색어 관련 비즈니스 유스케이스를 처리하는 서비스이다.
  */
 @Service
 public class PopularKeywordService {
@@ -23,24 +23,23 @@ public class PopularKeywordService {
     private final PopularKeywordRepository popularKeywordRepository;
 
     /**
-     * Creates a popular keyword service instance.
-     * @param popularKeywordRepository the popular keyword repository value
+     * 필요한 의존성을 주입받아 컴포넌트를 생성한다.
+     * @param popularKeywordRepository 데이터를 조회하고 저장하는 리포지토리
      */
     public PopularKeywordService(PopularKeywordRepository popularKeywordRepository) {
         this.popularKeywordRepository = popularKeywordRepository;
     }
 
-    /**
-     * Handles record search keyword behavior.
-     * @param keyword the keyword value
-     */
-    public void recordSearchKeyword(String keyword) {
+    public void recordSearchKeyword(Long userId, String keyword) {
         String normalizedKeyword = normalize(keyword);
         if (normalizedKeyword.isBlank()) {
             return;
         }
         LocalDate today = LocalDate.now();
         runWithoutRedisFailure("record popular keyword. keyword=" + normalizedKeyword, () -> {
+            if (userId != null && !popularKeywordRepository.tryMarkSearched(userId, normalizedKeyword)) {
+                return;
+            }
             popularKeywordRepository.increment(normalizedKeyword);
             popularKeywordRepository.incrementDaily(normalizedKeyword, dateKeyOf(today));
             popularKeywordRepository.incrementWeekly(normalizedKeyword, weekKeyOf(today));
@@ -48,9 +47,9 @@ public class PopularKeywordService {
     }
 
     /**
-     * Returns top keywords data.
-     * @param limit the limit value
-     * @return the get top keywords result
+     * 'getTopKeywords' 메서드는 필요한 데이터를 조회해 호출한 쪽에 반환한다.
+     * @param limit 조회 개수 제한
+     * @return 클라이언트에 반환할 API 응답
      */
     public List<PopularKeywordResponse> getTopKeywords(int limit) {
         return readWithoutRedisFailure(
@@ -60,9 +59,9 @@ public class PopularKeywordService {
     }
 
     /**
-     * Returns top daily keywords data.
-     * @param limit the limit value
-     * @return the get top daily keywords result
+     * 'getTopDailyKeywords' 메서드는 필요한 데이터를 조회해 호출한 쪽에 반환한다.
+     * @param limit 조회 개수 제한
+     * @return 클라이언트에 반환할 API 응답
      */
     public List<PopularKeywordResponse> getTopDailyKeywords(int limit) {
         return readWithoutRedisFailure(
@@ -72,9 +71,9 @@ public class PopularKeywordService {
     }
 
     /**
-     * Returns top weekly keywords data.
-     * @param limit the limit value
-     * @return the get top weekly keywords result
+     * 'getTopWeeklyKeywords' 메서드는 필요한 데이터를 조회해 호출한 쪽에 반환한다.
+     * @param limit 조회 개수 제한
+     * @return 클라이언트에 반환할 API 응답
      */
     public List<PopularKeywordResponse> getTopWeeklyKeywords(int limit) {
         return readWithoutRedisFailure(

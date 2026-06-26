@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * REST controller that exposes product like endpoints.
+ * 상품 좋아요 기능에서 클라이언트의 HTTP 요청을 받아 서비스 계층으로 전달하는 컨트롤러이다.
  */
 @RestController
 @RequestMapping("/api/products/{productId}/likes")
@@ -22,18 +22,18 @@ public class ProductLikeController {
     private final ProductLikeService productLikeService;
 
     /**
-     * Creates a product like controller instance.
-     * @param productLikeService the product like service value
+     * 필요한 의존성을 주입받아 컴포넌트를 생성한다.
+     * @param productLikeService 해당 기능의 비즈니스 로직을 처리하는 서비스
      */
     public ProductLikeController(ProductLikeService productLikeService) {
         this.productLikeService = productLikeService;
     }
 
     /**
-     * Handles like behavior.
-     * @param userDetails the auth user value
-     * @param productId the product id value
-     * @return the like result
+     * 상품 좋아요 상태를 변경하는 POST /api/products/{productId}/likes 요청을 처리한다.
+     * @param userDetails 현재 로그인한 사용자 정보
+     * @param productId 대상 상품 ID
+     * @return 클라이언트에 반환할 API 응답
      */
     @PostMapping
     public ApiResponse<ProductLikeResponse> like(
@@ -45,10 +45,10 @@ public class ProductLikeController {
     }
 
     /**
-     * Handles unlike behavior.
-     * @param userDetails the auth user value
-     * @param productId the product id value
-     * @return the unlike result
+     * 상품 좋아요 상태를 변경하는 DELETE /api/products/{productId}/likes 요청을 처리한다.
+     * @param userDetails 현재 로그인한 사용자 정보
+     * @param productId 대상 상품 ID
+     * @return 클라이언트에 반환할 API 응답
      */
     @DeleteMapping
     public ApiResponse<ProductLikeResponse> unlike(

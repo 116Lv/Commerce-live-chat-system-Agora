@@ -4,53 +4,37 @@ import com.team7.agora.domain.product.repository.ProductRepository;
 import com.team7.agora.domain.search.dto.ProductSearchCondition;
 import com.team7.agora.domain.search.dto.ProductSearchResponse;
 import com.team7.agora.domain.search.metric.SearchPerformanceRecorder;
-import com.team7.agora.global.cache.ProductSearchCache;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Application service that coordinates product search use cases.
+ * 상품 검색 관련 비즈니스 유스케이스를 처리하는 서비스이다.
  */
 @Service
 @Transactional(readOnly = true)
 public class ProductSearchService {
 
     private final ProductRepository productRepository;
-    private final ProductSearchCache productSearchCache;
+    private final ProductSearchCacheLoader productSearchCacheLoader;
     private final SearchPerformanceRecorder searchPerformanceRecorder;
 
-    /**
-     * Creates a product search service instance.
-     * @param productRepository the product repository value
-     */
-    public ProductSearchService(ProductRepository productRepository) {
-        this(productRepository, new ProductSearchCache(1_000, 60_000L), new SearchPerformanceRecorder());
-    }
-
-    /**
-     * Creates a product search service instance.
-     * @param productRepository the product repository value
-     * @param productSearchCache the product search cache value
-     * @param searchPerformanceRecorder the search performance recorder value
-     */
     @Autowired
     public ProductSearchService(
         ProductRepository productRepository,
-        ProductSearchCache productSearchCache,
+        ProductSearchCacheLoader productSearchCacheLoader,
         SearchPerformanceRecorder searchPerformanceRecorder
     ) {
         this.productRepository = productRepository;
-        this.productSearchCache = productSearchCache;
+        this.productSearchCacheLoader = productSearchCacheLoader;
         this.searchPerformanceRecorder = searchPerformanceRecorder;
     }
 
     /**
-     * Handles search v1 behavior.
-     * @param condition the condition value
-     * @return the search v1 result
+     * 'searchV1' 메서드가 맡은 기능을 수행하고 필요한 결과를 반환한다.
+     * @param condition 검색 조건
+     * @return 클라이언트에 반환할 API 응답
      */
     public List<ProductSearchResponse> searchV1(ProductSearchCondition condition) {
         long start = System.nanoTime();
@@ -60,28 +44,21 @@ public class ProductSearchService {
     }
 
     /**
-     * Handles search v2 behavior.
-     * @param condition the condition value
-     * @return the search v2 result
+     * 'searchV2' 메서드가 맡은 기능을 수행하고 필요한 결과를 반환한다.
+     * @param condition 검색 조건
+     * @return 클라이언트에 반환할 API 응답
      */
     public List<ProductSearchResponse> searchV2(ProductSearchCondition condition) {
         long start = System.nanoTime();
-        AtomicBoolean dbQueried = new AtomicBoolean(false);
-        List<ProductSearchResponse> responses = productSearchCache.get(condition)
-            .orElseGet(() -> {
-                dbQueried.set(true);
-                List<ProductSearchResponse> dbResponses = productRepository.search(condition);
-                productSearchCache.put(condition, dbResponses);
-                return dbResponses;
-            });
-        searchPerformanceRecorder.record("v2", System.nanoTime() - start, dbQueried.get());
+        List<ProductSearchResponse> responses = productSearchCacheLoader.load(condition);
+        searchPerformanceRecorder.recordCall("v2", System.nanoTime() - start);
         return responses;
     }
 
     /**
-     * Handles evict search cache behavior.
+     * 'evictSearchCache' 메서드가 맡은 기능을 수행하고 필요한 결과를 반환한다.
      */
     public void evictSearchCache() {
-        productSearchCache.clear();
+        productSearchCacheLoader.evictAll();
     }
 }

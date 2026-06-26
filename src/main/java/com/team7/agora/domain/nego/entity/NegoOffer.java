@@ -24,7 +24,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 /**
- * JPA entity that represents a nego offer record.
+ * Nego Offer 도메인 정보를 영속화하는 JPA 엔티티이다.
  */
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -36,7 +36,7 @@ import lombok.NoArgsConstructor;
 public class NegoOffer extends BaseTimeEntity {
 
     /**
-     * Statuses that keep a negotiation offer active for expiration checks.
+     * 만료 검사에서 활성 상태로 판단할 네고 제안 상태를 정의한다.
      */
     public static final List<NegoOfferStatus> ACTIVE_STATUSES = List.of(
         NegoOfferStatus.PENDING,
@@ -78,18 +78,18 @@ public class NegoOffer extends BaseTimeEntity {
     }
 
     /**
-     * Creates create data.
-     * @param chatRoom the chat room value
-     * @param requester the requester value
-     * @param offerPrice the offer price value
-     * @return the create result
+     * 채팅방과 구매자, 제안 가격을 기준으로 새 네고 제안 엔티티를 생성한다.
+     * @param chatRoom 채팅방 엔티티
+     * @param requester 가격 제안을 만든 구매자 엔티티
+     * @param offerPrice 제안 가격
+     * @return 클라이언트에 반환할 API 응답
      */
     public static NegoOffer create(ChatRoom chatRoom, User requester, BigDecimal offerPrice) {
         return new NegoOffer(chatRoom, requester, offerPrice);
     }
 
     /**
-     * Handles accept behavior.
+     * 'accept' 메서드가 맡은 기능을 수행하고 필요한 결과를 반환한다.
      */
     public void accept() {
         validatePending();
@@ -98,7 +98,7 @@ public class NegoOffer extends BaseTimeEntity {
     }
 
     /**
-     * Handles reject behavior.
+     * 도메인 객체를 거절 상태로 변경한다.
      */
     public void reject() {
         validatePending();
@@ -107,7 +107,7 @@ public class NegoOffer extends BaseTimeEntity {
     }
 
     /**
-     * Handles request extension behavior.
+     * 구매자가 가격 제안의 응답 기한 연장을 요청한다.
      */
     public void requestExtension() {
         validatePending();
@@ -115,7 +115,7 @@ public class NegoOffer extends BaseTimeEntity {
     }
 
     /**
-     * Handles approve extension behavior.
+     * 판매자가 가격 제안 연장 요청을 승인하고 만료 시간을 늘린다.
      */
     public void approveExtension() {
         if (status != NegoOfferStatus.EXTENSION_REQUESTED) {
@@ -126,7 +126,7 @@ public class NegoOffer extends BaseTimeEntity {
     }
 
     /**
-     * Handles reject extension behavior.
+     * 판매자가 가격 제안 연장 요청을 거절한다.
      */
     public void rejectExtension() {
         if (status != NegoOfferStatus.EXTENSION_REQUESTED) {
@@ -136,17 +136,17 @@ public class NegoOffer extends BaseTimeEntity {
     }
 
     /**
-     * Checks whether is expired applies.
-     * @param now the now value
-     * @return the is expired result
+     * 조건 충족 여부를 확인한다.
+     * @param now 현재 시각
+     * @return 클라이언트에 반환할 API 응답
      */
     public boolean isExpired(LocalDateTime now) {
         return !expiresAt.isAfter(now);
     }
 
     /**
-     * Handles expire behavior.
-     * @param now the now value
+     * 도메인 객체를 만료 상태로 변경한다.
+     * @param now 현재 시각
      */
     public void expire(LocalDateTime now) {
         if (this.status == NegoOfferStatus.ACCEPTED
@@ -163,7 +163,7 @@ public class NegoOffer extends BaseTimeEntity {
     }
 
     /**
-     * Handles cancel behavior.
+     * 도메인 객체를 취소 상태로 변경한다.
      */
     public void cancel() {
         validatePending();

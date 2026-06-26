@@ -13,7 +13,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 /**
- * JPA entity that represents a region record.
+ * 지역 도메인 정보를 영속화하는 JPA 엔티티이다.
  */
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -52,13 +52,13 @@ public class Region {
     }
 
     /**
-     * Creates create data.
-     * @param name the name value
-     * @param code the code value
-     * @param sido the sido value
-     * @param sigungu the sigungu value
-     * @param eupmyeondong the eupmyeondong value
-     * @return the create result
+     * 지역 코드와 행정구역 이름으로 거래 지역 엔티티를 생성한다.
+     * @param name 이름 또는 제목
+     * @param code 지역 코드
+     * @param sido 시도 이름
+     * @param sigungu 시군구 이름
+     * @param eupmyeondong 읍면동 이름
+     * @return 클라이언트에 반환할 API 응답
      */
     public static Region create(String name, String code, String sido, String sigungu, String eupmyeondong) {
         return new Region(name, code, sido, sigungu, eupmyeondong);

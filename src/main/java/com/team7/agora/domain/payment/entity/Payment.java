@@ -33,7 +33,7 @@ import lombok.NoArgsConstructor;
         @Index(name = "idx_payments_status_requested", columnList = "status, requested_at")
     }
 /**
- * JPA entity that represents a payment record.
+ * 결제 도메인 정보를 영속화하는 JPA 엔티티이다.
  */
 )
 public class Payment {
@@ -43,7 +43,7 @@ public class Payment {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "trade_id", nullable = false)
+    @JoinColumn(name = "trade_id", nullable = false, unique = true)
     private Trade trade;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -79,20 +79,20 @@ public class Payment {
     }
 
     /**
-     * Handles ready behavior.
-     * @param trade the trade value
-     * @param payer the payer value
-     * @param amount the amount value
-     * @param orderId the order id value
-     * @return the ready result
+     * 'ready' 메서드가 맡은 기능을 수행하고 필요한 결과를 반환한다.
+     * @param trade 거래 엔티티 또는 거래 응답 변환 대상
+     * @param payer 결제를 진행한 회원 엔티티
+     * @param amount 금액
+     * @param orderId 주문 ID
+     * @return 클라이언트에 반환할 API 응답
      */
     public static Payment ready(Trade trade, User payer, BigDecimal amount, String orderId) {
         return new Payment(trade, payer, amount, orderId);
     }
 
     /**
-     * Validates payer rules.
-     * @param userId the user id value
+     * 규칙을 검증한다.
+     * @param userId 회원 ID
      */
     public void validatePayer(Long userId) {
         if (!payer.getId().equals(userId)) {
@@ -101,8 +101,8 @@ public class Payment {
     }
 
     /**
-     * Marks paid state.
-     * @param paymentKey the payment key value
+     * 결제 승인 정보를 반영해 결제를 완료 상태로 변경한다.
+     * @param paymentKey 결제 승인 키
      */
     public void markPaid(String paymentKey) {
         if (status == PaymentStatus.PAID) {
@@ -117,8 +117,8 @@ public class Payment {
     }
 
     /**
-     * Handles refund behavior.
-     * @param reason the reason value
+     * 결제 환불 요청을 검증하고 결제 상태를 환불 처리로 갱신한다.
+     * @param reason 처리 사유
      */
     public void refund(String reason) {
         if (status != PaymentStatus.PAID) {
@@ -129,7 +129,7 @@ public class Payment {
     }
 
     /**
-     * Marks failed state.
+     * 결제 실패 사유를 저장하고 결제를 실패 상태로 변경한다.
      */
     public void markFailed() {
         if (status == PaymentStatus.PAID) {

@@ -5,9 +5,9 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
 /**
- * Request payload for payment confirm by id operations.
- * @param paymentId the payment id value
- * @param paymentKey the payment key value
+ * Payment Confirm By Id 요청 본문을 표현하는 DTO이다.
+ * @param paymentId 결제 ID
+ * @param paymentKey 결제 승인 키
  */
 public record PaymentConfirmByIdRequest(
     @NotNull(message = "결제 ID는 필수입니다.")
