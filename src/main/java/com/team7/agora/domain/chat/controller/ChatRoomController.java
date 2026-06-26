@@ -6,8 +6,6 @@ import com.team7.agora.domain.chat.dto.request.ChatRoomOpenRequest;
 import com.team7.agora.domain.chat.realtime.ChatRedisPublisher;
 import com.team7.agora.domain.chat.service.ChatService;
 import com.team7.agora.global.auth.CustomUserDetails;
-import com.team7.agora.global.exception.BusinessException;
-import com.team7.agora.global.exception.ErrorCode;
 import com.team7.agora.global.response.ApiResponse;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
@@ -74,7 +72,6 @@ public class ChatRoomController {
         @Max(value = 500, message = "조회 크기는 500 이하여야 합니다.")
         @RequestParam(defaultValue = "20") int size
     ) {
-        validateMessagePageSize(size);
         List<ChatMessageResponse> responses = chatService.getMessages(userDetails.getUserId(), chatRoomId, lastMessageId, size);
         return ApiResponse.success("채팅 메시지 목록을 조회했습니다.", responses);
     }
@@ -97,11 +94,5 @@ public class ChatRoomController {
     private ApiResponse<ChatRoomResponse> openRoomResponse(CustomUserDetails userDetails, Long productId) {
         ChatRoomResponse response = chatService.openRoom(userDetails.getUserId(), productId);
         return ApiResponse.success("채팅방이 준비되었습니다.", response);
-    }
-
-    private void validateMessagePageSize(int size) {
-        if (size < 1 || size > 500) {
-            throw new BusinessException(ErrorCode.INVALID_REQUEST, "조회 크기는 1 이상 500 이하여야 합니다.");
-        }
     }
 }

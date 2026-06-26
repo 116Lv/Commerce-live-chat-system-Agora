@@ -40,7 +40,7 @@ public class Payment {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "trade_id", nullable = false)
+    @JoinColumn(name = "trade_id", nullable = false, unique = true)
     private Trade trade;
 
     @ManyToOne(fetch = FetchType.LAZY)

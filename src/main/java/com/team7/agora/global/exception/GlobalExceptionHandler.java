@@ -2,6 +2,7 @@
 package com.team7.agora.global.exception;
 
 import com.team7.agora.global.response.ApiResponse;
+import jakarta.validation.ConstraintViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
@@ -28,6 +29,20 @@ public class GlobalExceptionHandler {
                 .map(error -> error.getDefaultMessage() == null
                         ? ErrorCode.INVALID_REQUEST.getMessage()
                         : error.getDefaultMessage())
+                .orElse(ErrorCode.INVALID_REQUEST.getMessage());
+
+        return ResponseEntity
+                .status(ErrorCode.INVALID_REQUEST.getStatus())
+                .body(ApiResponse.error(message));
+    }
+
+    @ExceptionHandler(ConstraintViolationException.class)
+    public ResponseEntity<ApiResponse<Void>> handleConstraintViolationException(ConstraintViolationException exception) {
+        String message = exception.getConstraintViolations().stream()
+                .findFirst()
+                .map(violation -> violation.getMessage() == null
+                        ? ErrorCode.INVALID_REQUEST.getMessage()
+                        : violation.getMessage())
                 .orElse(ErrorCode.INVALID_REQUEST.getMessage());
 
         return ResponseEntity

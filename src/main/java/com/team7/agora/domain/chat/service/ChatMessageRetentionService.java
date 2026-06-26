@@ -20,8 +20,6 @@ public class ChatMessageRetentionService {
     @Transactional
     public long deleteMessagesOlderThanRetentionPeriod(LocalDateTime now) {
         LocalDateTime threshold = now.minusMonths(RETENTION_MONTHS);
-        long deletedCount = chatMessageRepository.countByCreatedAtBefore(threshold);
-        chatMessageRepository.deleteByCreatedAtBefore(threshold);
-        return deletedCount;
+        return chatMessageRepository.deleteByCreatedAtBefore(threshold);
     }
 }

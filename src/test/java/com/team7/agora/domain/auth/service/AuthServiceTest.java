@@ -30,6 +30,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -118,6 +119,21 @@ class AuthServiceTest {
                 .extracting("errorCode")
                 .isEqualTo(ErrorCode.DUPLICATE_EMAIL);
         verify(userRepository, never()).save(any(User.class));
+    }
+
+    @Test
+    void signup_mapsUniqueConstraintViolationToDuplicateEmail() {
+        // given
+        AuthService authService = createService();
+        SignupRequest request = new SignupRequest("user@test.com", "password123!", "동네유저");
+        when(userRepository.existsByEmailIgnoreCase("user@test.com")).thenReturn(false);
+        when(userRepository.save(any(User.class))).thenThrow(new DataIntegrityViolationException("users.email"));
+
+        // when & then
+        assertThatThrownBy(() -> authService.signup(request))
+                .isInstanceOf(BusinessException.class)
+                .extracting("errorCode")
+                .isEqualTo(ErrorCode.DUPLICATE_EMAIL);
     }
 
     @Test

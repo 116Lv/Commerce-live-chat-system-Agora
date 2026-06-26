@@ -22,7 +22,7 @@ class ChatMessageRetentionServiceTest {
         ChatMessageRetentionService service = new ChatMessageRetentionService(chatMessageRepository);
         LocalDateTime now = LocalDateTime.of(2026, 6, 26, 0, 0);
         LocalDateTime expectedThreshold = now.minusMonths(3);
-        when(chatMessageRepository.countByCreatedAtBefore(expectedThreshold)).thenReturn(7L);
+        when(chatMessageRepository.deleteByCreatedAtBefore(expectedThreshold)).thenReturn(7);
 
         long deletedCount = service.deleteMessagesOlderThanRetentionPeriod(now);
 

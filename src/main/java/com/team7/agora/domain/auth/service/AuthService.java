@@ -20,6 +20,7 @@ import java.time.ZoneOffset;
 import java.util.Locale;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -61,8 +62,16 @@ public class AuthService {
                 passwordEncoder.encode(request.password()),
                 request.nickname()
         );
-        User savedUser = userRepository.save(user);
+        User savedUser = saveUserOrThrowDuplicateEmail(user);
         return new SignupResponse(savedUser.getEmail(), savedUser.getNickname());
+    }
+
+    private User saveUserOrThrowDuplicateEmail(User user) {
+        try {
+            return userRepository.save(user);
+        } catch (DataIntegrityViolationException e) {
+            throw new BusinessException(ErrorCode.DUPLICATE_EMAIL);
+        }
     }
 
     @Transactional

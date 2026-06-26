@@ -33,7 +33,9 @@ class ProductSearchServiceTest {
 
     @Test
     void searchV1_delegatesToRepositoryEveryCall() {
-        ProductSearchService service = new ProductSearchService(productRepository);
+        ProductSearchService service = new ProductSearchService(
+            productRepository, productSearchCacheLoader, searchPerformanceRecorder
+        );
         ProductSearchCondition condition = new ProductSearchCondition(" 자전거 ", null, null, PageRequest.of(0, 20));
         when(productRepository.search(condition)).thenReturn(List.of(
             new ProductSearchResponse(1L, "자전거", BigDecimal.valueOf(73000), "서울 강남구 역삼동")

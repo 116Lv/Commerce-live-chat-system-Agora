@@ -17,14 +17,6 @@ public class ProductSearchService {
     private final ProductSearchCacheLoader productSearchCacheLoader;
     private final SearchPerformanceRecorder searchPerformanceRecorder;
 
-    public ProductSearchService(ProductRepository productRepository) {
-        this(productRepository, new SearchPerformanceRecorder());
-    }
-
-    private ProductSearchService(ProductRepository productRepository, SearchPerformanceRecorder searchPerformanceRecorder) {
-        this(productRepository, new ProductSearchCacheLoader(productRepository, searchPerformanceRecorder), searchPerformanceRecorder);
-    }
-
     @Autowired
     public ProductSearchService(
         ProductRepository productRepository,

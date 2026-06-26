@@ -40,7 +40,6 @@ class CouponIssueConcurrencyTest {
         ));
         couponRepository.save(Coupon.firstCome("5천원 할인", 5000, 10000, 30));
         for (long i = 1; i <= 30; i++) {
-            when(userRepository.existsById(i)).thenReturn(true);
             when(userRepository.findById(i)).thenReturn(
                 Optional.of(User.signup("user" + i + "@test.com", "encoded", "유저" + i, "01012345678"))
             );
@@ -48,7 +47,7 @@ class CouponIssueConcurrencyTest {
         CouponIssueTransactionExecutor executor = new CouponIssueTransactionExecutor(
             eventRepository, couponRepository, issueRepository, userRepository
         );
-        CouponIssueService service = new CouponIssueService(userRepository, LockService.local(), executor);
+        CouponIssueService service = new CouponIssueService(LockService.local(), executor);
         ExecutorService executorService = Executors.newFixedThreadPool(30);
         CountDownLatch start = new CountDownLatch(1);
         CountDownLatch done = new CountDownLatch(30);

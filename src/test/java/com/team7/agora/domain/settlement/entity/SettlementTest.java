@@ -10,7 +10,9 @@ import com.team7.agora.domain.region.entity.Region;
 import com.team7.agora.domain.settlement.enums.SettlementStatus;
 import com.team7.agora.domain.trade.entity.Trade;
 import com.team7.agora.domain.user.entity.User;
+import jakarta.persistence.JoinColumn;
 import java.math.BigDecimal;
+import java.lang.reflect.Field;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -43,6 +45,16 @@ class SettlementTest {
         assertThat(settlement.getSeller()).isSameAs(seller);
         assertThat(settlement.getAmount()).isEqualByComparingTo(BigDecimal.valueOf(50000));
         assertThat(settlement.getStatus()).isEqualTo(SettlementStatus.HELD);
+    }
+
+    @Test
+    void paymentJoinColumnIsUniqueToPreventDuplicateSettlementPerPayment() throws NoSuchFieldException {
+        Field paymentField = Settlement.class.getDeclaredField("payment");
+
+        JoinColumn joinColumn = paymentField.getAnnotation(JoinColumn.class);
+
+        assertThat(joinColumn).isNotNull();
+        assertThat(joinColumn.unique()).isTrue();
     }
 
     @Test
