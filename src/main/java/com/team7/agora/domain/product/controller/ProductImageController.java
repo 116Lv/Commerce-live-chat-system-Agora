@@ -3,7 +3,7 @@ package com.team7.agora.domain.product.controller;
 
 import com.team7.agora.domain.product.dto.response.ProductImageResponse;
 import com.team7.agora.domain.product.service.ProductImageService;
-import com.team7.agora.global.auth.AuthUser;
+import com.team7.agora.global.auth.CustomUserDetails;
 import com.team7.agora.global.response.ApiResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -41,11 +41,11 @@ public class ProductImageController {
      */
     @PostMapping("/{productId}/images")
     public ResponseEntity<ApiResponse<ProductImageResponse>> upload(
-        @AuthenticationPrincipal AuthUser authUser,
+        @AuthenticationPrincipal CustomUserDetails userDetails,
         @PathVariable Long productId,
         @RequestParam("image") MultipartFile image
     ) {
-        ProductImageResponse response = productImageService.upload(authUser.userId(), productId, image);
+        ProductImageResponse response = productImageService.upload(userDetails.getUserId(), productId, image);
         return ResponseEntity
             .status(HttpStatus.CREATED)
             .body(ApiResponse.success("상품 이미지가 업로드되었습니다.", response));

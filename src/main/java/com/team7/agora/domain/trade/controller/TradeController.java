@@ -3,7 +3,7 @@ package com.team7.agora.domain.trade.controller;
 import com.team7.agora.domain.trade.dto.response.TradeDetailResponse;
 import com.team7.agora.domain.trade.dto.response.TradeResponse;
 import com.team7.agora.domain.trade.service.TradeService;
-import com.team7.agora.global.auth.AuthUser;
+import com.team7.agora.global.auth.CustomUserDetails;
 import com.team7.agora.global.response.ApiResponse;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -37,10 +37,10 @@ public class TradeController {
      */
     @GetMapping("/{tradeId}")
     public ApiResponse<TradeDetailResponse> getDetail(
-        @AuthenticationPrincipal AuthUser authUser,
+        @AuthenticationPrincipal CustomUserDetails userDetails,
         @PathVariable Long tradeId
     ) {
-        TradeDetailResponse response = tradeService.getTradeDetail(authUser.userId(), tradeId);
+        TradeDetailResponse response = tradeService.getTradeDetail(userDetails.getUserId(), tradeId);
         return ApiResponse.success("거래 상세 조회가 완료되었습니다.", response);
     }
 
@@ -52,10 +52,10 @@ public class TradeController {
      */
     @PostMapping("/products/{productId}")
     public ApiResponse<TradeResponse> start(
-        @AuthenticationPrincipal AuthUser authUser,
+        @AuthenticationPrincipal CustomUserDetails userDetails,
         @PathVariable Long productId
     ) {
-        TradeResponse response = tradeService.startTrade(authUser.userId(), productId);
+        TradeResponse response = tradeService.startTrade(userDetails.getUserId(), productId);
         return ApiResponse.success("구매 신청이 완료되었습니다.", response);
     }
 
@@ -67,10 +67,10 @@ public class TradeController {
      */
     @PostMapping("/{tradeId}/complete")
     public ApiResponse<TradeResponse> complete(
-        @AuthenticationPrincipal AuthUser authUser,
+        @AuthenticationPrincipal CustomUserDetails userDetails,
         @PathVariable Long tradeId
     ) {
-        TradeResponse response = tradeService.completeTrade(authUser.userId(), tradeId);
+        TradeResponse response = tradeService.completeTrade(userDetails.getUserId(), tradeId);
         return ApiResponse.success("구매 확정이 완료되었습니다. 판매자 정산이 시작됩니다.", response);
     }
 
@@ -82,10 +82,10 @@ public class TradeController {
      */
     @PostMapping("/{tradeId}/expire-reservation")
     public ApiResponse<TradeResponse> expireReservation(
-        @AuthenticationPrincipal AuthUser authUser,
+        @AuthenticationPrincipal CustomUserDetails userDetails,
         @PathVariable Long tradeId
     ) {
-        TradeResponse response = tradeService.expireReservation(authUser, tradeId);
+        TradeResponse response = tradeService.expireReservation(userDetails.toAuthUser(), tradeId);
         return ApiResponse.success("예약이 만료되었습니다.", response);
     }
 
@@ -97,10 +97,10 @@ public class TradeController {
      */
     @PostMapping("/{tradeId}/rating-request-message")
     public ApiResponse<Void> sendRatingRequestMessage(
-        @AuthenticationPrincipal AuthUser authUser,
+        @AuthenticationPrincipal CustomUserDetails userDetails,
         @PathVariable Long tradeId
     ) {
-        tradeService.sendRatingRequestMessage(authUser, tradeId);
+        tradeService.sendRatingRequestMessage(userDetails.toAuthUser(), tradeId);
         return ApiResponse.success("평가 요청 메시지를 발송했습니다.", null);
     }
 }

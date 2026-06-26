@@ -4,7 +4,7 @@ import com.team7.agora.domain.product.dto.request.ProductCreateRequest;
 import com.team7.agora.domain.product.dto.request.ProductUpdateRequest;
 import com.team7.agora.domain.product.dto.response.ProductResponse;
 import com.team7.agora.domain.product.service.ProductService;
-import com.team7.agora.global.auth.AuthUser;
+import com.team7.agora.global.auth.CustomUserDetails;
 import com.team7.agora.global.response.ApiResponse;
 import jakarta.validation.Valid;
 import java.util.List;
@@ -47,10 +47,10 @@ public class ProductController {
      */
     @PostMapping
     public ResponseEntity<ApiResponse<ProductResponse>> create(
-        @AuthenticationPrincipal AuthUser authUser,
+        @AuthenticationPrincipal CustomUserDetails userDetails,
         @Valid @RequestBody ProductCreateRequest request
     ) {
-        ProductResponse response = productService.create(authUser.userId(), request);
+        ProductResponse response = productService.create(userDetails.getUserId(), request);
         return ResponseEntity
             .status(HttpStatus.CREATED)
             .body(ApiResponse.success("상품이 등록되었습니다.", response));
@@ -77,12 +77,12 @@ public class ProductController {
      */
     @GetMapping
     public ResponseEntity<ApiResponse<List<ProductResponse>>> getProducts(
-        @AuthenticationPrincipal AuthUser authUser,
+        @AuthenticationPrincipal CustomUserDetails userDetails,
         @RequestParam(required = false) Long regionId,
         @RequestParam(defaultValue = "0") int page,
         @RequestParam(defaultValue = "20") int size
     ) {
-        Long viewerId = authUser == null ? null : authUser.userId();
+        Long viewerId = userDetails == null ? null : userDetails.getUserId();
         List<ProductResponse> responses = productService.getProducts(viewerId, regionId, PageRequest.of(page, size));
         return ResponseEntity.ok(ApiResponse.success("상품 목록을 조회했습니다.", responses));
     }
@@ -96,11 +96,11 @@ public class ProductController {
      */
     @PatchMapping("/{productId}")
     public ResponseEntity<ApiResponse<ProductResponse>> update(
-        @AuthenticationPrincipal AuthUser authUser,
+        @AuthenticationPrincipal CustomUserDetails userDetails,
         @PathVariable Long productId,
         @Valid @RequestBody ProductUpdateRequest request
     ) {
-        ProductResponse response = productService.update(authUser.userId(), productId, request);
+        ProductResponse response = productService.update(userDetails.getUserId(), productId, request);
         return ResponseEntity.ok(ApiResponse.success("상품이 수정되었습니다.", response));
     }
 
@@ -112,10 +112,10 @@ public class ProductController {
      */
     @DeleteMapping("/{productId}")
     public ResponseEntity<ApiResponse<Void>> delete(
-        @AuthenticationPrincipal AuthUser authUser,
+        @AuthenticationPrincipal CustomUserDetails userDetails,
         @PathVariable Long productId
     ) {
-        productService.delete(authUser.userId(), productId);
+        productService.delete(userDetails.getUserId(), productId);
         return ResponseEntity.ok(ApiResponse.success("상품이 삭제되었습니다.", null));
     }
 }

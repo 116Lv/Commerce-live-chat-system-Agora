@@ -3,7 +3,7 @@ package com.team7.agora.domain.product.controller;
 
 import com.team7.agora.domain.product.dto.response.ProductResponse;
 import com.team7.agora.domain.product.service.ProductService;
-import com.team7.agora.global.auth.AuthUser;
+import com.team7.agora.global.auth.CustomUserDetails;
 import com.team7.agora.global.response.ApiResponse;
 import java.util.List;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -32,7 +32,7 @@ public class MyProductController {
      * @return the get my products result
      */
     @GetMapping("/api/users/me/products")
-    public ApiResponse<List<ProductResponse>> getMyProducts(@AuthenticationPrincipal AuthUser authUser) {
-        return ApiResponse.success("내가 등록한 상품 목록을 조회했습니다.", productService.getMyProducts(authUser.userId()));
+    public ApiResponse<List<ProductResponse>> getMyProducts(@AuthenticationPrincipal CustomUserDetails userDetails) {
+        return ApiResponse.success("내가 등록한 상품 목록을 조회했습니다.", productService.getMyProducts(userDetails.getUserId()));
     }
 }

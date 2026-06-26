@@ -127,4 +127,8 @@ public class CustomUserDetails implements UserDetails {
     public boolean isEnabled() {
         return status == UserStatus.ACTIVE;
     }
+
+    public AuthUser toAuthUser() {
+        return new AuthUser(userId, email, role.name(), nickname);
+    }
 }

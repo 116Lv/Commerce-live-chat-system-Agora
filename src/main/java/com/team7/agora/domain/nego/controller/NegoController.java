@@ -3,7 +3,7 @@ package com.team7.agora.domain.nego.controller;
 import com.team7.agora.domain.nego.dto.request.NegoOfferCreateRequest;
 import com.team7.agora.domain.nego.dto.response.NegoOfferResponse;
 import com.team7.agora.domain.nego.service.NegoService;
-import com.team7.agora.global.auth.AuthUser;
+import com.team7.agora.global.auth.CustomUserDetails;
 import com.team7.agora.global.response.ApiResponse;
 import jakarta.validation.Valid;
 import java.util.function.BiFunction;
@@ -41,12 +41,12 @@ public class NegoController {
      */
     @PostMapping("/chat-rooms/{chatRoomId}")
     public ApiResponse<NegoOfferResponse> createOffer(
-        @AuthenticationPrincipal AuthUser authUser,
+        @AuthenticationPrincipal CustomUserDetails userDetails,
         @PathVariable Long chatRoomId,
         @Valid @RequestBody NegoOfferCreateRequest request
     ) {
         NegoOfferResponse response = negoService.createOffer(
-            authUser.userId(),
+            userDetails.getUserId(),
             chatRoomId,
             request.offerPrice()
         );
@@ -61,10 +61,10 @@ public class NegoController {
      */
     @RequestMapping(path = "/{offerId}/accept", method = {RequestMethod.PATCH, RequestMethod.POST})
     public ApiResponse<NegoOfferResponse> acceptOffer(
-        @AuthenticationPrincipal AuthUser authUser,
+        @AuthenticationPrincipal CustomUserDetails userDetails,
         @PathVariable Long offerId
     ) {
-        return handleOfferAction(authUser, offerId, negoService::acceptOffer, "가격 제안을 수락했습니다.");
+        return handleOfferAction(userDetails, offerId, negoService::acceptOffer, "가격 제안을 수락했습니다.");
     }
 
     /**
@@ -75,10 +75,10 @@ public class NegoController {
      */
     @RequestMapping(path = "/{offerId}/reject", method = {RequestMethod.PATCH, RequestMethod.POST})
     public ApiResponse<NegoOfferResponse> rejectOffer(
-        @AuthenticationPrincipal AuthUser authUser,
+        @AuthenticationPrincipal CustomUserDetails userDetails,
         @PathVariable Long offerId
     ) {
-        return handleOfferAction(authUser, offerId, negoService::rejectOffer, "가격 제안을 거절했습니다.");
+        return handleOfferAction(userDetails, offerId, negoService::rejectOffer, "가격 제안을 거절했습니다.");
     }
 
     /**
@@ -89,10 +89,10 @@ public class NegoController {
      */
     @RequestMapping(path = "/{offerId}/extension-request", method = {RequestMethod.PATCH, RequestMethod.POST})
     public ApiResponse<NegoOfferResponse> requestExtension(
-        @AuthenticationPrincipal AuthUser authUser,
+        @AuthenticationPrincipal CustomUserDetails userDetails,
         @PathVariable Long offerId
     ) {
-        return handleOfferAction(authUser, offerId, negoService::requestExtension, "가격 제안 연장을 요청했습니다.");
+        return handleOfferAction(userDetails, offerId, negoService::requestExtension, "가격 제안 연장을 요청했습니다.");
     }
 
     /**
@@ -103,10 +103,10 @@ public class NegoController {
      */
     @RequestMapping(path = "/{offerId}/extension-approve", method = {RequestMethod.PATCH, RequestMethod.POST})
     public ApiResponse<NegoOfferResponse> approveExtension(
-        @AuthenticationPrincipal AuthUser authUser,
+        @AuthenticationPrincipal CustomUserDetails userDetails,
         @PathVariable Long offerId
     ) {
-        return handleOfferAction(authUser, offerId, negoService::approveExtension, "가격 제안 연장을 승인했습니다.");
+        return handleOfferAction(userDetails, offerId, negoService::approveExtension, "가격 제안 연장을 승인했습니다.");
     }
 
     /**
@@ -117,10 +117,10 @@ public class NegoController {
      */
     @RequestMapping(path = "/{offerId}/extension-reject", method = {RequestMethod.PATCH, RequestMethod.POST})
     public ApiResponse<NegoOfferResponse> rejectExtension(
-        @AuthenticationPrincipal AuthUser authUser,
+        @AuthenticationPrincipal CustomUserDetails userDetails,
         @PathVariable Long offerId
     ) {
-        return handleOfferAction(authUser, offerId, negoService::rejectExtension, "가격 제안 연장을 거절했습니다.");
+        return handleOfferAction(userDetails, offerId, negoService::rejectExtension, "가격 제안 연장을 거절했습니다.");
     }
 
     /**
@@ -131,20 +131,20 @@ public class NegoController {
      */
     @PostMapping("/{offerId}/expire")
     public ApiResponse<NegoOfferResponse> expireOffer(
-        @AuthenticationPrincipal AuthUser authUser,
+        @AuthenticationPrincipal CustomUserDetails userDetails,
         @PathVariable Long offerId
     ) {
-        NegoOfferResponse response = negoService.expireOffer(authUser, offerId);
+        NegoOfferResponse response = negoService.expireOffer(userDetails.toAuthUser(), offerId);
         return ApiResponse.success("가격 제안이 만료 처리되었습니다.", response);
     }
 
     private ApiResponse<NegoOfferResponse> handleOfferAction(
-        AuthUser authUser,
+        CustomUserDetails userDetails,
         Long offerId,
         BiFunction<Long, Long, NegoOfferResponse> action,
         String message
     ) {
-        NegoOfferResponse response = action.apply(authUser.userId(), offerId);
+        NegoOfferResponse response = action.apply(userDetails.getUserId(), offerId);
         return ApiResponse.success(message, response);
     }
 }

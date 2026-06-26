@@ -7,7 +7,9 @@ import com.team7.agora.domain.product.dto.request.ProductCreateRequest;
 import com.team7.agora.domain.product.dto.response.ProductResponse;
 import com.team7.agora.domain.product.enums.ProductStatus;
 import com.team7.agora.domain.product.service.ProductService;
-import com.team7.agora.global.auth.AuthUser;
+import com.team7.agora.domain.user.enums.UserRole;
+import com.team7.agora.domain.user.enums.UserStatus;
+import com.team7.agora.global.auth.CustomUserDetails;
 import com.team7.agora.global.response.ApiResponse;
 import java.math.BigDecimal;
 import org.junit.jupiter.api.Test;
@@ -25,7 +27,7 @@ class ProductControllerTest {
     @Test
     void create_returnsCreatedProductEnvelope() {
         ProductController controller = new ProductController(productService);
-        AuthUser authUser = new AuthUser(1L, "user@test.com", "ROLE_USER", "동네유저");
+        CustomUserDetails authUser = new CustomUserDetails(1L, "user@test.com", "password", UserRole.ROLE_USER, UserStatus.ACTIVE, "동네유저");
         ProductCreateRequest request = new ProductCreateRequest(
             "자전거",
             "상태 좋은 중고 자전거입니다.",
