@@ -58,24 +58,24 @@ VALUES
     (4, 3, 1),
     (5, 4, 1);
 
-INSERT INTO coupons (id, name, discount_amount, min_order_amount, type, status, valid_days)
+INSERT INTO coupon_events (
+    id, type, name, total_quantity, issued_quantity, start_at, end_at,
+    discount_amount, min_order_amount, valid_days, status, created_at
+)
 VALUES
-    (1, '첫 거래 5천원 할인 쿠폰', 5000, 10000, 'FIRST_COME', 'ACTIVE', 30),
-    (2, '매너점수 우수 쿠폰', 3000, 10000, 'SMILE_REWARD', 'ACTIVE', 30),
-    (3, '관리자 발급 테스트 쿠폰', 7000, 30000, 'FIRST_COME', 'ACTIVE', 14);
+    (1, 'FIRST_COME', '동네 첫 거래 선착순 쿠폰', 100, 3, '2026-01-01 00:00:00', '2026-12-31 23:59:59', 5000, 10000, 30, 'ACTIVE', '2026-01-01 00:00:00'),
+    (2, 'NEW_SIGNUP', '스마일 리워드 쿠폰 이벤트', 50, 1, '2026-01-01 00:00:00', '2026-12-31 23:59:59', 3000, 10000, 30, 'ACTIVE', '2026-01-01 00:00:00'),
+    (3, 'ADMIN_INDIVIDUAL', '관리자 발급 테스트 쿠폰', 10, 0, '2026-01-01 00:00:00', '2026-12-31 23:59:59', 7000, 30000, 14, 'ACTIVE', '2026-01-01 00:00:00');
 
-INSERT INTO coupon_events (id, name, total_quantity, issued_quantity, start_at, end_at, status, created_at)
+INSERT INTO coupons (id, coupon_event_id, user_id, status, issued_at, expires_at)
 VALUES
-    (1, '동네 첫 거래 선착순 쿠폰', 100, 3, '2026-01-01 00:00:00', '2026-12-31 23:59:59', 'ACTIVE', '2026-01-01 00:00:00'),
-    (2, '스마일 리워드 쿠폰 이벤트', 50, 1, '2026-01-01 00:00:00', '2026-12-31 23:59:59', 'ACTIVE', '2026-01-01 00:00:00'),
-    (3, '종료된 테스트 쿠폰 이벤트', 10, 10, '2026-01-01 00:00:00', '2026-01-31 23:59:59', 'ENDED', '2026-01-01 00:00:00');
-
-INSERT INTO coupon_issues (id, coupon_id, coupon_event_id, user_id, status, issued_at)
-VALUES
-    (1, 1, 1, 1, 'ISSUED', '2026-06-23 09:00:00'),
-    (2, 1, 1, 2, 'USED', '2026-06-23 09:05:00'),
-    (3, 1, 1, 3, 'ISSUED', '2026-06-23 09:10:00'),
-    (4, 2, 2, 3, 'ISSUED', '2026-06-23 09:15:00');
+    (1, 1, 1, 'ISSUED', '2026-06-23 09:00:00', '2026-07-23 09:00:00'),
+    (2, 1, 2, 'USED', '2026-06-23 09:05:00', '2026-07-23 09:05:00'),
+    (3, 1, 3, 'ISSUED', '2026-06-23 09:10:00', '2026-07-23 09:10:00'),
+    (4, 1, NULL, 'AVAILABLE', NULL, NULL),
+    (5, 2, 3, 'ISSUED', '2026-06-23 09:15:00', '2026-07-23 09:15:00'),
+    (6, 2, NULL, 'AVAILABLE', NULL, NULL),
+    (7, 3, NULL, 'AVAILABLE', NULL, NULL);
 
 INSERT INTO chat_rooms (id, product_id, seller_id, buyer_id, status, created_at, seller_last_read_at, buyer_last_read_at)
 VALUES

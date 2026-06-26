@@ -1,19 +1,31 @@
 package com.team7.agora.domain.coupon.repository;
 
 import com.team7.agora.domain.coupon.entity.Coupon;
+import com.team7.agora.domain.coupon.enums.CouponStatus;
+import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
-/**
- * Coupon 데이터 저장과 조회를 담당하는 저장소 인터페이스이다.
- */
 public interface CouponRepository {
 
     Coupon save(Coupon coupon);
 
+    List<Coupon> saveAll(List<Coupon> coupons);
+
     Optional<Coupon> findById(Long couponId);
 
-    Optional<Coupon> findFirstComeCoupon();
+    Optional<Coupon> findFirstAvailableSlotForUpdate(Long eventId);
 
-    List<Coupon> findAll();
+    List<Coupon> findAllByUserIdAndStatusIn(Long userId, Collection<CouponStatus> statuses);
+
+    List<Coupon> findAllByCouponEventIdAndUserIsNotNull(Long eventId);
+
+    boolean existsByCouponEventIdAndUserId(Long eventId, Long userId);
+
+    void deleteByCouponEventIdAndUserIsNull(Long eventId);
+
+    int deleteAvailableSlotsForEndedEventsBefore(LocalDateTime now);
+
+    int expireIssuedCouponsBefore(LocalDateTime now);
 }
