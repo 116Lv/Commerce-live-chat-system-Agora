@@ -19,17 +19,17 @@ public class CustomUserDetailsService implements UserDetailsService {
     private final UserRepository userRepository;
 
     /**
-     * 의존성을 주입받아 인스턴스를 생성한다.
-     * @param userRepository 입력 값
+     * 필요한 의존성을 주입받아 컴포넌트를 생성한다.
+     * @param userRepository 데이터를 조회하고 저장하는 리포지토리
      */
     public CustomUserDetailsService(UserRepository userRepository) {
         this.userRepository = userRepository;
     }
 
     /**
-     * 데이터를 반환한다.
-     * @param email 입력 값
-     * @return 처리 결과
+     * 'loadUserByUsername' 메서드는 필요한 데이터를 조회해 호출한 쪽에 반환한다.
+     * @param email 이메일
+     * @return 클라이언트에 반환할 API 응답
      */
     @Override
     @Transactional(readOnly = true)

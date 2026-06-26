@@ -13,7 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * 애플리케이션 유스케이스를 조정하는 서비스이다.
+ * 신고 관련 비즈니스 유스케이스를 처리하는 서비스이다.
  */
 @Service
 @Transactional(readOnly = true)
@@ -24,10 +24,10 @@ public class ReportService {
     private final ProductRepository productRepository;
 
     /**
-     * 의존성을 주입받아 인스턴스를 생성한다.
-     * @param reportRepository 입력 값
-     * @param userRepository 입력 값
-     * @param productRepository 입력 값
+     * 필요한 의존성을 주입받아 컴포넌트를 생성한다.
+     * @param reportRepository 데이터를 조회하고 저장하는 리포지토리
+     * @param userRepository 데이터를 조회하고 저장하는 리포지토리
+     * @param productRepository 데이터를 조회하고 저장하는 리포지토리
      */
     public ReportService(
         ReportRepository reportRepository,
@@ -40,11 +40,11 @@ public class ReportService {
     }
 
     /**
-     * 도메인 객체를 생성한다.
-     * @param reporterId 입력 값
-     * @param productId 입력 값
-     * @param reason 입력 값
-     * @return 처리 결과
+     * 사용자가 상품에 대한 신고 내용을 등록한다.
+     * @param reporterId 신고를 등록한 회원 ID
+     * @param productId 상품 ID
+     * @param reason 처리 사유
+     * @return 클라이언트에 반환할 API 응답
      */
     @Transactional
     public ReportResponse createProductReport(Long reporterId, Long productId, String reason) {
@@ -62,11 +62,11 @@ public class ReportService {
     }
 
     /**
-     * 도메인 객체를 생성한다.
-     * @param reporterId 입력 값
-     * @param reportedUserId 입력 값
-     * @param reason 입력 값
-     * @return 처리 결과
+     * 사용자가 다른 회원에 대한 신고 내용을 등록한다.
+     * @param reporterId 신고를 등록한 회원 ID
+     * @param reportedUserId 신고 대상 회원 ID
+     * @param reason 처리 사유
+     * @return 클라이언트에 반환할 API 응답
      */
     @Transactional
     public ReportResponse createUserReport(Long reporterId, Long reportedUserId, String reason) {

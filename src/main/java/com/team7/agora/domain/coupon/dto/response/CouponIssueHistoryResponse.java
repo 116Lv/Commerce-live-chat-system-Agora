@@ -5,10 +5,10 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 /**
- * 응답 본문을 전달하는 DTO이다.
- * @param couponId 입력 값
- * @param totalIssued 입력 값
- * @param issues 입력 값
+ * Coupon Issue History 응답 본문을 표현하는 DTO이다.
+ * @param couponId 쿠폰 ID
+ * @param totalIssued 전체 발급 건수
+ * @param issues 쿠폰 발급 이력 목록
  */
 public record CouponIssueHistoryResponse(
     Long couponId,
@@ -17,10 +17,10 @@ public record CouponIssueHistoryResponse(
 ) {
 
     /**
-     * 요청한 동작을 처리한다.
-     * @param couponId 입력 값
-     * @param couponIssues 입력 값
-     * @return 처리 결과
+     * 도메인 객체를 클라이언트 응답 DTO로 변환한다.
+     * @param couponId 쿠폰 ID
+     * @param couponIssues 응답으로 변환할 쿠폰 발급 엔티티 목록
+     * @return 클라이언트에 반환할 API 응답
      */
     public static CouponIssueHistoryResponse of(Long couponId, List<CouponIssue> couponIssues) {
         List<IssueRecord> records = couponIssues.stream()

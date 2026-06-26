@@ -4,13 +4,13 @@ import com.team7.agora.global.auth.AuthUser;
 import java.security.Principal;
 
 /**
- * REST 엔드포인트를 제공하는 컨트롤러이다.
- * @param authUser 입력 값
+ * WebSocket/STOMP 연결에서 인증된 사용자를 식별하기 위해 사용하는 Principal 구현체이다.
+ * @param authUser 인증 사용자 정보
  */
 public record StompPrincipal(AuthUser authUser) implements Principal {
     /**
-     * 데이터를 반환한다.
-     * @return 처리 결과
+     * STOMP 세션에서 인증 사용자를 구분할 사용자 ID 문자열을 반환한다.
+     * @return STOMP 세션에서 사용할 사용자 ID 문자열
      */
     @Override
     public String getName() {

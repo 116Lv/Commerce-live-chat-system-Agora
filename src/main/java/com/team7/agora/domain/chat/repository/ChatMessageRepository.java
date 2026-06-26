@@ -11,7 +11,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 /**
- * 데이터 저장과 조회를 위한 저장소 계약이다.
+ * Chat Message 데이터 저장과 조회를 담당하는 저장소 인터페이스이다.
  */
 public interface ChatMessageRepository extends JpaRepository<ChatMessage, Long> {
 

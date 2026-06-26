@@ -9,7 +9,7 @@ import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 /**
- * 데이터 저장과 조회를 위한 저장소 계약이다.
+ * 거래 데이터 저장과 조회를 담당하는 저장소 인터페이스이다.
  */
 public interface TradeRepository extends JpaRepository<Trade, Long> {
 

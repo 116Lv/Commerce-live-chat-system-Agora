@@ -13,7 +13,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.validation.annotation.Validated;
 
 /**
- * REST 엔드포인트를 제공하는 컨트롤러이다.
+ * 실시간 채팅 기능에서 클라이언트의 HTTP 요청을 받아 서비스 계층으로 전달하는 컨트롤러이다.
  */
 @Controller
 @Validated
@@ -28,10 +28,10 @@ public class ChatStompController {
     }
 
     /**
-     * 요청한 동작을 처리한다.
-     * @param chatRoomId 입력 값
-     * @param request 입력 값
-     * @param principal 입력 값
+     * 시스템 알림 메시지를 채팅방 메시지로 저장해 대화 흐름에 남긴다.
+     * @param chatRoomId 채팅방 ID
+     * @param request 요청 본문
+     * @param principal 인증 주체
      */
     @MessageMapping("/chat/{chatRoomId}/messages")
     public void send(

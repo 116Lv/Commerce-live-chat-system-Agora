@@ -6,15 +6,15 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 /**
- * 응답 본문을 전달하는 DTO이다.
- * @param offerId 입력 값
- * @param chatRoomId 입력 값
- * @param requesterId 입력 값
- * @param offerPrice 입력 값
- * @param status 입력 값
- * @param createdAt 입력 값
- * @param expiresAt 입력 값
- * @param respondedAt 입력 값
+ * Nego Offer 응답 본문을 표현하는 DTO이다.
+ * @param offerId 네고 제안 ID
+ * @param chatRoomId 채팅방 ID
+ * @param requesterId 가격 제안을 생성한 구매자 ID
+ * @param offerPrice 제안 가격
+ * @param status 조회 또는 변경할 상태
+ * @param createdAt 데이터가 생성된 시각
+ * @param expiresAt 토큰 또는 제안이 만료되는 시각
+ * @param respondedAt 판매자가 제안에 응답한 시각
  */
 public record NegoOfferResponse(
     Long offerId,
@@ -30,8 +30,8 @@ public record NegoOfferResponse(
 
     /**
      * 도메인 객체로부터 응답 객체를 생성한다.
-     * @param offer 입력 값
-     * @return 처리 결과
+     * @param offer 네고 제안 엔티티
+     * @return 클라이언트에 반환할 API 응답
      */
     public static NegoOfferResponse from(NegoOffer offer) {
         return from(offer, (Long) null);

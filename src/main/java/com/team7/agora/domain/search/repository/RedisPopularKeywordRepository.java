@@ -9,7 +9,7 @@ import org.springframework.data.redis.core.ZSetOperations;
 import org.springframework.stereotype.Repository;
 
 /**
- * 영속성 작업을 구현하는 저장소 어댑터이다.
+ * Redis 인기 검색어 영속성 작업을 구현하는 저장소 어댑터이다.
  */
 @Repository
 public class RedisPopularKeywordRepository implements PopularKeywordRepository {
@@ -25,16 +25,16 @@ public class RedisPopularKeywordRepository implements PopularKeywordRepository {
     private final StringRedisTemplate redisTemplate;
 
     /**
-     * 의존성을 주입받아 인스턴스를 생성한다.
-     * @param redisTemplate 입력 값
+     * 필요한 의존성을 주입받아 컴포넌트를 생성한다.
+     * @param redisTemplate Redis에 검색어 통계를 저장하고 조회하는 템플릿
      */
     public RedisPopularKeywordRepository(StringRedisTemplate redisTemplate) {
         this.redisTemplate = redisTemplate;
     }
 
     /**
-     * 요청한 동작을 처리한다.
-     * @param keyword 입력 값
+     * 'tryMarkSearched' 메서드가 맡은 기능을 수행하고 필요한 결과를 반환한다.
+     * @param keyword 검색어
      */
     @Override
     public boolean tryMarkSearched(Long userId, String keyword) {
@@ -49,9 +49,9 @@ public class RedisPopularKeywordRepository implements PopularKeywordRepository {
     }
 
     /**
-     * 데이터를 반환한다.
-     * @param limit 입력 값
-     * @return 처리 결과
+     * 'getTopKeywords' 메서드는 필요한 데이터를 조회해 호출한 쪽에 반환한다.
+     * @param limit 조회 개수 제한
+     * @return 클라이언트에 반환할 API 응답
      */
     @Override
     public List<PopularKeywordResponse> getTopKeywords(int limit) {
@@ -59,9 +59,9 @@ public class RedisPopularKeywordRepository implements PopularKeywordRepository {
     }
 
     /**
-     * 요청한 동작을 처리한다.
-     * @param keyword 입력 값
-     * @param dateKey 입력 값
+     * 'incrementDaily' 메서드가 맡은 기능을 수행하고 필요한 결과를 반환한다.
+     * @param keyword 검색어
+     * @param dateKey 일별 Redis 키
      */
     @Override
     public void incrementDaily(String keyword, String dateKey) {
@@ -71,10 +71,10 @@ public class RedisPopularKeywordRepository implements PopularKeywordRepository {
     }
 
     /**
-     * 데이터를 반환한다.
-     * @param dateKey 입력 값
-     * @param limit 입력 값
-     * @return 처리 결과
+     * 'getTopDailyKeywords' 메서드는 필요한 데이터를 조회해 호출한 쪽에 반환한다.
+     * @param dateKey 일별 Redis 키
+     * @param limit 조회 개수 제한
+     * @return 클라이언트에 반환할 API 응답
      */
     @Override
     public List<PopularKeywordResponse> getTopDailyKeywords(String dateKey, int limit) {
@@ -82,9 +82,9 @@ public class RedisPopularKeywordRepository implements PopularKeywordRepository {
     }
 
     /**
-     * 요청한 동작을 처리한다.
-     * @param keyword 입력 값
-     * @param weekKey 입력 값
+     * 'incrementWeekly' 메서드가 맡은 기능을 수행하고 필요한 결과를 반환한다.
+     * @param keyword 검색어
+     * @param weekKey 주별 Redis 키
      */
     @Override
     public void incrementWeekly(String keyword, String weekKey) {
@@ -94,10 +94,10 @@ public class RedisPopularKeywordRepository implements PopularKeywordRepository {
     }
 
     /**
-     * 데이터를 반환한다.
-     * @param weekKey 입력 값
-     * @param limit 입력 값
-     * @return 처리 결과
+     * 'getTopWeeklyKeywords' 메서드는 필요한 데이터를 조회해 호출한 쪽에 반환한다.
+     * @param weekKey 주별 Redis 키
+     * @param limit 조회 개수 제한
+     * @return 클라이언트에 반환할 API 응답
      */
     @Override
     public List<PopularKeywordResponse> getTopWeeklyKeywords(String weekKey, int limit) {

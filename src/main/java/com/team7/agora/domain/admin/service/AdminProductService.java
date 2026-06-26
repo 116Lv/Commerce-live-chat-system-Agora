@@ -13,7 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * 애플리케이션 유스케이스를 조정하는 서비스이다.
+ * 관리자 상품 관련 비즈니스 유스케이스를 처리하는 서비스이다.
  */
 @Service
 @Transactional(readOnly = true)
@@ -23,9 +23,9 @@ public class AdminProductService {
     private final ReportRepository reportRepository;
 
     /**
-     * 의존성을 주입받아 인스턴스를 생성한다.
-     * @param productRepository 입력 값
-     * @param reportRepository 입력 값
+     * 필요한 의존성을 주입받아 컴포넌트를 생성한다.
+     * @param productRepository 데이터를 조회하고 저장하는 리포지토리
+     * @param reportRepository 데이터를 조회하고 저장하는 리포지토리
      */
     public AdminProductService(ProductRepository productRepository, ReportRepository reportRepository) {
         this.productRepository = productRepository;
@@ -33,11 +33,11 @@ public class AdminProductService {
     }
 
     /**
-     * 데이터를 반환한다.
-     * @param admin 입력 값
-     * @param reportedOnly 입력 값
-     * @param pageable 입력 값
-     * @return 처리 결과
+     * 'getProducts' 메서드는 필요한 데이터를 조회해 호출한 쪽에 반환한다.
+     * @param admin 인증된 관리자 정보
+     * @param reportedOnly 신고 상품만 조회할지 여부
+     * @param pageable 페이지 요청 정보
+     * @return 클라이언트에 반환할 API 응답
      */
     public Page<AdminProductResponse> getProducts(CustomUserDetails admin, boolean reportedOnly, Pageable pageable) {
         validateProductAdmin(admin);
@@ -48,10 +48,10 @@ public class AdminProductService {
     }
 
     /**
-     * 요청한 동작을 처리한다.
-     * @param admin 입력 값
-     * @param productId 입력 값
-     * @return 처리 결과
+     * 관리자가 신고나 정책 위반 상품을 숨김 상태로 변경한다.
+     * @param admin 인증된 관리자 정보
+     * @param productId 상품 ID
+     * @return 클라이언트에 반환할 API 응답
      */
     @Transactional
     public AdminProductResponse hideProduct(CustomUserDetails admin, Long productId) {

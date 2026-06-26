@@ -25,13 +25,13 @@ public class CustomUserDetails implements UserDetails {
     private final String nickname;
 
     /**
-     * 의존성을 주입받아 인스턴스를 생성한다.
-     * @param userId 입력 값
-     * @param email 입력 값
-     * @param password 입력 값
-     * @param role 입력 값
-     * @param status 입력 값
-     * @param nickname 입력 값
+     * 필요한 의존성을 주입받아 컴포넌트를 생성한다.
+     * @param userId 회원 ID
+     * @param email 이메일
+     * @param password 비밀번호
+     * @param role 권한
+     * @param status 조회 또는 변경할 상태
+     * @param nickname 닉네임
      */
     public CustomUserDetails(
         Long userId,
@@ -51,8 +51,8 @@ public class CustomUserDetails implements UserDetails {
 
     /**
      * 도메인 객체로부터 응답 객체를 생성한다.
-     * @param user 입력 값
-     * @return 처리 결과
+     * @param user 회원 엔티티
+     * @return 클라이언트에 반환할 API 응답
      */
     public static CustomUserDetails from(User user) {
         return new CustomUserDetails(
@@ -66,8 +66,8 @@ public class CustomUserDetails implements UserDetails {
     }
 
     /**
-     * 데이터를 반환한다.
-     * @return 처리 결과
+     * 'getAuthorities' 메서드는 필요한 데이터를 조회해 호출한 쪽에 반환한다.
+     * @return 클라이언트에 반환할 API 응답
      */
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
@@ -75,8 +75,8 @@ public class CustomUserDetails implements UserDetails {
     }
 
     /**
-     * 데이터를 반환한다.
-     * @return 처리 결과
+     * 'getPassword' 메서드는 필요한 데이터를 조회해 호출한 쪽에 반환한다.
+     * @return 클라이언트에 반환할 API 응답
      */
     @Override
     public String getPassword() {
@@ -84,8 +84,8 @@ public class CustomUserDetails implements UserDetails {
     }
 
     /**
-     * 데이터를 반환한다.
-     * @return 처리 결과
+     * 'getUsername' 메서드는 필요한 데이터를 조회해 호출한 쪽에 반환한다.
+     * @return 클라이언트에 반환할 API 응답
      */
     @Override
     public String getUsername() {
@@ -94,7 +94,7 @@ public class CustomUserDetails implements UserDetails {
 
     /**
      * 조건 충족 여부를 확인한다.
-     * @return 처리 결과
+     * @return 클라이언트에 반환할 API 응답
      */
     @Override
     public boolean isAccountNonExpired() {
@@ -103,7 +103,7 @@ public class CustomUserDetails implements UserDetails {
 
     /**
      * 조건 충족 여부를 확인한다.
-     * @return 처리 결과
+     * @return 클라이언트에 반환할 API 응답
      */
     @Override
     public boolean isAccountNonLocked() {
@@ -112,7 +112,7 @@ public class CustomUserDetails implements UserDetails {
 
     /**
      * 조건 충족 여부를 확인한다.
-     * @return 처리 결과
+     * @return 클라이언트에 반환할 API 응답
      */
     @Override
     public boolean isCredentialsNonExpired() {
@@ -121,7 +121,7 @@ public class CustomUserDetails implements UserDetails {
 
     /**
      * 조건 충족 여부를 확인한다.
-     * @return 처리 결과
+     * @return 클라이언트에 반환할 API 응답
      */
     @Override
     public boolean isEnabled() {

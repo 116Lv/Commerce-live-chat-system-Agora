@@ -26,7 +26,7 @@ public class ChatRedisPublisher {
     /**
      * 채팅 메시지를 직렬화해 채팅방별 Redis 채널에 발행한다.
      * @param roomId 채팅방 ID
-     * @param message 발행할 채팅 메시지
+     * @param message 메시지
      */
     public void publish(Long roomId, ChatMessageResponse message) {
         try {

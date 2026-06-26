@@ -12,8 +12,8 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 public class AgoraApplication {
 
     /**
-     * 요청한 동작을 처리한다.
-     * @param args 입력 값
+     * 스프링 부트 애플리케이션을 실행하는 시작 지점이다.
+     * @param args 애플리케이션 실행 인자
      */
     public static void main(String[] args) {
         SpringApplication.run(AgoraApplication.class, args);

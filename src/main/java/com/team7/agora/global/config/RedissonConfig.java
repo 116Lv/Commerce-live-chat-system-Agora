@@ -18,7 +18,7 @@ public class RedissonConfig {
      * Spring Redis 연결 속성을 기반으로 Redisson 클라이언트를 생성한다.
      * @param host Redis 호스트
      * @param port Redis 포트
-     * @param password Redis 비밀번호
+     * @param password 비밀번호
      * @return Redisson 클라이언트
      */
     @Bean(destroyMethod = "shutdown")

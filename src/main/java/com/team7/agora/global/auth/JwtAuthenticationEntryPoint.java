@@ -15,10 +15,10 @@ import org.springframework.stereotype.Component;
 @Component
 public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
     /**
-     * 요청한 동작을 처리한다.
-     * @param request 입력 값
-     * @param response 입력 값
-     * @param authException 입력 값
+     * 인증되지 않은 사용자가 보호된 API에 접근했을 때 401 응답을 반환한다.
+     * @param request 요청 본문
+     * @param response HTTP 응답
+     * @param authException 인증 예외
      */
     @Override
     public void commence(

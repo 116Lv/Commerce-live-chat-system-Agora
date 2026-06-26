@@ -26,7 +26,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * 애플리케이션 유스케이스를 조정하는 서비스이다.
+ * 인증 관련 비즈니스 유스케이스를 처리하는 서비스이다.
  */
 @Service
 @Transactional(readOnly = true)
@@ -39,12 +39,12 @@ public class AuthService {
     private final long refreshTokenValidTime;
 
     /**
-     * 의존성을 주입받아 인스턴스를 생성한다.
-     * @param userRepository 입력 값
-     * @param refreshTokenRepository 입력 값
-     * @param passwordEncoder 입력 값
-     * @param jwtProvider 입력 값
-     * @param refreshTokenValidTime 입력 값
+     * 필요한 의존성을 주입받아 컴포넌트를 생성한다.
+     * @param userRepository 데이터를 조회하고 저장하는 리포지토리
+     * @param refreshTokenRepository 데이터를 조회하고 저장하는 리포지토리
+     * @param passwordEncoder 비밀번호 해시와 검증에 사용하는 인코더
+     * @param jwtProvider JWT 생성과 검증을 담당하는 컴포넌트
+     * @param refreshTokenValidTime 리프레시 토큰 유효 시간
      */
     public AuthService(
         UserRepository userRepository,
@@ -61,9 +61,9 @@ public class AuthService {
     }
 
     /**
-     * 요청한 동작을 처리한다.
-     * @param request 입력 값
-     * @return 처리 결과
+     * 회원가입 요청 정보를 검증하고 새 회원을 등록한다.
+     * @param request 요청 본문
+     * @return 클라이언트에 반환할 API 응답
      */
     @Transactional
     public SignupResponse signup(SignupRequest request) {
@@ -107,8 +107,8 @@ public class AuthService {
     }
 
     /**
-     * 요청한 동작을 처리한다.
-     * @param userId 입력 값
+     * 사용자의 리프레시 토큰을 삭제해 로그아웃 상태로 만든다.
+     * @param userId 회원 ID
      */
     @Transactional
     public void logout(Long userId) {
@@ -116,9 +116,9 @@ public class AuthService {
     }
 
     /**
-     * 요청한 동작을 처리한다.
-     * @param refreshTokenValue 입력 값
-     * @return 처리 결과
+     * 리프레시 토큰을 검증하고 새 액세스 토큰과 리프레시 토큰을 발급한다.
+     * @param refreshTokenValue 재발급에 사용할 리프레시 토큰 문자열
+     * @return 클라이언트에 반환할 API 응답
      */
     @Transactional
     public ReissueResponse reissue(String refreshTokenValue) {

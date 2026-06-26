@@ -33,7 +33,7 @@ import lombok.NoArgsConstructor;
         @Index(name = "idx_reports_reported_user", columnList = "reported_user_id")
     }
 /**
- * JPA 엔티티이다.
+ * 신고 도메인 정보를 영속화하는 JPA 엔티티이다.
  */
 )
 public class Report extends BaseTimeEntity {
@@ -76,31 +76,31 @@ public class Report extends BaseTimeEntity {
     }
 
     /**
-     * 요청한 동작을 처리한다.
-     * @param reporter 입력 값
-     * @param reportedUser 입력 값
-     * @param product 입력 값
-     * @param reason 입력 값
-     * @return 처리 결과
+     * 'product' 메서드가 맡은 기능을 수행하고 필요한 결과를 반환한다.
+     * @param reporter 신고를 등록한 회원 엔티티
+     * @param reportedUser 신고 대상 회원 엔티티
+     * @param product 상품 엔티티
+     * @param reason 처리 사유
+     * @return 클라이언트에 반환할 API 응답
      */
     public static Report product(User reporter, User reportedUser, Product product, String reason) {
         return new Report(reporter, reportedUser, product, reason);
     }
 
     /**
-     * 요청한 동작을 처리한다.
-     * @param reporter 입력 값
-     * @param reportedUser 입력 값
-     * @param reason 입력 값
-     * @return 처리 결과
+     * 'user' 메서드가 맡은 기능을 수행하고 필요한 결과를 반환한다.
+     * @param reporter 신고를 등록한 회원 엔티티
+     * @param reportedUser 신고 대상 회원 엔티티
+     * @param reason 처리 사유
+     * @return 클라이언트에 반환할 API 응답
      */
     public static Report user(User reporter, User reportedUser, String reason) {
         return new Report(reporter, reportedUser, null, reason);
     }
 
     /**
-     * 요청한 동작을 처리한다.
-     * @param adminMemo 입력 값
+     * 관리자가 신고 내용을 확인하고 처리 상태와 메모를 저장한다.
+     * @param adminMemo 관리자가 신고 처리 시 남기는 메모
      */
     public void resolve(String adminMemo) {
         if (status != ReportStatus.PENDING) {

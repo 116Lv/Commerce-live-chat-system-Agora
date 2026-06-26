@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * REST 엔드포인트를 제공하는 컨트롤러이다.
+ * 결제 기능에서 클라이언트의 HTTP 요청을 받아 서비스 계층으로 전달하는 컨트롤러이다.
  */
 @RestController
 @RequestMapping("/api/payments")
@@ -28,18 +28,18 @@ public class PaymentController {
     private final PaymentService paymentService;
 
     /**
-     * 의존성을 주입받아 인스턴스를 생성한다.
-     * @param paymentService 입력 값
+     * 필요한 의존성을 주입받아 컴포넌트를 생성한다.
+     * @param paymentService 결제 비즈니스 로직을 처리하는 서비스
      */
     public PaymentController(PaymentService paymentService) {
         this.paymentService = paymentService;
     }
 
     /**
-     * 요청한 동작을 처리한다.
-     * @param userDetails 입력 값
-     * @param tradeId 입력 값
-     * @return 처리 결과
+     * 결제 정보를 생성하거나 준비하는 POST /api/payments/trades/{tradeId}/prepare 요청을 처리한다.
+     * @param userDetails 현재 로그인한 사용자 정보
+     * @param tradeId 대상 거래 ID
+     * @return 클라이언트에 반환할 API 응답
      */
     @PostMapping("/trades/{tradeId}/prepare")
     public ApiResponse<PaymentResponse> prepare(
@@ -50,10 +50,10 @@ public class PaymentController {
     }
 
     /**
-     * 요청한 동작을 처리한다.
-     * @param userDetails 입력 값
-     * @param request 입력 값
-     * @return 처리 결과
+     * 결제 정보를 생성하거나 준비하는 POST /api/payments/prepare 요청을 처리한다.
+     * @param userDetails 현재 로그인한 사용자 정보
+     * @param request 클라이언트가 전달한 요청 본문
+     * @return 클라이언트에 반환할 API 응답
      */
     @PostMapping("/prepare")
     public ApiResponse<PaymentResponse> prepareByRequest(
@@ -64,11 +64,11 @@ public class PaymentController {
     }
 
     /**
-     * 요청한 동작을 처리한다.
-     * @param userDetails 입력 값
-     * @param paymentId 입력 값
-     * @param request 입력 값
-     * @return 처리 결과
+     * 결제를 확정하거나 진행하는 POST /api/payments/{paymentId}/confirm 요청을 처리한다.
+     * @param userDetails 현재 로그인한 사용자 정보
+     * @param paymentId 대상 결제 ID
+     * @param request 클라이언트가 전달한 요청 본문
+     * @return 클라이언트에 반환할 API 응답
      */
     @PostMapping("/{paymentId}/confirm")
     public ApiResponse<PaymentResponse> confirm(
@@ -80,10 +80,10 @@ public class PaymentController {
     }
 
     /**
-     * 요청한 동작을 처리한다.
-     * @param userDetails 입력 값
-     * @param request 입력 값
-     * @return 처리 결과
+     * 결제를 확정하거나 진행하는 POST /api/payments/confirm 요청을 처리한다.
+     * @param userDetails 현재 로그인한 사용자 정보
+     * @param request 클라이언트가 전달한 요청 본문
+     * @return 클라이언트에 반환할 API 응답
      */
     @PostMapping("/confirm")
     public ApiResponse<PaymentResponse> confirmByRequest(
@@ -94,11 +94,11 @@ public class PaymentController {
     }
 
     /**
-     * 요청한 동작을 처리한다.
-     * @param userDetails 입력 값
-     * @param paymentId 입력 값
-     * @param request 입력 값
-     * @return 처리 결과
+     * 결제 상태를 변경하는 POST /api/payments/{paymentId}/refund 요청을 처리한다.
+     * @param userDetails 현재 로그인한 사용자 정보
+     * @param paymentId 대상 결제 ID
+     * @param request 클라이언트가 전달한 요청 본문
+     * @return 클라이언트에 반환할 API 응답
      */
     @PostMapping("/{paymentId}/refund")
     public ApiResponse<PaymentResponse> refund(
@@ -111,10 +111,10 @@ public class PaymentController {
     }
 
     /**
-     * 데이터를 반환한다.
-     * @param userDetails 입력 값
-     * @param paymentId 입력 값
-     * @return 처리 결과
+     * 결제 정보를 조회하는 GET /api/payments/{paymentId}/refund 요청을 처리한다.
+     * @param userDetails 현재 로그인한 사용자 정보
+     * @param paymentId 대상 결제 ID
+     * @return 클라이언트에 반환할 API 응답
      */
     @GetMapping("/{paymentId}/refund")
     public ApiResponse<RefundStatusResponse> getRefundStatus(

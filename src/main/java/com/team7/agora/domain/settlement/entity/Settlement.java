@@ -23,7 +23,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 /**
- * JPA 엔티티이다.
+ * Settlement 도메인 정보를 영속화하는 JPA 엔티티이다.
  */
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -61,16 +61,16 @@ public class Settlement extends BaseTimeEntity {
     }
 
     /**
-     * 요청한 동작을 처리한다.
-     * @param payment 입력 값
-     * @return 처리 결과
+     * 'pending' 메서드가 맡은 기능을 수행하고 필요한 결과를 반환한다.
+     * @param payment 결제 엔티티 또는 결제 응답 변환 대상
+     * @return 클라이언트에 반환할 API 응답
      */
     public static Settlement pending(Payment payment) {
         return new Settlement(payment);
     }
 
     /**
-     * 요청한 동작을 처리한다.
+     * 도메인 객체를 완료 상태로 변경한다.
      */
     public void complete() {
         if (status != SettlementStatus.HELD) {
@@ -80,7 +80,7 @@ public class Settlement extends BaseTimeEntity {
     }
 
     /**
-     * 요청한 동작을 처리한다.
+     * 도메인 객체를 취소 상태로 변경한다.
      */
     public void cancel() {
         if (status != SettlementStatus.HELD && status != SettlementStatus.READY) {
@@ -90,7 +90,7 @@ public class Settlement extends BaseTimeEntity {
     }
 
     /**
-     * 요청한 동작을 처리한다.
+     * 'settle' 메서드가 맡은 기능을 수행하고 필요한 결과를 반환한다.
      */
     public void settle() {
         if (status != SettlementStatus.READY) {

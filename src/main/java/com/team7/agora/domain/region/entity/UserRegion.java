@@ -16,7 +16,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 /**
- * JPA 엔티티이다.
+ * 사용자 선호 지역 도메인 정보를 영속화하는 JPA 엔티티이다.
  */
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -46,11 +46,11 @@ public class UserRegion {
     }
 
     /**
-     * 요청한 동작을 처리한다.
-     * @param user 입력 값
-     * @param region 입력 값
-     * @param primaryRegion 입력 값
-     * @return 처리 결과
+     * 도메인 객체를 클라이언트 응답 DTO로 변환한다.
+     * @param user 회원 엔티티
+     * @param region 거래 지역 엔티티
+     * @param primaryRegion 대표 거래 지역 여부
+     * @return 클라이언트에 반환할 API 응답
      */
     public static UserRegion of(User user, Region region, boolean primaryRegion) {
         return new UserRegion(user, region, primaryRegion);

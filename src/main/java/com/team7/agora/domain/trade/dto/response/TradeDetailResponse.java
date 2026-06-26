@@ -7,16 +7,16 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 /**
- * 응답 본문을 전달하는 DTO이다.
- * @param tradeId 입력 값
- * @param productId 입력 값
- * @param sellerId 입력 값
- * @param buyerId 입력 값
- * @param price 입력 값
- * @param tradeStatus 입력 값
- * @param completedAt 입력 값
- * @param paymentStatus 입력 값
- * @param settlementStatus 입력 값
+ * Trade Detail 응답 본문을 표현하는 DTO이다.
+ * @param tradeId 거래 ID
+ * @param productId 상품 ID
+ * @param sellerId 상품 판매자 ID
+ * @param buyerId 구매자 ID
+ * @param price 가격
+ * @param tradeStatus 거래 진행 상태
+ * @param completedAt 거래가 완료된 시각
+ * @param paymentStatus 결제 진행 상태
+ * @param settlementStatus 정산 진행 상태
  */
 public record TradeDetailResponse(
     Long tradeId,
@@ -31,11 +31,11 @@ public record TradeDetailResponse(
 ) {
 
     /**
-     * 요청한 동작을 처리한다.
-     * @param trade 입력 값
-     * @param payment 입력 값
-     * @param settlement 입력 값
-     * @return 처리 결과
+     * 도메인 객체를 클라이언트 응답 DTO로 변환한다.
+     * @param trade 거래 엔티티 또는 거래 응답 변환 대상
+     * @param payment 결제 엔티티 또는 결제 응답 변환 대상
+     * @param settlement 정산 엔티티 또는 정산 응답 변환 대상
+     * @return 클라이언트에 반환할 API 응답
      */
     public static TradeDetailResponse of(Trade trade, Payment payment, Settlement settlement) {
         return new TradeDetailResponse(

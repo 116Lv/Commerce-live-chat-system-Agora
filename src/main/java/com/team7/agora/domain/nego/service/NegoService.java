@@ -23,7 +23,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * 애플리케이션 유스케이스를 조정하는 서비스이다.
+ * 네고 관련 비즈니스 유스케이스를 처리하는 서비스이다.
  */
 @Service
 @Transactional(readOnly = true)
@@ -35,10 +35,10 @@ public class NegoService {
     private final ChatSystemMessageService chatSystemMessageService;
 
     /**
-     * 의존성을 주입받아 인스턴스를 생성한다.
-     * @param negoOfferRepository 입력 값
-     * @param chatRoomRepository 입력 값
-     * @param tradeService 입력 값
+     * 필요한 의존성을 주입받아 컴포넌트를 생성한다.
+     * @param negoOfferRepository 데이터를 조회하고 저장하는 리포지토리
+     * @param chatRoomRepository 데이터를 조회하고 저장하는 리포지토리
+     * @param tradeService 거래 비즈니스 로직을 처리하는 서비스
      */
     public NegoService(
         NegoOfferRepository negoOfferRepository,
@@ -53,11 +53,11 @@ public class NegoService {
     }
 
     /**
-     * 도메인 객체를 생성한다.
-     * @param requesterId 입력 값
-     * @param chatRoomId 입력 값
-     * @param offerPrice 입력 값
-     * @return 처리 결과
+     * 구매자가 채팅방에서 제안한 가격으로 네고 제안을 생성한다.
+     * @param requesterId 가격 제안을 생성한 구매자 ID
+     * @param chatRoomId 채팅방 ID
+     * @param offerPrice 제안 가격
+     * @return 클라이언트에 반환할 API 응답
      */
     @Transactional
     public NegoOfferResponse createOffer(Long requesterId, Long chatRoomId, BigDecimal offerPrice) {
@@ -80,10 +80,10 @@ public class NegoService {
     }
 
     /**
-     * 요청한 동작을 처리한다.
-     * @param sellerId 입력 값
-     * @param offerId 입력 값
-     * @return 처리 결과
+     * 판매자가 가격 제안을 수락하고 해당 상품의 거래를 생성한다.
+     * @param sellerId 상품 판매자 ID
+     * @param offerId 네고 제안 ID
+     * @return 클라이언트에 반환할 API 응답
      */
     @Transactional
     public NegoOfferResponse acceptOffer(Long sellerId, Long offerId) {
@@ -116,10 +116,10 @@ public class NegoService {
     }
 
     /**
-     * 요청한 동작을 처리한다.
-     * @param sellerId 입력 값
-     * @param offerId 입력 값
-     * @return 처리 결과
+     * 판매자가 구매자의 가격 제안을 거절 상태로 변경한다.
+     * @param sellerId 상품 판매자 ID
+     * @param offerId 네고 제안 ID
+     * @return 클라이언트에 반환할 API 응답
      */
     @Transactional
     public NegoOfferResponse rejectOffer(Long sellerId, Long offerId) {
@@ -133,10 +133,10 @@ public class NegoService {
     }
 
     /**
-     * 요청한 동작을 처리한다.
-     * @param sellerId 입력 값
-     * @param offerId 입력 값
-     * @return 처리 결과
+     * 구매자가 가격 제안의 응답 기한 연장을 요청한다.
+     * @param buyerId 가격 제안 연장을 요청하는 구매자 ID
+     * @param offerId 네고 제안 ID
+     * @return 클라이언트에 반환할 API 응답
      */
     @Transactional
     public NegoOfferResponse requestExtension(Long buyerId, Long offerId) {
@@ -151,6 +151,12 @@ public class NegoService {
         return NegoOfferResponse.from(offer);
     }
 
+    /**
+     * 판매자가 가격 제안 연장 요청을 승인하고 만료 시간을 연장한다.
+     * @param sellerId 가격 제안 연장 요청을 승인하는 판매자 ID
+     * @param offerId 네고 제안 ID
+     * @return 클라이언트에 반환할 API 응답
+     */
     @Transactional
     public NegoOfferResponse approveExtension(Long sellerId, Long offerId) {
         NegoOffer offer = findOffer(offerId);
@@ -165,10 +171,10 @@ public class NegoService {
     }
 
     /**
-     * 요청한 동작을 처리한다.
-     * @param buyerId 입력 값
-     * @param offerId 입력 값
-     * @return 처리 결과
+     * 판매자가 가격 제안 연장 요청을 거절한다.
+     * @param sellerId 가격 제안 연장 요청을 거절하는 판매자 ID
+     * @param offerId 네고 제안 ID
+     * @return 클라이언트에 반환할 API 응답
      */
     @Transactional
     public NegoOfferResponse rejectExtension(Long sellerId, Long offerId) {
@@ -181,10 +187,10 @@ public class NegoService {
     }
 
     /**
-     * 요청한 동작을 처리한다.
-     * @param authUser 입력 값
-     * @param offerId 입력 값
-     * @return 처리 결과
+     * 관리자가 특정 가격 제안을 수동으로 만료 처리한다.
+     * @param authUser 인증 사용자 정보
+     * @param offerId 네고 제안 ID
+     * @return 클라이언트에 반환할 API 응답
      */
     @Transactional
     public NegoOfferResponse expireOffer(AuthUser authUser, Long offerId) {

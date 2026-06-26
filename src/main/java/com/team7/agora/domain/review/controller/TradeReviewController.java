@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * REST 엔드포인트를 제공하는 컨트롤러이다.
+ * 거래 리뷰 기능에서 클라이언트의 HTTP 요청을 받아 서비스 계층으로 전달하는 컨트롤러이다.
  */
 @RestController
 public class TradeReviewController {
@@ -19,18 +19,18 @@ public class TradeReviewController {
     private final ReviewService reviewService;
 
     /**
-     * 의존성을 주입받아 인스턴스를 생성한다.
-     * @param reviewService 입력 값
+     * 필요한 의존성을 주입받아 컴포넌트를 생성한다.
+     * @param reviewService 리뷰 비즈니스 로직을 처리하는 서비스
      */
     public TradeReviewController(ReviewService reviewService) {
         this.reviewService = reviewService;
     }
 
     /**
-     * 데이터를 반환한다.
-     * @param userDetails 입력 값
-     * @param tradeId 입력 값
-     * @return 처리 결과
+     * 거래 리뷰 정보를 조회하는 GET /api/trades/{tradeId}/reviews 요청을 처리한다.
+     * @param userDetails 현재 로그인한 사용자 정보
+     * @param tradeId 대상 거래 ID
+     * @return 클라이언트에 반환할 API 응답
      */
     @GetMapping("/api/trades/{tradeId}/reviews")
     public ApiResponse<List<ReviewResponse>> getTradeReviews(

@@ -3,13 +3,13 @@ package com.team7.agora.domain.region.dto.response;
 import com.team7.agora.domain.region.entity.Region;
 
 /**
- * 응답 본문을 전달하는 DTO이다.
- * @param regionId 입력 값
- * @param name 입력 값
- * @param code 입력 값
- * @param sido 입력 값
- * @param sigungu 입력 값
- * @param eupmyeondong 입력 값
+ * 지역 응답 본문을 표현하는 DTO이다.
+ * @param regionId 지역 ID
+ * @param name 이름 또는 제목
+ * @param code 지역 코드
+ * @param sido 시도 이름
+ * @param sigungu 시군구 이름
+ * @param eupmyeondong 읍면동 이름
  */
 public record RegionResponse(
         Long regionId,
@@ -22,8 +22,8 @@ public record RegionResponse(
 
     /**
      * 도메인 객체로부터 응답 객체를 생성한다.
-     * @param region 입력 값
-     * @return 처리 결과
+     * @param region 거래 지역 엔티티
+     * @return 클라이언트에 반환할 API 응답
      */
     public static RegionResponse from(Region region) {
         return new RegionResponse(

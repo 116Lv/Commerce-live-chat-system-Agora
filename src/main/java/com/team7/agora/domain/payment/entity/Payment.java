@@ -33,7 +33,7 @@ import lombok.NoArgsConstructor;
         @Index(name = "idx_payments_status_requested", columnList = "status, requested_at")
     }
 /**
- * JPA 엔티티이다.
+ * 결제 도메인 정보를 영속화하는 JPA 엔티티이다.
  */
 )
 public class Payment {
@@ -79,12 +79,12 @@ public class Payment {
     }
 
     /**
-     * 요청한 동작을 처리한다.
-     * @param trade 입력 값
-     * @param payer 입력 값
-     * @param amount 입력 값
-     * @param orderId 입력 값
-     * @return 처리 결과
+     * 'ready' 메서드가 맡은 기능을 수행하고 필요한 결과를 반환한다.
+     * @param trade 거래 엔티티 또는 거래 응답 변환 대상
+     * @param payer 결제를 진행한 회원 엔티티
+     * @param amount 금액
+     * @param orderId 주문 ID
+     * @return 클라이언트에 반환할 API 응답
      */
     public static Payment ready(Trade trade, User payer, BigDecimal amount, String orderId) {
         return new Payment(trade, payer, amount, orderId);
@@ -92,7 +92,7 @@ public class Payment {
 
     /**
      * 규칙을 검증한다.
-     * @param userId 입력 값
+     * @param userId 회원 ID
      */
     public void validatePayer(Long userId) {
         if (!payer.getId().equals(userId)) {
@@ -101,8 +101,8 @@ public class Payment {
     }
 
     /**
-     * 상태를 변경한다.
-     * @param paymentKey 입력 값
+     * 결제 승인 정보를 반영해 결제를 완료 상태로 변경한다.
+     * @param paymentKey 결제 승인 키
      */
     public void markPaid(String paymentKey) {
         if (status == PaymentStatus.PAID) {
@@ -117,8 +117,8 @@ public class Payment {
     }
 
     /**
-     * 요청한 동작을 처리한다.
-     * @param reason 입력 값
+     * 결제 환불 요청을 검증하고 결제 상태를 환불 처리로 갱신한다.
+     * @param reason 처리 사유
      */
     public void refund(String reason) {
         if (status != PaymentStatus.PAID) {
@@ -129,7 +129,7 @@ public class Payment {
     }
 
     /**
-     * 상태를 변경한다.
+     * 결제 실패 사유를 저장하고 결제를 실패 상태로 변경한다.
      */
     public void markFailed() {
         if (status == PaymentStatus.PAID) {

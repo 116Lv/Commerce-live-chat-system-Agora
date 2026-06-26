@@ -2,9 +2,9 @@
 package com.team7.agora.domain.auth.dto.response;
 
 /**
- * 응답 본문을 전달하는 DTO이다.
- * @param accessToken 입력 값
- * @param refreshToken 입력 값
+ * Login 응답 본문을 표현하는 DTO이다.
+ * @param accessToken API 인증에 사용하는 액세스 토큰
+ * @param refreshToken 토큰 재발급에 사용하는 리프레시 토큰
  */
 public record LoginResponse(
         String accessToken,

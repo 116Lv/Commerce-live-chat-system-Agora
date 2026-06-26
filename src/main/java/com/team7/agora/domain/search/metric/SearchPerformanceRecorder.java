@@ -13,10 +13,10 @@ public class SearchPerformanceRecorder {
     private final ConcurrentHashMap<String, VersionCounters> countersByVersion = new ConcurrentHashMap<>();
 
     /**
-     * 요청한 동작을 처리한다.
-     * @param version 입력 값
-     * @param elapsedNanos 입력 값
-     * @param dbQueried 입력 값
+     * 검색 요청의 처리 시간과 결과 수를 성능 통계에 기록한다.
+     * @param version 검색 로직 버전
+     * @param elapsedNanos 검색 처리에 걸린 시간
+     * @param dbQueried DB 조회 발생 여부
      */
     public void record(String version, long elapsedNanos, boolean dbQueried) {
         countersByVersion

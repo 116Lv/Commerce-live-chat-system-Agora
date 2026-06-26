@@ -14,7 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 /**
- * 애플리케이션 유스케이스를 조정하는 서비스이다.
+ * 상품 이미지 관련 비즈니스 유스케이스를 처리하는 서비스이다.
  */
 @Service
 @Transactional(readOnly = true)
@@ -25,10 +25,10 @@ public class ProductImageService {
     private final ImageStorageClient imageStorageClient;
 
     /**
-     * 의존성을 주입받아 인스턴스를 생성한다.
-     * @param productRepository 입력 값
-     * @param productImageRepository 입력 값
-     * @param imageStorageClient 입력 값
+     * 필요한 의존성을 주입받아 컴포넌트를 생성한다.
+     * @param productRepository 데이터를 조회하고 저장하는 리포지토리
+     * @param productImageRepository 데이터를 조회하고 저장하는 리포지토리
+     * @param imageStorageClient 외부 시스템 또는 저장소와 통신하는 클라이언트
      */
     public ProductImageService(
         ProductRepository productRepository,
@@ -41,11 +41,11 @@ public class ProductImageService {
     }
 
     /**
-     * 요청한 동작을 처리한다.
-     * @param sellerId 입력 값
-     * @param productId 입력 값
-     * @param file 입력 값
-     * @return 처리 결과
+     * 상품 이미지 파일을 저장하고 상품 이미지 정보를 등록한다.
+     * @param sellerId 상품 판매자 ID
+     * @param productId 상품 ID
+     * @param file 업로드 파일
+     * @return 클라이언트에 반환할 API 응답
      */
     @Transactional
     public ProductImageResponse upload(Long sellerId, Long productId, MultipartFile file) {

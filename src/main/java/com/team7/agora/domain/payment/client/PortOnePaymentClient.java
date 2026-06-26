@@ -23,9 +23,9 @@ public class PortOnePaymentClient implements PaymentClient {
     private final String apiSecret;
 
     /**
-     * 의존성을 주입받아 인스턴스를 생성한다.
-     * @param apiBaseUrl 입력 값
-     * @param apiSecret 입력 값
+     * 필요한 의존성을 주입받아 컴포넌트를 생성한다.
+     * @param apiBaseUrl PortOne API 기본 주소
+     * @param apiSecret PortOne API 인증 비밀값
      */
     public PortOnePaymentClient(
         @Value("${portone.api-base-url:https://api.portone.io}") String apiBaseUrl,
@@ -36,11 +36,11 @@ public class PortOnePaymentClient implements PaymentClient {
     }
 
     /**
-     * 요청한 동작을 처리한다.
-     * @param paymentKey 입력 값
-     * @param orderId 입력 값
-     * @param amount 입력 값
-     * @return 처리 결과
+     * 외부 결제 승인 결과를 검증하고 결제를 완료 상태로 변경한다.
+     * @param paymentKey 결제 승인 키
+     * @param orderId 주문 ID
+     * @param amount 금액
+     * @return 클라이언트에 반환할 API 응답
      */
     @Override
     public boolean confirm(String paymentKey, String orderId, BigDecimal amount) {

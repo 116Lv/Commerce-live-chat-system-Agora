@@ -3,10 +3,10 @@ package com.team7.agora.domain.payment.dto.request;
 import jakarta.validation.constraints.NotBlank;
 
 /**
- * 요청 본문을 전달하는 DTO이다.
- * @param orderId 입력 값
- * @param paymentKey 입력 값
- * @param status 입력 값
+ * 결제 웹훅 요청 본문을 표현하는 DTO이다.
+ * @param orderId 주문 ID
+ * @param paymentKey 결제 승인 키
+ * @param status 조회 또는 변경할 상태
  */
 public record PaymentWebhookRequest(
     @NotBlank(message = "orderId는 필수입니다.")

@@ -12,7 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * 애플리케이션 유스케이스를 조정하는 서비스이다.
+ * 관리자 계정 관련 비즈니스 유스케이스를 처리하는 서비스이다.
  */
 @Service
 @Transactional(readOnly = true)
@@ -21,19 +21,19 @@ public class AdminAccountService {
     private final UserRepository userRepository;
 
     /**
-     * 의존성을 주입받아 인스턴스를 생성한다.
-     * @param userRepository 입력 값
+     * 필요한 의존성을 주입받아 컴포넌트를 생성한다.
+     * @param userRepository 데이터를 조회하고 저장하는 리포지토리
      */
     public AdminAccountService(UserRepository userRepository) {
         this.userRepository = userRepository;
     }
 
     /**
-     * 요청한 동작을 처리한다.
-     * @param admin 입력 값
-     * @param userId 입력 값
-     * @param role 입력 값
-     * @return 처리 결과
+     * 관리자가 회원 계정의 권한을 변경한다.
+     * @param admin 인증된 관리자 정보
+     * @param userId 회원 ID
+     * @param role 권한
+     * @return 클라이언트에 반환할 API 응답
      */
     @Transactional
     public AdminUserResponse changeRole(CustomUserDetails admin, Long userId, UserRole role) {

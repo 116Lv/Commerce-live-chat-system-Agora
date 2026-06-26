@@ -4,8 +4,8 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
 /**
- * 요청 본문을 전달하는 DTO이다.
- * @param reason 입력 값
+ * Payment Refund 요청 본문을 표현하는 DTO이다.
+ * @param reason 처리 사유
  */
 public record PaymentRefundRequest(
     @NotBlank(message = "환불 사유는 필수입니다.")

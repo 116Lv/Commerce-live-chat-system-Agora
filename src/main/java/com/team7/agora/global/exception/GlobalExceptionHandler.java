@@ -18,9 +18,9 @@ import org.springframework.web.servlet.resource.NoResourceFoundException;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
     /**
-     * 요청한 동작을 처리한다.
-     * @param exception 입력 값
-     * @return 처리 결과
+     * 'handleBusinessException' 메서드가 맡은 기능을 수행하고 필요한 결과를 반환한다.
+     * @param exception 발생한 예외
+     * @return 클라이언트에 반환할 API 응답
      */
     @ExceptionHandler(BusinessException.class)
     public ResponseEntity<ApiResponse<Void>> handleBusinessException(BusinessException exception) {
@@ -30,9 +30,9 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * 요청한 동작을 처리한다.
-     * @param exception 입력 값
-     * @return 처리 결과
+     * 'handleValidationException' 메서드가 맡은 기능을 수행하고 필요한 결과를 반환한다.
+     * @param exception 발생한 예외
+     * @return 클라이언트에 반환할 API 응답
      */
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiResponse<Void>> handleValidationException(MethodArgumentNotValidException exception) {
@@ -79,9 +79,9 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * 요청한 동작을 처리한다.
-     * @param exception 입력 값
-     * @return 처리 결과
+     * 'handleMethodNotSupportedException' 메서드가 맡은 기능을 수행하고 필요한 결과를 반환한다.
+     * @param exception 발생한 예외
+     * @return 클라이언트에 반환할 API 응답
      */
     @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
     public ResponseEntity<ApiResponse<Void>> handleMethodNotSupportedException(
@@ -92,9 +92,9 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * 요청한 동작을 처리한다.
-     * @param exception 입력 값
-     * @return 처리 결과
+     * 'handleUnexpectedException' 메서드가 맡은 기능을 수행하고 필요한 결과를 반환한다.
+     * @param exception 발생한 예외
+     * @return 클라이언트에 반환할 API 응답
      */
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse<Void>> handleUnexpectedException(Exception exception) {

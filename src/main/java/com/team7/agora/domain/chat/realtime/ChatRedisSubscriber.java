@@ -29,7 +29,7 @@ public class ChatRedisSubscriber implements MessageListener {
 
     /**
      * Redis 메시지를 역직렬화해 채팅방 STOMP 목적지로 전송한다.
-     * @param message Redis에서 수신한 메시지
+     * @param message 메시지
      * @param pattern 구독 중인 Redis 패턴
      */
     @Override

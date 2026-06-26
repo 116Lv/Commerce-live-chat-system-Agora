@@ -5,14 +5,14 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 /**
- * 응답 본문을 전달하는 DTO이다.
- * @param tradeId 입력 값
- * @param productId 입력 값
- * @param sellerId 입력 값
- * @param buyerId 입력 값
- * @param price 입력 값
- * @param status 입력 값
- * @param completedAt 입력 값
+ * 거래 응답 본문을 표현하는 DTO이다.
+ * @param tradeId 거래 ID
+ * @param productId 상품 ID
+ * @param sellerId 상품 판매자 ID
+ * @param buyerId 구매자 ID
+ * @param price 가격
+ * @param status 조회 또는 변경할 상태
+ * @param completedAt 거래가 완료된 시각
  */
 public record TradeResponse(
     Long tradeId,
@@ -26,8 +26,8 @@ public record TradeResponse(
 
     /**
      * 도메인 객체로부터 응답 객체를 생성한다.
-     * @param trade 입력 값
-     * @return 처리 결과
+     * @param trade 거래 엔티티 또는 거래 응답 변환 대상
+     * @return 클라이언트에 반환할 API 응답
      */
     public static TradeResponse from(Trade trade) {
         return new TradeResponse(

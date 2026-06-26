@@ -5,8 +5,8 @@ import com.team7.agora.domain.user.enums.UserRole;
 import jakarta.validation.constraints.NotNull;
 
 /**
- * 요청 본문을 전달하는 DTO이다.
- * @param role 입력 값
+ * Admin Account Role Update 요청 본문을 표현하는 DTO이다.
+ * @param role 권한
  */
 public record AdminAccountRoleUpdateRequest(
         @NotNull(message = "변경할 권한은 필수입니다.")

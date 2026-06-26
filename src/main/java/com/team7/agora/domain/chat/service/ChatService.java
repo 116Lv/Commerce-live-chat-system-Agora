@@ -22,7 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 /**
- * 애플리케이션 유스케이스를 조정하는 서비스이다.
+ * Chat 관련 비즈니스 유스케이스를 처리하는 서비스이다.
  */
 @Service
 @Transactional(readOnly = true)
@@ -35,12 +35,12 @@ public class ChatService {
     private final ImageStorageClient imageStorageClient;
 
     /**
-     * 의존성을 주입받아 인스턴스를 생성한다.
-     * @param chatRoomRepository 입력 값
-     * @param chatMessageRepository 입력 값
-     * @param productRepository 입력 값
-     * @param userRepository 입력 값
-     * @param imageStorageClient 입력 값
+     * 필요한 의존성을 주입받아 컴포넌트를 생성한다.
+     * @param chatRoomRepository 데이터를 조회하고 저장하는 리포지토리
+     * @param chatMessageRepository 데이터를 조회하고 저장하는 리포지토리
+     * @param productRepository 데이터를 조회하고 저장하는 리포지토리
+     * @param userRepository 데이터를 조회하고 저장하는 리포지토리
+     * @param imageStorageClient 외부 시스템 또는 저장소와 통신하는 클라이언트
      */
     public ChatService(
         ChatRoomRepository chatRoomRepository,
@@ -57,10 +57,10 @@ public class ChatService {
     }
 
     /**
-     * 요청한 동작을 처리한다.
-     * @param userId 입력 값
-     * @param productId 입력 값
-     * @return 처리 결과
+     * 상품 구매자가 판매자와 대화할 채팅방을 찾거나 새로 생성한다.
+     * @param userId 회원 ID
+     * @param productId 상품 ID
+     * @return 클라이언트에 반환할 API 응답
      */
     @Transactional
     public ChatRoomResponse openRoom(Long userId, Long productId) {
@@ -79,11 +79,11 @@ public class ChatService {
     }
 
     /**
-     * 요청한 동작을 처리한다.
-     * @param userId 입력 값
-     * @param chatRoomId 입력 값
-     * @param content 입력 값
-     * @return 처리 결과
+     * 채팅방 참여자인지 확인한 뒤 텍스트 채팅 메시지를 저장한다.
+     * @param userId 회원 ID
+     * @param chatRoomId 채팅방 ID
+     * @param content 내용
+     * @return 클라이언트에 반환할 API 응답
      */
     @Transactional
     public ChatMessageResponse sendMessage(Long userId, Long chatRoomId, String content) {
@@ -99,11 +99,11 @@ public class ChatService {
     }
 
     /**
-     * 요청한 동작을 처리한다.
-     * @param userId 입력 값
-     * @param chatRoomId 입력 값
-     * @param image 입력 값
-     * @return 처리 결과
+     * 채팅방 참여자인지 확인한 뒤 이미지를 저장하고 이미지 메시지를 생성한다.
+     * @param userId 회원 ID
+     * @param chatRoomId 채팅방 ID
+     * @param image 업로드할 이미지 파일
+     * @return 클라이언트에 반환할 API 응답
      */
     @Transactional
     public ChatMessageResponse sendImageMessage(Long userId, Long chatRoomId, MultipartFile image) {
@@ -137,9 +137,9 @@ public class ChatService {
     }
 
     /**
-     * 데이터를 반환한다.
-     * @param userId 입력 값
-     * @return 처리 결과
+     * 사용자가 판매자 또는 구매자로 참여 중인 채팅방 목록을 조회한다.
+     * @param userId 회원 ID
+     * @return 클라이언트에 반환할 API 응답
      */
     public List<ChatRoomResponse> getMyRooms(Long userId) {
         User user = findUser(userId);
@@ -149,10 +149,10 @@ public class ChatService {
     }
 
     /**
-     * 상태를 변경한다.
-     * @param userId 입력 값
-     * @param chatRoomId 입력 값
-     * @return 처리 결과
+     * 사용자가 채팅방 메시지를 읽은 시각을 갱신해 읽음 상태로 표시한다.
+     * @param userId 회원 ID
+     * @param chatRoomId 채팅방 ID
+     * @return 클라이언트에 반환할 API 응답
      */
     @Transactional
     public ChatRoomResponse markRead(Long userId, Long chatRoomId) {

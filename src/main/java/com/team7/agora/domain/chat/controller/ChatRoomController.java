@@ -24,7 +24,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 /**
- * REST 엔드포인트를 제공하는 컨트롤러이다.
+ * 채팅방 기능에서 클라이언트의 HTTP 요청을 받아 서비스 계층으로 전달하는 컨트롤러이다.
  */
 @RestController
 @Validated
@@ -40,10 +40,10 @@ public class ChatRoomController {
     }
 
     /**
-     * 요청한 동작을 처리한다.
-     * @param userDetails 입력 값
-     * @param productId 입력 값
-     * @return 처리 결과
+     * 채팅방을 열거나 준비하는 POST /api/chat/rooms/products/{productId} 요청을 처리한다.
+     * @param userDetails 현재 로그인한 사용자 정보
+     * @param productId 대상 상품 ID
+     * @return 클라이언트에 반환할 API 응답
      */
     @PostMapping("/rooms/products/{productId}")
     public ApiResponse<ChatRoomResponse> openRoom(
@@ -54,10 +54,10 @@ public class ChatRoomController {
     }
 
     /**
-     * 요청한 동작을 처리한다.
-     * @param userDetails 입력 값
-     * @param request 입력 값
-     * @return 처리 결과
+     * 채팅방을 열거나 준비하는 POST /api/chat/rooms 요청을 처리한다.
+     * @param userDetails 현재 로그인한 사용자 정보
+     * @param request 클라이언트가 전달한 요청 본문
+     * @return 클라이언트에 반환할 API 응답
      */
     @PostMapping("/rooms")
     public ApiResponse<ChatRoomResponse> openRoomByRequest(
@@ -68,11 +68,11 @@ public class ChatRoomController {
     }
 
     /**
-     * 요청한 동작을 처리한다.
-     * @param userDetails 입력 값
-     * @param chatRoomId 입력 값
-     * @param image 입력 값
-     * @return 처리 결과
+     * 채팅방 메시지를 전송하는 POST /api/chat/rooms/{chatRoomId}/images 요청을 처리한다.
+     * @param userDetails 현재 로그인한 사용자 정보
+     * @param chatRoomId 대상 채팅방 ID
+     * @param image 업로드할 이미지 파일
+     * @return 클라이언트에 반환할 API 응답
      */
     @PostMapping("/rooms/{chatRoomId}/images")
     public ApiResponse<ChatMessageResponse> sendImage(
@@ -86,10 +86,10 @@ public class ChatRoomController {
     }
 
     /**
-     * 데이터를 반환한다.
-     * @param userDetails 입력 값
-     * @param chatRoomId 입력 값
-     * @return 처리 결과
+     * 채팅방 정보를 조회하는 GET /api/chat/rooms/{chatRoomId}/messages 요청을 처리한다.
+     * @param userDetails 현재 로그인한 사용자 정보
+     * @param chatRoomId 대상 채팅방 ID
+     * @return 클라이언트에 반환할 API 응답
      */
     @GetMapping("/rooms/{chatRoomId}/messages")
     public ApiResponse<List<ChatMessageResponse>> getMessages(
@@ -105,9 +105,9 @@ public class ChatRoomController {
     }
 
     /**
-     * 데이터를 반환한다.
-     * @param userDetails 입력 값
-     * @return 처리 결과
+     * 채팅방 정보를 조회하는 GET /api/chat/rooms 요청을 처리한다.
+     * @param userDetails 현재 로그인한 사용자 정보
+     * @return 클라이언트에 반환할 API 응답
      */
     @GetMapping("/rooms")
     public ApiResponse<List<ChatRoomResponse>> getMyRooms(@AuthenticationPrincipal CustomUserDetails userDetails) {
@@ -116,10 +116,10 @@ public class ChatRoomController {
     }
 
     /**
-     * 상태를 변경한다.
-     * @param userDetails 입력 값
-     * @param chatRoomId 입력 값
-     * @return 처리 결과
+     * 채팅방 상태를 변경하는 PATCH /api/chat/rooms/{chatRoomId}/read 요청을 처리한다.
+     * @param userDetails 현재 로그인한 사용자 정보
+     * @param chatRoomId 대상 채팅방 ID
+     * @return 클라이언트에 반환할 API 응답
      */
     @PatchMapping("/rooms/{chatRoomId}/read")
     public ApiResponse<ChatRoomResponse> markRead(

@@ -17,7 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * 애플리케이션 유스케이스를 조정하는 서비스이다.
+ * 지역 관련 비즈니스 유스케이스를 처리하는 서비스이다.
  */
 @Service
 @Transactional(readOnly = true)
@@ -31,10 +31,10 @@ public class RegionService {
     private final UserRegionRepository userRegionRepository;
 
     /**
-     * 의존성을 주입받아 인스턴스를 생성한다.
-     * @param userRepository 입력 값
-     * @param regionRepository 입력 값
-     * @param userRegionRepository 입력 값
+     * 필요한 의존성을 주입받아 컴포넌트를 생성한다.
+     * @param userRepository 데이터를 조회하고 저장하는 리포지토리
+     * @param regionRepository 데이터를 조회하고 저장하는 리포지토리
+     * @param userRegionRepository 데이터를 조회하고 저장하는 리포지토리
      */
     public RegionService(
             UserRepository userRepository,
@@ -48,8 +48,8 @@ public class RegionService {
 
     /**
      * 데이터를 수정한다.
-     * @param userId 입력 값
-     * @param request 입력 값
+     * @param userId 회원 ID
+     * @param request 요청 본문
      */
     @Transactional
     public void updatePreferredRegions(Long userId, PreferredRegionUpdateRequest request) {
@@ -73,9 +73,9 @@ public class RegionService {
     }
 
     /**
-     * 데이터를 반환한다.
-     * @param keyword 입력 값
-     * @return 처리 결과
+     * 'findRegions' 메서드는 필요한 데이터를 조회해 호출한 쪽에 반환한다.
+     * @param keyword 검색어
+     * @return 클라이언트에 반환할 API 응답
      */
     public List<RegionResponse> findRegions(String keyword) {
         List<Region> regions = (keyword == null || keyword.isBlank())

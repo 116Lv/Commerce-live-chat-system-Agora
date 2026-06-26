@@ -40,7 +40,7 @@ public class CouponIssueTransactionExecutor {
 
     /**
      * 쿠폰 이벤트에 대해 사용자에게 쿠폰을 발급한다.
-     * @param userId 사용자 ID
+     * @param userId 회원 ID
      * @param couponEventId 쿠폰 이벤트 ID
      */
     @Transactional

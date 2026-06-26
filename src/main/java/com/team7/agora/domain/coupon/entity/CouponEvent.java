@@ -18,7 +18,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 /**
- * JPA 엔티티이다.
+ * 쿠폰 이벤트 도메인 정보를 영속화하는 JPA 엔티티이다.
  */
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -60,12 +60,12 @@ public class CouponEvent extends BaseTimeEntity {
     }
 
     /**
-     * 도메인 객체를 생성한다.
-     * @param name 입력 값
-     * @param totalQuantity 입력 값
-     * @param startAt 입력 값
-     * @param endAt 입력 값
-     * @return 처리 결과
+     * 쿠폰과 이벤트 기간, 발급 수량을 기준으로 새 쿠폰 이벤트 엔티티를 생성한다.
+     * @param name 이름 또는 제목
+     * @param totalQuantity 이벤트 전체 발급 수량
+     * @param startAt 이벤트 시작 시각
+     * @param endAt 이벤트 종료 시각
+     * @return 클라이언트에 반환할 API 응답
      */
     public static CouponEvent create(String name, int totalQuantity, LocalDateTime startAt, LocalDateTime endAt) {
         return new CouponEvent(name, totalQuantity, startAt, endAt);
@@ -81,7 +81,7 @@ public class CouponEvent extends BaseTimeEntity {
 
     /**
      * 규칙을 검증한다.
-     * @param now 입력 값
+     * @param now 현재 시각
      */
     public void validateIssueable(LocalDateTime now) {
         if (status != CouponEventStatus.ACTIVE) {

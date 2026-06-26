@@ -16,7 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * 애플리케이션 유스케이스를 조정하는 서비스이다.
+ * 상품 좋아요 관련 비즈니스 유스케이스를 처리하는 서비스이다.
  */
 @Service
 @Transactional(readOnly = true)
@@ -27,10 +27,10 @@ public class ProductLikeService {
     private final UserRepository userRepository;
 
     /**
-     * 의존성을 주입받아 인스턴스를 생성한다.
-     * @param productRepository 입력 값
-     * @param productLikeRepository 입력 값
-     * @param userRepository 입력 값
+     * 필요한 의존성을 주입받아 컴포넌트를 생성한다.
+     * @param productRepository 데이터를 조회하고 저장하는 리포지토리
+     * @param productLikeRepository 데이터를 조회하고 저장하는 리포지토리
+     * @param userRepository 데이터를 조회하고 저장하는 리포지토리
      */
     public ProductLikeService(
         ProductRepository productRepository,
@@ -43,10 +43,10 @@ public class ProductLikeService {
     }
 
     /**
-     * 요청한 동작을 처리한다.
-     * @param userId 입력 값
-     * @param productId 입력 값
-     * @return 처리 결과
+     * 'like' 메서드가 맡은 기능을 수행하고 필요한 결과를 반환한다.
+     * @param userId 회원 ID
+     * @param productId 상품 ID
+     * @return 클라이언트에 반환할 API 응답
      */
     @Transactional
     public ProductLikeResponse like(Long userId, Long productId) {
@@ -63,10 +63,10 @@ public class ProductLikeService {
     }
 
     /**
-     * 요청한 동작을 처리한다.
-     * @param userId 입력 값
-     * @param productId 입력 값
-     * @return 처리 결과
+     * 'unlike' 메서드가 맡은 기능을 수행하고 필요한 결과를 반환한다.
+     * @param userId 회원 ID
+     * @param productId 상품 ID
+     * @return 클라이언트에 반환할 API 응답
      */
     @Transactional
     public ProductLikeResponse unlike(Long userId, Long productId) {
@@ -82,9 +82,9 @@ public class ProductLikeService {
     }
 
     /**
-     * 데이터를 반환한다.
-     * @param userId 입력 값
-     * @return 처리 결과
+     * 'getMyLikedProducts' 메서드는 필요한 데이터를 조회해 호출한 쪽에 반환한다.
+     * @param userId 회원 ID
+     * @return 클라이언트에 반환할 API 응답
      */
     public List<ProductResponse> getMyLikedProducts(Long userId) {
         User user = getUser(userId);

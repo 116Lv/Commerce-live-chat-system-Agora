@@ -16,7 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * 애플리케이션 유스케이스를 조정하는 서비스이다.
+ * 관리자 인증 관련 비즈니스 유스케이스를 처리하는 서비스이다.
  */
 @Service
 @Transactional(readOnly = true)
@@ -27,10 +27,10 @@ public class AdminAuthService {
     private final JwtProvider jwtProvider;
 
     /**
-     * 의존성을 주입받아 인스턴스를 생성한다.
-     * @param userRepository 입력 값
-     * @param passwordEncoder 입력 값
-     * @param jwtProvider 입력 값
+     * 필요한 의존성을 주입받아 컴포넌트를 생성한다.
+     * @param userRepository 데이터를 조회하고 저장하는 리포지토리
+     * @param passwordEncoder 비밀번호 해시와 검증에 사용하는 인코더
+     * @param jwtProvider JWT 생성과 검증을 담당하는 컴포넌트
      */
     public AdminAuthService(UserRepository userRepository, PasswordEncoder passwordEncoder, JwtProvider jwtProvider) {
         this.userRepository = userRepository;
@@ -39,9 +39,9 @@ public class AdminAuthService {
     }
 
     /**
-     * 요청한 동작을 처리한다.
-     * @param request 입력 값
-     * @return 처리 결과
+     * 로그인 요청의 이메일과 비밀번호를 검증하고 JWT 토큰을 발급한다.
+     * @param request 요청 본문
+     * @return 클라이언트에 반환할 API 응답
      */
     public AdminLoginResponse login(AdminLoginRequest request) {
         String email = normalizeEmail(request.email());
@@ -68,8 +68,8 @@ public class AdminAuthService {
     }
 
     /**
-     * 요청한 동작을 처리한다.
-     * @param admin 입력 값
+     * 사용자의 리프레시 토큰을 삭제해 로그아웃 상태로 만든다.
+     * @param admin 인증된 관리자 정보
      */
     public void logout(CustomUserDetails admin) {
         if (admin == null) {

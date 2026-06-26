@@ -30,7 +30,7 @@ public class ChatSystemMessageService {
      * 시스템 메시지를 저장한 뒤 채팅방 Redis 채널로 발행한다.
      * @param chatRoom 메시지를 남길 채팅방
      * @param actor 메시지를 발생시킨 사용자
-     * @param content 시스템 메시지 내용
+     * @param content 내용
      */
     public void send(ChatRoom chatRoom, User actor, String content) {
         ChatMessage message = chatMessageRepository.save(ChatMessage.system(chatRoom, actor, content));

@@ -33,7 +33,7 @@ import lombok.NoArgsConstructor;
         @Index(name = "idx_chat_rooms_seller_status", columnList = "seller_id, status")
     }
 /**
- * JPA 엔티티이다.
+ * 채팅방 도메인 정보를 영속화하는 JPA 엔티티이다.
  */
 )
 public class ChatRoom extends BaseTimeEntity {
@@ -70,10 +70,10 @@ public class ChatRoom extends BaseTimeEntity {
     }
 
     /**
-     * 요청한 동작을 처리한다.
-     * @param product 입력 값
-     * @param buyer 입력 값
-     * @return 처리 결과
+     * 'open' 메서드가 맡은 기능을 수행하고 필요한 결과를 반환한다.
+     * @param product 상품 엔티티
+     * @param buyer 구매자 엔티티
+     * @return 클라이언트에 반환할 API 응답
      */
     public static ChatRoom open(Product product, User buyer) {
         return new ChatRoom(product, product.getSeller(), buyer);
@@ -81,7 +81,7 @@ public class ChatRoom extends BaseTimeEntity {
 
     /**
      * 규칙을 검증한다.
-     * @param userId 입력 값
+     * @param userId 회원 ID
      */
     public void validateParticipant(Long userId) {
         if (!isParticipant(userId)) {
@@ -91,16 +91,16 @@ public class ChatRoom extends BaseTimeEntity {
 
     /**
      * 조건 충족 여부를 확인한다.
-     * @param userId 입력 값
-     * @return 처리 결과
+     * @param userId 회원 ID
+     * @return 클라이언트에 반환할 API 응답
      */
     public boolean isParticipant(Long userId) {
         return seller.getId().equals(userId) || buyer.getId().equals(userId);
     }
 
     /**
-     * 상태를 변경한다.
-     * @param userId 입력 값
+     * 사용자가 채팅방 메시지를 읽은 시각을 갱신해 읽음 상태로 표시한다.
+     * @param userId 회원 ID
      */
     public void markRead(Long userId) {
         if (seller.getId().equals(userId)) {

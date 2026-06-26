@@ -30,7 +30,7 @@ public class ProductSearchCacheLoader {
 
     /**
      * 정규화된 검색 조건을 기준으로 상품 검색 결과를 조회하고 캐싱한다.
-     * @param condition 상품 검색 조건
+     * @param condition 검색 조건
      * @return 상품 검색 결과 목록
      */
     @Cacheable(

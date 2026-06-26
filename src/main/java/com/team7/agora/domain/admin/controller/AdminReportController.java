@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * REST 엔드포인트를 제공하는 컨트롤러이다.
+ * 관리자 신고 기능에서 클라이언트의 HTTP 요청을 받아 서비스 계층으로 전달하는 컨트롤러이다.
  */
 @RestController
 @RequestMapping("/api/admin/reports")
@@ -26,17 +26,17 @@ public class AdminReportController {
     private final AdminReportService adminReportService;
 
     /**
-     * 의존성을 주입받아 인스턴스를 생성한다.
-     * @param adminReportService 입력 값
+     * 필요한 의존성을 주입받아 컴포넌트를 생성한다.
+     * @param adminReportService 해당 기능의 비즈니스 로직을 처리하는 서비스
      */
     public AdminReportController(AdminReportService adminReportService) {
         this.adminReportService = adminReportService;
     }
 
     /**
-     * 데이터를 반환한다.
-     * @param admin 입력 값
-     * @return 처리 결과
+     * 관리자 신고 정보를 조회하는 GET /api/admin/reports/users 요청을 처리한다.
+     * @param admin 현재 로그인한 관리자 정보
+     * @return 클라이언트에 반환할 API 응답
      */
     @GetMapping("/users")
     public ApiResponse<List<AdminReportListResponse>> getUserReports(
@@ -46,11 +46,11 @@ public class AdminReportController {
     }
 
     /**
-     * 요청한 동작을 처리한다.
-     * @param admin 입력 값
-     * @param reportId 입력 값
-     * @param request 입력 값
-     * @return 처리 결과
+     * 관리자 신고 상태를 변경하는 POST /api/admin/reports/users/{reportId}/resolve 요청을 처리한다.
+     * @param admin 현재 로그인한 관리자 정보
+     * @param reportId 대상 신고 ID
+     * @param request 클라이언트가 전달한 요청 본문
+     * @return 클라이언트에 반환할 API 응답
      */
     @PostMapping("/users/{reportId}/resolve")
     public ApiResponse<AdminReportResponse> resolveUserReport(
@@ -63,9 +63,9 @@ public class AdminReportController {
     }
 
     /**
-     * 데이터를 반환한다.
-     * @param admin 입력 값
-     * @return 처리 결과
+     * 관리자 신고 정보를 조회하는 GET /api/admin/reports/products 요청을 처리한다.
+     * @param admin 현재 로그인한 관리자 정보
+     * @return 클라이언트에 반환할 API 응답
      */
     @GetMapping("/products")
     public ApiResponse<List<AdminReportListResponse>> getProductReports(
@@ -75,11 +75,11 @@ public class AdminReportController {
     }
 
     /**
-     * 요청한 동작을 처리한다.
-     * @param admin 입력 값
-     * @param reportId 입력 값
-     * @param request 입력 값
-     * @return 처리 결과
+     * 관리자 신고 상태를 변경하는 POST /api/admin/reports/products/{reportId}/resolve 요청을 처리한다.
+     * @param admin 현재 로그인한 관리자 정보
+     * @param reportId 대상 신고 ID
+     * @param request 클라이언트가 전달한 요청 본문
+     * @return 클라이언트에 반환할 API 응답
      */
     @PostMapping("/products/{reportId}/resolve")
     public ApiResponse<AdminReportResponse> resolveProductReport(

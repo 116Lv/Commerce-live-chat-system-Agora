@@ -31,18 +31,18 @@ public class LocalImageStorageClient implements ImageStorageClient {
     private final Path baseUploadDir;
 
     /**
-     * 의존성을 주입받아 인스턴스를 생성한다.
-     * @param baseUploadDir 입력 값
+     * 필요한 의존성을 주입받아 컴포넌트를 생성한다.
+     * @param baseUploadDir 기본 업로드 디렉터리
      */
     public LocalImageStorageClient(@Value("${file.upload-dir:uploads}") String baseUploadDir) {
         this.baseUploadDir = Path.of(baseUploadDir);
     }
 
     /**
-     * 요청한 동작을 처리한다.
-     * @param category 입력 값
-     * @param file 입력 값
-     * @return 처리 결과
+     * 업로드된 이미지 파일을 검증한 뒤 로컬 저장소에 저장하고 접근 URL을 반환한다.
+     * @param category 업로드 카테고리
+     * @param file 업로드 파일
+     * @return 클라이언트에 반환할 API 응답
      */
     @Override
     public String store(String category, MultipartFile file) {

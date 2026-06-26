@@ -11,7 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * 애플리케이션 유스케이스를 조정하는 서비스이다.
+ * 회원 관련 비즈니스 유스케이스를 처리하는 서비스이다.
  */
 @Service
 @Transactional(readOnly = true)
@@ -21,9 +21,9 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
 
     /**
-     * 의존성을 주입받아 인스턴스를 생성한다.
-     * @param userRepository 입력 값
-     * @param passwordEncoder 입력 값
+     * 필요한 의존성을 주입받아 컴포넌트를 생성한다.
+     * @param userRepository 데이터를 조회하고 저장하는 리포지토리
+     * @param passwordEncoder 비밀번호 해시와 검증에 사용하는 인코더
      */
     public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
@@ -31,18 +31,18 @@ public class UserService {
     }
 
     /**
-     * 데이터를 반환한다.
-     * @param userId 입력 값
-     * @return 처리 결과
+     * 'getMe' 메서드는 필요한 데이터를 조회해 호출한 쪽에 반환한다.
+     * @param userId 회원 ID
+     * @return 클라이언트에 반환할 API 응답
      */
     public UserMeResponse getMe(Long userId) {
         return UserMeResponse.from(getUser(userId));
     }
 
     /**
-     * 데이터를 반환한다.
-     * @param userId 입력 값
-     * @return 처리 결과
+     * 'getSmileScore' 메서드는 필요한 데이터를 조회해 호출한 쪽에 반환한다.
+     * @param userId 회원 ID
+     * @return 클라이언트에 반환할 API 응답
      */
     public SmileScoreResponse getSmileScore(Long userId) {
         return SmileScoreResponse.from(getUser(userId));
@@ -50,9 +50,9 @@ public class UserService {
 
     /**
      * 데이터를 수정한다.
-     * @param userId 입력 값
-     * @param nickname 입력 값
-     * @return 처리 결과
+     * @param userId 회원 ID
+     * @param nickname 닉네임
+     * @return 클라이언트에 반환할 API 응답
      */
     @Transactional
     public UserMeResponse updateProfile(Long userId, String nickname) {
@@ -62,10 +62,10 @@ public class UserService {
     }
 
     /**
-     * 요청한 동작을 처리한다.
-     * @param userId 입력 값
-     * @param currentPassword 입력 값
-     * @param newPassword 입력 값
+     * 현재 비밀번호를 검증한 뒤 새 비밀번호로 변경한다.
+     * @param userId 회원 ID
+     * @param currentPassword 현재 비밀번호
+     * @param newPassword 새 비밀번호
      */
     @Transactional
     public void changePassword(Long userId, String currentPassword, String newPassword) {

@@ -5,8 +5,8 @@ import jakarta.validation.constraints.Positive;
 import java.math.BigDecimal;
 
 /**
- * 요청 본문을 전달하는 DTO이다.
- * @param offerPrice 입력 값
+ * Nego Offer Create 요청 본문을 표현하는 DTO이다.
+ * @param offerPrice 제안 가격
  */
 public record NegoOfferCreateRequest(
     @NotNull(message = "제안 가격은 필수입니다.")

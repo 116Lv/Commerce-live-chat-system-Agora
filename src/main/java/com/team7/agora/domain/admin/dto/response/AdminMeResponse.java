@@ -4,11 +4,11 @@ package com.team7.agora.domain.admin.dto.response;
 import com.team7.agora.domain.user.entity.User;
 
 /**
- * 응답 본문을 전달하는 DTO이다.
- * @param id 입력 값
- * @param email 입력 값
- * @param nickname 입력 값
- * @param role 입력 값
+ * Admin Me 응답 본문을 표현하는 DTO이다.
+ * @param id 식별자
+ * @param email 이메일
+ * @param nickname 닉네임
+ * @param role 권한
  */
 public record AdminMeResponse(
         Long id,
@@ -19,8 +19,8 @@ public record AdminMeResponse(
 
     /**
      * 도메인 객체로부터 응답 객체를 생성한다.
-     * @param user 입력 값
-     * @return 처리 결과
+     * @param user 회원 엔티티
+     * @return 클라이언트에 반환할 API 응답
      */
     public static AdminMeResponse from(User user) {
         return new AdminMeResponse(

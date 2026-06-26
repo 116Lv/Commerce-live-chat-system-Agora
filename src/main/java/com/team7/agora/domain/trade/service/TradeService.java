@@ -32,7 +32,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * 애플리케이션 유스케이스를 조정하는 서비스이다.
+ * 거래 관련 비즈니스 유스케이스를 처리하는 서비스이다.
  */
 @Service
 @Transactional(readOnly = true)
@@ -49,15 +49,15 @@ public class TradeService {
     private final ChatRedisPublisher chatRedisPublisher;
 
     /**
-     * 의존성을 주입받아 인스턴스를 생성한다.
-     * @param tradeRepository 입력 값
-     * @param productRepository 입력 값
-     * @param userRepository 입력 값
-     * @param chatRoomRepository 입력 값
-     * @param negoOfferRepository 입력 값
-     * @param settlementRepository 입력 값
-     * @param paymentRepository 입력 값
-     * @param chatMessageRepository 입력 값
+     * 필요한 의존성을 주입받아 컴포넌트를 생성한다.
+     * @param tradeRepository 데이터를 조회하고 저장하는 리포지토리
+     * @param productRepository 데이터를 조회하고 저장하는 리포지토리
+     * @param userRepository 데이터를 조회하고 저장하는 리포지토리
+     * @param chatRoomRepository 데이터를 조회하고 저장하는 리포지토리
+     * @param negoOfferRepository 데이터를 조회하고 저장하는 리포지토리
+     * @param settlementRepository 데이터를 조회하고 저장하는 리포지토리
+     * @param paymentRepository 데이터를 조회하고 저장하는 리포지토리
+     * @param chatMessageRepository 데이터를 조회하고 저장하는 리포지토리
      */
     public TradeService(
         TradeRepository tradeRepository,
@@ -82,10 +82,10 @@ public class TradeService {
     }
 
     /**
-     * 데이터를 반환한다.
-     * @param userId 입력 값
-     * @param tradeId 입력 값
-     * @return 처리 결과
+     * 'getTradeDetail' 메서드는 필요한 데이터를 조회해 호출한 쪽에 반환한다.
+     * @param userId 회원 ID
+     * @param tradeId 거래 ID
+     * @return 클라이언트에 반환할 API 응답
      */
     public TradeDetailResponse getTradeDetail(Long userId, Long tradeId) {
         Trade trade = tradeRepository.findById(tradeId)
@@ -104,10 +104,10 @@ public class TradeService {
     }
 
     /**
-     * 요청한 동작을 처리한다.
-     * @param buyerId 입력 값
-     * @param productId 입력 값
-     * @return 처리 결과
+     * 'startTrade' 메서드가 맡은 기능을 수행하고 필요한 결과를 반환한다.
+     * @param buyerId 구매자 ID
+     * @param productId 상품 ID
+     * @return 클라이언트에 반환할 API 응답
      */
     @Transactional
     public TradeResponse startTrade(Long buyerId, Long productId) {
@@ -138,10 +138,10 @@ public class TradeService {
     }
 
     /**
-     * 도메인 객체를 생성한다.
-     * @param product 입력 값
-     * @param acceptedOffer 입력 값
-     * @return 처리 결과
+     * 수락된 네고 제안을 기준으로 결제 대기 거래를 생성한다.
+     * @param product 상품 엔티티
+     * @param acceptedOffer 판매자가 수락한 네고 제안
+     * @return 클라이언트에 반환할 API 응답
      */
     @Transactional
     public Trade createTradeFromAcceptedOffer(Product product, NegoOffer acceptedOffer) {
@@ -158,10 +158,10 @@ public class TradeService {
     }
 
     /**
-     * 요청한 동작을 처리한다.
-     * @param buyerId 입력 값
-     * @param tradeId 입력 값
-     * @return 처리 결과
+     * 구매 확정 요청을 검증하고 거래를 완료 상태로 변경한다.
+     * @param buyerId 구매자 ID
+     * @param tradeId 거래 ID
+     * @return 클라이언트에 반환할 API 응답
      */
     @Transactional
     public TradeResponse completeTrade(Long buyerId, Long tradeId) {
@@ -186,10 +186,10 @@ public class TradeService {
     }
 
     /**
-     * 요청한 동작을 처리한다.
-     * @param authUser 입력 값
-     * @param tradeId 입력 값
-     * @return 처리 결과
+     * 'expireReservation' 메서드가 맡은 기능을 수행하고 필요한 결과를 반환한다.
+     * @param authUser 인증 사용자 정보
+     * @param tradeId 거래 ID
+     * @return 클라이언트에 반환할 API 응답
      */
     @Transactional
     public TradeResponse expireReservation(AuthUser authUser, Long tradeId) {
@@ -213,9 +213,9 @@ public class TradeService {
     }
 
     /**
-     * 요청한 동작을 처리한다.
-     * @param authUser 입력 값
-     * @param tradeId 입력 값
+     * 'sendRatingRequestMessage' 메서드가 맡은 기능을 수행하고 필요한 결과를 반환한다.
+     * @param authUser 인증 사용자 정보
+     * @param tradeId 거래 ID
      */
     @Transactional
     public void sendRatingRequestMessage(AuthUser authUser, Long tradeId) {

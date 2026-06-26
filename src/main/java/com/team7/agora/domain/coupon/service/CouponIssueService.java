@@ -4,7 +4,7 @@ import com.team7.agora.global.lock.LockService;
 import org.springframework.stereotype.Service;
 
 /**
- * 애플리케이션 유스케이스를 조정하는 서비스이다.
+ * Coupon Issue 관련 비즈니스 유스케이스를 처리하는 서비스이다.
  */
 @Service
 public class CouponIssueService {
@@ -13,12 +13,12 @@ public class CouponIssueService {
     private final CouponIssueTransactionExecutor couponIssueTransactionExecutor;
 
     /**
-     * 의존성을 주입받아 인스턴스를 생성한다.
-     * @param couponEventRepository 입력 값
-     * @param couponRepository 입력 값
-     * @param couponIssueRepository 입력 값
-     * @param userRepository 입력 값
-     * @param lockService 입력 값
+     * 필요한 의존성을 주입받아 컴포넌트를 생성한다.
+     * @param couponEventRepository 데이터를 조회하고 저장하는 리포지토리
+     * @param couponRepository 데이터를 조회하고 저장하는 리포지토리
+     * @param couponIssueRepository 데이터를 조회하고 저장하는 리포지토리
+     * @param userRepository 데이터를 조회하고 저장하는 리포지토리
+     * @param lockService 해당 기능의 비즈니스 로직을 처리하는 서비스
      */
     public CouponIssueService(
         LockService lockService,

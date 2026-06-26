@@ -28,7 +28,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * 애플리케이션 유스케이스를 조정하는 서비스이다.
+ * Admin Coupon 관련 비즈니스 유스케이스를 처리하는 서비스이다.
  */
 @Service
 @Transactional(readOnly = true)
@@ -43,12 +43,12 @@ public class AdminCouponService {
     private final LockService lockService;
 
     /**
-     * 의존성을 주입받아 인스턴스를 생성한다.
-     * @param couponRepository 입력 값
-     * @param couponEventRepository 입력 값
-     * @param couponIssueRepository 입력 값
-     * @param userRepository 입력 값
-     * @param lockService 입력 값
+     * 필요한 의존성을 주입받아 컴포넌트를 생성한다.
+     * @param couponRepository 데이터를 조회하고 저장하는 리포지토리
+     * @param couponEventRepository 데이터를 조회하고 저장하는 리포지토리
+     * @param couponIssueRepository 데이터를 조회하고 저장하는 리포지토리
+     * @param userRepository 데이터를 조회하고 저장하는 리포지토리
+     * @param lockService 해당 기능의 비즈니스 로직을 처리하는 서비스
      */
     public AdminCouponService(
         CouponRepository couponRepository,
@@ -65,14 +65,14 @@ public class AdminCouponService {
     }
 
     /**
-     * 도메인 객체를 생성한다.
-     * @param admin 입력 값
-     * @param name 입력 값
-     * @param discountAmount 입력 값
-     * @param minOrderAmount 입력 값
-     * @param type 입력 값
-     * @param validDays 입력 값
-     * @return 처리 결과
+     * 관리자가 전달한 쿠폰 정책 요청으로 새 쿠폰을 생성한다.
+     * @param admin 인증된 관리자 정보
+     * @param name 이름 또는 제목
+     * @param discountAmount 쿠폰 할인 금액
+     * @param minOrderAmount 쿠폰 사용을 위한 최소 주문 금액
+     * @param type 쿠폰 유형
+     * @param validDays 쿠폰 유효 일수
+     * @return 클라이언트에 반환할 API 응답
      */
     @Transactional
     public AdminCouponResponse create(
@@ -89,10 +89,10 @@ public class AdminCouponService {
     }
 
     /**
-     * 데이터를 반환한다.
-     * @param admin 입력 값
-     * @param couponId 입력 값
-     * @return 처리 결과
+     * 'getDetail' 메서드는 필요한 데이터를 조회해 호출한 쪽에 반환한다.
+     * @param admin 인증된 관리자 정보
+     * @param couponId 쿠폰 ID
+     * @return 클라이언트에 반환할 API 응답
      */
     public AdminCouponResponse getDetail(CustomUserDetails admin, Long couponId) {
         validateAdminAuthority(admin);
@@ -126,10 +126,10 @@ public class AdminCouponService {
     }
 
     /**
-     * 요청한 동작을 처리한다.
-     * @param admin 입력 값
-     * @param couponId 입력 값
-     * @return 처리 결과
+     * 쿠폰 이벤트에 참여한 사용자들에게 쿠폰 발급 결과를 반환한다.
+     * @param admin 인증된 관리자 정보
+     * @param couponId 쿠폰 ID
+     * @return 클라이언트에 반환할 API 응답
      */
     @Transactional
     public CouponBroadcastResponse broadcast(CustomUserDetails admin, Long couponId) {
@@ -207,10 +207,10 @@ public class AdminCouponService {
     }
 
     /**
-     * 데이터를 반환한다.
-     * @param admin 입력 값
-     * @param couponId 입력 값
-     * @return 처리 결과
+     * 'getIssueHistory' 메서드는 필요한 데이터를 조회해 호출한 쪽에 반환한다.
+     * @param admin 인증된 관리자 정보
+     * @param couponId 쿠폰 ID
+     * @return 클라이언트에 반환할 API 응답
      */
     public CouponIssueHistoryResponse getIssueHistory(CustomUserDetails admin, Long couponId) {
         validateAdminAuthority(admin);

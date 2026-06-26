@@ -14,7 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * 애플리케이션 유스케이스를 조정하는 서비스이다.
+ * Nego Expiration 관련 비즈니스 유스케이스를 처리하는 서비스이다.
  */
 @Service
 @Transactional(readOnly = true)
@@ -38,9 +38,9 @@ public class NegoExpirationService {
     }
 
     /**
-     * 요청한 동작을 처리한다.
-     * @param now 입력 값
-     * @return 처리 결과
+     * 현재 시간 기준으로 만료 시간이 지난 가격 제안들을 일괄 만료 처리한다.
+     * @param now 현재 시각
+     * @return 클라이언트에 반환할 API 응답
      */
     @Transactional
     public int expireDueOffers(LocalDateTime now) {
@@ -56,9 +56,9 @@ public class NegoExpirationService {
     }
 
     /**
-     * 요청한 동작을 처리한다.
-     * @param now 입력 값
-     * @return 처리 결과
+     * 'expireDuePaymentReservations' 메서드가 맡은 기능을 수행하고 필요한 결과를 반환한다.
+     * @param now 현재 시각
+     * @return 클라이언트에 반환할 API 응답
      */
     @Transactional
     public int expireDuePaymentReservations(LocalDateTime now) {

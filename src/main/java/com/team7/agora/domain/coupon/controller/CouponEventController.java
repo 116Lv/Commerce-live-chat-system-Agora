@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * REST 엔드포인트를 제공하는 컨트롤러이다.
+ * 쿠폰 이벤트 기능에서 클라이언트의 HTTP 요청을 받아 서비스 계층으로 전달하는 컨트롤러이다.
  */
 @RestController
 @RequestMapping("/api/coupon-events")
@@ -26,9 +26,9 @@ public class CouponEventController {
     private final CouponQueryService couponQueryService;
 
     /**
-     * 의존성을 주입받아 인스턴스를 생성한다.
-     * @param couponIssueService 입력 값
-     * @param couponQueryService 입력 값
+     * 필요한 의존성을 주입받아 컴포넌트를 생성한다.
+     * @param couponIssueService 해당 기능의 비즈니스 로직을 처리하는 서비스
+     * @param couponQueryService 해당 기능의 비즈니스 로직을 처리하는 서비스
      */
     public CouponEventController(CouponIssueService couponIssueService, CouponQueryService couponQueryService) {
         this.couponIssueService = couponIssueService;
@@ -36,8 +36,8 @@ public class CouponEventController {
     }
 
     /**
-     * 요청한 동작을 처리한다.
-     * @return 처리 결과
+     * 쿠폰 이벤트 정보를 조회하는 GET /api/coupon-events 요청을 처리한다.
+     * @return 클라이언트에 반환할 API 응답
      */
     @GetMapping
     public ApiResponse<List<CouponEventResponse>> list() {
@@ -46,9 +46,9 @@ public class CouponEventController {
 
     /**
      * 조건 충족 여부를 확인한다.
-     * @param userDetails 입력 값
-     * @param eventId 입력 값
-     * @return 처리 결과
+     * @param userDetails 인증된 사용자 정보
+     * @param eventId 이벤트 ID
+     * @return 클라이언트에 반환할 API 응답
      */
     @PreAuthorize("hasAuthority('ROLE_USER')")
     @PostMapping("/{eventId}/issue")

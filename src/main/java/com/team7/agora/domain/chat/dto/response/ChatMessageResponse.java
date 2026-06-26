@@ -4,14 +4,14 @@ import com.team7.agora.domain.chat.entity.ChatMessage;
 import java.time.LocalDateTime;
 
 /**
- * 응답 본문을 전달하는 DTO이다.
- * @param messageId 입력 값
- * @param chatRoomId 입력 값
- * @param senderId 입력 값
- * @param senderNickname 입력 값
- * @param content 입력 값
- * @param messageType 입력 값
- * @param createdAt 입력 값
+ * Chat Message 응답 본문을 표현하는 DTO이다.
+ * @param messageId 채팅 메시지 ID
+ * @param chatRoomId 채팅방 ID
+ * @param senderId 메시지를 보낸 회원 ID
+ * @param senderNickname 메시지를 보낸 회원 닉네임
+ * @param content 내용
+ * @param messageType 채팅 메시지 유형
+ * @param createdAt 데이터가 생성된 시각
  */
 public record ChatMessageResponse(
     Long messageId,
@@ -25,8 +25,8 @@ public record ChatMessageResponse(
 
     /**
      * 도메인 객체로부터 응답 객체를 생성한다.
-     * @param message 입력 값
-     * @return 처리 결과
+     * @param message 메시지
+     * @return 클라이언트에 반환할 API 응답
      */
     public static ChatMessageResponse from(ChatMessage message) {
         return new ChatMessageResponse(

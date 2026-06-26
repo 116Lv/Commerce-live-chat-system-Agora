@@ -3,14 +3,14 @@ package com.team7.agora.domain.coupon.dto.response;
 import com.team7.agora.domain.coupon.entity.Coupon;
 
 /**
- * 응답 본문을 전달하는 DTO이다.
- * @param couponId 입력 값
- * @param name 입력 값
- * @param discountAmount 입력 값
- * @param minOrderAmount 입력 값
- * @param type 입력 값
- * @param status 입력 값
- * @param validDays 입력 값
+ * Admin Coupon 응답 본문을 표현하는 DTO이다.
+ * @param couponId 쿠폰 ID
+ * @param name 이름 또는 제목
+ * @param discountAmount 쿠폰 할인 금액
+ * @param minOrderAmount 쿠폰 사용을 위한 최소 주문 금액
+ * @param type 쿠폰 유형
+ * @param status 조회 또는 변경할 상태
+ * @param validDays 쿠폰 유효 일수
  */
 public record AdminCouponResponse(
     Long couponId,
@@ -24,8 +24,8 @@ public record AdminCouponResponse(
 
     /**
      * 도메인 객체로부터 응답 객체를 생성한다.
-     * @param coupon 입력 값
-     * @return 처리 결과
+     * @param coupon 쿠폰 엔티티
+     * @return 클라이언트에 반환할 API 응답
      */
     public static AdminCouponResponse from(Coupon coupon) {
         return new AdminCouponResponse(

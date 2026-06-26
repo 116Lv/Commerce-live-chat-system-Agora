@@ -26,16 +26,16 @@ public class SecurityConfig {
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
     /**
-     * 의존성을 주입받아 인스턴스를 생성한다.
-     * @param jwtAuthenticationFilter 입력 값
+     * 필요한 의존성을 주입받아 컴포넌트를 생성한다.
+     * @param jwtAuthenticationFilter HTTP 요청의 JWT를 인증 객체로 바꾸는 필터
      */
     public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter) {
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
     }
 
     /**
-     * 요청한 동작을 처리한다.
-     * @return 처리 결과
+     * 비밀번호를 안전하게 해시하기 위해 BCrypt PasswordEncoder 빈을 등록한다.
+     * @return 클라이언트에 반환할 API 응답
      */
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -43,9 +43,9 @@ public class SecurityConfig {
     }
 
     /**
-     * 요청한 동작을 처리한다.
-     * @param http 입력 값
-     * @return 처리 결과
+     * HTTP 요청에 적용할 인증, 인가, CORS, JWT 필터 설정을 구성한다.
+     * @param http HTTP 보안 설정 객체
+     * @return 클라이언트에 반환할 API 응답
      */
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -90,8 +90,8 @@ public class SecurityConfig {
     }
 
     /**
-     * 요청한 동작을 처리한다.
-     * @return 처리 결과
+     * 'unauthorizedEntryPoint' 메서드가 맡은 기능을 수행하고 필요한 결과를 반환한다.
+     * @return 클라이언트에 반환할 API 응답
      */
     @Bean
     public AuthenticationEntryPoint unauthorizedEntryPoint() {

@@ -20,7 +20,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * 애플리케이션 유스케이스를 조정하는 서비스이다.
+ * 결제 관련 비즈니스 유스케이스를 처리하는 서비스이다.
  */
 @Service
 @Transactional(readOnly = true)
@@ -32,11 +32,11 @@ public class PaymentService {
     private final PaymentClient paymentClient;
 
     /**
-     * 의존성을 주입받아 인스턴스를 생성한다.
-     * @param paymentRepository 입력 값
-     * @param settlementRepository 입력 값
-     * @param tradeRepository 입력 값
-     * @param paymentClient 입력 값
+     * 필요한 의존성을 주입받아 컴포넌트를 생성한다.
+     * @param paymentRepository 데이터를 조회하고 저장하는 리포지토리
+     * @param settlementRepository 데이터를 조회하고 저장하는 리포지토리
+     * @param tradeRepository 데이터를 조회하고 저장하는 리포지토리
+     * @param paymentClient 외부 시스템 또는 저장소와 통신하는 클라이언트
      */
     public PaymentService(
         PaymentRepository paymentRepository,
@@ -51,10 +51,10 @@ public class PaymentService {
     }
 
     /**
-     * 요청한 동작을 처리한다.
-     * @param payerId 입력 값
-     * @param tradeId 입력 값
-     * @return 처리 결과
+     * 거래 정보를 확인하고 결제 대기 상태의 결제 데이터를 생성한다.
+     * @param payerId 결제자 ID
+     * @param tradeId 거래 ID
+     * @return 클라이언트에 반환할 API 응답
      */
     @Transactional
     public PaymentResponse prepare(Long payerId, Long tradeId) {
@@ -83,11 +83,11 @@ public class PaymentService {
     }
 
     /**
-     * 요청한 동작을 처리한다.
-     * @param payerId 입력 값
-     * @param paymentId 입력 값
-     * @param paymentKey 입력 값
-     * @return 처리 결과
+     * 외부 결제 승인 결과를 검증하고 결제를 완료 상태로 변경한다.
+     * @param payerId 결제자 ID
+     * @param paymentId 결제 ID
+     * @param paymentKey 결제 승인 키
+     * @return 클라이언트에 반환할 API 응답
      */
     @Transactional
     public PaymentResponse confirm(Long payerId, Long paymentId, String paymentKey) {
@@ -109,11 +109,11 @@ public class PaymentService {
     }
 
     /**
-     * 요청한 동작을 처리한다.
-     * @param payerId 입력 값
-     * @param paymentId 입력 값
-     * @param reason 입력 값
-     * @return 처리 결과
+     * 결제 환불 요청을 검증하고 결제 상태를 환불 처리로 갱신한다.
+     * @param payerId 결제자 ID
+     * @param paymentId 결제 ID
+     * @param reason 처리 사유
+     * @return 클라이언트에 반환할 API 응답
      */
     @Transactional
     public PaymentResponse refund(Long payerId, Long paymentId, String reason) {
@@ -128,10 +128,10 @@ public class PaymentService {
     }
 
     /**
-     * 데이터를 반환한다.
-     * @param authUser 입력 값
-     * @param paymentId 입력 값
-     * @return 처리 결과
+     * 결제 ID로 현재 환불 처리 상태를 조회한다.
+     * @param authUser 인증 사용자 정보
+     * @param paymentId 결제 ID
+     * @return 클라이언트에 반환할 API 응답
      */
     public RefundStatusResponse getRefundStatus(AuthUser authUser, Long paymentId) {
         Payment payment = findPayment(paymentId);

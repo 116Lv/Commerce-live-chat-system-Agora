@@ -16,7 +16,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 /**
- * JPA 엔티티이다.
+ * 회원 도메인 정보를 영속화하는 JPA 엔티티이다.
  */
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -64,23 +64,23 @@ public class User {
     }
 
     /**
-     * 요청한 동작을 처리한다.
-     * @param email 입력 값
-     * @param encodedPassword 입력 값
-     * @param nickname 입력 값
-     * @param phone 입력 값
-     * @return 처리 결과
+     * 회원가입 요청 정보를 검증하고 새 회원을 등록한다.
+     * @param email 이메일
+     * @param encodedPassword 암호화된 비밀번호
+     * @param nickname 닉네임
+     * @param phone 전화번호
+     * @return 클라이언트에 반환할 API 응답
      */
     public static User signup(String email, String encodedPassword, String nickname, String phone) {
         return new User(email, encodedPassword, nickname, phone);
     }
 
     /**
-     * 도메인 객체를 생성한다.
-     * @param email 입력 값
-     * @param encodedPassword 입력 값
-     * @param nickname 입력 값
-     * @return 처리 결과
+     * 회원가입 요청에서 검증된 이메일과 암호화된 비밀번호로 새 회원 엔티티를 생성한다.
+     * @param email 이메일
+     * @param encodedPassword 암호화된 비밀번호
+     * @param nickname 닉네임
+     * @return 클라이언트에 반환할 API 응답
      */
     public static User create(String email, String encodedPassword, String nickname) {
         return new User(email, encodedPassword, nickname, null);
@@ -88,7 +88,7 @@ public class User {
 
     /**
      * 데이터를 수정한다.
-     * @param delta 입력 값
+     * @param delta 증감할 점수
      */
     public void updateSmileScore(int delta) {
         int nextScore = this.smileScore + delta;
@@ -96,31 +96,31 @@ public class User {
     }
 
     /**
-     * 요청한 동작을 처리한다.
+     * 'block' 메서드가 맡은 기능을 수행하고 필요한 결과를 반환한다.
      */
     public void block() {
         this.status = UserStatus.BLOCKED;
     }
 
     /**
-     * 요청한 동작을 처리한다.
-     * @param status 입력 값
+     * 'changeStatus' 메서드가 맡은 기능을 수행하고 필요한 결과를 반환한다.
+     * @param status 조회 또는 변경할 상태
      */
     public void changeStatus(UserStatus status) {
         this.status = status;
     }
 
     /**
-     * 요청한 동작을 처리한다.
-     * @param role 입력 값
+     * 관리자가 회원 계정의 권한을 변경한다.
+     * @param role 권한
      */
     public void changeRole(UserRole role) {
         this.role = role;
     }
 
     /**
-     * 요청한 동작을 처리한다.
-     * @param encodedPassword 입력 값
+     * 현재 비밀번호를 검증한 뒤 새 비밀번호로 변경한다.
+     * @param encodedPassword 암호화된 비밀번호
      */
     public void changePassword(String encodedPassword) {
         this.password = encodedPassword;
@@ -128,7 +128,7 @@ public class User {
 
     /**
      * 데이터를 수정한다.
-     * @param nickname 입력 값
+     * @param nickname 닉네임
      */
     public void updateProfile(String nickname) {
         this.nickname = nickname;

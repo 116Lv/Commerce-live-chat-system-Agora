@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * REST 엔드포인트를 제공하는 컨트롤러이다.
+ * 지역 기능에서 클라이언트의 HTTP 요청을 받아 서비스 계층으로 전달하는 컨트롤러이다.
  */
 @RestController
 public class RegionController {
@@ -17,17 +17,17 @@ public class RegionController {
     private final RegionService regionService;
 
     /**
-     * 의존성을 주입받아 인스턴스를 생성한다.
-     * @param regionService 입력 값
+     * 필요한 의존성을 주입받아 컴포넌트를 생성한다.
+     * @param regionService 지역 비즈니스 로직을 처리하는 서비스
      */
     public RegionController(RegionService regionService) {
         this.regionService = regionService;
     }
 
     /**
-     * 데이터를 반환한다.
-     * @param keyword 입력 값
-     * @return 처리 결과
+     * 지역 정보를 조회하는 GET /api/regions 요청을 처리한다.
+     * @param keyword 검색어
+     * @return 클라이언트에 반환할 API 응답
      */
     @GetMapping("/api/regions")
     public ApiResponse<List<RegionResponse>> findRegions(

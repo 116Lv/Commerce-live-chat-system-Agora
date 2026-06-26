@@ -22,7 +22,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * 애플리케이션 유스케이스를 조정하는 서비스이다.
+ * 상품 관련 비즈니스 유스케이스를 처리하는 서비스이다.
  */
 @Service
 @Transactional(readOnly = true)
@@ -35,12 +35,12 @@ public class ProductService {
     private final ProductSearchService productSearchService;
 
     /**
-     * 의존성을 주입받아 인스턴스를 생성한다.
-     * @param productRepository 입력 값
-     * @param userRepository 입력 값
-     * @param regionRepository 입력 값
-     * @param userRegionRepository 입력 값
-     * @param productSearchService 입력 값
+     * 필요한 의존성을 주입받아 컴포넌트를 생성한다.
+     * @param productRepository 데이터를 조회하고 저장하는 리포지토리
+     * @param userRepository 데이터를 조회하고 저장하는 리포지토리
+     * @param regionRepository 데이터를 조회하고 저장하는 리포지토리
+     * @param userRegionRepository 데이터를 조회하고 저장하는 리포지토리
+     * @param productSearchService 해당 기능의 비즈니스 로직을 처리하는 서비스
      */
     public ProductService(
         ProductRepository productRepository,
@@ -57,10 +57,10 @@ public class ProductService {
     }
 
     /**
-     * 도메인 객체를 생성한다.
-     * @param sellerId 입력 값
-     * @param request 입력 값
-     * @return 처리 결과
+     * 판매자가 입력한 상품 정보와 거래 지역으로 새 상품을 등록한다.
+     * @param sellerId 상품 판매자 ID
+     * @param request 요청 본문
+     * @return 클라이언트에 반환할 API 응답
      */
     @Transactional
     public ProductResponse create(Long sellerId, ProductCreateRequest request) {
@@ -82,10 +82,10 @@ public class ProductService {
 
     /**
      * 데이터를 수정한다.
-     * @param requesterId 입력 값
-     * @param productId 입력 값
-     * @param request 입력 값
-     * @return 처리 결과
+     * @param requesterId 가격 제안을 생성한 구매자 ID
+     * @param productId 상품 ID
+     * @param request 요청 본문
+     * @return 클라이언트에 반환할 API 응답
      */
     @Transactional
     public ProductResponse update(Long requesterId, Long productId, ProductUpdateRequest request) {
@@ -98,8 +98,8 @@ public class ProductService {
 
     /**
      * 데이터를 삭제한다.
-     * @param requesterId 입력 값
-     * @param productId 입력 값
+     * @param requesterId 가격 제안을 생성한 구매자 ID
+     * @param productId 상품 ID
      */
     @Transactional
     public void delete(Long requesterId, Long productId) {
@@ -110,20 +110,20 @@ public class ProductService {
     }
 
     /**
-     * 데이터를 반환한다.
-     * @param productId 입력 값
-     * @return 처리 결과
+     * 'getProduct' 메서드는 필요한 데이터를 조회해 호출한 쪽에 반환한다.
+     * @param productId 상품 ID
+     * @return 클라이언트에 반환할 API 응답
      */
     public ProductResponse getProduct(Long productId) {
         return ProductResponse.from(getActiveProduct(productId));
     }
 
     /**
-     * 데이터를 반환한다.
-     * @param viewerId 입력 값
-     * @param regionId 입력 값
-     * @param pageable 입력 값
-     * @return 처리 결과
+     * 'getProducts' 메서드는 필요한 데이터를 조회해 호출한 쪽에 반환한다.
+     * @param viewerId 상품을 조회하는 회원 ID
+     * @param regionId 지역 ID
+     * @param pageable 페이지 요청 정보
+     * @return 클라이언트에 반환할 API 응답
      */
     public List<ProductResponse> getProducts(Long viewerId, Long regionId, Pageable pageable) {
         List<Long> regionIds = resolveRegionIds(viewerId, regionId);
@@ -136,9 +136,9 @@ public class ProductService {
     }
 
     /**
-     * 데이터를 반환한다.
-     * @param sellerId 입력 값
-     * @return 처리 결과
+     * 'getMyProducts' 메서드는 필요한 데이터를 조회해 호출한 쪽에 반환한다.
+     * @param sellerId 상품 판매자 ID
+     * @return 클라이언트에 반환할 API 응답
      */
     public List<ProductResponse> getMyProducts(Long sellerId) {
         User seller = getUser(sellerId);

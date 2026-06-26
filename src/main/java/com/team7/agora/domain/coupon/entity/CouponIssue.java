@@ -35,7 +35,7 @@ import lombok.NoArgsConstructor;
         @Index(name = "idx_coupon_issues_user_status", columnList = "user_id, status")
     }
 /**
- * JPA 엔티티이다.
+ * Coupon Issue 도메인 정보를 영속화하는 JPA 엔티티이다.
  */
 )
 public class CouponIssue {
@@ -73,10 +73,10 @@ public class CouponIssue {
 
     /**
      * 조건 충족 여부를 확인한다.
-     * @param coupon 입력 값
-     * @param couponEvent 입력 값
-     * @param user 입력 값
-     * @return 처리 결과
+     * @param coupon 쿠폰 엔티티
+     * @param couponEvent 쿠폰 이벤트 엔티티
+     * @param user 회원 엔티티
+     * @return 클라이언트에 반환할 API 응답
      */
     public static CouponIssue issue(Coupon coupon, CouponEvent couponEvent, User user) {
         return new CouponIssue(coupon, couponEvent, user);

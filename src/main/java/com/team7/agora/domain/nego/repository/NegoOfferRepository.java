@@ -9,7 +9,7 @@ import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 /**
- * 데이터 저장과 조회를 위한 저장소 계약이다.
+ * Nego Offer 데이터 저장과 조회를 담당하는 저장소 인터페이스이다.
  */
 public interface NegoOfferRepository extends JpaRepository<NegoOffer, Long> {
     Optional<NegoOffer> findFirstByChatRoomIdAndStatusOrderByCreatedAtDesc(Long chatRoomId, NegoOfferStatus status);

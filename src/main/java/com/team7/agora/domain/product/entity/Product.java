@@ -33,7 +33,7 @@ import lombok.NoArgsConstructor;
         @Index(name = "idx_products_title", columnList = "title")
     }
 /**
- * JPA 엔티티이다.
+ * 상품 도메인 정보를 영속화하는 JPA 엔티티이다.
  */
 )
 public class Product {
@@ -87,14 +87,14 @@ public class Product {
     }
 
     /**
-     * 도메인 객체를 생성한다.
-     * @param seller 입력 값
-     * @param region 입력 값
-     * @param title 입력 값
-     * @param description 입력 값
-     * @param price 입력 값
-     * @param category 입력 값
-     * @return 처리 결과
+     * 판매자, 지역, 상품 제목과 가격 정보로 새 상품 엔티티를 생성한다.
+     * @param seller 판매자 엔티티
+     * @param region 거래 지역 엔티티
+     * @param title 상품 제목 또는 화면에 표시할 제목
+     * @param description 상품 설명 또는 상세 내용
+     * @param price 가격
+     * @param category 업로드 카테고리
+     * @return 클라이언트에 반환할 API 응답
      */
     public static Product create(
         User seller,
@@ -109,8 +109,8 @@ public class Product {
 
     /**
      * 조건 충족 여부를 확인한다.
-     * @param userId 입력 값
-     * @return 처리 결과
+     * @param userId 회원 ID
+     * @return 클라이언트에 반환할 API 응답
      */
     public boolean isSeller(Long userId) {
         return seller.getId() != null && seller.getId().equals(userId);
@@ -118,10 +118,10 @@ public class Product {
 
     /**
      * 데이터를 수정한다.
-     * @param title 입력 값
-     * @param description 입력 값
-     * @param price 입력 값
-     * @param category 입력 값
+     * @param title 상품 제목 또는 화면에 표시할 제목
+     * @param description 상품 설명 또는 상세 내용
+     * @param price 가격
+     * @param category 업로드 카테고리
      */
     public void update(String title, String description, BigDecimal price, String category) {
         this.title = title;
@@ -138,42 +138,42 @@ public class Product {
     }
 
     /**
-     * 상태를 변경한다.
+     * 예약 가능한 상품 또는 거래를 예약 상태로 변경한다.
      */
     public void markReserved() {
         this.status = ProductStatus.RESERVED;
     }
 
     /**
-     * 요청한 동작을 처리한다.
+     * 관리자가 숨겨진 상품을 다시 판매 중 상태로 되돌린다.
      */
     public void restoreSelling() {
         this.status = ProductStatus.SELLING;
     }
 
     /**
-     * 상태를 변경한다.
+     * 상품 또는 거래를 판매 완료 상태로 변경한다.
      */
     public void markSold() {
         this.status = ProductStatus.SOLD;
     }
 
     /**
-     * 요청한 동작을 처리한다.
+     * 'hide' 메서드가 맡은 기능을 수행하고 필요한 결과를 반환한다.
      */
     public void hide() {
         this.status = ProductStatus.HIDDEN;
     }
 
     /**
-     * 요청한 동작을 처리한다.
+     * 상품 좋아요 수를 1 증가시킨다.
      */
     public void increaseLikeCount() {
         this.likeCount++;
     }
 
     /**
-     * 요청한 동작을 처리한다.
+     * 상품 좋아요 수를 1 감소시킨다.
      */
     public void decreaseLikeCount() {
         this.likeCount = Math.max(0, this.likeCount - 1);

@@ -23,18 +23,18 @@ public class StompAuthInterceptor implements ChannelInterceptor {
     private final JwtProvider jwtProvider;
 
     /**
-     * 의존성을 주입받아 인스턴스를 생성한다.
-     * @param jwtProvider 입력 값
+     * 필요한 의존성을 주입받아 컴포넌트를 생성한다.
+     * @param jwtProvider JWT 생성과 검증을 담당하는 컴포넌트
      */
     public StompAuthInterceptor(JwtProvider jwtProvider) {
         this.jwtProvider = jwtProvider;
     }
 
     /**
-     * 요청한 동작을 처리한다.
-     * @param message 입력 값
-     * @param channel 입력 값
-     * @return 처리 결과
+     * STOMP CONNECT 요청의 JWT 토큰을 검증하고 인증 사용자를 세션에 저장한다.
+     * @param message 메시지
+     * @param channel 메시지 채널
+     * @return 클라이언트에 반환할 API 응답
      */
     @Override
     public Message<?> preSend(Message<?> message, MessageChannel channel) {

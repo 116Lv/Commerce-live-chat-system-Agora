@@ -17,7 +17,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 /**
- * JPA 엔티티이다.
+ * 리프레시 토큰 도메인 정보를 영속화하는 JPA 엔티티이다.
  */
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -47,10 +47,10 @@ public class RefreshToken {
 
     /**
      * 조건 충족 여부를 확인한다.
-     * @param user 입력 값
-     * @param token 입력 값
-     * @param expiresAt 입력 값
-     * @return 처리 결과
+     * @param user 회원 엔티티
+     * @param token JWT 토큰
+     * @param expiresAt 토큰 또는 제안이 만료되는 시각
+     * @return 클라이언트에 반환할 API 응답
      */
     public static RefreshToken issue(User user, String token, LocalDateTime expiresAt) {
         return new RefreshToken(user, token, expiresAt);
@@ -58,8 +58,8 @@ public class RefreshToken {
 
     /**
      * 조건 충족 여부를 확인한다.
-     * @param now 입력 값
-     * @return 처리 결과
+     * @param now 현재 시각
+     * @return 클라이언트에 반환할 API 응답
      */
     public boolean isExpired(LocalDateTime now) {
         return !expiresAt.isAfter(now);

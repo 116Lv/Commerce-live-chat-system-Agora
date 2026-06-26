@@ -5,9 +5,9 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 /**
- * 요청 본문을 전달하는 DTO이다.
- * @param productId 입력 값
- * @param reason 입력 값
+ * Product Report Create 요청 본문을 표현하는 DTO이다.
+ * @param productId 상품 ID
+ * @param reason 처리 사유
  */
 public record ProductReportCreateRequest(
     @NotNull(message = "신고 대상 상품 ID는 필수입니다.")

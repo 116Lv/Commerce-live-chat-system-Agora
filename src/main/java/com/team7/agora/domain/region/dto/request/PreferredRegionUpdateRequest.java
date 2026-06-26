@@ -5,9 +5,9 @@ import jakarta.validation.constraints.NotEmpty;
 import java.util.List;
 
 /**
- * 요청 본문을 전달하는 DTO이다.
- * @param regionIds 입력 값
- * @param primaryRegionId 입력 값
+ * Preferred Region Update 요청 본문을 표현하는 DTO이다.
+ * @param regionIds 선호 지역 ID 목록
+ * @param primaryRegionId 대표 선호 지역 ID
  */
 public record PreferredRegionUpdateRequest(
         @NotEmpty(message = "관심 지역은 필수입니다.")

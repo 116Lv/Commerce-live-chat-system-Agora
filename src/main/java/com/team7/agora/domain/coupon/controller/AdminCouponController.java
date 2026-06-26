@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * REST 엔드포인트를 제공하는 컨트롤러이다.
+ * Admin Coupon 기능에서 클라이언트의 HTTP 요청을 받아 서비스 계층으로 전달하는 컨트롤러이다.
  */
 @RestController
 @RequestMapping("/api/admin/coupons")
@@ -29,18 +29,18 @@ public class AdminCouponController {
     private final AdminCouponService adminCouponService;
 
     /**
-     * 의존성을 주입받아 인스턴스를 생성한다.
-     * @param adminCouponService 입력 값
+     * 필요한 의존성을 주입받아 컴포넌트를 생성한다.
+     * @param adminCouponService 해당 기능의 비즈니스 로직을 처리하는 서비스
      */
     public AdminCouponController(AdminCouponService adminCouponService) {
         this.adminCouponService = adminCouponService;
     }
 
     /**
-     * 도메인 객체를 생성한다.
-     * @param admin 입력 값
-     * @param request 입력 값
-     * @return 처리 결과
+     * 관리자 쿠폰 생성 요청을 받아 쿠폰 생성 서비스로 전달한다.
+     * @param admin 인증된 관리자 정보
+     * @param request 요청 본문
+     * @return 클라이언트에 반환할 API 응답
      */
     @PreAuthorize("hasAnyAuthority('USER_ADMIN', 'ROOT_ADMIN')")
     @PostMapping
@@ -60,10 +60,10 @@ public class AdminCouponController {
     }
 
     /**
-     * 데이터를 반환한다.
-     * @param admin 입력 값
-     * @param couponId 입력 값
-     * @return 처리 결과
+     * 'getList' 메서드는 필요한 데이터를 조회해 호출한 쪽에 반환한다.
+     * @param admin 인증된 관리자 정보
+     * @param couponId 쿠폰 ID
+     * @return 클라이언트에 반환할 API 응답
      */
     @PreAuthorize("hasAnyAuthority('USER_ADMIN', 'ROOT_ADMIN')")
     @GetMapping
@@ -83,10 +83,10 @@ public class AdminCouponController {
 
     /**
      * 조건 충족 여부를 확인한다.
-     * @param admin 입력 값
-     * @param couponId 입력 값
-     * @param request 입력 값
-     * @return 처리 결과
+     * @param admin 인증된 관리자 정보
+     * @param couponId 쿠폰 ID
+     * @param request 요청 본문
+     * @return 클라이언트에 반환할 API 응답
      */
     @PreAuthorize("hasAnyAuthority('USER_ADMIN', 'ROOT_ADMIN')")
     @PostMapping("/{couponId}/issue")
@@ -100,10 +100,10 @@ public class AdminCouponController {
     }
 
     /**
-     * 데이터를 반환한다.
-     * @param admin 입력 값
-     * @param couponId 입력 값
-     * @return 처리 결과
+     * 쿠폰 이벤트에 참여한 사용자들에게 쿠폰 발급 결과를 반환한다.
+     * @param admin 인증된 관리자 정보
+     * @param couponId 쿠폰 ID
+     * @return 클라이언트에 반환할 API 응답
      */
     @PreAuthorize("hasAnyAuthority('USER_ADMIN', 'ROOT_ADMIN')")
     @PostMapping("/{couponId}/broadcast")

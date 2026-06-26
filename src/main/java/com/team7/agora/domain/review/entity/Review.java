@@ -18,7 +18,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 /**
- * JPA 엔티티이다.
+ * 리뷰 도메인 정보를 영속화하는 JPA 엔티티이다.
  */
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -61,13 +61,13 @@ public class Review extends BaseTimeEntity {
     }
 
     /**
-     * 도메인 객체를 생성한다.
-     * @param trade 입력 값
-     * @param reviewer 입력 값
-     * @param targetUser 입력 값
-     * @param rating 입력 값
-     * @param content 입력 값
-     * @return 처리 결과
+     * 거래와 작성자, 대상 회원, 평점을 기준으로 새 후기 엔티티를 생성한다.
+     * @param trade 거래 엔티티 또는 거래 응답 변환 대상
+     * @param reviewer 후기를 작성한 회원 엔티티
+     * @param targetUser 후기를 받는 회원 엔티티
+     * @param rating 후기 평점
+     * @param content 내용
+     * @return 클라이언트에 반환할 API 응답
      */
     public static Review create(Trade trade, User reviewer, User targetUser, int rating, String content) {
         targetUser.updateSmileScore(toSmileDelta(rating));

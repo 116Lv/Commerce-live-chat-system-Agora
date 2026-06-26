@@ -5,9 +5,9 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 
 /**
- * 요청 본문을 전달하는 DTO이다.
- * @param email 입력 값
- * @param password 입력 값
+ * Admin Login 요청 본문을 표현하는 DTO이다.
+ * @param email 이메일
+ * @param password 비밀번호
  */
 public record AdminLoginRequest(
         @Email(message = "이메일 형식이 올바르지 않습니다.")

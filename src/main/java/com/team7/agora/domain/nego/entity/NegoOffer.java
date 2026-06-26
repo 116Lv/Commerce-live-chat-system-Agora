@@ -24,7 +24,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 /**
- * JPA 엔티티이다.
+ * Nego Offer 도메인 정보를 영속화하는 JPA 엔티티이다.
  */
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -78,18 +78,18 @@ public class NegoOffer extends BaseTimeEntity {
     }
 
     /**
-     * 도메인 객체를 생성한다.
-     * @param chatRoom 입력 값
-     * @param requester 입력 값
-     * @param offerPrice 입력 값
-     * @return 처리 결과
+     * 채팅방과 구매자, 제안 가격을 기준으로 새 네고 제안 엔티티를 생성한다.
+     * @param chatRoom 채팅방 엔티티
+     * @param requester 가격 제안을 만든 구매자 엔티티
+     * @param offerPrice 제안 가격
+     * @return 클라이언트에 반환할 API 응답
      */
     public static NegoOffer create(ChatRoom chatRoom, User requester, BigDecimal offerPrice) {
         return new NegoOffer(chatRoom, requester, offerPrice);
     }
 
     /**
-     * 요청한 동작을 처리한다.
+     * 'accept' 메서드가 맡은 기능을 수행하고 필요한 결과를 반환한다.
      */
     public void accept() {
         validatePending();
@@ -98,7 +98,7 @@ public class NegoOffer extends BaseTimeEntity {
     }
 
     /**
-     * 요청한 동작을 처리한다.
+     * 도메인 객체를 거절 상태로 변경한다.
      */
     public void reject() {
         validatePending();
@@ -107,7 +107,7 @@ public class NegoOffer extends BaseTimeEntity {
     }
 
     /**
-     * 요청한 동작을 처리한다.
+     * 구매자가 가격 제안의 응답 기한 연장을 요청한다.
      */
     public void requestExtension() {
         validatePending();
@@ -115,7 +115,7 @@ public class NegoOffer extends BaseTimeEntity {
     }
 
     /**
-     * 요청한 동작을 처리한다.
+     * 판매자가 가격 제안 연장 요청을 승인하고 만료 시간을 늘린다.
      */
     public void approveExtension() {
         if (status != NegoOfferStatus.EXTENSION_REQUESTED) {
@@ -126,7 +126,7 @@ public class NegoOffer extends BaseTimeEntity {
     }
 
     /**
-     * 요청한 동작을 처리한다.
+     * 판매자가 가격 제안 연장 요청을 거절한다.
      */
     public void rejectExtension() {
         if (status != NegoOfferStatus.EXTENSION_REQUESTED) {
@@ -137,16 +137,16 @@ public class NegoOffer extends BaseTimeEntity {
 
     /**
      * 조건 충족 여부를 확인한다.
-     * @param now 입력 값
-     * @return 처리 결과
+     * @param now 현재 시각
+     * @return 클라이언트에 반환할 API 응답
      */
     public boolean isExpired(LocalDateTime now) {
         return !expiresAt.isAfter(now);
     }
 
     /**
-     * 요청한 동작을 처리한다.
-     * @param now 입력 값
+     * 도메인 객체를 만료 상태로 변경한다.
+     * @param now 현재 시각
      */
     public void expire(LocalDateTime now) {
         if (this.status == NegoOfferStatus.ACCEPTED
@@ -163,7 +163,7 @@ public class NegoOffer extends BaseTimeEntity {
     }
 
     /**
-     * 요청한 동작을 처리한다.
+     * 도메인 객체를 취소 상태로 변경한다.
      */
     public void cancel() {
         validatePending();

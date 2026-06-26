@@ -32,7 +32,7 @@ import lombok.NoArgsConstructor;
         @Index(name = "idx_trades_seller", columnList = "seller_id")
     }
 /**
- * JPA 엔티티이다.
+ * 거래 도메인 정보를 영속화하는 JPA 엔티티이다.
  */
 )
 public class Trade {
@@ -76,19 +76,19 @@ public class Trade {
     }
 
     /**
-     * 요청한 동작을 처리한다.
-     * @param product 입력 값
-     * @param seller 입력 값
-     * @param buyer 입력 값
-     * @param price 입력 값
-     * @return 처리 결과
+     * 'start' 메서드가 맡은 기능을 수행하고 필요한 결과를 반환한다.
+     * @param product 상품 엔티티
+     * @param seller 판매자 엔티티
+     * @param buyer 구매자 엔티티
+     * @param price 가격
+     * @return 클라이언트에 반환할 API 응답
      */
     public static Trade start(Product product, User seller, User buyer, BigDecimal price) {
         return new Trade(product, seller, buyer, price);
     }
 
     /**
-     * 상태를 변경한다.
+     * 결제 승인 정보를 반영해 결제를 완료 상태로 변경한다.
      */
     public void markPaid() {
         if (this.status != TradeStatus.PAYMENT_PENDING) {
@@ -100,7 +100,7 @@ public class Trade {
     }
 
     /**
-     * 요청한 동작을 처리한다.
+     * 도메인 객체를 완료 상태로 변경한다.
      */
     public void complete() {
         if (this.status != TradeStatus.PAID) {
@@ -111,7 +111,7 @@ public class Trade {
     }
 
     /**
-     * 요청한 동작을 처리한다.
+     * 도메인 객체를 취소 상태로 변경한다.
      */
     public void cancel() {
         if (this.status != TradeStatus.PAYMENT_PENDING && this.status != TradeStatus.PAID) {
@@ -123,7 +123,7 @@ public class Trade {
     }
 
     /**
-     * 요청한 동작을 처리한다.
+     * 도메인 객체를 만료 상태로 변경한다.
      */
     public void expire() {
         if (this.status != TradeStatus.PAYMENT_PENDING) {
@@ -136,17 +136,17 @@ public class Trade {
 
     /**
      * 조건 충족 여부를 확인한다.
-     * @param userId 입력 값
-     * @return 처리 결과
+     * @param userId 회원 ID
+     * @return 클라이언트에 반환할 API 응답
      */
     public boolean isParticipant(Long userId) {
         return seller.getId().equals(userId) || buyer.getId().equals(userId);
     }
 
     /**
-     * 데이터를 반환한다.
-     * @param userId 입력 값
-     * @return 처리 결과
+     * 'getCounterpart' 메서드는 필요한 데이터를 조회해 호출한 쪽에 반환한다.
+     * @param userId 회원 ID
+     * @return 클라이언트에 반환할 API 응답
      */
     public User getCounterpart(Long userId) {
         if (seller.getId().equals(userId)) {

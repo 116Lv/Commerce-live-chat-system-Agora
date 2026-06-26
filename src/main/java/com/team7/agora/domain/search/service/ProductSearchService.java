@@ -10,7 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * 애플리케이션 유스케이스를 조정하는 서비스이다.
+ * 상품 검색 관련 비즈니스 유스케이스를 처리하는 서비스이다.
  */
 @Service
 @Transactional(readOnly = true)
@@ -32,9 +32,9 @@ public class ProductSearchService {
     }
 
     /**
-     * 요청한 동작을 처리한다.
-     * @param condition 입력 값
-     * @return 처리 결과
+     * 'searchV1' 메서드가 맡은 기능을 수행하고 필요한 결과를 반환한다.
+     * @param condition 검색 조건
+     * @return 클라이언트에 반환할 API 응답
      */
     public List<ProductSearchResponse> searchV1(ProductSearchCondition condition) {
         long start = System.nanoTime();
@@ -44,9 +44,9 @@ public class ProductSearchService {
     }
 
     /**
-     * 요청한 동작을 처리한다.
-     * @param condition 입력 값
-     * @return 처리 결과
+     * 'searchV2' 메서드가 맡은 기능을 수행하고 필요한 결과를 반환한다.
+     * @param condition 검색 조건
+     * @return 클라이언트에 반환할 API 응답
      */
     public List<ProductSearchResponse> searchV2(ProductSearchCondition condition) {
         long start = System.nanoTime();
@@ -56,7 +56,7 @@ public class ProductSearchService {
     }
 
     /**
-     * 요청한 동작을 처리한다.
+     * 'evictSearchCache' 메서드가 맡은 기능을 수행하고 필요한 결과를 반환한다.
      */
     public void evictSearchCache() {
         productSearchCacheLoader.evictAll();

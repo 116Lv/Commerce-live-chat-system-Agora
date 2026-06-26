@@ -4,7 +4,7 @@ import com.team7.agora.domain.search.dto.PopularKeywordResponse;
 import java.util.List;
 
 /**
- * 데이터 저장과 조회를 위한 저장소 계약이다.
+ * 인기 검색어 데이터 저장과 조회를 담당하는 저장소 인터페이스이다.
  */
 public interface PopularKeywordRepository {
 

@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * REST 엔드포인트를 제공하는 컨트롤러이다.
+ * 가격 제안 기능에서 클라이언트의 HTTP 요청을 받아 서비스 계층으로 전달하는 컨트롤러이다.
  */
 @RestController
 @RequestMapping("/api/nego-offers")
@@ -22,8 +22,8 @@ public class NegoController {
     private final NegoService negoService;
 
     /**
-     * 의존성을 주입받아 인스턴스를 생성한다.
-     * @param negoService 입력 값
+     * 필요한 의존성을 주입받아 컴포넌트를 생성한다.
+     * @param negoService 가격 제안 비즈니스 로직을 처리하는 서비스
      */
     public NegoController(NegoService negoService) {
         this.negoService = negoService;
@@ -38,10 +38,10 @@ public class NegoController {
     }
 
     /**
-     * 요청한 동작을 처리한다.
-     * @param userDetails 입력 값
-     * @param offerId 입력 값
-     * @return 처리 결과
+     * 판매자가 구매자의 가격 제안을 거절 상태로 변경한다.
+     * @param userDetails 인증된 사용자 정보
+     * @param offerId 네고 제안 ID
+     * @return 클라이언트에 반환할 API 응답
      */
     @RequestMapping(path = "/{offerId}/reject", method = {RequestMethod.PATCH, RequestMethod.POST})
     public ApiResponse<NegoOfferResponse> rejectOffer(
@@ -52,10 +52,10 @@ public class NegoController {
     }
 
     /**
-     * 요청한 동작을 처리한다.
-     * @param userDetails 입력 값
-     * @param offerId 입력 값
-     * @return 처리 결과
+     * 구매자가 가격 제안의 응답 기한 연장을 요청한다.
+     * @param userDetails 인증된 사용자 정보
+     * @param offerId 네고 제안 ID
+     * @return 클라이언트에 반환할 API 응답
      */
     @RequestMapping(path = "/{offerId}/extension-request", method = {RequestMethod.PATCH, RequestMethod.POST})
     public ApiResponse<NegoOfferResponse> requestExtension(
@@ -66,10 +66,10 @@ public class NegoController {
     }
 
     /**
-     * 요청한 동작을 처리한다.
-     * @param userDetails 입력 값
-     * @param offerId 입력 값
-     * @return 처리 결과
+     * 판매자가 가격 제안 연장 요청을 승인하고 만료 시간을 늘린다.
+     * @param userDetails 인증된 사용자 정보
+     * @param offerId 네고 제안 ID
+     * @return 클라이언트에 반환할 API 응답
      */
     @RequestMapping(path = "/{offerId}/extension-approve", method = {RequestMethod.PATCH, RequestMethod.POST})
     public ApiResponse<NegoOfferResponse> approveExtension(
@@ -80,10 +80,10 @@ public class NegoController {
     }
 
     /**
-     * 요청한 동작을 처리한다.
-     * @param userDetails 입력 값
-     * @param offerId 입력 값
-     * @return 처리 결과
+     * 판매자가 가격 제안 연장 요청을 거절한다.
+     * @param userDetails 인증된 사용자 정보
+     * @param offerId 네고 제안 ID
+     * @return 클라이언트에 반환할 API 응답
      */
     @RequestMapping(path = "/{offerId}/extension-reject", method = {RequestMethod.PATCH, RequestMethod.POST})
     public ApiResponse<NegoOfferResponse> rejectExtension(
@@ -94,10 +94,10 @@ public class NegoController {
     }
 
     /**
-     * 요청한 동작을 처리한다.
-     * @param userDetails 입력 값
-     * @param offerId 입력 값
-     * @return 처리 결과
+     * 가격 제안 기능을 처리하는 POST /api/nego-offers/{offerId}/expire 요청을 처리한다.
+     * @param userDetails 현재 로그인한 사용자 정보
+     * @param offerId 대상 가격 제안 ID
+     * @return 클라이언트에 반환할 API 응답
      */
     @PostMapping("/{offerId}/expire")
     public ApiResponse<NegoOfferResponse> expireOffer(

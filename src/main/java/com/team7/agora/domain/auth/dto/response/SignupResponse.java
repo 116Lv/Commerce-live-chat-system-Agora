@@ -2,9 +2,9 @@
 package com.team7.agora.domain.auth.dto.response;
 
 /**
- * 응답 본문을 전달하는 DTO이다.
- * @param email 입력 값
- * @param nickname 입력 값
+ * Signup 응답 본문을 표현하는 DTO이다.
+ * @param email 이메일
+ * @param nickname 닉네임
  */
 public record SignupResponse(
         String email,

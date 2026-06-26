@@ -14,7 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * 애플리케이션 유스케이스를 조정하는 서비스이다.
+ * 관리자 관련 비즈니스 유스케이스를 처리하는 서비스이다.
  */
 @Service
 @Transactional(readOnly = true)
@@ -23,17 +23,17 @@ public class AdminService {
     private final UserRepository userRepository;
 
     /**
-     * 의존성을 주입받아 인스턴스를 생성한다.
-     * @param userRepository 입력 값
+     * 필요한 의존성을 주입받아 컴포넌트를 생성한다.
+     * @param userRepository 데이터를 조회하고 저장하는 리포지토리
      */
     public AdminService(UserRepository userRepository) {
         this.userRepository = userRepository;
     }
 
     /**
-     * 데이터를 반환한다.
-     * @param admin 입력 값
-     * @return 처리 결과
+     * 'getMe' 메서드는 필요한 데이터를 조회해 호출한 쪽에 반환한다.
+     * @param admin 인증된 관리자 정보
+     * @return 클라이언트에 반환할 API 응답
      */
     public AdminMeResponse getMe(CustomUserDetails admin) {
         validateAdmin(admin);
@@ -43,9 +43,9 @@ public class AdminService {
     }
 
     /**
-     * 데이터를 반환한다.
-     * @param admin 입력 값
-     * @return 처리 결과
+     * 'getDashboard' 메서드는 필요한 데이터를 조회해 호출한 쪽에 반환한다.
+     * @param admin 인증된 관리자 정보
+     * @return 클라이언트에 반환할 API 응답
      */
     public AdminDashboardResponse getDashboard(CustomUserDetails admin) {
         validateAdmin(admin);

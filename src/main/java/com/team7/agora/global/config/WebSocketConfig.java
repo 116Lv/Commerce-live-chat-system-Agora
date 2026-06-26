@@ -18,16 +18,16 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     private final StompAuthInterceptor stompAuthInterceptor;
 
     /**
-     * 의존성을 주입받아 인스턴스를 생성한다.
-     * @param stompAuthInterceptor 입력 값
+     * 필요한 의존성을 주입받아 컴포넌트를 생성한다.
+     * @param stompAuthInterceptor WebSocket/STOMP 연결 인증을 처리하는 인터셉터
      */
     public WebSocketConfig(StompAuthInterceptor stompAuthInterceptor) {
         this.stompAuthInterceptor = stompAuthInterceptor;
     }
 
     /**
-     * 요청한 동작을 처리한다.
-     * @param registry 입력 값
+     * 채팅 메시지를 주고받을 STOMP 발행 경로와 구독 경로를 설정한다.
+     * @param registry 등록 설정 객체
      */
     @Override
     public void configureMessageBroker(MessageBrokerRegistry registry) {
@@ -36,8 +36,8 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     }
 
     /**
-     * 요청한 동작을 처리한다.
-     * @param registry 입력 값
+     * 클라이언트가 WebSocket/STOMP에 연결할 엔드포인트와 SockJS 옵션을 등록한다.
+     * @param registry 등록 설정 객체
      */
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
@@ -46,8 +46,8 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     }
 
     /**
-     * 요청한 동작을 처리한다.
-     * @param registration 입력 값
+     * WebSocket으로 들어오는 STOMP 요청에 JWT 인증 인터셉터를 적용한다.
+     * @param registration 채널 등록 객체
      */
     @Override
     public void configureClientInboundChannel(ChannelRegistration registration) {

@@ -20,7 +20,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 /**
- * JPA 엔티티이다.
+ * Chat Message 도메인 정보를 영속화하는 JPA 엔티티이다.
  */
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -59,22 +59,22 @@ public class ChatMessage extends BaseTimeEntity {
     }
 
     /**
-     * 요청한 동작을 처리한다.
-     * @param chatRoom 입력 값
-     * @param sender 입력 값
-     * @param content 입력 값
-     * @return 처리 결과
+     * 시스템 알림 메시지를 채팅방 메시지로 저장해 대화 흐름에 남긴다.
+     * @param chatRoom 채팅방 엔티티
+     * @param sender 메시지를 보낸 회원
+     * @param content 내용
+     * @return 클라이언트에 반환할 API 응답
      */
     public static ChatMessage send(ChatRoom chatRoom, User sender, String content) {
         return new ChatMessage(chatRoom, sender, content, ChatMessageType.TEXT);
     }
 
     /**
-     * 요청한 동작을 처리한다.
-     * @param chatRoom 입력 값
-     * @param sender 입력 값
-     * @param imageUrl 입력 값
-     * @return 처리 결과
+     * 'sendImage' 메서드가 맡은 기능을 수행하고 필요한 결과를 반환한다.
+     * @param chatRoom 채팅방 엔티티
+     * @param sender 메시지를 보낸 회원
+     * @param imageUrl 저장된 이미지 접근 URL
+     * @return 클라이언트에 반환할 API 응답
      */
     public static ChatMessage sendImage(ChatRoom chatRoom, User sender, String imageUrl) {
         return new ChatMessage(chatRoom, sender, imageUrl, ChatMessageType.IMAGE);

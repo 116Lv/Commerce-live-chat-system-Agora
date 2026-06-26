@@ -27,9 +27,9 @@ public class JwtProvider {
     private final long accessTokenValidTime;
 
     /**
-     * 의존성을 주입받아 인스턴스를 생성한다.
-     * @param secretKey 입력 값
-     * @param accessTokenValidTime 입력 값
+     * 필요한 의존성을 주입받아 컴포넌트를 생성한다.
+     * @param secretKey JWT 서명에 사용하는 비밀 키
+     * @param accessTokenValidTime 액세스 토큰 유효 시간
      */
     public JwtProvider(
         @Value("${jwt.secret-key}") String secretKey,
@@ -40,12 +40,12 @@ public class JwtProvider {
     }
 
     /**
-     * 도메인 객체를 생성한다.
-     * @param userId 입력 값
-     * @param email 입력 값
-     * @param role 입력 값
-     * @param nickname 입력 값
-     * @return 처리 결과
+     * 인증된 사용자 정보를 담은 JWT 액세스 토큰을 생성한다.
+     * @param userId 회원 ID
+     * @param email 이메일
+     * @param role 권한
+     * @param nickname 닉네임
+     * @return 클라이언트에 반환할 API 응답
      */
     public String createToken(Long userId, String email, String role, String nickname) {
         long now = Instant.now().toEpochMilli();
@@ -69,9 +69,9 @@ public class JwtProvider {
     }
 
     /**
-     * 요청한 동작을 처리한다.
-     * @param token 입력 값
-     * @return 처리 결과
+     * 'substringBearer' 메서드가 맡은 기능을 수행하고 필요한 결과를 반환한다.
+     * @param token JWT 토큰
+     * @return 클라이언트에 반환할 API 응답
      */
     public String substringBearer(String token) {
         if (token == null || !token.startsWith(BEARER_PREFIX)) {
@@ -81,9 +81,9 @@ public class JwtProvider {
     }
 
     /**
-     * 요청한 동작을 처리한다.
-     * @param token 입력 값
-     * @return 처리 결과
+     * 'parse' 메서드가 맡은 기능을 수행하고 필요한 결과를 반환한다.
+     * @param token JWT 토큰
+     * @return 클라이언트에 반환할 API 응답
      */
     public JwtClaims parse(String token) {
         String[] parts = token.split("\\.");
