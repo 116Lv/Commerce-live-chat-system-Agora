@@ -14,6 +14,7 @@ import com.team7.agora.domain.trade.entity.Trade;
 import com.team7.agora.domain.user.entity.User;
 import com.team7.agora.domain.user.repository.UserRepository;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,6 +22,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.test.util.ReflectionTestUtils;
 
 @SpringBootTest
 @Transactional
@@ -119,6 +121,23 @@ class TradeQueryRepositoryImplTest {
             .containsExactly(sellerTrade.getId(), buyerTrade.getId());
         assertThat(responses).extracting(MyTradeResponse::role)
             .containsExactly("SELLER", "BUYER");
+    }
+
+    @Test
+    void findMyTrades_ordersByCreatedAtDescThenIdDesc() {
+        Trade newerLowerId = tradeRepository.save(startTrade(seller, currentUser, "newer product", 12000, 10000));
+        Trade olderHigherId = tradeRepository.save(startTrade(currentUser, buyer, "older product", 22000, 20000));
+        ReflectionTestUtils.setField(newerLowerId, "createdAt", LocalDateTime.of(2026, 1, 2, 0, 0));
+        ReflectionTestUtils.setField(olderHigherId, "createdAt", LocalDateTime.of(2026, 1, 1, 0, 0));
+
+        Page<MyTradeResponse> responses = tradeQueryRepository.findMyTrades(
+            currentUser.getId(),
+            MyTradeRole.ALL,
+            PageRequest.of(0, 20)
+        );
+
+        assertThat(responses).extracting(MyTradeResponse::tradeId)
+            .containsExactly(newerLowerId.getId(), olderHigherId.getId());
     }
 
     private Trade startTrade(User seller, User buyer, String title, long productPrice, long tradePrice) {

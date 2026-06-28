@@ -63,7 +63,7 @@ public class TradeQueryRepositoryImpl implements TradeQueryRepository {
             .join(trade.buyer, buyer)
             .leftJoin(payment).on(payment.trade.eq(trade))
             .where(where)
-            .orderBy(trade.id.desc())
+            .orderBy(trade.createdAt.desc(), trade.id.desc())
             .offset(pageable.getOffset())
             .limit(pageable.getPageSize())
             .fetch();
