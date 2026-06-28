@@ -1,10 +1,12 @@
 import assert from 'node:assert/strict';
 import { beforeEach, test } from 'node:test';
+import { AxiosHeaders } from 'axios';
 import {
   apiClient,
   formatAuthorizationHeader,
   getApiErrorMessage,
   selectAuthToken,
+  stripAuthorizationHeaders,
   unwrapApiResponse
 } from './client.js';
 import { loginAdmin, loginUser, logoutAdmin, logoutUser, signupUser } from './authApi.js';
@@ -99,6 +101,38 @@ test('request interceptor omits Authorization for explicitly public auth request
 
   assert.equal(requestConfig.headers.Authorization, undefined);
   assert.equal(requestConfig.authType, undefined);
+});
+
+test('public login strips caller-provided authorization header in any casing', async () => {
+  let requestConfig;
+
+  await loginUser(
+    { email: 'user@example.com', password: 'password' },
+    {
+      headers: { authorization: 'Bearer leaked' },
+      adapter: (config) => {
+        requestConfig = config;
+        return Promise.resolve({
+          config,
+          data: { status: 'SUCCESS', message: 'ok', data: { accessToken: 'new-token' } },
+          headers: {},
+          status: 200,
+          statusText: 'OK'
+        });
+      }
+    }
+  );
+
+  assert.equal(requestConfig.headers.Authorization, undefined);
+  assert.equal(requestConfig.headers.authorization, undefined);
+});
+
+test('stripAuthorizationHeaders removes authorization from AxiosHeaders', () => {
+  const headers = new AxiosHeaders({ authorization: 'Bearer leaked' });
+
+  stripAuthorizationHeaders(headers);
+
+  assert.equal(headers.get('authorization'), undefined);
 });
 
 test('auth API login and signup requests are sent without stored tokens', async () => {

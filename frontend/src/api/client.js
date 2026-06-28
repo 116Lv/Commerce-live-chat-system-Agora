@@ -45,6 +45,23 @@ export const formatAuthorizationHeader = (token) => {
   return value.toLowerCase().startsWith('bearer ') ? value : `Bearer ${value}`;
 };
 
+export const stripAuthorizationHeaders = (headers) => {
+  if (!headers) {
+    return;
+  }
+
+  if (typeof headers.delete === 'function') {
+    headers.delete('Authorization');
+    headers.delete('authorization');
+  }
+
+  Object.keys(headers).forEach((key) => {
+    if (key.toLowerCase() === 'authorization') {
+      delete headers[key];
+    }
+  });
+};
+
 export const unwrapApiResponse = (response) => {
   const payload = response?.data;
 
@@ -72,7 +89,7 @@ apiClient.interceptors.request.use((config) => {
   if (token) {
     config.headers.Authorization = formatAuthorizationHeader(token);
   } else if (config.authType === 'none') {
-    delete config.headers.Authorization;
+    stripAuthorizationHeaders(config.headers);
   }
 
   delete config.authType;
