@@ -10,6 +10,7 @@ import com.team7.agora.domain.nego.enums.NegoOfferStatus;
 import com.team7.agora.domain.nego.repository.NegoOfferRepository;
 import com.team7.agora.domain.product.entity.Product;
 import com.team7.agora.domain.product.enums.ProductStatus;
+import com.team7.agora.domain.product.repository.ProductRepository;
 import com.team7.agora.domain.trade.entity.Trade;
 import com.team7.agora.domain.trade.service.TradeService;
 import com.team7.agora.domain.user.entity.User;
@@ -32,6 +33,7 @@ public class NegoService {
 
     private final NegoOfferRepository negoOfferRepository;
     private final ChatRoomRepository chatRoomRepository;
+    private final ProductRepository productRepository;
     private final TradeService tradeService;
     private final ChatSystemMessageService chatSystemMessageService;
 
@@ -45,11 +47,13 @@ public class NegoService {
     public NegoService(
         NegoOfferRepository negoOfferRepository,
         ChatRoomRepository chatRoomRepository,
+        ProductRepository productRepository,
         TradeService tradeService,
         ChatSystemMessageService chatSystemMessageService
     ) {
         this.negoOfferRepository = negoOfferRepository;
         this.chatRoomRepository = chatRoomRepository;
+        this.productRepository = productRepository;
         this.tradeService = tradeService;
         this.chatSystemMessageService = chatSystemMessageService;
     }
@@ -64,6 +68,7 @@ public class NegoService {
     @Transactional
     public NegoOfferResponse createOffer(Long requesterId, Long chatRoomId, BigDecimal offerPrice) {
         ChatRoom chatRoom = findActiveRoom(chatRoomId);
+        Product lockedProduct = findProductForUpdate(chatRoom.getProduct().getId());
 
         if (!chatRoom.isParticipant(requesterId)) {
             throw new BusinessException(ErrorCode.FORBIDDEN, "채팅방 참여자만 가격 제안을 할 수 있습니다.");
@@ -71,7 +76,7 @@ public class NegoService {
         if (chatRoom.getSeller().getId().equals(requesterId)) {
             throw new BusinessException(ErrorCode.INVALID_REQUEST, "판매자는 가격 제안을 만들 수 없습니다.");
         }
-        if (isAlreadyReservedOrSold(chatRoom.getProduct())) {
+        if (isAlreadyReservedOrSold(lockedProduct)) {
             throw new BusinessException(ErrorCode.CONFLICT, "이미 거래가 진행 중이거나 완료된 상품입니다.");
         }
 
@@ -224,6 +229,11 @@ public class NegoService {
     private ChatRoom findActiveRoom(Long chatRoomId) {
         return chatRoomRepository.findByIdAndStatusForUpdate(chatRoomId, ChatRoomStatus.ACTIVE)
             .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "채팅방을 찾을 수 없습니다."));
+    }
+
+    private Product findProductForUpdate(Long productId) {
+        return productRepository.findByIdForUpdateAndDeletedAtIsNull(productId)
+            .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "상품을 찾을 수 없습니다."));
     }
 
     private NegoOffer findOffer(Long offerId) {

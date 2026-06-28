@@ -4,6 +4,7 @@ package com.team7.agora.domain.user.controller;
 import com.team7.agora.domain.user.dto.response.SmileScoreResponse;
 import com.team7.agora.domain.user.service.UserService;
 import com.team7.agora.global.response.ApiResponse;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
@@ -29,6 +30,7 @@ public class SmileScoreController {
      * @param userId 대상 회원 ID
      * @return 클라이언트에 반환할 API 응답
      */
+    @PreAuthorize("isAuthenticated()")
     @GetMapping("/api/users/{userId}/smile-score")
     public ApiResponse<SmileScoreResponse> getSmileScore(@PathVariable Long userId) {
         SmileScoreResponse response = userService.getSmileScore(userId);

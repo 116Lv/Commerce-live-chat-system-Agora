@@ -14,6 +14,7 @@ import com.team7.agora.domain.region.entity.UserRegion;
 import com.team7.agora.domain.region.repository.RegionRepository;
 import com.team7.agora.domain.region.repository.UserRegionRepository;
 import com.team7.agora.domain.user.entity.User;
+import com.team7.agora.domain.user.enums.UserStatus;
 import com.team7.agora.domain.user.repository.UserRepository;
 import com.team7.agora.global.exception.BusinessException;
 import com.team7.agora.global.exception.ErrorCode;
@@ -94,7 +95,7 @@ class RegionServiceTest {
         Region first = region(1L, "역삼동");
         Region second = region(2L, "삼성동");
         Region third = region(3L, "논현동");
-        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(userRepository.findByIdAndStatusAndDeletedAtIsNull(1L, UserStatus.ACTIVE)).thenReturn(Optional.of(user));
         when(regionRepository.findAllById(List.of(1L, 2L, 3L))).thenReturn(List.of(first, second, third));
 
         // when
@@ -156,13 +157,27 @@ class RegionServiceTest {
     void updatePreferredRegions_throwsNotFoundWhenRegionMissing() {
         // given
         RegionService regionService = createService();
-        when(userRepository.findById(1L)).thenReturn(Optional.of(user()));
+        when(userRepository.findByIdAndStatusAndDeletedAtIsNull(1L, UserStatus.ACTIVE)).thenReturn(Optional.of(user()));
         when(regionRepository.findAllById(List.of(1L, 2L, 3L))).thenReturn(List.of(region(1L, "역삼동")));
 
         // when & then
         assertThatThrownBy(
                 () -> regionService.updatePreferredRegions(1L, new PreferredRegionUpdateRequest(List.of(1L, 2L, 3L), 1L))
         )
+                .isInstanceOf(BusinessException.class)
+                .extracting("errorCode")
+                .isEqualTo(ErrorCode.NOT_FOUND);
+    }
+
+    @Test
+    void updatePreferredRegions_throwsNotFoundWhenUserIsNotActive() {
+        // given
+        RegionService regionService = createService();
+        PreferredRegionUpdateRequest request = new PreferredRegionUpdateRequest(List.of(1L, 2L, 3L), 1L);
+        when(userRepository.findByIdAndStatusAndDeletedAtIsNull(1L, UserStatus.ACTIVE)).thenReturn(Optional.empty());
+
+        // when & then
+        assertThatThrownBy(() -> regionService.updatePreferredRegions(1L, request))
                 .isInstanceOf(BusinessException.class)
                 .extracting("errorCode")
                 .isEqualTo(ErrorCode.NOT_FOUND);

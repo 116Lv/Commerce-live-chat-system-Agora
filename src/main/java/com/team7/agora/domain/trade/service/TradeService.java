@@ -22,6 +22,7 @@ import com.team7.agora.domain.trade.entity.Trade;
 import com.team7.agora.domain.trade.enums.TradeStatus;
 import com.team7.agora.domain.trade.repository.TradeRepository;
 import com.team7.agora.domain.user.entity.User;
+import com.team7.agora.domain.user.enums.UserStatus;
 import com.team7.agora.domain.user.repository.UserRepository;
 import com.team7.agora.global.auth.AuthUser;
 import com.team7.agora.global.exception.BusinessException;
@@ -119,7 +120,7 @@ public class TradeService {
             throw new BusinessException(ErrorCode.INVALID_REQUEST, "판매자는 구매자가 될 수 없습니다.");
         }
 
-        User buyer = userRepository.findById(buyerId)
+        User buyer = userRepository.findByIdAndStatusAndDeletedAtIsNull(buyerId, UserStatus.ACTIVE)
             .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "구매자를 찾을 수 없습니다."));
 
         if (tradeRepository.existsByProductAndStatusNot(product, TradeStatus.CANCELLED)) {

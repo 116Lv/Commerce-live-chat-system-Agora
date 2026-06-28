@@ -4,6 +4,7 @@ import com.team7.agora.domain.user.enums.UserRole;
 import com.team7.agora.domain.user.enums.UserStatus;
 import com.team7.agora.global.exception.BusinessException;
 import com.team7.agora.global.exception.ErrorCode;
+import com.team7.agora.global.time.AgoraClock;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -113,6 +114,11 @@ public class User {
             throw new BusinessException(ErrorCode.CONFLICT, "이미 같은 회원 상태입니다.");
         }
         this.status = status;
+        if (status == UserStatus.DELETED) {
+            this.deletedAt = AgoraClock.now();
+            return;
+        }
+        this.deletedAt = null;
     }
 
     /**

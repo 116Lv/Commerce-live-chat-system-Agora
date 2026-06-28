@@ -13,8 +13,10 @@ import com.team7.agora.domain.coupon.enums.CouponStatus;
 import com.team7.agora.domain.coupon.repository.CouponEventRepository;
 import com.team7.agora.domain.coupon.repository.CouponRepository;
 import com.team7.agora.domain.user.entity.User;
+import com.team7.agora.domain.user.enums.UserStatus;
 import com.team7.agora.domain.user.repository.UserRepository;
 import com.team7.agora.global.exception.BusinessException;
+import com.team7.agora.global.exception.ErrorCode;
 import java.time.LocalDateTime;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
@@ -41,7 +43,7 @@ class CouponSlotTransactionExecutorTest {
         Coupon slot = Coupon.createAvailableSlot(event);
         assignId(slot, 100L);
         when(couponEventRepository.findById(1L)).thenReturn(Optional.of(event));
-        when(userRepository.findById(10L)).thenReturn(Optional.of(user));
+        when(userRepository.findByIdAndStatusAndDeletedAtIsNull(10L, UserStatus.ACTIVE)).thenReturn(Optional.of(user));
         when(couponRepository.existsByCouponEventIdAndUserId(1L, 10L)).thenReturn(false);
         when(couponRepository.findFirstAvailableSlotForUpdate(1L)).thenReturn(Optional.of(slot));
 
@@ -59,7 +61,7 @@ class CouponSlotTransactionExecutorTest {
         CouponEvent event = event();
         User user = user(10L);
         when(couponEventRepository.findById(1L)).thenReturn(Optional.of(event));
-        when(userRepository.findById(10L)).thenReturn(Optional.of(user));
+        when(userRepository.findByIdAndStatusAndDeletedAtIsNull(10L, UserStatus.ACTIVE)).thenReturn(Optional.of(user));
         when(couponRepository.existsByCouponEventIdAndUserId(1L, 10L)).thenReturn(true);
 
         assertThatThrownBy(() -> newExecutor().assignSlotInTransaction(1L, 10L))
@@ -74,8 +76,8 @@ class CouponSlotTransactionExecutorTest {
         Coupon slot = Coupon.createAvailableSlot(event);
         assignId(slot, 100L);
         when(couponEventRepository.findById(1L)).thenReturn(Optional.of(event));
-        when(userRepository.findById(10L)).thenReturn(Optional.of(first));
-        when(userRepository.findById(11L)).thenReturn(Optional.of(duplicated));
+        when(userRepository.findByIdAndStatusAndDeletedAtIsNull(10L, UserStatus.ACTIVE)).thenReturn(Optional.of(first));
+        when(userRepository.findByIdAndStatusAndDeletedAtIsNull(11L, UserStatus.ACTIVE)).thenReturn(Optional.of(duplicated));
         when(couponRepository.existsByCouponEventIdAndUserId(1L, 10L)).thenReturn(false);
         when(couponRepository.existsByCouponEventIdAndUserId(1L, 11L)).thenReturn(true);
         when(couponRepository.findFirstAvailableSlotForUpdate(1L)).thenReturn(Optional.of(slot));
@@ -85,6 +87,18 @@ class CouponSlotTransactionExecutorTest {
         assertThat(response.issuedCount()).isEqualTo(1);
         assertThat(response.skippedCount()).isEqualTo(1);
         verify(couponRepository).findFirstAvailableSlotForUpdate(1L);
+    }
+
+    @Test
+    void assignSlotRejectsNonActiveUser() {
+        CouponEvent event = event();
+        when(couponEventRepository.findById(1L)).thenReturn(Optional.of(event));
+        when(userRepository.findByIdAndStatusAndDeletedAtIsNull(10L, UserStatus.ACTIVE)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> newExecutor().assignSlotInTransaction(1L, 10L))
+            .isInstanceOf(BusinessException.class)
+            .extracting("errorCode")
+            .isEqualTo(ErrorCode.NOT_FOUND);
     }
 
     private CouponSlotTransactionExecutor newExecutor() {

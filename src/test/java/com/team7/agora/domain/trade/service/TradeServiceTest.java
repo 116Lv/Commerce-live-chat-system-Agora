@@ -28,9 +28,11 @@ import com.team7.agora.domain.trade.entity.Trade;
 import com.team7.agora.domain.trade.enums.TradeStatus;
 import com.team7.agora.domain.trade.repository.TradeRepository;
 import com.team7.agora.domain.user.entity.User;
+import com.team7.agora.domain.user.enums.UserStatus;
 import com.team7.agora.domain.user.repository.UserRepository;
 import com.team7.agora.global.auth.AuthUser;
 import com.team7.agora.global.exception.BusinessException;
+import com.team7.agora.global.exception.ErrorCode;
 import java.math.BigDecimal;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
@@ -100,7 +102,7 @@ class TradeServiceTest {
     @Test
     void startTradeRejectsWhenNoAcceptedNego() {
         when(productRepository.findByIdForUpdateAndDeletedAtIsNull(10L)).thenReturn(Optional.of(product));
-        when(userRepository.findById(2L)).thenReturn(Optional.of(buyer));
+        when(userRepository.findByIdAndStatusAndDeletedAtIsNull(2L, UserStatus.ACTIVE)).thenReturn(Optional.of(buyer));
         when(chatRoomRepository.findByProductAndSellerAndBuyer(product, seller, buyer)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> tradeService.startTrade(2L, 10L))
@@ -115,7 +117,7 @@ class TradeServiceTest {
         acceptedOffer.accept();
 
         when(productRepository.findByIdForUpdateAndDeletedAtIsNull(10L)).thenReturn(Optional.of(product));
-        when(userRepository.findById(2L)).thenReturn(Optional.of(buyer));
+        when(userRepository.findByIdAndStatusAndDeletedAtIsNull(2L, UserStatus.ACTIVE)).thenReturn(Optional.of(buyer));
         when(tradeRepository.existsByProductAndStatusNot(product, TradeStatus.CANCELLED)).thenReturn(false);
         when(chatRoomRepository.findByProductAndSellerAndBuyer(product, seller, buyer)).thenReturn(Optional.of(chatRoom));
         when(negoOfferRepository.findFirstByChatRoomIdAndStatusOrderByCreatedAtDesc(50L, NegoOfferStatus.ACCEPTED))
@@ -131,6 +133,17 @@ class TradeServiceTest {
         assertThat(response.price()).isEqualByComparingTo(BigDecimal.valueOf(45000));
         assertThat(response.status()).isEqualTo("PAYMENT_PENDING");
         verify(productRepository).findByIdForUpdateAndDeletedAtIsNull(10L);
+    }
+
+    @Test
+    void startTradeRejectsNonActiveBuyer() {
+        when(productRepository.findByIdForUpdateAndDeletedAtIsNull(10L)).thenReturn(Optional.of(product));
+        when(userRepository.findByIdAndStatusAndDeletedAtIsNull(2L, UserStatus.ACTIVE)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> tradeService.startTrade(2L, 10L))
+            .isInstanceOf(BusinessException.class)
+            .extracting("errorCode")
+            .isEqualTo(ErrorCode.NOT_FOUND);
     }
 
     @Test

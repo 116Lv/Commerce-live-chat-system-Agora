@@ -6,8 +6,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.when;
 
+import com.team7.agora.domain.user.dto.response.SmileScoreResponse;
 import com.team7.agora.domain.user.dto.response.UserMeResponse;
 import com.team7.agora.domain.user.entity.User;
+import com.team7.agora.domain.user.enums.UserStatus;
 import com.team7.agora.domain.user.repository.UserRepository;
 import com.team7.agora.global.exception.BusinessException;
 import com.team7.agora.global.exception.ErrorCode;
@@ -69,11 +71,40 @@ class UserServiceTest {
     }
 
     @Test
+    void getSmileScore_returnsVisibleUserScore() {
+        // given
+        UserService userService = createService();
+        User user = userWithId(2L);
+        user.updateSmileScore(12);
+        when(userRepository.findByIdAndDeletedAtIsNull(2L)).thenReturn(Optional.of(user));
+
+        // when
+        SmileScoreResponse response = userService.getSmileScore(2L);
+
+        // then
+        assertThat(response.userId()).isEqualTo(2L);
+        assertThat(response.smileScore()).isEqualTo(72);
+    }
+
+    @Test
+    void getSmileScore_throwsNotFoundWhenUserMissingOrDeleted() {
+        // given
+        UserService userService = createService();
+        when(userRepository.findByIdAndDeletedAtIsNull(2L)).thenReturn(Optional.empty());
+
+        // when & then
+        assertThatThrownBy(() -> userService.getSmileScore(2L))
+                .isInstanceOf(BusinessException.class)
+                .extracting("errorCode")
+                .isEqualTo(ErrorCode.NOT_FOUND);
+    }
+
+    @Test
     void updateProfile_changesNickname() {
         // given
         UserService userService = createService();
         User user = userWithId(1L);
-        when(userRepository.findByIdAndDeletedAtIsNull(1L)).thenReturn(Optional.of(user));
+        when(userRepository.findByIdAndStatusAndDeletedAtIsNull(1L, UserStatus.ACTIVE)).thenReturn(Optional.of(user));
 
         // when
         UserMeResponse response = userService.updateProfile(1L, "새닉네임");
@@ -84,11 +115,24 @@ class UserServiceTest {
     }
 
     @Test
+    void updateProfile_throwsNotFoundWhenUserIsNotActive() {
+        // given
+        UserService userService = createService();
+        when(userRepository.findByIdAndStatusAndDeletedAtIsNull(1L, UserStatus.ACTIVE)).thenReturn(Optional.empty());
+
+        // when & then
+        assertThatThrownBy(() -> userService.updateProfile(1L, "새닉네임"))
+                .isInstanceOf(BusinessException.class)
+                .extracting("errorCode")
+                .isEqualTo(ErrorCode.NOT_FOUND);
+    }
+
+    @Test
     void changePassword_updatesEncodedPasswordWhenCurrentPasswordMatches() {
         // given
         UserService userService = createService();
         User user = userWithId(1L);
-        when(userRepository.findByIdAndDeletedAtIsNull(1L)).thenReturn(Optional.of(user));
+        when(userRepository.findByIdAndStatusAndDeletedAtIsNull(1L, UserStatus.ACTIVE)).thenReturn(Optional.of(user));
 
         // when
         userService.changePassword(1L, "oldPassword1!", "newPassword1!");
@@ -102,7 +146,7 @@ class UserServiceTest {
         // given
         UserService userService = createService();
         User user = userWithId(1L);
-        when(userRepository.findByIdAndDeletedAtIsNull(1L)).thenReturn(Optional.of(user));
+        when(userRepository.findByIdAndStatusAndDeletedAtIsNull(1L, UserStatus.ACTIVE)).thenReturn(Optional.of(user));
 
         // when & then
         assertThatThrownBy(() -> userService.changePassword(1L, "wrongPassword", "newPassword1!"))

@@ -9,6 +9,7 @@ import com.team7.agora.domain.product.exception.ProductException;
 import com.team7.agora.domain.product.repository.ProductLikeRepository;
 import com.team7.agora.domain.product.repository.ProductRepository;
 import com.team7.agora.domain.user.entity.User;
+import com.team7.agora.domain.user.enums.UserStatus;
 import com.team7.agora.domain.user.repository.UserRepository;
 import com.team7.agora.global.exception.ErrorCode;
 import java.util.List;
@@ -105,7 +106,7 @@ public class ProductLikeService {
     }
 
     private User getUser(Long userId) {
-        return userRepository.findById(userId)
+        return userRepository.findByIdAndStatusAndDeletedAtIsNull(userId, UserStatus.ACTIVE)
             .orElseThrow(() -> new ProductException(ErrorCode.NOT_FOUND, "회원을 찾을 수 없습니다."));
     }
 }

@@ -14,8 +14,10 @@ import com.team7.agora.domain.product.repository.ProductLikeRepository;
 import com.team7.agora.domain.product.repository.ProductRepository;
 import com.team7.agora.domain.region.entity.Region;
 import com.team7.agora.domain.user.entity.User;
+import com.team7.agora.domain.user.enums.UserStatus;
 import com.team7.agora.domain.user.repository.UserRepository;
 import com.team7.agora.global.exception.BusinessException;
+import com.team7.agora.global.exception.ErrorCode;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
@@ -56,7 +58,7 @@ class ProductLikeServiceTest {
     void likeIncreasesLikeCount() {
         setUpFixtures();
         when(productRepository.findByIdAndDeletedAtIsNull(10L)).thenReturn(Optional.of(product));
-        when(userRepository.findById(2L)).thenReturn(Optional.of(user));
+        when(userRepository.findByIdAndStatusAndDeletedAtIsNull(2L, UserStatus.ACTIVE)).thenReturn(Optional.of(user));
         when(productLikeRepository.existsByProductAndUser(product, user)).thenReturn(false);
         when(productRepository.findLikeCountById(10L)).thenReturn(1);
 
@@ -71,7 +73,7 @@ class ProductLikeServiceTest {
     void likeRejectsDuplicateLike() {
         setUpFixtures();
         when(productRepository.findByIdAndDeletedAtIsNull(10L)).thenReturn(Optional.of(product));
-        when(userRepository.findById(2L)).thenReturn(Optional.of(user));
+        when(userRepository.findByIdAndStatusAndDeletedAtIsNull(2L, UserStatus.ACTIVE)).thenReturn(Optional.of(user));
         when(productLikeRepository.existsByProductAndUser(product, user)).thenReturn(true);
 
         assertThatThrownBy(() -> service.like(2L, 10L))
@@ -82,7 +84,7 @@ class ProductLikeServiceTest {
     void likeMapsDuplicateConstraintViolationToBusinessException() {
         setUpFixtures();
         when(productRepository.findByIdAndDeletedAtIsNull(10L)).thenReturn(Optional.of(product));
-        when(userRepository.findById(2L)).thenReturn(Optional.of(user));
+        when(userRepository.findByIdAndStatusAndDeletedAtIsNull(2L, UserStatus.ACTIVE)).thenReturn(Optional.of(user));
         when(productLikeRepository.existsByProductAndUser(product, user)).thenReturn(false);
         when(productLikeRepository.save(org.mockito.ArgumentMatchers.any(ProductLike.class)))
             .thenThrow(new DataIntegrityViolationException("duplicate product like"));
@@ -99,7 +101,7 @@ class ProductLikeServiceTest {
         assignId(productLike, 100L);
 
         when(productRepository.findByIdAndDeletedAtIsNull(10L)).thenReturn(Optional.of(product));
-        when(userRepository.findById(2L)).thenReturn(Optional.of(user));
+        when(userRepository.findByIdAndStatusAndDeletedAtIsNull(2L, UserStatus.ACTIVE)).thenReturn(Optional.of(user));
         when(productLikeRepository.findByProductAndUser(product, user)).thenReturn(Optional.of(productLike));
         when(productRepository.findLikeCountById(10L)).thenReturn(0);
 
@@ -114,7 +116,7 @@ class ProductLikeServiceTest {
     void unlikeRejectsWhenNotLiked() {
         setUpFixtures();
         when(productRepository.findByIdAndDeletedAtIsNull(10L)).thenReturn(Optional.of(product));
-        when(userRepository.findById(2L)).thenReturn(Optional.of(user));
+        when(userRepository.findByIdAndStatusAndDeletedAtIsNull(2L, UserStatus.ACTIVE)).thenReturn(Optional.of(user));
         when(productLikeRepository.findByProductAndUser(product, user)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> service.unlike(2L, 10L))
@@ -127,12 +129,24 @@ class ProductLikeServiceTest {
         ProductLike productLike = ProductLike.create(product, user);
         assignId(productLike, 100L);
 
-        when(userRepository.findById(2L)).thenReturn(Optional.of(user));
+        when(userRepository.findByIdAndStatusAndDeletedAtIsNull(2L, UserStatus.ACTIVE)).thenReturn(Optional.of(user));
         when(productLikeRepository.findAllByUser(user)).thenReturn(List.of(productLike));
 
         var responses = service.getMyLikedProducts(2L);
 
         assertThat(responses).hasSize(1);
         assertThat(responses.get(0).productId()).isEqualTo(10L);
+    }
+
+    @Test
+    void likeRejectsNonActiveUser() {
+        setUpFixtures();
+        when(productRepository.findByIdAndDeletedAtIsNull(10L)).thenReturn(Optional.of(product));
+        when(userRepository.findByIdAndStatusAndDeletedAtIsNull(2L, UserStatus.ACTIVE)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> service.like(2L, 10L))
+            .isInstanceOf(BusinessException.class)
+            .extracting("errorCode")
+            .isEqualTo(ErrorCode.NOT_FOUND);
     }
 }

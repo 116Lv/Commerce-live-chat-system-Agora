@@ -33,7 +33,7 @@ class AdminUserServiceTest {
         AdminUserService service = new AdminUserService(userRepository);
         User user = User.signup("user@test.com", "encoded", "동네유저", "01011112222");
         assignId(user, 1L);
-        when(userRepository.findAllByDeletedAtIsNull(PageRequest.of(0, 20)))
+        when(userRepository.findAll(PageRequest.of(0, 20)))
                 .thenReturn(new PageImpl<>(List.of(user), PageRequest.of(0, 20), 42));
 
         Page<AdminUserResponse> responses = service.getUsers(principal(UserRole.USER_ADMIN), PageRequest.of(0, 20));
@@ -44,6 +44,22 @@ class AdminUserServiceTest {
         assertThat(responses.getContent().get(0).status()).isEqualTo("ACTIVE");
         assertThat(responses.getTotalElements()).isEqualTo(42);
         assertThat(responses.getTotalPages()).isEqualTo(3);
+    }
+
+    @Test
+    void getUsers_includesDeletedUsersForAdminStatusAudit() {
+        AdminUserService service = new AdminUserService(userRepository);
+        User deletedUser = User.signup("deleted@test.com", "encoded", "탈퇴유저", "01011112222");
+        assignId(deletedUser, 2L);
+        deletedUser.changeStatus(UserStatus.DELETED);
+        when(userRepository.findAll(PageRequest.of(0, 20)))
+                .thenReturn(new PageImpl<>(List.of(deletedUser), PageRequest.of(0, 20), 1));
+
+        Page<AdminUserResponse> responses = service.getUsers(principal(UserRole.USER_ADMIN), PageRequest.of(0, 20));
+
+        assertThat(responses.getContent()).hasSize(1);
+        assertThat(responses.getContent().get(0).id()).isEqualTo(2L);
+        assertThat(responses.getContent().get(0).status()).isEqualTo("DELETED");
     }
 
     @Test

@@ -92,7 +92,7 @@ public class AdminReportService {
     }
 
     private Report findReport(Long reportId) {
-        return reportRepository.findById(reportId)
+        return reportRepository.findByIdForUpdate(reportId)
             .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "신고를 찾을 수 없습니다."));
     }
 

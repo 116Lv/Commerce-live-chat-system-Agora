@@ -13,8 +13,10 @@ import com.team7.agora.domain.report.dto.response.ReportResponse;
 import com.team7.agora.domain.report.entity.Report;
 import com.team7.agora.domain.report.repository.ReportRepository;
 import com.team7.agora.domain.user.entity.User;
+import com.team7.agora.domain.user.enums.UserStatus;
 import com.team7.agora.domain.user.repository.UserRepository;
 import com.team7.agora.global.exception.BusinessException;
+import com.team7.agora.global.exception.ErrorCode;
 import java.math.BigDecimal;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
@@ -57,7 +59,7 @@ class ReportServiceTest {
 
     @Test
     void createUserReport_storesPendingReport() {
-        when(userRepository.findById(1L)).thenReturn(Optional.of(reporter));
+        when(userRepository.findByIdAndStatusAndDeletedAtIsNull(1L, UserStatus.ACTIVE)).thenReturn(Optional.of(reporter));
         when(userRepository.findByIdForUpdate(3L)).thenReturn(Optional.of(reportedUser));
         when(reportRepository.existsByReporterAndReportedUserAndProductIsNull(reporter, reportedUser)).thenReturn(false);
         when(reportRepository.save(any(Report.class))).thenAnswer(invocation -> {
@@ -83,7 +85,7 @@ class ReportServiceTest {
 
     @Test
     void createProductReport_storesPendingReport() {
-        when(userRepository.findById(1L)).thenReturn(Optional.of(reporter));
+        when(userRepository.findByIdAndStatusAndDeletedAtIsNull(1L, UserStatus.ACTIVE)).thenReturn(Optional.of(reporter));
         when(productRepository.findByIdForUpdateAndDeletedAtIsNull(10L)).thenReturn(Optional.of(product));
         when(reportRepository.existsByReporterAndProduct(reporter, product)).thenReturn(false);
         when(reportRepository.save(any(Report.class))).thenAnswer(invocation -> {
@@ -103,7 +105,7 @@ class ReportServiceTest {
 
     @Test
     void createProductReport_rejectsOwnProduct() {
-        when(userRepository.findById(2L)).thenReturn(Optional.of(seller));
+        when(userRepository.findByIdAndStatusAndDeletedAtIsNull(2L, UserStatus.ACTIVE)).thenReturn(Optional.of(seller));
         when(productRepository.findByIdForUpdateAndDeletedAtIsNull(10L)).thenReturn(Optional.of(product));
 
         assertThatThrownBy(() -> reportService.createProductReport(2L, 10L, "내 상품 신고 시도"))
@@ -112,7 +114,7 @@ class ReportServiceTest {
 
     @Test
     void createUserReport_rejectsDuplicateReport() {
-        when(userRepository.findById(1L)).thenReturn(Optional.of(reporter));
+        when(userRepository.findByIdAndStatusAndDeletedAtIsNull(1L, UserStatus.ACTIVE)).thenReturn(Optional.of(reporter));
         when(userRepository.findByIdForUpdate(3L)).thenReturn(Optional.of(reportedUser));
         when(reportRepository.existsByReporterAndReportedUserAndProductIsNull(reporter, reportedUser)).thenReturn(true);
 
@@ -122,11 +124,31 @@ class ReportServiceTest {
 
     @Test
     void createProductReport_rejectsDuplicateReport() {
-        when(userRepository.findById(1L)).thenReturn(Optional.of(reporter));
+        when(userRepository.findByIdAndStatusAndDeletedAtIsNull(1L, UserStatus.ACTIVE)).thenReturn(Optional.of(reporter));
         when(productRepository.findByIdForUpdateAndDeletedAtIsNull(10L)).thenReturn(Optional.of(product));
         when(reportRepository.existsByReporterAndProduct(reporter, product)).thenReturn(true);
 
         assertThatThrownBy(() -> reportService.createProductReport(1L, 10L, "중복 신고"))
             .isInstanceOf(BusinessException.class);
+    }
+
+    @Test
+    void createProductReport_rejectsNonActiveReporter() {
+        when(userRepository.findByIdAndStatusAndDeletedAtIsNull(1L, UserStatus.ACTIVE)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> reportService.createProductReport(1L, 10L, "비활성 신고"))
+            .isInstanceOf(BusinessException.class)
+            .extracting("errorCode")
+            .isEqualTo(ErrorCode.NOT_FOUND);
+    }
+
+    @Test
+    void createUserReport_rejectsNonActiveReporter() {
+        when(userRepository.findByIdAndStatusAndDeletedAtIsNull(1L, UserStatus.ACTIVE)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> reportService.createUserReport(1L, 3L, "비활성 신고"))
+            .isInstanceOf(BusinessException.class)
+            .extracting("errorCode")
+            .isEqualTo(ErrorCode.NOT_FOUND);
     }
 }
