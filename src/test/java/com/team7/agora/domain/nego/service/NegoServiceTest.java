@@ -386,6 +386,18 @@ class NegoServiceTest {
     }
 
     @Test
+    void requestExtensionRejectsSecondRequestAfterRejection() {
+        NegoOffer offer = NegoOffer.create(chatRoom, buyer, BigDecimal.valueOf(45000));
+        assignId(offer, 1000L);
+        offer.requestExtension();
+        offer.rejectExtension();
+        when(negoOfferRepository.findById(1000L)).thenReturn(Optional.of(offer));
+
+        assertThatThrownBy(() -> negoService.requestExtension(2L, 1000L))
+            .isInstanceOf(BusinessException.class);
+    }
+
+    @Test
     void rejectExtensionRejectsNonExtensionRequestedOfferAsBusinessException() {
         NegoOffer offer = NegoOffer.create(chatRoom, buyer, BigDecimal.valueOf(45000));
         assignId(offer, 1000L);

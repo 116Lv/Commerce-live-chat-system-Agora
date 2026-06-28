@@ -280,6 +280,9 @@ public class NegoService {
         if (offer.getStatus() != NegoOfferStatus.PENDING) {
             throw new BusinessException(ErrorCode.CONFLICT, "연장 요청 가능한 가격 제안 상태가 아닙니다.");
         }
+        if (offer.isExtensionRequested()) {
+            throw new BusinessException(ErrorCode.CONFLICT, "연장 요청은 한 번만 할 수 있습니다.");
+        }
     }
 
     private void validateExtensionRequested(NegoOffer offer) {
