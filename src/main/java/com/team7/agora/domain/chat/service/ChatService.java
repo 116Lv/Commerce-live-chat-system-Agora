@@ -73,7 +73,7 @@ public class ChatService {
             throw new BusinessException(ErrorCode.INVALID_REQUEST, "내 상품에는 채팅을 시작할 수 없습니다.");
         }
 
-        User buyer = findUser(userId);
+        User buyer = findActiveUser(userId);
         ChatRoom chatRoom = chatRoomRepository.findByProductAndSellerAndBuyer(product, product.getSeller(), buyer)
             .orElseGet(() -> createRoomOrFindExisting(product, buyer));
 
@@ -104,7 +104,7 @@ public class ChatService {
             throw new BusinessException(ErrorCode.FORBIDDEN, "채팅방 참여자만 메시지를 보낼 수 있습니다.");
         }
 
-        User sender = findUser(userId);
+        User sender = findActiveUser(userId);
         ChatMessage message = chatMessageRepository.save(ChatMessage.send(chatRoom, sender, content));
         return ChatMessageResponse.from(message);
     }
@@ -124,7 +124,7 @@ public class ChatService {
             throw new BusinessException(ErrorCode.FORBIDDEN, "채팅방 참여자만 이미지를 보낼 수 있습니다.");
         }
 
-        User sender = findUser(userId);
+        User sender = findActiveUser(userId);
         String imageUrl = imageStorageClient.store("chat", image);
         ChatMessage message = chatMessageRepository.save(ChatMessage.sendImage(chatRoom, sender, imageUrl));
         return ChatMessageResponse.from(message);
@@ -183,6 +183,11 @@ public class ChatService {
     }
 
     private User findUser(Long userId) {
+        return userRepository.findById(userId)
+            .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "회원을 찾을 수 없습니다."));
+    }
+
+    private User findActiveUser(Long userId) {
         return userRepository.findByIdAndStatusAndDeletedAtIsNull(userId, UserStatus.ACTIVE)
             .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "회원을 찾을 수 없습니다."));
     }

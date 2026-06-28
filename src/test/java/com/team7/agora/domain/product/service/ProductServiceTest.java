@@ -149,6 +149,7 @@ class ProductServiceTest {
             "SPORTS"
         );
         when(productRepository.findByIdAndDeletedAtIsNull(1L)).thenReturn(Optional.of(product));
+        when(userRepository.findByIdAndStatusAndDeletedAtIsNull(1L, UserStatus.ACTIVE)).thenReturn(Optional.of(seller));
         ProductUpdateRequest request = new ProductUpdateRequest("수정 제목", "수정 설명", BigDecimal.valueOf(70000), "SPORTS");
 
         productService.update(1L, 1L, request);
@@ -171,12 +172,36 @@ class ProductServiceTest {
         );
         product.markReserved();
         when(productRepository.findByIdAndDeletedAtIsNull(1L)).thenReturn(Optional.of(product));
+        when(userRepository.findByIdAndStatusAndDeletedAtIsNull(1L, UserStatus.ACTIVE)).thenReturn(Optional.of(seller));
         ProductUpdateRequest request = new ProductUpdateRequest("수정 제목", "수정 설명", BigDecimal.valueOf(70000), "SPORTS");
 
         assertThatThrownBy(() -> productService.update(1L, 1L, request))
             .isInstanceOf(BusinessException.class)
             .extracting("errorCode")
             .isEqualTo(ErrorCode.CONFLICT);
+    }
+
+    @Test
+    void update_rejectsNonActiveSeller() {
+        ProductService productService = new ProductService(productRepository, userRepository, regionRepository, userRegionRepository, productSearchService);
+        User seller = User.signup("seller@test.com", "encoded", "판매자", "01011112222");
+        assignId(seller, 1L);
+        Product product = Product.create(
+            seller,
+            Region.create("서울 강남구 역삼동", "1168010100", "서울", "강남구", "역삼동"),
+            "자전거",
+            "상태 좋은 중고 자전거입니다.",
+            BigDecimal.valueOf(73000),
+            "SPORTS"
+        );
+        when(productRepository.findByIdAndDeletedAtIsNull(1L)).thenReturn(Optional.of(product));
+        when(userRepository.findByIdAndStatusAndDeletedAtIsNull(1L, UserStatus.ACTIVE)).thenReturn(Optional.empty());
+        ProductUpdateRequest request = new ProductUpdateRequest("수정 제목", "수정 설명", BigDecimal.valueOf(70000), "SPORTS");
+
+        assertThatThrownBy(() -> productService.update(1L, 1L, request))
+            .isInstanceOf(BusinessException.class)
+            .extracting("errorCode")
+            .isEqualTo(ErrorCode.NOT_FOUND);
     }
 
     @Test
@@ -193,6 +218,7 @@ class ProductServiceTest {
             "SPORTS"
         );
         when(productRepository.findByIdAndDeletedAtIsNull(1L)).thenReturn(Optional.of(product));
+        when(userRepository.findByIdAndStatusAndDeletedAtIsNull(1L, UserStatus.ACTIVE)).thenReturn(Optional.of(seller));
 
         productService.delete(1L, 1L);
 
@@ -234,9 +260,32 @@ class ProductServiceTest {
             "SPORTS"
         );
         when(productRepository.findByIdAndDeletedAtIsNull(1L)).thenReturn(Optional.of(product));
+        when(userRepository.findByIdAndStatusAndDeletedAtIsNull(1L, UserStatus.ACTIVE)).thenReturn(Optional.of(seller));
 
         productService.delete(1L, 1L);
 
         verify(productSearchService).evictSearchCache();
+    }
+
+    @Test
+    void delete_rejectsNonActiveSeller() {
+        ProductService productService = new ProductService(productRepository, userRepository, regionRepository, userRegionRepository, productSearchService);
+        User seller = User.signup("seller@test.com", "encoded", "판매자", "01011112222");
+        assignId(seller, 1L);
+        Product product = Product.create(
+            seller,
+            Region.create("서울 강남구 역삼동", "1168010100", "서울", "강남구", "역삼동"),
+            "자전거",
+            "상태 좋은 중고 자전거입니다.",
+            BigDecimal.valueOf(73000),
+            "SPORTS"
+        );
+        when(productRepository.findByIdAndDeletedAtIsNull(1L)).thenReturn(Optional.of(product));
+        when(userRepository.findByIdAndStatusAndDeletedAtIsNull(1L, UserStatus.ACTIVE)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> productService.delete(1L, 1L))
+            .isInstanceOf(BusinessException.class)
+            .extracting("errorCode")
+            .isEqualTo(ErrorCode.NOT_FOUND);
     }
 }

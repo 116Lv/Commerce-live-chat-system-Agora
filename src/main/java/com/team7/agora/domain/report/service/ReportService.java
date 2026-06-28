@@ -6,6 +6,7 @@ import com.team7.agora.domain.report.dto.response.ReportResponse;
 import com.team7.agora.domain.report.entity.Report;
 import com.team7.agora.domain.report.repository.ReportRepository;
 import com.team7.agora.domain.user.entity.User;
+import com.team7.agora.domain.user.enums.UserStatus;
 import com.team7.agora.domain.user.repository.UserRepository;
 import com.team7.agora.global.exception.BusinessException;
 import com.team7.agora.global.exception.ErrorCode;
@@ -48,7 +49,7 @@ public class ReportService {
      */
     @Transactional
     public ReportResponse createProductReport(Long reporterId, Long productId, String reason) {
-        User reporter = userRepository.findById(reporterId)
+        User reporter = userRepository.findByIdAndStatusAndDeletedAtIsNull(reporterId, UserStatus.ACTIVE)
             .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "신고자를 찾을 수 없습니다."));
         Product product = productRepository.findByIdForUpdateAndDeletedAtIsNull(productId)
             .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "상품을 찾을 수 없습니다."));
@@ -78,7 +79,7 @@ public class ReportService {
             throw new BusinessException(ErrorCode.INVALID_REQUEST, "본인을 신고할 수 없습니다.");
         }
 
-        User reporter = userRepository.findById(reporterId)
+        User reporter = userRepository.findByIdAndStatusAndDeletedAtIsNull(reporterId, UserStatus.ACTIVE)
             .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "신고자를 찾을 수 없습니다."));
         User reportedUser = userRepository.findByIdForUpdate(reportedUserId)
             .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "신고 대상 회원을 찾을 수 없습니다."));

@@ -245,7 +245,21 @@ class ChatServiceTest {
     void getMyRoomsReturnsRoomsForParticipant() {
         ChatRoom chatRoom = ChatRoom.open(product, buyer);
         assignId(chatRoom, 100L);
-        when(userRepository.findByIdAndStatusAndDeletedAtIsNull(2L, UserStatus.ACTIVE)).thenReturn(Optional.of(buyer));
+        when(userRepository.findById(2L)).thenReturn(Optional.of(buyer));
+        when(chatRoomRepository.findAllBySellerOrBuyer(buyer, buyer)).thenReturn(List.of(chatRoom));
+
+        var responses = chatService.getMyRooms(2L);
+
+        assertThat(responses).hasSize(1);
+        assertThat(responses.get(0).chatRoomId()).isEqualTo(100L);
+    }
+
+    @Test
+    void getMyRoomsAllowsDeletedUserForHistoryView() {
+        buyer.changeStatus(UserStatus.DELETED);
+        ChatRoom chatRoom = ChatRoom.open(product, buyer);
+        assignId(chatRoom, 100L);
+        when(userRepository.findById(2L)).thenReturn(Optional.of(buyer));
         when(chatRoomRepository.findAllBySellerOrBuyer(buyer, buyer)).thenReturn(List.of(chatRoom));
 
         var responses = chatService.getMyRooms(2L);

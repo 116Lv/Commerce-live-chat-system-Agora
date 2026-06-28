@@ -92,6 +92,7 @@ public class ProductService {
     public ProductResponse update(Long requesterId, Long productId, ProductUpdateRequest request) {
         Product product = getActiveProduct(productId);
         validateSeller(product, requesterId);
+        getActiveUser(requesterId);
         validateEditable(product);
         product.update(request.title(), request.description(), request.price(), request.category());
         productSearchService.evictSearchCache();
@@ -107,6 +108,7 @@ public class ProductService {
     public void delete(Long requesterId, Long productId) {
         Product product = getActiveProduct(productId);
         validateSeller(product, requesterId);
+        getActiveUser(requesterId);
         product.delete();
         productSearchService.evictSearchCache();
     }
