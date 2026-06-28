@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.inOrder;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.verify;
 
@@ -132,6 +133,18 @@ class NegoServiceTest {
         LocalDateTime after = AgoraClock.now();
         assertThat(response.expiresAt()).isAfterOrEqualTo(before.plusHours(24));
         assertThat(response.expiresAt()).isBeforeOrEqualTo(after.plusHours(24));
+    }
+
+    @Test
+    void createOfferRejectsZeroOrNegativeOfferPriceWithInvalidRequest() {
+        assertInvalidOfferPriceRejected(BigDecimal.ZERO);
+        assertInvalidOfferPriceRejected(BigDecimal.valueOf(-1));
+    }
+
+    @Test
+    void createOfferRejectsListPriceOrHigherOfferPriceWithInvalidRequest() {
+        assertInvalidOfferPriceRejected(BigDecimal.valueOf(50000));
+        assertInvalidOfferPriceRejected(BigDecimal.valueOf(50001));
     }
 
     @Test
@@ -299,7 +312,7 @@ class NegoServiceTest {
     }
 
     @Test
-    void approveExtensionAllowsSellerAndAdds12Hours() {
+    void approveExtensionAllowsSellerAndAdds24Hours() {
         NegoOffer offer = NegoOffer.create(chatRoom, buyer, BigDecimal.valueOf(45000));
         assignId(offer, 1000L);
         offer.requestExtension();
@@ -309,7 +322,53 @@ class NegoServiceTest {
         NegoOfferResponse response = negoService.approveExtension(1L, 1000L);
 
         assertThat(response.status()).isEqualTo("EXTENDED");
-        assertThat(Duration.between(previousExpiresAt, response.expiresAt())).isEqualTo(Duration.ofHours(12));
+        assertThat(Duration.between(previousExpiresAt, response.expiresAt())).isEqualTo(Duration.ofHours(24));
+    }
+
+    @Test
+    void requestExtensionRejectsAlreadyExtendedOffer() {
+        NegoOffer offer = NegoOffer.create(chatRoom, buyer, BigDecimal.valueOf(45000));
+        assignId(offer, 1000L);
+        offer.requestExtension();
+        offer.approveExtension();
+        when(negoOfferRepository.findById(1000L)).thenReturn(Optional.of(offer));
+
+        assertThatThrownBy(() -> negoService.requestExtension(2L, 1000L))
+            .isInstanceOf(BusinessException.class);
+    }
+
+    @Test
+    void approveExtensionRejectsAlreadyExtendedOffer() {
+        NegoOffer offer = NegoOffer.create(chatRoom, buyer, BigDecimal.valueOf(45000));
+        assignId(offer, 1000L);
+        offer.requestExtension();
+        offer.approveExtension();
+        when(negoOfferRepository.findById(1000L)).thenReturn(Optional.of(offer));
+
+        assertThatThrownBy(() -> negoService.approveExtension(1L, 1000L))
+            .isInstanceOf(BusinessException.class);
+    }
+
+    @Test
+    void requestExtensionRejectsClosedOffer() {
+        NegoOffer offer = NegoOffer.create(chatRoom, buyer, BigDecimal.valueOf(45000));
+        assignId(offer, 1000L);
+        offer.accept();
+        when(negoOfferRepository.findById(1000L)).thenReturn(Optional.of(offer));
+
+        assertThatThrownBy(() -> negoService.requestExtension(2L, 1000L))
+            .isInstanceOf(BusinessException.class);
+    }
+
+    @Test
+    void approveExtensionRejectsClosedOffer() {
+        NegoOffer offer = NegoOffer.create(chatRoom, buyer, BigDecimal.valueOf(45000));
+        assignId(offer, 1000L);
+        offer.accept();
+        when(negoOfferRepository.findById(1000L)).thenReturn(Optional.of(offer));
+
+        assertThatThrownBy(() -> negoService.approveExtension(1L, 1000L))
+            .isInstanceOf(BusinessException.class);
     }
 
     @Test
@@ -368,5 +427,22 @@ class NegoServiceTest {
 
         assertThatThrownBy(() -> negoService.expireOffer(rootAdmin, 1000L))
             .isInstanceOf(IllegalStateException.class);
+    }
+
+    private void assertInvalidOfferPriceRejected(BigDecimal offerPrice) {
+        when(chatRoomRepository.findByIdAndStatusForUpdate(100L, ChatRoomStatus.ACTIVE))
+            .thenReturn(Optional.of(chatRoom));
+        when(productRepository.findByIdForUpdateAndDeletedAtIsNull(10L))
+            .thenReturn(Optional.of(chatRoom.getProduct()));
+        lenient().when(negoOfferRepository.save(any(NegoOffer.class))).thenAnswer(invocation -> {
+            NegoOffer offer = invocation.getArgument(0);
+            assignId(offer, 1000L);
+            return offer;
+        });
+
+        assertThatThrownBy(() -> negoService.createOffer(2L, 100L, offerPrice))
+            .isInstanceOfSatisfying(BusinessException.class, exception ->
+                assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.INVALID_REQUEST)
+            );
     }
 }

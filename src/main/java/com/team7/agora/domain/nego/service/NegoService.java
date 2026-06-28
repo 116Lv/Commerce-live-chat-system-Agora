@@ -79,6 +79,7 @@ public class NegoService {
         if (isAlreadyReservedOrSold(lockedProduct)) {
             throw new BusinessException(ErrorCode.CONFLICT, "이미 거래가 진행 중이거나 완료된 상품입니다.");
         }
+        validateOfferPrice(offerPrice, lockedProduct);
 
         if (negoOfferRepository.existsByChatRoomAndRequesterAndStatusIn(
             chatRoom,
@@ -158,7 +159,7 @@ public class NegoService {
         NegoOffer offer = findOffer(offerId);
         validateBuyer(offer, buyerId);
         expireIfNeededAndThrow(offer);
-        validateRespondable(offer);
+        validateExtensionRequestable(offer);
         offer.requestExtension();
         chatSystemMessageService.send(
             offer.getChatRoom(), offer.getRequester(), "구매자가 제안 연장을 요청했습니다."
@@ -222,6 +223,14 @@ public class NegoService {
         return product.getStatus() == ProductStatus.RESERVED || product.getStatus() == ProductStatus.SOLD;
     }
 
+    private void validateOfferPrice(BigDecimal offerPrice, Product product) {
+        if (offerPrice == null
+            || offerPrice.compareTo(BigDecimal.ZERO) <= 0
+            || offerPrice.compareTo(product.getPrice()) >= 0) {
+            throw new BusinessException(ErrorCode.INVALID_REQUEST, "가격 제안은 0보다 크고 상품 정가보다 작아야 합니다.");
+        }
+    }
+
     private boolean isExpiryAuthority(AuthUser authUser) {
         return authUser != null && "ROOT_ADMIN".equals(authUser.role());
     }
@@ -264,6 +273,12 @@ public class NegoService {
     private void validateRespondable(NegoOffer offer) {
         if (!NegoOffer.ACTIVE_STATUSES.contains(offer.getStatus())) {
             throw new BusinessException(ErrorCode.CONFLICT, "응답 가능한 가격 제안 상태가 아닙니다.");
+        }
+    }
+
+    private void validateExtensionRequestable(NegoOffer offer) {
+        if (offer.getStatus() != NegoOfferStatus.PENDING) {
+            throw new BusinessException(ErrorCode.CONFLICT, "연장 요청 가능한 가격 제안 상태가 아닙니다.");
         }
     }
 
