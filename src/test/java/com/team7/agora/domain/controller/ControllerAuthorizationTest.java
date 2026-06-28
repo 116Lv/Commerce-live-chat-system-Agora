@@ -12,10 +12,12 @@ import org.springframework.security.access.prepost.PreAuthorize;
 class ControllerAuthorizationTest {
 
     @Test
-    void smileScoreIsPublicEndpointWithoutMethodAuthorization() throws NoSuchMethodException {
+    void smileScoreRequiresAuthenticatedUser() throws NoSuchMethodException {
         Method method = SmileScoreController.class.getMethod("getSmileScore", Long.class);
 
-        assertThat(method.getAnnotation(PreAuthorize.class)).isNull();
+        assertThat(method.getAnnotation(PreAuthorize.class))
+                .extracting(PreAuthorize::value)
+                .isEqualTo("isAuthenticated()");
     }
 
     @Test

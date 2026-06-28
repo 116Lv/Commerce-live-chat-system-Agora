@@ -6,6 +6,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.when;
 
+import com.team7.agora.domain.user.dto.response.SmileScoreResponse;
 import com.team7.agora.domain.user.dto.response.UserMeResponse;
 import com.team7.agora.domain.user.entity.User;
 import com.team7.agora.domain.user.repository.UserRepository;
@@ -63,6 +64,35 @@ class UserServiceTest {
 
         // when & then
         assertThatThrownBy(() -> userService.getMe(1L))
+                .isInstanceOf(BusinessException.class)
+                .extracting("errorCode")
+                .isEqualTo(ErrorCode.NOT_FOUND);
+    }
+
+    @Test
+    void getSmileScore_returnsVisibleUserScore() {
+        // given
+        UserService userService = createService();
+        User user = userWithId(2L);
+        user.updateSmileScore(12);
+        when(userRepository.findByIdAndDeletedAtIsNull(2L)).thenReturn(Optional.of(user));
+
+        // when
+        SmileScoreResponse response = userService.getSmileScore(2L);
+
+        // then
+        assertThat(response.userId()).isEqualTo(2L);
+        assertThat(response.smileScore()).isEqualTo(72);
+    }
+
+    @Test
+    void getSmileScore_throwsNotFoundWhenUserMissingOrDeleted() {
+        // given
+        UserService userService = createService();
+        when(userRepository.findByIdAndDeletedAtIsNull(2L)).thenReturn(Optional.empty());
+
+        // when & then
+        assertThatThrownBy(() -> userService.getSmileScore(2L))
                 .isInstanceOf(BusinessException.class)
                 .extracting("errorCode")
                 .isEqualTo(ErrorCode.NOT_FOUND);
