@@ -3,6 +3,7 @@ package com.team7.agora.domain.admin.service;
 import static com.team7.agora.support.TestEntityIds.assignId;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.team7.agora.domain.admin.dto.response.AdminReportListResponse;
@@ -85,13 +86,22 @@ class AdminReportServiceTest {
 
     @Test
     void resolveUserReport_resolvesReportAndBlocksUser() {
-        when(reportRepository.findById(200L)).thenReturn(Optional.of(userReport));
+        when(reportRepository.findByIdForUpdate(200L)).thenReturn(Optional.of(userReport));
 
         AdminReportResponse response = adminReportService.resolveUserReport(userAdmin, 200L, "욕설 확인");
 
         assertThat(response.reportId()).isEqualTo(200L);
         assertThat(response.status()).isEqualTo("RESOLVED");
         assertThat(userReport.getReportedUser().getStatus()).isEqualTo(UserStatus.BLOCKED);
+    }
+
+    @Test
+    void resolveUserReport_locksReportBeforeResolving() {
+        when(reportRepository.findByIdForUpdate(200L)).thenReturn(Optional.of(userReport));
+
+        adminReportService.resolveUserReport(userAdmin, 200L, "욕설 확인");
+
+        verify(reportRepository).findByIdForUpdate(200L);
     }
 
     @Test
@@ -102,10 +112,21 @@ class AdminReportServiceTest {
 
     @Test
     void resolveUserReport_rejectsProductReport() {
-        when(reportRepository.findById(100L)).thenReturn(Optional.of(productReport));
+        when(reportRepository.findByIdForUpdate(100L)).thenReturn(Optional.of(productReport));
 
         assertThatThrownBy(() -> adminReportService.resolveUserReport(userAdmin, 100L, "가품 판매 확인"))
             .isInstanceOf(BusinessException.class);
+    }
+
+    @Test
+    void resolveUserReport_rejectsAlreadyResolvedReport() {
+        userReport.resolve("이미 처리됨");
+        when(reportRepository.findByIdForUpdate(200L)).thenReturn(Optional.of(userReport));
+
+        assertThatThrownBy(() -> adminReportService.resolveUserReport(userAdmin, 200L, "다시 처리"))
+            .isInstanceOf(BusinessException.class)
+            .extracting("errorCode")
+            .isEqualTo(ErrorCode.CONFLICT);
     }
 
     @Test
@@ -123,7 +144,7 @@ class AdminReportServiceTest {
     @Test
     void resolveProductReport_rejectsAlreadyResolvedReport() {
         productReport.resolve("이미 처리됨");
-        when(reportRepository.findById(100L)).thenReturn(Optional.of(productReport));
+        when(reportRepository.findByIdForUpdate(100L)).thenReturn(Optional.of(productReport));
 
         assertThatThrownBy(() -> adminReportService.resolveProductReport(productAdmin, 100L, "다시 처리"))
             .isInstanceOf(BusinessException.class)
@@ -139,12 +160,21 @@ class AdminReportServiceTest {
 
     @Test
     void resolveProductReport_resolvesReport() {
-        when(reportRepository.findById(100L)).thenReturn(Optional.of(productReport));
+        when(reportRepository.findByIdForUpdate(100L)).thenReturn(Optional.of(productReport));
 
         AdminReportResponse response = adminReportService.resolveProductReport(productAdmin, 100L, "가품 판매 확인");
 
         assertThat(response.reportId()).isEqualTo(100L);
         assertThat(response.status()).isEqualTo("RESOLVED");
+    }
+
+    @Test
+    void resolveProductReport_locksReportBeforeResolving() {
+        when(reportRepository.findByIdForUpdate(100L)).thenReturn(Optional.of(productReport));
+
+        adminReportService.resolveProductReport(productAdmin, 100L, "가품 판매 확인");
+
+        verify(reportRepository).findByIdForUpdate(100L);
     }
 
     @Test
@@ -155,7 +185,7 @@ class AdminReportServiceTest {
 
     @Test
     void resolveProductReport_rejectsUserReport() {
-        when(reportRepository.findById(200L)).thenReturn(Optional.of(userReport));
+        when(reportRepository.findByIdForUpdate(200L)).thenReturn(Optional.of(userReport));
 
         assertThatThrownBy(() -> adminReportService.resolveProductReport(productAdmin, 200L, "욕설 확인"))
             .isInstanceOf(BusinessException.class);
