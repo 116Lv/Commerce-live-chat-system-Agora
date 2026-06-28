@@ -38,7 +38,7 @@ public class AdminUserService {
      */
     public Page<AdminUserResponse> getUsers(CustomUserDetails admin, Pageable pageable) {
         validateUserAdmin(admin);
-        return userRepository.findAll(pageable)
+        return userRepository.findAllByDeletedAtIsNull(pageable)
                 .map(AdminUserResponse::from);
     }
 

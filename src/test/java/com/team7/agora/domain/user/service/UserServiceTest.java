@@ -58,7 +58,7 @@ class UserServiceTest {
     }
 
     @Test
-    void getMe_throwsNotFoundWhenUserMissing() {
+    void getMe_throwsNotFoundWhenUserMissingOrDeleted() {
         // given
         UserService userService = createService();
         when(userRepository.findByIdAndDeletedAtIsNull(1L)).thenReturn(Optional.empty());
