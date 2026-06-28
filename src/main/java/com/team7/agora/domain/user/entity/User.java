@@ -4,6 +4,7 @@ import com.team7.agora.domain.user.enums.UserRole;
 import com.team7.agora.domain.user.enums.UserStatus;
 import com.team7.agora.global.exception.BusinessException;
 import com.team7.agora.global.exception.ErrorCode;
+import com.team7.agora.global.time.AgoraClock;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -114,7 +115,7 @@ public class User {
         }
         this.status = status;
         if (status == UserStatus.DELETED) {
-            this.deletedAt = LocalDateTime.now();
+            this.deletedAt = AgoraClock.now();
             return;
         }
         this.deletedAt = null;
