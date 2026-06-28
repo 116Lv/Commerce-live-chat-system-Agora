@@ -6,18 +6,15 @@ import com.team7.agora.domain.product.entity.Product;
 import com.team7.agora.domain.region.entity.Region;
 import com.team7.agora.domain.report.entity.Report;
 import com.team7.agora.domain.user.entity.User;
-import com.team7.agora.global.config.QuerydslConfig;
+import com.team7.agora.test.support.RepositorySliceTest;
 import jakarta.persistence.EntityManager;
 import java.math.BigDecimal;
 import java.util.List;
 import org.hibernate.Hibernate;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
-import org.springframework.context.annotation.Import;
 
-@DataJpaTest(properties = "spring.sql.init.mode=never")
-@Import(QuerydslConfig.class)
+@RepositorySliceTest
 class ReportRepositoryTest {
 
     @Autowired
