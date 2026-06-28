@@ -298,6 +298,41 @@ p {
   color: var(--agora-brand-dark);
 }
 
+.auth-shell {
+  display: grid;
+  min-height: calc(100vh - 5rem);
+  place-items: center;
+}
+
+.auth-card {
+  width: min(100%, 430px);
+  border-color: var(--agora-border);
+  border-radius: 8px;
+}
+
+.auth-card h1 {
+  margin-bottom: 1.25rem;
+  font-size: 1.55rem;
+  font-weight: 800;
+}
+
+.auth-icon {
+  display: inline-grid;
+  width: 2.5rem;
+  height: 2.5rem;
+  margin-bottom: 1rem;
+  place-items: center;
+  border-radius: 8px;
+  background: #e8f4ef;
+  color: var(--agora-brand-dark);
+}
+
+.auth-footer {
+  margin: 1rem 0 0;
+  color: var(--agora-muted);
+  font-size: 0.95rem;
+}
+
 @media (max-width: 767.98px) {
   .page-header {
     align-items: stretch;

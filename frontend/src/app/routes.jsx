@@ -1,4 +1,8 @@
 import { createBrowserRouter } from 'react-router-dom';
+import { RequireAdminAuth, RequireUserAuth } from '../auth/RouteGuards.jsx';
+import AdminLoginPage from '../features/auth/AdminLoginPage.jsx';
+import UserLoginPage from '../features/auth/UserLoginPage.jsx';
+import UserSignupPage from '../features/auth/UserSignupPage.jsx';
 import UserLayout from '../layouts/UserLayout.jsx';
 import AdminLayout from '../layouts/AdminLayout.jsx';
 import {
@@ -6,7 +10,6 @@ import {
   ChatRoomPage,
   CouponsPage,
   HomePage,
-  LoginPage,
   MyCouponsPage,
   MyLikesPage,
   MyPage,
@@ -17,13 +20,11 @@ import {
   ProductDetailPage,
   ProductsPage,
   RegionSetupPage,
-  SellPage,
-  SignupPage
+  SellPage
 } from '../pages/UserPlaceholderPages.jsx';
 import {
   AdminCouponsPage,
   AdminDashboardPage,
-  AdminLoginPage,
   AdminNotFoundPage,
   AdminPaymentsPage,
   AdminProductsPage,
@@ -38,15 +39,20 @@ export const router = createBrowserRouter([
   },
   {
     path: '/admin',
-    element: <AdminLayout />,
+    element: <RequireAdminAuth />,
     children: [
-      { index: true, element: <AdminDashboardPage /> },
-      { path: 'products', element: <AdminProductsPage /> },
-      { path: 'users', element: <AdminUsersPage /> },
-      { path: 'reports', element: <AdminReportsPage /> },
-      { path: 'payments', element: <AdminPaymentsPage /> },
-      { path: 'coupons', element: <AdminCouponsPage /> },
-      { path: '*', element: <AdminNotFoundPage /> }
+      {
+        element: <AdminLayout />,
+        children: [
+          { index: true, element: <AdminDashboardPage /> },
+          { path: 'products', element: <AdminProductsPage /> },
+          { path: 'users', element: <AdminUsersPage /> },
+          { path: 'reports', element: <AdminReportsPage /> },
+          { path: 'payments', element: <AdminPaymentsPage /> },
+          { path: 'coupons', element: <AdminCouponsPage /> },
+          { path: '*', element: <AdminNotFoundPage /> }
+        ]
+      }
     ]
   },
   {
@@ -54,21 +60,26 @@ export const router = createBrowserRouter([
     element: <UserLayout />,
     children: [
       { index: true, element: <HomePage /> },
-      { path: 'login', element: <LoginPage /> },
-      { path: 'signup', element: <SignupPage /> },
-      { path: 'regions/setup', element: <RegionSetupPage /> },
+      { path: 'login', element: <UserLoginPage /> },
+      { path: 'signup', element: <UserSignupPage /> },
       { path: 'products', element: <ProductsPage /> },
       { path: 'products/:productId', element: <ProductDetailPage /> },
-      { path: 'sell', element: <SellPage /> },
       { path: 'events', element: <CouponsPage /> },
-      { path: 'chat', element: <ChatPage /> },
-      { path: 'chat/:chatRoomId', element: <ChatRoomPage /> },
-      { path: 'me', element: <MyPage /> },
-      { path: 'me/likes', element: <MyLikesPage /> },
-      { path: 'me/products', element: <MyProductsPage /> },
-      { path: 'me/trades', element: <MyTradesPage /> },
-      { path: 'me/reviews', element: <MyReviewsPage /> },
-      { path: 'me/coupons', element: <MyCouponsPage /> },
+      {
+        element: <RequireUserAuth />,
+        children: [
+          { path: 'regions/setup', element: <RegionSetupPage /> },
+          { path: 'sell', element: <SellPage /> },
+          { path: 'chat', element: <ChatPage /> },
+          { path: 'chat/:chatRoomId', element: <ChatRoomPage /> },
+          { path: 'me', element: <MyPage /> },
+          { path: 'me/likes', element: <MyLikesPage /> },
+          { path: 'me/products', element: <MyProductsPage /> },
+          { path: 'me/trades', element: <MyTradesPage /> },
+          { path: 'me/reviews', element: <MyReviewsPage /> },
+          { path: 'me/coupons', element: <MyCouponsPage /> }
+        ]
+      },
       { path: '*', element: <NotFoundPage /> }
     ]
   }
