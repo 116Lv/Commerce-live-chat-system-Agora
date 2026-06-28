@@ -8,6 +8,9 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.team7.agora.domain.review.dto.request.MyReviewType;
+import com.team7.agora.domain.review.dto.response.MyReviewResponse;
+import com.team7.agora.domain.review.service.ReviewService;
 import com.team7.agora.domain.trade.dto.request.MyTradeRole;
 import com.team7.agora.domain.trade.dto.response.MyTradeResponse;
 import com.team7.agora.domain.trade.service.TradeService;
@@ -37,11 +40,14 @@ class MyActivityControllerTest {
     @Mock
     private TradeService tradeService;
 
+    @Mock
+    private ReviewService reviewService;
+
     private MockMvc mockMvc;
 
     @BeforeEach
     void setUp() {
-        mockMvc = MockMvcBuilders.standaloneSetup(new MyActivityController(tradeService))
+        mockMvc = MockMvcBuilders.standaloneSetup(new MyActivityController(tradeService, reviewService))
             .setControllerAdvice(new GlobalExceptionHandler())
             .setCustomArgumentResolvers(new AuthenticationPrincipalArgumentResolver())
             .build();
@@ -117,6 +123,91 @@ class MyActivityControllerTest {
         authenticate();
 
         mockMvc.perform(get("/api/users/me/trades").param("page", "abc"))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.status").value("ERROR"));
+    }
+
+    @Test
+    void getMyReviews_wrapsPagedResponseAndParsesType() throws Exception {
+        authenticate();
+        when(reviewService.getMyReviews(eq(1L), eq(MyReviewType.RECEIVED), any()))
+            .thenReturn(new PageImpl<>(List.of(new MyReviewResponse(
+                100L,
+                10L,
+                20L,
+                "product",
+                "reviewer",
+                "target",
+                5,
+                "kind trade",
+                LocalDateTime.of(2026, 1, 1, 0, 0)
+            )), PageRequest.of(1, 5), 6));
+
+        mockMvc.perform(get("/api/users/me/reviews")
+                .param("type", "received")
+                .param("page", "1")
+                .param("size", "5"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.status").value("SUCCESS"))
+            .andExpect(jsonPath("$.data.content[0].reviewId").value(100L))
+            .andExpect(jsonPath("$.data.content[0].tradeId").value(10L))
+            .andExpect(jsonPath("$.data.content[0].productId").value(20L))
+            .andExpect(jsonPath("$.data.content[0].reviewerNickname").value("reviewer"))
+            .andExpect(jsonPath("$.data.content[0].targetNickname").value("target"))
+            .andExpect(jsonPath("$.data.page").value(1))
+            .andExpect(jsonPath("$.data.size").value(5))
+            .andExpect(jsonPath("$.data.totalElements").value(6));
+
+        verify(reviewService).getMyReviews(eq(1L), eq(MyReviewType.RECEIVED), any());
+    }
+
+    @Test
+    void getMyReviews_defaultsBlankTypeToWritten() throws Exception {
+        authenticate();
+        when(reviewService.getMyReviews(eq(1L), eq(MyReviewType.WRITTEN), any()))
+            .thenReturn(new PageImpl<>(List.of(), PageRequest.of(0, 20), 0));
+
+        mockMvc.perform(get("/api/users/me/reviews").param("type", " "))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.status").value("SUCCESS"))
+            .andExpect(jsonPath("$.data.page").value(0))
+            .andExpect(jsonPath("$.data.size").value(20));
+
+        verify(reviewService).getMyReviews(eq(1L), eq(MyReviewType.WRITTEN), any());
+    }
+
+    @Test
+    void getMyReviews_returns400ForInvalidType() throws Exception {
+        authenticate();
+
+        mockMvc.perform(get("/api/users/me/reviews").param("type", "all"))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.status").value("ERROR"));
+    }
+
+    @Test
+    void getMyReviews_returns400ForNegativePage() throws Exception {
+        authenticate();
+
+        mockMvc.perform(get("/api/users/me/reviews").param("page", "-1"))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.status").value("ERROR"));
+    }
+
+    @Test
+    void getMyReviews_returns400ForNonNumericPage() throws Exception {
+        authenticate();
+
+        mockMvc.perform(get("/api/users/me/reviews").param("page", "abc"))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.status").value("ERROR"));
+    }
+
+    @Test
+    void getMyReviews_returns400ForNonPositiveSize() throws Exception {
+        authenticate();
+
+        mockMvc.perform(get("/api/users/me/reviews").param("size", "0"))
             .andExpect(status().isBadRequest())
             .andExpect(jsonPath("$.status").value("ERROR"));
     }

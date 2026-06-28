@@ -8,18 +8,24 @@ import static org.mockito.Mockito.when;
 
 import com.team7.agora.domain.product.entity.Product;
 import com.team7.agora.domain.region.entity.Region;
+import com.team7.agora.domain.review.dto.request.MyReviewType;
+import com.team7.agora.domain.review.dto.response.MyReviewResponse;
 import com.team7.agora.domain.review.dto.response.ReviewResponse;
 import com.team7.agora.domain.review.entity.Review;
+import com.team7.agora.domain.review.repository.ReviewQueryRepository;
 import com.team7.agora.domain.review.repository.ReviewRepository;
 import com.team7.agora.domain.trade.entity.Trade;
 import com.team7.agora.domain.trade.repository.TradeRepository;
 import com.team7.agora.domain.user.entity.User;
 import com.team7.agora.global.exception.BusinessException;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -32,6 +38,9 @@ class ReviewServiceTest {
     @Mock
     private TradeRepository tradeRepository;
 
+    @Mock
+    private ReviewQueryRepository reviewQueryRepository;
+
     private ReviewService reviewService;
     private User seller;
     private User buyer;
@@ -40,7 +49,7 @@ class ReviewServiceTest {
 
     @BeforeEach
     void setUp() {
-        reviewService = new ReviewService(reviewRepository, tradeRepository);
+        reviewService = new ReviewService(reviewRepository, reviewQueryRepository, tradeRepository);
         seller = User.signup("seller@test.com", "password", "판매자", "01011112222");
         assignId(seller, 1L);
         buyer = User.signup("buyer@test.com", "password", "구매자", "01033334444");
@@ -109,5 +118,28 @@ class ReviewServiceTest {
 
         assertThatThrownBy(() -> reviewService.getTradeReviews(3L, 100L))
             .isInstanceOf(BusinessException.class);
+    }
+
+    @Test
+    void getMyReviewsDelegatesToQueryRepository() {
+        PageRequest pageable = PageRequest.of(0, 20);
+        MyReviewResponse expected = new MyReviewResponse(
+            1000L,
+            100L,
+            10L,
+            "bike",
+            "buyer",
+            "seller",
+            5,
+            "kind trade",
+            LocalDateTime.of(2026, 1, 1, 0, 0)
+        );
+        when(reviewQueryRepository.findMyReviews(2L, MyReviewType.WRITTEN, pageable))
+            .thenReturn(new PageImpl<>(java.util.List.of(expected), pageable, 1));
+
+        var responses = reviewService.getMyReviews(2L, MyReviewType.WRITTEN, pageable);
+
+        assertThat(responses.getTotalElements()).isEqualTo(1);
+        assertThat(responses.getContent()).containsExactly(expected);
     }
 }

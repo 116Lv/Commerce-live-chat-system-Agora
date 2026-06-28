@@ -1,5 +1,8 @@
 package com.team7.agora.domain.user.controller;
 
+import com.team7.agora.domain.review.dto.request.MyReviewType;
+import com.team7.agora.domain.review.dto.response.MyReviewResponse;
+import com.team7.agora.domain.review.service.ReviewService;
 import com.team7.agora.domain.trade.dto.request.MyTradeRole;
 import com.team7.agora.domain.trade.dto.response.MyTradeResponse;
 import com.team7.agora.domain.trade.service.TradeService;
@@ -21,9 +24,11 @@ import org.springframework.web.bind.annotation.RestController;
 public class MyActivityController {
 
     private final TradeService tradeService;
+    private final ReviewService reviewService;
 
-    public MyActivityController(TradeService tradeService) {
+    public MyActivityController(TradeService tradeService, ReviewService reviewService) {
         this.tradeService = tradeService;
+        this.reviewService = reviewService;
     }
 
     @GetMapping("/trades")
@@ -41,6 +46,23 @@ public class MyActivityController {
             PageRequest.of(pageNumber, pageSize)
         );
         return ApiResponse.success("거래 목록을 조회했습니다.", PageResponse.from(responses));
+    }
+
+    @GetMapping("/reviews")
+    public ApiResponse<PageResponse<MyReviewResponse>> getMyReviews(
+        @AuthenticationPrincipal CustomUserDetails userDetails,
+        @RequestParam(required = false) String type,
+        @RequestParam(defaultValue = "0") String page,
+        @RequestParam(defaultValue = "20") String size
+    ) {
+        int pageNumber = parsePage(page);
+        int pageSize = parseSize(size);
+        Page<MyReviewResponse> responses = reviewService.getMyReviews(
+            userDetails.getUserId(),
+            MyReviewType.from(type),
+            PageRequest.of(pageNumber, pageSize)
+        );
+        return ApiResponse.success("Review list retrieved.", PageResponse.from(responses));
     }
 
     private int parsePage(String value) {
