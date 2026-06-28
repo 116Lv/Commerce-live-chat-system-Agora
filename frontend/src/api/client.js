@@ -26,9 +26,23 @@ const isAdminUrl = (url = '') => {
 };
 
 export const selectAuthToken = (config = {}) => {
+  if (config.authType === 'none') {
+    return null;
+  }
+
   const authType = config.authType || (isAdminUrl(config.url) ? 'admin' : 'user');
 
   return authType === 'admin' ? getAdminToken() : getUserToken();
+};
+
+export const formatAuthorizationHeader = (token) => {
+  const value = typeof token === 'string' ? token.trim() : '';
+
+  if (!value) {
+    return null;
+  }
+
+  return value.toLowerCase().startsWith('bearer ') ? value : `Bearer ${value}`;
 };
 
 export const unwrapApiResponse = (response) => {
@@ -53,10 +67,12 @@ export const getApiErrorMessage = (error) => {
 
 apiClient.interceptors.request.use((config) => {
   const token = selectAuthToken(config);
+  config.headers = config.headers ?? {};
 
   if (token) {
-    config.headers = config.headers ?? {};
-    config.headers.Authorization = `Bearer ${token}`;
+    config.headers.Authorization = formatAuthorizationHeader(token);
+  } else if (config.authType === 'none') {
+    delete config.headers.Authorization;
   }
 
   delete config.authType;
