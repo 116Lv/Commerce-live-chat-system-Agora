@@ -101,3 +101,7 @@ export function AdminPaymentsPage() {
 export function AdminCouponsPage() {
   return <AdminPlaceholderPage title="Coupons" emptyTitle="No coupon events yet" />;
 }
+
+export function AdminNotFoundPage() {
+  return <AdminPlaceholderPage title="Page not found" emptyTitle="This admin page does not exist" />;
+}

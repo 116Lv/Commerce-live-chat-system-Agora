@@ -24,6 +24,7 @@ import {
   AdminCouponsPage,
   AdminDashboardPage,
   AdminLoginPage,
+  AdminNotFoundPage,
   AdminPaymentsPage,
   AdminProductsPage,
   AdminReportsPage,
@@ -44,7 +45,8 @@ export const router = createBrowserRouter([
       { path: 'users', element: <AdminUsersPage /> },
       { path: 'reports', element: <AdminReportsPage /> },
       { path: 'payments', element: <AdminPaymentsPage /> },
-      { path: 'coupons', element: <AdminCouponsPage /> }
+      { path: 'coupons', element: <AdminCouponsPage /> },
+      { path: '*', element: <AdminNotFoundPage /> }
     ]
   },
   {

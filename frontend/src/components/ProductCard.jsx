@@ -7,11 +7,12 @@ import StatusBadge from './StatusBadge.jsx';
 export default function ProductCard({ product }) {
   const item = product || {};
   const productId = item.productId ?? item.id ?? '#';
+  const imageAlt = item.title ? `${item.title} product image` : 'Product image';
 
   return (
     <Card className="product-card h-100">
       <div className="product-card-media">
-        {item.imageUrl ? <img src={item.imageUrl} alt="" /> : <span>No image</span>}
+        {item.imageUrl ? <img src={item.imageUrl} alt={imageAlt} /> : <span>No image</span>}
       </div>
       <Card.Body>
         <div className="d-flex justify-content-between gap-2 align-items-start mb-2">
