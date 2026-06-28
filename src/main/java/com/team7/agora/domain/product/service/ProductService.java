@@ -12,6 +12,7 @@ import com.team7.agora.domain.region.repository.RegionRepository;
 import com.team7.agora.domain.region.repository.UserRegionRepository;
 import com.team7.agora.domain.search.service.ProductSearchService;
 import com.team7.agora.domain.user.entity.User;
+import com.team7.agora.domain.user.enums.UserStatus;
 import com.team7.agora.domain.user.repository.UserRepository;
 import com.team7.agora.global.exception.BusinessException;
 import com.team7.agora.global.exception.ErrorCode;
@@ -64,7 +65,7 @@ public class ProductService {
      */
     @Transactional
     public ProductResponse create(Long sellerId, ProductCreateRequest request) {
-        User seller = getUser(sellerId);
+        User seller = getActiveUser(sellerId);
         Region region = getRegion(request.regionId());
 
         Product product = Product.create(
@@ -171,6 +172,11 @@ public class ProductService {
 
     private User getUser(Long userId) {
         return userRepository.findById(userId)
+            .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "회원을 찾을 수 없습니다."));
+    }
+
+    private User getActiveUser(Long userId) {
+        return userRepository.findByIdAndStatusAndDeletedAtIsNull(userId, UserStatus.ACTIVE)
             .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "회원을 찾을 수 없습니다."));
     }
 

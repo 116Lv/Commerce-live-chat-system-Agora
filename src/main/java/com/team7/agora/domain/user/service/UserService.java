@@ -3,6 +3,7 @@ package com.team7.agora.domain.user.service;
 import com.team7.agora.domain.user.dto.response.SmileScoreResponse;
 import com.team7.agora.domain.user.dto.response.UserMeResponse;
 import com.team7.agora.domain.user.entity.User;
+import com.team7.agora.domain.user.enums.UserStatus;
 import com.team7.agora.domain.user.repository.UserRepository;
 import com.team7.agora.global.exception.BusinessException;
 import com.team7.agora.global.exception.ErrorCode;
@@ -56,7 +57,7 @@ public class UserService {
      */
     @Transactional
     public UserMeResponse updateProfile(Long userId, String nickname) {
-        User user = getUser(userId);
+        User user = getActiveUser(userId);
         user.updateProfile(nickname);
         return UserMeResponse.from(user);
     }
@@ -69,7 +70,7 @@ public class UserService {
      */
     @Transactional
     public void changePassword(Long userId, String currentPassword, String newPassword) {
-        User user = getUser(userId);
+        User user = getActiveUser(userId);
         if (!passwordEncoder.matches(currentPassword, user.getPassword())) {
             throw new BusinessException(ErrorCode.INVALID_REQUEST, "현재 비밀번호가 일치하지 않습니다.");
         }
@@ -78,6 +79,11 @@ public class UserService {
 
     private User getUser(Long userId) {
         return userRepository.findByIdAndDeletedAtIsNull(userId)
+            .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "회원을 찾을 수 없습니다."));
+    }
+
+    private User getActiveUser(Long userId) {
+        return userRepository.findByIdAndStatusAndDeletedAtIsNull(userId, UserStatus.ACTIVE)
             .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "회원을 찾을 수 없습니다."));
     }
 }

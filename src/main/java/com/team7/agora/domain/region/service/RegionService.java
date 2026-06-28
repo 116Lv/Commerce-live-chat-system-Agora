@@ -8,6 +8,7 @@ import com.team7.agora.domain.region.entity.UserRegion;
 import com.team7.agora.domain.region.repository.RegionRepository;
 import com.team7.agora.domain.region.repository.UserRegionRepository;
 import com.team7.agora.domain.user.entity.User;
+import com.team7.agora.domain.user.enums.UserStatus;
 import com.team7.agora.domain.user.repository.UserRepository;
 import com.team7.agora.global.exception.BusinessException;
 import com.team7.agora.global.exception.ErrorCode;
@@ -58,7 +59,7 @@ public class RegionService {
 
         validateRegionSelection(regionIds, primaryRegionId);
 
-        User user = userRepository.findById(userId)
+        User user = userRepository.findByIdAndStatusAndDeletedAtIsNull(userId, UserStatus.ACTIVE)
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "회원을 찾을 수 없습니다."));
         List<Region> regions = regionRepository.findAllById(regionIds);
         if (regions.size() != regionIds.size()) {

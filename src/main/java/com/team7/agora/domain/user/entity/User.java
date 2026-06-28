@@ -113,6 +113,11 @@ public class User {
             throw new BusinessException(ErrorCode.CONFLICT, "이미 같은 회원 상태입니다.");
         }
         this.status = status;
+        if (status == UserStatus.DELETED) {
+            this.deletedAt = LocalDateTime.now();
+            return;
+        }
+        this.deletedAt = null;
     }
 
     /**

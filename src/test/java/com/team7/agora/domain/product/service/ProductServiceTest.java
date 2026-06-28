@@ -17,6 +17,7 @@ import com.team7.agora.domain.region.repository.RegionRepository;
 import com.team7.agora.domain.region.repository.UserRegionRepository;
 import com.team7.agora.domain.search.service.ProductSearchService;
 import com.team7.agora.domain.user.entity.User;
+import com.team7.agora.domain.user.enums.UserStatus;
 import com.team7.agora.domain.user.repository.UserRepository;
 import com.team7.agora.global.exception.BusinessException;
 import com.team7.agora.global.exception.ErrorCode;
@@ -58,7 +59,7 @@ class ProductServiceTest {
             "SPORTS",
             1L
         );
-        when(userRepository.findById(1L)).thenReturn(Optional.of(seller));
+        when(userRepository.findByIdAndStatusAndDeletedAtIsNull(1L, UserStatus.ACTIVE)).thenReturn(Optional.of(seller));
         when(regionRepository.findById(1L)).thenReturn(Optional.of(region));
         when(productRepository.save(any(Product.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
@@ -84,13 +85,31 @@ class ProductServiceTest {
             "SPORTS",
             1L
         );
-        when(userRepository.findById(1L)).thenReturn(Optional.of(seller));
+        when(userRepository.findByIdAndStatusAndDeletedAtIsNull(1L, UserStatus.ACTIVE)).thenReturn(Optional.of(seller));
         when(regionRepository.findById(1L)).thenReturn(Optional.of(region));
         when(productRepository.save(any(Product.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         productService.create(1L, request);
 
         verify(productSearchService).evictSearchCache();
+    }
+
+    @Test
+    void create_rejectsNonActiveSeller() {
+        ProductService productService = new ProductService(productRepository, userRepository, regionRepository, userRegionRepository, productSearchService);
+        ProductCreateRequest request = new ProductCreateRequest(
+            "자전거",
+            "상태 좋은 중고 자전거입니다.",
+            BigDecimal.valueOf(73000),
+            "SPORTS",
+            1L
+        );
+        when(userRepository.findByIdAndStatusAndDeletedAtIsNull(1L, UserStatus.ACTIVE)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> productService.create(1L, request))
+            .isInstanceOf(BusinessException.class)
+            .extracting("errorCode")
+            .isEqualTo(ErrorCode.NOT_FOUND);
     }
 
     @Test

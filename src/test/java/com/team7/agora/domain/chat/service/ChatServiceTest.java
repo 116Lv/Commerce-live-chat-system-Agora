@@ -19,8 +19,10 @@ import com.team7.agora.domain.product.entity.Product;
 import com.team7.agora.domain.product.repository.ProductRepository;
 import com.team7.agora.domain.region.entity.Region;
 import com.team7.agora.domain.user.entity.User;
+import com.team7.agora.domain.user.enums.UserStatus;
 import com.team7.agora.domain.user.repository.UserRepository;
 import com.team7.agora.global.exception.BusinessException;
+import com.team7.agora.global.exception.ErrorCode;
 import com.team7.agora.global.storage.ImageStorageClient;
 import java.math.BigDecimal;
 import java.util.List;
@@ -83,7 +85,7 @@ class ChatServiceTest {
     @Test
     void openRoomCreatesRoomForBuyerAndSeller() {
         when(productRepository.findByIdAndDeletedAtIsNull(10L)).thenReturn(Optional.of(product));
-        when(userRepository.findById(2L)).thenReturn(Optional.of(buyer));
+        when(userRepository.findByIdAndStatusAndDeletedAtIsNull(2L, UserStatus.ACTIVE)).thenReturn(Optional.of(buyer));
         when(chatRoomRepository.findByProductAndSellerAndBuyer(product, seller, buyer)).thenReturn(Optional.empty());
         when(chatRoomRepository.save(any(ChatRoom.class))).thenAnswer(invocation -> {
             ChatRoom chatRoom = invocation.getArgument(0);
@@ -104,7 +106,7 @@ class ChatServiceTest {
         assignId(existingRoom, 100L);
 
         when(productRepository.findByIdAndDeletedAtIsNull(10L)).thenReturn(Optional.of(product));
-        when(userRepository.findById(2L)).thenReturn(Optional.of(buyer));
+        when(userRepository.findByIdAndStatusAndDeletedAtIsNull(2L, UserStatus.ACTIVE)).thenReturn(Optional.of(buyer));
         when(chatRoomRepository.findByProductAndSellerAndBuyer(product, seller, buyer))
             .thenReturn(Optional.empty(), Optional.of(existingRoom));
         when(chatRoomRepository.save(any(ChatRoom.class)))
@@ -126,6 +128,17 @@ class ChatServiceTest {
     }
 
     @Test
+    void openRoomRejectsNonActiveBuyer() {
+        when(productRepository.findByIdAndDeletedAtIsNull(10L)).thenReturn(Optional.of(product));
+        when(userRepository.findByIdAndStatusAndDeletedAtIsNull(2L, UserStatus.ACTIVE)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> chatService.openRoom(2L, 10L))
+            .isInstanceOf(BusinessException.class)
+            .extracting("errorCode")
+            .isEqualTo(ErrorCode.NOT_FOUND);
+    }
+
+    @Test
     void sendMessageRejectsNonParticipant() {
         ChatRoom chatRoom = ChatRoom.open(product, buyer);
         assignId(chatRoom, 100L);
@@ -142,7 +155,7 @@ class ChatServiceTest {
         assignId(chatRoom, 100L);
         when(chatRoomRepository.findByIdAndStatus(100L, ChatRoomStatus.ACTIVE))
             .thenReturn(Optional.of(chatRoom));
-        when(userRepository.findById(2L)).thenReturn(Optional.of(buyer));
+        when(userRepository.findByIdAndStatusAndDeletedAtIsNull(2L, UserStatus.ACTIVE)).thenReturn(Optional.of(buyer));
         when(chatMessageRepository.save(any(ChatMessage.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         ChatMessageResponse response = chatService.sendMessage(2L, 100L, "거래 가능할까요?");
@@ -163,7 +176,7 @@ class ChatServiceTest {
         MultipartFile image = new MockMultipartFile("image", "photo.jpg", "image/jpeg", "data".getBytes());
         when(chatRoomRepository.findByIdAndStatus(100L, ChatRoomStatus.ACTIVE))
             .thenReturn(Optional.of(chatRoom));
-        when(userRepository.findById(2L)).thenReturn(Optional.of(buyer));
+        when(userRepository.findByIdAndStatusAndDeletedAtIsNull(2L, UserStatus.ACTIVE)).thenReturn(Optional.of(buyer));
         when(imageStorageClient.store("chat", image)).thenReturn("/uploads/chat/abc.jpg");
         when(chatMessageRepository.save(any(ChatMessage.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
@@ -232,7 +245,7 @@ class ChatServiceTest {
     void getMyRoomsReturnsRoomsForParticipant() {
         ChatRoom chatRoom = ChatRoom.open(product, buyer);
         assignId(chatRoom, 100L);
-        when(userRepository.findById(2L)).thenReturn(Optional.of(buyer));
+        when(userRepository.findByIdAndStatusAndDeletedAtIsNull(2L, UserStatus.ACTIVE)).thenReturn(Optional.of(buyer));
         when(chatRoomRepository.findAllBySellerOrBuyer(buyer, buyer)).thenReturn(List.of(chatRoom));
 
         var responses = chatService.getMyRooms(2L);

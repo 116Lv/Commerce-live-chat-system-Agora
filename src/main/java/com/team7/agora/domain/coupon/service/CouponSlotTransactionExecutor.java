@@ -7,6 +7,7 @@ import com.team7.agora.domain.coupon.enums.CouponEventType;
 import com.team7.agora.domain.coupon.repository.CouponEventRepository;
 import com.team7.agora.domain.coupon.repository.CouponRepository;
 import com.team7.agora.domain.user.entity.User;
+import com.team7.agora.domain.user.enums.UserStatus;
 import com.team7.agora.domain.user.repository.UserRepository;
 import com.team7.agora.global.exception.BusinessException;
 import com.team7.agora.global.exception.ErrorCode;
@@ -94,7 +95,7 @@ public class CouponSlotTransactionExecutor {
     }
 
     private User findUser(Long userId) {
-        return userRepository.findById(userId)
+        return userRepository.findByIdAndStatusAndDeletedAtIsNull(userId, UserStatus.ACTIVE)
             .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "회원을 찾을 수 없습니다."));
     }
 }
