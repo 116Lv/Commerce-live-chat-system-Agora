@@ -1,5 +1,6 @@
 package com.team7.agora.domain.trade.entity;
 
+import com.team7.agora.domain.common.entity.BaseTimeEntity;
 import com.team7.agora.domain.product.entity.Product;
 import com.team7.agora.domain.trade.enums.TradeStatus;
 import com.team7.agora.domain.user.entity.User;
@@ -38,7 +39,7 @@ import lombok.NoArgsConstructor;
  * 거래 도메인 정보를 영속화하는 JPA 엔티티이다.
  */
 )
-public class Trade {
+public class Trade extends BaseTimeEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -75,6 +76,7 @@ public class Trade {
         this.buyer = buyer;
         this.price = price;
         this.status = TradeStatus.PAYMENT_PENDING;
+        markCreatedNow();
         this.paymentDueAt = AgoraClock.now().plusHours(24);
     }
 

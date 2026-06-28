@@ -26,6 +26,7 @@ import com.team7.agora.domain.settlement.repository.SettlementRepository;
 import com.team7.agora.domain.trade.dto.response.TradeResponse;
 import com.team7.agora.domain.trade.entity.Trade;
 import com.team7.agora.domain.trade.enums.TradeStatus;
+import com.team7.agora.domain.trade.repository.TradeQueryRepository;
 import com.team7.agora.domain.trade.repository.TradeRepository;
 import com.team7.agora.domain.user.entity.User;
 import com.team7.agora.domain.user.enums.UserStatus;
@@ -47,6 +48,9 @@ class TradeServiceTest {
 
     @Mock
     private TradeRepository tradeRepository;
+
+    @Mock
+    private TradeQueryRepository tradeQueryRepository;
 
     @Mock
     private ProductRepository productRepository;
@@ -81,6 +85,7 @@ class TradeServiceTest {
     void setUp() {
         tradeService = new TradeService(
             tradeRepository,
+            tradeQueryRepository,
             productRepository,
             userRepository,
             chatRoomRepository,
