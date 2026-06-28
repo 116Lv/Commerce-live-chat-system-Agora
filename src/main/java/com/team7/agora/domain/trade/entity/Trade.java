@@ -1,6 +1,7 @@
 package com.team7.agora.domain.trade.entity;
 
 import com.team7.agora.domain.product.entity.Product;
+import com.team7.agora.domain.product.enums.ProductStatus;
 import com.team7.agora.domain.trade.enums.TradeStatus;
 import com.team7.agora.domain.user.entity.User;
 import com.team7.agora.global.exception.BusinessException;
@@ -117,9 +118,10 @@ public class Trade {
      * 도메인 객체를 취소 상태로 변경한다.
      */
     public void cancel() {
-        if (this.status != TradeStatus.PAYMENT_PENDING && this.status != TradeStatus.PAID) {
+        if (this.status != TradeStatus.PAYMENT_PENDING) {
             throw new BusinessException(ErrorCode.CONFLICT, "취소 가능한 상태의 거래가 아닙니다.");
         }
+        validateProductCanReturnToSelling();
         this.status = TradeStatus.CANCELLED;
         this.product.restoreSelling();
         this.paymentDueAt = null;
@@ -132,9 +134,16 @@ public class Trade {
         if (this.status != TradeStatus.PAYMENT_PENDING) {
             throw new BusinessException(ErrorCode.CONFLICT, "결제 대기 상태인 거래만 만료할 수 있습니다.");
         }
+        validateProductCanReturnToSelling();
         this.status = TradeStatus.EXPIRED;
         this.product.restoreSelling();
         this.paymentDueAt = null;
+    }
+
+    private void validateProductCanReturnToSelling() {
+        if (this.product.getStatus() == ProductStatus.SOLD) {
+            throw new BusinessException(ErrorCode.CONFLICT, "판매 완료 상품은 판매 중 상태로 되돌릴 수 없습니다.");
+        }
     }
 
     /**
