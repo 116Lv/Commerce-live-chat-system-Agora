@@ -8,8 +8,8 @@ import com.team7.agora.domain.coupon.entity.CouponEvent;
 import com.team7.agora.domain.coupon.enums.CouponEventType;
 import com.team7.agora.domain.coupon.repository.CouponEventRepository;
 import com.team7.agora.domain.coupon.repository.CouponRepository;
-import com.team7.agora.domain.user.enums.UserRole;
-import com.team7.agora.global.auth.CustomUserDetails;
+import com.team7.agora.domain.admin.service.AdminRoleSupport;
+import com.team7.agora.global.auth.AdminPrincipal;
 import com.team7.agora.global.exception.BusinessException;
 import com.team7.agora.global.exception.ErrorCode;
 import java.time.LocalDateTime;
@@ -40,7 +40,7 @@ public class AdminCouponEventService {
 
     @Transactional
     public AdminCouponEventResponse createEvent(
-        CustomUserDetails admin,
+        AdminPrincipal admin,
         CouponEventType type,
         String name,
         LocalDateTime startAt,
@@ -64,19 +64,19 @@ public class AdminCouponEventService {
         return AdminCouponEventResponse.from(event);
     }
 
-    public List<AdminCouponEventResponse> getList(CustomUserDetails admin) {
+    public List<AdminCouponEventResponse> getList(AdminPrincipal admin) {
         validateAdminAuthority(admin);
         return couponEventRepository.findAll().stream()
             .map(AdminCouponEventResponse::from)
             .toList();
     }
 
-    public AdminCouponEventResponse getDetail(CustomUserDetails admin, Long eventId) {
+    public AdminCouponEventResponse getDetail(AdminPrincipal admin, Long eventId) {
         validateAdminAuthority(admin);
         return AdminCouponEventResponse.from(findEvent(eventId));
     }
 
-    public CouponEventIssueResponse issueToUsers(CustomUserDetails admin, Long eventId, List<Long> userIds) {
+    public CouponEventIssueResponse issueToUsers(AdminPrincipal admin, Long eventId, List<Long> userIds) {
         validateAdminAuthority(admin);
         validateIssueTargetCount(userIds);
         CouponEvent event = findEvent(eventId);
@@ -86,7 +86,7 @@ public class AdminCouponEventService {
         return couponSlotService.assignSlots(eventId, userIds);
     }
 
-    public List<CouponEventCouponResponse> getCoupons(CustomUserDetails admin, Long eventId) {
+    public List<CouponEventCouponResponse> getCoupons(AdminPrincipal admin, Long eventId) {
         validateAdminAuthority(admin);
         findEvent(eventId);
         return couponRepository.findAllByCouponEventIdAndUserIsNotNull(eventId).stream()
@@ -111,9 +111,9 @@ public class AdminCouponEventService {
         }
     }
 
-    private void validateAdminAuthority(CustomUserDetails admin) {
+    private void validateAdminAuthority(AdminPrincipal admin) {
         // Controller 권한 검증을 우회한 내부 호출에서도 관리자 정책을 지키기 위한 방어 코드다.
-        if (admin == null || !(admin.getRole() == UserRole.ROOT_ADMIN || admin.getRole() == UserRole.USER_ADMIN)) {
+        if (admin == null || !AdminRoleSupport.isUserAdminRole(admin.getRole())) {
             throw new BusinessException(ErrorCode.FORBIDDEN, "쿠폰 이벤트 관리는 관리자만 수행할 수 있습니다.");
         }
     }

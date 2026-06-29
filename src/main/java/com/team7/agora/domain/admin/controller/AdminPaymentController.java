@@ -3,7 +3,7 @@ package com.team7.agora.domain.admin.controller;
 import com.team7.agora.domain.admin.dto.response.AdminPaymentResponse;
 import com.team7.agora.domain.admin.service.AdminPaymentService;
 import com.team7.agora.domain.payment.enums.PaymentStatus;
-import com.team7.agora.global.auth.CustomUserDetails;
+import com.team7.agora.global.auth.AdminPrincipal;
 import com.team7.agora.global.response.ApiResponse;
 import java.util.List;
 import org.springframework.data.domain.PageRequest;
@@ -40,7 +40,7 @@ public class AdminPaymentController {
      */
     @GetMapping("/api/admin/payments")
     public ApiResponse<List<AdminPaymentResponse>> getPayments(
-        @AuthenticationPrincipal CustomUserDetails userDetails,
+        @AuthenticationPrincipal AdminPrincipal userDetails,
         @RequestParam(required = false) PaymentStatus status,
         @RequestParam(defaultValue = "0") int page,
         @RequestParam(defaultValue = "20") int size
@@ -61,7 +61,7 @@ public class AdminPaymentController {
      */
     @PostMapping("/api/admin/payments/{paymentId}/verify")
     public ApiResponse<AdminPaymentResponse> verifyPayment(
-        @AuthenticationPrincipal CustomUserDetails userDetails,
+        @AuthenticationPrincipal AdminPrincipal userDetails,
         @PathVariable Long paymentId
     ) {
         AdminPaymentResponse response = adminPaymentService.verifyPayment(userDetails, paymentId);
@@ -75,7 +75,7 @@ public class AdminPaymentController {
      */
     @GetMapping("/api/admin/refunds")
     public ApiResponse<List<AdminPaymentResponse>> getRefunds(
-        @AuthenticationPrincipal CustomUserDetails userDetails
+        @AuthenticationPrincipal AdminPrincipal userDetails
     ) {
         return ApiResponse.success("환불 목록을 조회했습니다.", adminPaymentService.getRefunds(userDetails));
     }

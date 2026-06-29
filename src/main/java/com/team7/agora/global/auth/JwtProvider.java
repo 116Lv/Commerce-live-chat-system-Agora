@@ -48,6 +48,10 @@ public class JwtProvider {
      * @return 클라이언트에 반환할 API 응답
      */
     public String createToken(Long userId, String email, String role, String nickname) {
+        return createToken(userId, email, role, nickname, AccountType.USER);
+    }
+
+    public String createToken(Long subjectId, String email, String role, String nickname, AccountType accountType) {
         long now = Instant.now().toEpochMilli();
         long expiresAt = now + accessTokenValidTime;
 
@@ -56,10 +60,11 @@ public class JwtProvider {
             "typ", "JWT"
         ));
         String payload = encodeJson(new LinkedHashMap<>() {{
-            put("sub", String.valueOf(userId));
+            put("sub", String.valueOf(subjectId));
             put("email", email);
             put("role", role);
             put("nickname", nickname);
+            put("accountType", accountType.name());
             put("iat", now);
             put("exp", expiresAt);
         }});
@@ -106,8 +111,20 @@ public class JwtProvider {
             Long.parseLong(claims.get("sub")),
             claims.get("email"),
             claims.get("role"),
-            claims.get("nickname")
+            claims.get("nickname"),
+            parseAccountType(claims.get("accountType"))
         );
+    }
+
+    private AccountType parseAccountType(String value) {
+        if (value == null || value.isBlank()) {
+            return AccountType.USER;
+        }
+        try {
+            return AccountType.valueOf(value);
+        } catch (IllegalArgumentException e) {
+            throw new BusinessException(ErrorCode.INVALID_TOKEN, "Invalid account type.");
+        }
     }
 
     private String encodeJson(Map<String, ?> values) {

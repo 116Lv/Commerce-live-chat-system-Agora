@@ -10,9 +10,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.team7.agora.domain.admin.dto.response.AdminProductResponse;
 import com.team7.agora.domain.admin.service.AdminProductService;
-import com.team7.agora.domain.user.enums.UserRole;
-import com.team7.agora.domain.user.enums.UserStatus;
-import com.team7.agora.global.auth.CustomUserDetails;
+import com.team7.agora.domain.admin.enums.AdminRole;
+import com.team7.agora.domain.admin.enums.AdminStatus;
+import com.team7.agora.global.auth.AdminPrincipal;
 import java.math.BigDecimal;
 import java.util.List;
 import org.junit.jupiter.api.AfterEach;
@@ -51,8 +51,8 @@ class AdminProductControllerTest {
 
     @Test
     void getProducts_usesAuthenticatedAdminAndReturnsProducts() throws Exception {
-        authenticate(UserRole.PRODUCT_ADMIN);
-        when(adminProductService.getProducts(any(CustomUserDetails.class), eq(true), any()))
+        authenticate(AdminRole.PRODUCT_ADMIN);
+        when(adminProductService.getProducts(any(AdminPrincipal.class), eq(true), any()))
                 .thenReturn(new PageImpl<>(
                         List.of(new AdminProductResponse(1L, "중고 자전거", BigDecimal.valueOf(100000), 10L, "SELLING")),
                         PageRequest.of(0, 20),
@@ -75,8 +75,8 @@ class AdminProductControllerTest {
 
     @Test
     void hideProduct_usesAuthenticatedAdminAndReturnsHiddenProduct() throws Exception {
-        authenticate(UserRole.PRODUCT_ADMIN);
-        when(adminProductService.hideProduct(any(CustomUserDetails.class), eq(1L)))
+        authenticate(AdminRole.PRODUCT_ADMIN);
+        when(adminProductService.hideProduct(any(AdminPrincipal.class), eq(1L)))
                 .thenReturn(new AdminProductResponse(1L, "중고 자전거", BigDecimal.valueOf(100000), 10L, "HIDDEN"));
 
         mockMvc.perform(patch("/api/admin/products/{productId}/hide", 1L))
@@ -86,13 +86,13 @@ class AdminProductControllerTest {
                 .andExpect(jsonPath("$.data.status").value("HIDDEN"));
     }
 
-    private void authenticate(UserRole role) {
-        CustomUserDetails principal = new CustomUserDetails(
+    private void authenticate(AdminRole role) {
+        AdminPrincipal principal = new AdminPrincipal(
                 99L,
                 "admin@test.com",
                 "encoded",
                 role,
-                UserStatus.ACTIVE,
+                AdminStatus.ACTIVE,
                 "관리자"
         );
         SecurityContextHolder.getContext().setAuthentication(

@@ -1,6 +1,7 @@
 package com.team7.agora.global.websocket;
 
 import com.team7.agora.domain.chat.controller.StompPrincipal;
+import com.team7.agora.global.auth.AccountType;
 import com.team7.agora.global.auth.AuthUser;
 import com.team7.agora.global.auth.JwtClaims;
 import com.team7.agora.global.auth.JwtProvider;
@@ -45,6 +46,9 @@ public class StompAuthInterceptor implements ChannelInterceptor {
 
         String authorization = accessor.getFirstNativeHeader(AUTHORIZATION_HEADER);
         JwtClaims claims = jwtProvider.parse(jwtProvider.substringBearer(authorization));
+        if (claims.accountType() != AccountType.USER) {
+            return null;
+        }
         AuthUser authUser = new AuthUser(
             claims.userId(),
             claims.email(),

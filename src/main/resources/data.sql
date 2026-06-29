@@ -1,13 +1,16 @@
 INSERT INTO users (id, email, password, nickname, phone, smile_score, role, status, deleted_at)
 VALUES
-    (1, 'seller@test.com', '$2a$10$5XA3pQtBuOJfBIqcOZzcSeKMTBHqQpqFswCqh/fqLyxd5o7vmkY02', '판매자동네', '010-1111-1111', 82, 'ROLE_USER', 'ACTIVE', NULL),
-    (2, 'buyer@test.com', '$2a$10$5XA3pQtBuOJfBIqcOZzcSeKMTBHqQpqFswCqh/fqLyxd5o7vmkY02', '구매자동네', '010-2222-2222', 75, 'ROLE_USER', 'ACTIVE', NULL),
-    (3, 'user2@test.com', '$2a$10$5XA3pQtBuOJfBIqcOZzcSeKMTBHqQpqFswCqh/fqLyxd5o7vmkY02', '이웃사용자', '010-3333-3333', 91, 'ROLE_USER', 'ACTIVE', NULL),
-    (4, 'admin@test.com', '$2a$10$5XA3pQtBuOJfBIqcOZzcSeKMTBHqQpqFswCqh/fqLyxd5o7vmkY02', '최고관리자', '010-4444-4444', 60, 'ROOT_ADMIN', 'ACTIVE', NULL),
-    (5, 'blocked@test.com', '$2a$10$5XA3pQtBuOJfBIqcOZzcSeKMTBHqQpqFswCqh/fqLyxd5o7vmkY02', '차단회원', '010-5555-5555', 20, 'ROLE_USER', 'BLOCKED', NULL),
-    (6, 'useradmin@test.com', '$2a$10$5XA3pQtBuOJfBIqcOZzcSeKMTBHqQpqFswCqh/fqLyxd5o7vmkY02', '회원관리자', '010-6666-6666', 60, 'USER_ADMIN', 'ACTIVE', NULL),
-    (7, 'productadmin@test.com', '$2a$10$5XA3pQtBuOJfBIqcOZzcSeKMTBHqQpqFswCqh/fqLyxd5o7vmkY02', '상품관리자', '010-7777-7777', 60, 'PRODUCT_ADMIN', 'ACTIVE', NULL),
-    (8, 'settlementadmin@test.com', '$2a$10$5XA3pQtBuOJfBIqcOZzcSeKMTBHqQpqFswCqh/fqLyxd5o7vmkY02', '정산관리자', '010-8888-8888', 60, 'SETTLEMENT_ADMIN', 'ACTIVE', NULL);
+    (1, 'seller@test.com', '$2a$10$5XA3pQtBuOJfBIqcOZzcSeKMTBHqQpqFswCqh/fqLyxd5o7vmkY02', 'seller', '010-1111-1111', 82, 'ROLE_USER', 'ACTIVE', NULL),
+    (2, 'buyer@test.com', '$2a$10$5XA3pQtBuOJfBIqcOZzcSeKMTBHqQpqFswCqh/fqLyxd5o7vmkY02', 'buyer', '010-2222-2222', 75, 'ROLE_USER', 'ACTIVE', NULL),
+    (3, 'user2@test.com', '$2a$10$5XA3pQtBuOJfBIqcOZzcSeKMTBHqQpqFswCqh/fqLyxd5o7vmkY02', 'neighbor', '010-3333-3333', 91, 'ROLE_USER', 'ACTIVE', NULL),
+    (5, 'blocked@test.com', '$2a$10$5XA3pQtBuOJfBIqcOZzcSeKMTBHqQpqFswCqh/fqLyxd5o7vmkY02', 'blocked', '010-5555-5555', 20, 'ROLE_USER', 'BLOCKED', NULL);
+
+INSERT INTO admins (id, email, password, nickname, role, status)
+VALUES
+    (1, 'admin@test.com', '$2a$10$5XA3pQtBuOJfBIqcOZzcSeKMTBHqQpqFswCqh/fqLyxd5o7vmkY02', 'root-admin', 'ROOT_ADMIN', 'ACTIVE'),
+    (2, 'useradmin@test.com', '$2a$10$5XA3pQtBuOJfBIqcOZzcSeKMTBHqQpqFswCqh/fqLyxd5o7vmkY02', 'user-admin', 'USER_ADMIN', 'ACTIVE'),
+    (3, 'productadmin@test.com', '$2a$10$5XA3pQtBuOJfBIqcOZzcSeKMTBHqQpqFswCqh/fqLyxd5o7vmkY02', 'product-admin', 'PRODUCT_ADMIN', 'ACTIVE'),
+    (4, 'settlementadmin@test.com', '$2a$10$5XA3pQtBuOJfBIqcOZzcSeKMTBHqQpqFswCqh/fqLyxd5o7vmkY02', 'settlement-admin', 'SETTLEMENT_ADMIN', 'ACTIVE');
 
 INSERT INTO regions (id, name, code, sido, sigungu, eupmyeondong)
 VALUES

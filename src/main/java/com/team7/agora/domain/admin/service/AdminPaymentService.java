@@ -8,7 +8,7 @@ import com.team7.agora.domain.payment.repository.PaymentRepository;
 import com.team7.agora.domain.payment.service.PaymentService;
 import com.team7.agora.domain.settlement.entity.Settlement;
 import com.team7.agora.domain.settlement.repository.SettlementRepository;
-import com.team7.agora.global.auth.CustomUserDetails;
+import com.team7.agora.global.auth.AdminPrincipal;
 import com.team7.agora.global.exception.BusinessException;
 import com.team7.agora.global.exception.ErrorCode;
 import java.util.List;
@@ -53,7 +53,7 @@ public class AdminPaymentService {
      * @return 클라이언트에 반환할 API 응답
      */
     public List<AdminPaymentResponse> getPayments(
-        CustomUserDetails admin,
+        AdminPrincipal admin,
         PaymentStatus status,
         Pageable pageable
     ) {
@@ -73,7 +73,7 @@ public class AdminPaymentService {
      * @param admin 인증된 관리자 정보
      * @return 클라이언트에 반환할 API 응답
      */
-    public List<AdminPaymentResponse> getRefunds(CustomUserDetails admin) {
+    public List<AdminPaymentResponse> getRefunds(AdminPrincipal admin) {
         validateSettlementAdmin(admin);
         return paymentRepository.findAllByStatus(PaymentStatus.REFUNDED).stream()
             .map(this::toResponse)
@@ -87,7 +87,7 @@ public class AdminPaymentService {
      * @return 클라이언트에 반환할 API 응답
      */
     @Transactional
-    public AdminPaymentResponse verifyPayment(CustomUserDetails admin, Long paymentId) {
+    public AdminPaymentResponse verifyPayment(AdminPrincipal admin, Long paymentId) {
         validateSettlementAdmin(admin);
         Payment payment = paymentRepository.findById(paymentId)
             .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "결제를 찾을 수 없습니다."));
@@ -106,7 +106,7 @@ public class AdminPaymentService {
             .orElseGet(() -> AdminPaymentResponse.from(payment));
     }
 
-    private void validateSettlementAdmin(CustomUserDetails admin) {
+    private void validateSettlementAdmin(AdminPrincipal admin) {
         if (admin == null || !AdminRoleSupport.isSettlementAdminRole(admin.getRole())) {
             throw new BusinessException(ErrorCode.FORBIDDEN, "결제 관리는 정산 관리자만 수행할 수 있습니다.");
         }

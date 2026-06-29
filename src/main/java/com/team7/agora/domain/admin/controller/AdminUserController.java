@@ -3,7 +3,7 @@ package com.team7.agora.domain.admin.controller;
 import com.team7.agora.domain.admin.dto.request.AdminUserStatusUpdateRequest;
 import com.team7.agora.domain.admin.dto.response.AdminUserResponse;
 import com.team7.agora.domain.admin.service.AdminUserService;
-import com.team7.agora.global.auth.CustomUserDetails;
+import com.team7.agora.global.auth.AdminPrincipal;
 import com.team7.agora.global.response.ApiResponse;
 import com.team7.agora.global.response.PageResponse;
 import jakarta.validation.Valid;
@@ -46,7 +46,7 @@ public class AdminUserController {
      */
     @GetMapping
     public ApiResponse<PageResponse<AdminUserResponse>> getUsers(
-            @AuthenticationPrincipal CustomUserDetails admin,
+            @AuthenticationPrincipal AdminPrincipal admin,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size
     ) {
@@ -63,7 +63,7 @@ public class AdminUserController {
      */
     @PatchMapping("/{userId}/status")
     public ApiResponse<AdminUserResponse> changeStatus(
-            @AuthenticationPrincipal CustomUserDetails admin,
+            @AuthenticationPrincipal AdminPrincipal admin,
             @PathVariable Long userId,
             @Valid @RequestBody AdminUserStatusUpdateRequest request
     ) {

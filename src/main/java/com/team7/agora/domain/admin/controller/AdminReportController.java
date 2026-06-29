@@ -4,7 +4,7 @@ import com.team7.agora.domain.admin.dto.request.AdminReportResolveRequest;
 import com.team7.agora.domain.admin.dto.response.AdminReportListResponse;
 import com.team7.agora.domain.admin.dto.response.AdminReportResponse;
 import com.team7.agora.domain.admin.service.AdminReportService;
-import com.team7.agora.global.auth.CustomUserDetails;
+import com.team7.agora.global.auth.AdminPrincipal;
 import com.team7.agora.global.response.ApiResponse;
 import jakarta.validation.Valid;
 import java.util.List;
@@ -42,7 +42,7 @@ public class AdminReportController {
     @GetMapping("/users")
     @PreAuthorize("hasAnyAuthority('ROOT_ADMIN', 'USER_ADMIN')")
     public ApiResponse<List<AdminReportListResponse>> getUserReports(
-        @AuthenticationPrincipal CustomUserDetails admin
+        @AuthenticationPrincipal AdminPrincipal admin
     ) {
         return ApiResponse.success("유저 신고 내역을 조회했습니다.", adminReportService.getUserReports(admin));
     }
@@ -57,7 +57,7 @@ public class AdminReportController {
     @PostMapping("/users/{reportId}/resolve")
     @PreAuthorize("hasAnyAuthority('ROOT_ADMIN', 'USER_ADMIN')")
     public ApiResponse<AdminReportResponse> resolveUserReport(
-        @AuthenticationPrincipal CustomUserDetails admin,
+        @AuthenticationPrincipal AdminPrincipal admin,
         @PathVariable Long reportId,
         @Valid @RequestBody AdminReportResolveRequest request
     ) {
@@ -73,7 +73,7 @@ public class AdminReportController {
     @GetMapping("/products")
     @PreAuthorize("hasAnyAuthority('ROOT_ADMIN', 'PRODUCT_ADMIN')")
     public ApiResponse<List<AdminReportListResponse>> getProductReports(
-        @AuthenticationPrincipal CustomUserDetails admin
+        @AuthenticationPrincipal AdminPrincipal admin
     ) {
         return ApiResponse.success("상품 신고 내역을 조회했습니다.", adminReportService.getProductReports(admin));
     }
@@ -88,7 +88,7 @@ public class AdminReportController {
     @PostMapping("/products/{reportId}/resolve")
     @PreAuthorize("hasAnyAuthority('ROOT_ADMIN', 'PRODUCT_ADMIN')")
     public ApiResponse<AdminReportResponse> resolveProductReport(
-        @AuthenticationPrincipal CustomUserDetails admin,
+        @AuthenticationPrincipal AdminPrincipal admin,
         @PathVariable Long reportId,
         @Valid @RequestBody AdminReportResolveRequest request
     ) {

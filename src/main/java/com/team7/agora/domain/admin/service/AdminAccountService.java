@@ -1,62 +1,40 @@
-// ROOT_ADMIN의 관리자 권한 변경을 처리하는 서비스
 package com.team7.agora.domain.admin.service;
 
 import com.team7.agora.domain.admin.dto.response.AdminUserResponse;
-import com.team7.agora.domain.user.entity.User;
-import com.team7.agora.domain.user.enums.UserRole;
-import com.team7.agora.domain.user.repository.UserRepository;
-import com.team7.agora.global.auth.CustomUserDetails;
+import com.team7.agora.domain.admin.entity.Admin;
+import com.team7.agora.domain.admin.enums.AdminRole;
+import com.team7.agora.domain.admin.repository.AdminRepository;
+import com.team7.agora.global.auth.AdminPrincipal;
 import com.team7.agora.global.exception.BusinessException;
 import com.team7.agora.global.exception.ErrorCode;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-/**
- * 관리자 계정 관련 비즈니스 유스케이스를 처리하는 서비스이다.
- */
 @Service
 @Transactional(readOnly = true)
 public class AdminAccountService {
 
-    private final UserRepository userRepository;
+    private final AdminRepository adminRepository;
 
-    /**
-     * 필요한 의존성을 주입받아 컴포넌트를 생성한다.
-     * @param userRepository 데이터를 조회하고 저장하는 리포지토리
-     */
-    public AdminAccountService(UserRepository userRepository) {
-        this.userRepository = userRepository;
+    public AdminAccountService(AdminRepository adminRepository) {
+        this.adminRepository = adminRepository;
     }
 
-    /**
-     * 관리자가 회원 계정의 권한을 변경한다.
-     * @param admin 인증된 관리자 정보
-     * @param userId 회원 ID
-     * @param role 권한
-     * @return 클라이언트에 반환할 API 응답
-     */
     @Transactional
-    public AdminUserResponse changeRole(CustomUserDetails admin, Long userId, UserRole role) {
+    public AdminUserResponse changeRole(AdminPrincipal admin, Long adminId, AdminRole role) {
         validateRootAdmin(admin);
-        validateTargetRole(role);
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "계정을 찾을 수 없습니다."));
-        user.changeRole(role);
-        return AdminUserResponse.from(user);
+        Admin target = adminRepository.findById(adminId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "Admin account not found."));
+        target.changeRole(role);
+        return AdminUserResponse.from(target);
     }
 
-    private void validateRootAdmin(CustomUserDetails admin) {
+    private void validateRootAdmin(AdminPrincipal admin) {
         if (admin == null) {
             throw new BusinessException(ErrorCode.UNAUTHORIZED);
         }
-        if (admin.getRole() != UserRole.ROOT_ADMIN) {
-            throw new BusinessException(ErrorCode.FORBIDDEN, "관리자 권한 변경은 ROOT_ADMIN만 수행할 수 있습니다.");
-        }
-    }
-
-    private void validateTargetRole(UserRole role) {
-        if (!AdminRoleSupport.isAdminRole(role)) {
-            throw new BusinessException(ErrorCode.INVALID_REQUEST, "관리자 역할로만 변경할 수 있습니다.");
+        if (admin.getRole() != AdminRole.ROOT_ADMIN) {
+            throw new BusinessException(ErrorCode.FORBIDDEN, "Only ROOT_ADMIN can change admin roles.");
         }
     }
 }

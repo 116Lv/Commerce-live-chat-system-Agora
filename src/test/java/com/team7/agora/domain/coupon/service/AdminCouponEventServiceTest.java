@@ -10,9 +10,9 @@ import com.team7.agora.domain.coupon.entity.CouponEvent;
 import com.team7.agora.domain.coupon.enums.CouponEventType;
 import com.team7.agora.domain.coupon.repository.CouponEventRepository;
 import com.team7.agora.domain.coupon.repository.CouponRepository;
-import com.team7.agora.domain.user.enums.UserRole;
-import com.team7.agora.domain.user.enums.UserStatus;
-import com.team7.agora.global.auth.CustomUserDetails;
+import com.team7.agora.domain.admin.enums.AdminRole;
+import com.team7.agora.domain.admin.enums.AdminStatus;
+import com.team7.agora.global.auth.AdminPrincipal;
 import com.team7.agora.global.exception.BusinessException;
 import java.time.LocalDateTime;
 import org.junit.jupiter.api.Test;
@@ -44,7 +44,7 @@ class AdminCouponEventServiceTest {
         ArgumentCaptor<java.util.List> slotsCaptor = ArgumentCaptor.forClass(java.util.List.class);
 
         var response = newService().createEvent(
-            principal(UserRole.ROOT_ADMIN),
+            principal(AdminRole.ROOT_ADMIN),
             CouponEventType.FIRST_COME,
             "첫 거래 쿠폰",
             LocalDateTime.now().minusDays(1),
@@ -64,7 +64,7 @@ class AdminCouponEventServiceTest {
     @Test
     void createEventRejectsNonAdmin() {
         assertThatThrownBy(() -> newService().createEvent(
-            principal(UserRole.ROLE_USER),
+            principal(AdminRole.PRODUCT_ADMIN),
             CouponEventType.FIRST_COME,
             "첫 거래 쿠폰",
             LocalDateTime.now().minusDays(1),
@@ -79,7 +79,7 @@ class AdminCouponEventServiceTest {
     @Test
     void issueToUsersRejectsTooManyTargets() {
         assertThatThrownBy(() -> newService().issueToUsers(
-            principal(UserRole.ROOT_ADMIN),
+            principal(AdminRole.ROOT_ADMIN),
             1L,
             LongStream.rangeClosed(1, 101).boxed().toList()
         )).isInstanceOf(BusinessException.class);
@@ -89,7 +89,7 @@ class AdminCouponEventServiceTest {
         return new AdminCouponEventService(couponEventRepository, couponRepository, couponSlotService);
     }
 
-    private CustomUserDetails principal(UserRole role) {
-        return new CustomUserDetails(99L, "admin@test.com", "encoded", role, UserStatus.ACTIVE, "admin");
+    private AdminPrincipal principal(AdminRole role) {
+        return new AdminPrincipal(99L, "admin@test.com", "encoded", role, AdminStatus.ACTIVE, "admin");
     }
 }

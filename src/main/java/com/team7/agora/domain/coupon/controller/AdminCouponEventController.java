@@ -6,7 +6,7 @@ import com.team7.agora.domain.coupon.dto.response.AdminCouponEventResponse;
 import com.team7.agora.domain.coupon.dto.response.CouponEventCouponResponse;
 import com.team7.agora.domain.coupon.dto.response.CouponEventIssueResponse;
 import com.team7.agora.domain.coupon.service.AdminCouponEventService;
-import com.team7.agora.global.auth.CustomUserDetails;
+import com.team7.agora.global.auth.AdminPrincipal;
 import com.team7.agora.global.response.ApiResponse;
 import jakarta.validation.Valid;
 import java.util.List;
@@ -32,7 +32,7 @@ public class AdminCouponEventController {
     @PreAuthorize("hasAnyAuthority('USER_ADMIN', 'ROOT_ADMIN')")
     @PostMapping
     public ApiResponse<AdminCouponEventResponse> create(
-        @AuthenticationPrincipal CustomUserDetails admin,
+        @AuthenticationPrincipal AdminPrincipal admin,
         @Valid @RequestBody AdminCouponEventCreateRequest request
     ) {
         AdminCouponEventResponse response = adminCouponEventService.createEvent(
@@ -51,14 +51,14 @@ public class AdminCouponEventController {
 
     @PreAuthorize("hasAnyAuthority('USER_ADMIN', 'ROOT_ADMIN')")
     @GetMapping
-    public ApiResponse<List<AdminCouponEventResponse>> getList(@AuthenticationPrincipal CustomUserDetails admin) {
+    public ApiResponse<List<AdminCouponEventResponse>> getList(@AuthenticationPrincipal AdminPrincipal admin) {
         return ApiResponse.success("쿠폰 이벤트 목록을 조회했습니다.", adminCouponEventService.getList(admin));
     }
 
     @PreAuthorize("hasAnyAuthority('USER_ADMIN', 'ROOT_ADMIN')")
     @GetMapping("/{eventId}")
     public ApiResponse<AdminCouponEventResponse> getDetail(
-        @AuthenticationPrincipal CustomUserDetails admin,
+        @AuthenticationPrincipal AdminPrincipal admin,
         @PathVariable Long eventId
     ) {
         return ApiResponse.success("쿠폰 이벤트 상세를 조회했습니다.", adminCouponEventService.getDetail(admin, eventId));
@@ -67,7 +67,7 @@ public class AdminCouponEventController {
     @PreAuthorize("hasAnyAuthority('USER_ADMIN', 'ROOT_ADMIN')")
     @PostMapping("/{eventId}/issue")
     public ApiResponse<CouponEventIssueResponse> issue(
-        @AuthenticationPrincipal CustomUserDetails admin,
+        @AuthenticationPrincipal AdminPrincipal admin,
         @PathVariable Long eventId,
         @Valid @RequestBody AdminCouponEventIssueRequest request
     ) {
@@ -80,7 +80,7 @@ public class AdminCouponEventController {
     @PreAuthorize("hasAnyAuthority('USER_ADMIN', 'ROOT_ADMIN')")
     @GetMapping("/{eventId}/coupons")
     public ApiResponse<List<CouponEventCouponResponse>> getCoupons(
-        @AuthenticationPrincipal CustomUserDetails admin,
+        @AuthenticationPrincipal AdminPrincipal admin,
         @PathVariable Long eventId
     ) {
         return ApiResponse.success("쿠폰 이벤트 발급 현황을 조회했습니다.", adminCouponEventService.getCoupons(admin, eventId));

@@ -7,10 +7,11 @@ import static org.mockito.Mockito.when;
 
 import com.team7.agora.domain.admin.dto.response.AdminUserResponse;
 import com.team7.agora.domain.user.entity.User;
-import com.team7.agora.domain.user.enums.UserRole;
+import com.team7.agora.domain.admin.enums.AdminRole;
+import com.team7.agora.domain.admin.enums.AdminStatus;
 import com.team7.agora.domain.user.enums.UserStatus;
 import com.team7.agora.domain.user.repository.UserRepository;
-import com.team7.agora.global.auth.CustomUserDetails;
+import com.team7.agora.global.auth.AdminPrincipal;
 import com.team7.agora.global.exception.BusinessException;
 import java.util.List;
 import java.util.Optional;
@@ -36,7 +37,7 @@ class AdminUserServiceTest {
         when(userRepository.findAllByDeletedAtIsNull(PageRequest.of(0, 20)))
                 .thenReturn(new PageImpl<>(List.of(user), PageRequest.of(0, 20), 42));
 
-        Page<AdminUserResponse> responses = service.getUsers(principal(UserRole.USER_ADMIN), PageRequest.of(0, 20));
+        Page<AdminUserResponse> responses = service.getUsers(principal(AdminRole.USER_ADMIN), PageRequest.of(0, 20));
 
         assertThat(responses.getContent()).hasSize(1);
         assertThat(responses.getContent().get(0).id()).isEqualTo(1L);
@@ -52,7 +53,7 @@ class AdminUserServiceTest {
         when(userRepository.findAllByDeletedAtIsNull(PageRequest.of(0, 20)))
                 .thenReturn(new PageImpl<>(List.of(), PageRequest.of(0, 20), 0));
 
-        Page<AdminUserResponse> responses = service.getUsers(principal(UserRole.USER_ADMIN), PageRequest.of(0, 20));
+        Page<AdminUserResponse> responses = service.getUsers(principal(AdminRole.USER_ADMIN), PageRequest.of(0, 20));
 
         assertThat(responses.getContent()).isEmpty();
         assertThat(responses.getTotalElements()).isZero();
@@ -62,7 +63,7 @@ class AdminUserServiceTest {
     void getUsers_rejectsNonUserAdmin() {
         AdminUserService service = new AdminUserService(userRepository);
 
-        assertThatThrownBy(() -> service.getUsers(principal(UserRole.PRODUCT_ADMIN), PageRequest.of(0, 20)))
+        assertThatThrownBy(() -> service.getUsers(principal(AdminRole.PRODUCT_ADMIN), PageRequest.of(0, 20)))
                 .isInstanceOf(BusinessException.class);
     }
 
@@ -73,7 +74,7 @@ class AdminUserServiceTest {
         assignId(user, 1L);
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
 
-        AdminUserResponse response = service.changeStatus(principal(UserRole.USER_ADMIN), 1L, UserStatus.BLOCKED);
+        AdminUserResponse response = service.changeStatus(principal(AdminRole.USER_ADMIN), 1L, UserStatus.BLOCKED);
 
         assertThat(response.status()).isEqualTo("BLOCKED");
         assertThat(user.getStatus()).isEqualTo(UserStatus.BLOCKED);
@@ -86,7 +87,7 @@ class AdminUserServiceTest {
         assignId(user, 1L);
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
 
-        AdminUserResponse response = service.changeStatus(principal(UserRole.USER_ADMIN), 1L, UserStatus.DELETED);
+        AdminUserResponse response = service.changeStatus(principal(AdminRole.USER_ADMIN), 1L, UserStatus.DELETED);
 
         assertThat(response.email()).isNotEqualTo("user@test.com");
         assertThat(response.email()).startsWith("deleted-user-");
@@ -94,26 +95,21 @@ class AdminUserServiceTest {
     }
 
     @Test
-    void changeStatus_rejectsUserAdminWhenTargetIsAdminAccount() {
+    void changeStatus_rejectsMissingAdminPrincipal() {
         AdminUserService service = new AdminUserService(userRepository);
-        User user = User.signup("admin@test.com", "encoded", "관리자", "01011112222");
-        user.changeRole(UserRole.ROOT_ADMIN);
-        assignId(user, 1L);
-        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
 
-        assertThatThrownBy(() -> service.changeStatus(principal(UserRole.USER_ADMIN), 1L, UserStatus.BLOCKED))
+        assertThatThrownBy(() -> service.changeStatus(null, 1L, UserStatus.BLOCKED))
                 .isInstanceOf(BusinessException.class);
     }
 
     @Test
-    void changeStatus_allowsRootAdminWhenTargetIsAdminAccount() {
+    void changeStatus_allowsRootAdminForUserAccount() {
         AdminUserService service = new AdminUserService(userRepository);
-        User user = User.signup("admin@test.com", "encoded", "관리자", "01011112222");
-        user.changeRole(UserRole.USER_ADMIN);
+        User user = User.signup("user@test.com", "encoded", "동네유저", "01011112222");
         assignId(user, 1L);
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
 
-        AdminUserResponse response = service.changeStatus(principal(UserRole.ROOT_ADMIN), 1L, UserStatus.BLOCKED);
+        AdminUserResponse response = service.changeStatus(principal(AdminRole.ROOT_ADMIN), 1L, UserStatus.BLOCKED);
 
         assertThat(response.status()).isEqualTo("BLOCKED");
         assertThat(user.getStatus()).isEqualTo(UserStatus.BLOCKED);
@@ -123,7 +119,7 @@ class AdminUserServiceTest {
     void changeStatus_rejectsNonUserAdmin() {
         AdminUserService service = new AdminUserService(userRepository);
 
-        assertThatThrownBy(() -> service.changeStatus(principal(UserRole.PRODUCT_ADMIN), 1L, UserStatus.BLOCKED))
+        assertThatThrownBy(() -> service.changeStatus(principal(AdminRole.PRODUCT_ADMIN), 1L, UserStatus.BLOCKED))
                 .isInstanceOf(BusinessException.class);
     }
 
@@ -132,11 +128,11 @@ class AdminUserServiceTest {
         AdminUserService service = new AdminUserService(userRepository);
         when(userRepository.findById(1L)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> service.changeStatus(principal(UserRole.USER_ADMIN), 1L, UserStatus.BLOCKED))
+        assertThatThrownBy(() -> service.changeStatus(principal(AdminRole.USER_ADMIN), 1L, UserStatus.BLOCKED))
                 .isInstanceOf(BusinessException.class);
     }
 
-    private CustomUserDetails principal(UserRole role) {
-        return new CustomUserDetails(99L, "admin@test.com", "encoded", role, UserStatus.ACTIVE, "관리자");
+    private AdminPrincipal principal(AdminRole role) {
+        return new AdminPrincipal(99L, "admin@test.com", "encoded", role, AdminStatus.ACTIVE, "관리자");
     }
 }

@@ -2,7 +2,7 @@ package com.team7.agora.domain.admin.controller;
 
 import com.team7.agora.domain.admin.dto.response.AdminProductResponse;
 import com.team7.agora.domain.admin.service.AdminProductService;
-import com.team7.agora.global.auth.CustomUserDetails;
+import com.team7.agora.global.auth.AdminPrincipal;
 import com.team7.agora.global.response.ApiResponse;
 import com.team7.agora.global.response.PageResponse;
 import org.springframework.data.domain.Page;
@@ -42,7 +42,7 @@ public class AdminProductController {
      */
     @GetMapping
     public ApiResponse<PageResponse<AdminProductResponse>> getProducts(
-            @AuthenticationPrincipal CustomUserDetails admin,
+            @AuthenticationPrincipal AdminPrincipal admin,
             @RequestParam(defaultValue = "false") boolean reportedOnly,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size
@@ -59,7 +59,7 @@ public class AdminProductController {
      */
     @PatchMapping("/{productId}/hide")
     public ApiResponse<AdminProductResponse> hideProduct(
-            @AuthenticationPrincipal CustomUserDetails admin,
+            @AuthenticationPrincipal AdminPrincipal admin,
             @PathVariable Long productId
     ) {
         AdminProductResponse response = adminProductService.hideProduct(admin, productId);

@@ -27,7 +27,11 @@ class JwtAuthenticationFilterTest {
     }
 
     private JwtAuthenticationFilter filterWith(UserDetailsService userDetailsService) {
-        return new JwtAuthenticationFilter(jwtProvider, userDetailsService);
+        return new JwtAuthenticationFilter(
+            jwtProvider,
+            userDetailsService,
+            org.mockito.Mockito.mock(AdminDetailsService.class)
+        );
     }
 
     private UserDetailsService userServiceWithStatus(UserStatus status) {
@@ -101,7 +105,11 @@ class JwtAuthenticationFilterTest {
         // given
         JwtProvider expiredProvider = new JwtProvider(SECRET, -1_000L);
         JwtAuthenticationFilter filter =
-            new JwtAuthenticationFilter(expiredProvider, userServiceWithStatus(UserStatus.ACTIVE));
+            new JwtAuthenticationFilter(
+                expiredProvider,
+                userServiceWithStatus(UserStatus.ACTIVE),
+                org.mockito.Mockito.mock(AdminDetailsService.class)
+            );
         MockHttpServletRequest request = new MockHttpServletRequest();
         MockHttpServletResponse response = new MockHttpServletResponse();
         request.addHeader(HttpHeaders.AUTHORIZATION,

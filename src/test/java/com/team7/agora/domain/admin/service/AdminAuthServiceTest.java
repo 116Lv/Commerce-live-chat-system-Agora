@@ -2,6 +2,7 @@
 package com.team7.agora.domain.admin.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -9,11 +10,12 @@ import static org.mockito.Mockito.when;
 
 import com.team7.agora.domain.admin.dto.request.AdminLoginRequest;
 import com.team7.agora.domain.admin.dto.response.AdminLoginResponse;
-import com.team7.agora.domain.user.entity.User;
-import com.team7.agora.domain.user.enums.UserRole;
-import com.team7.agora.domain.user.enums.UserStatus;
-import com.team7.agora.domain.user.repository.UserRepository;
-import com.team7.agora.global.auth.CustomUserDetails;
+import com.team7.agora.domain.admin.entity.Admin;
+import com.team7.agora.domain.admin.enums.AdminRole;
+import com.team7.agora.domain.admin.enums.AdminStatus;
+import com.team7.agora.domain.admin.repository.AdminRepository;
+import com.team7.agora.global.auth.AccountType;
+import com.team7.agora.global.auth.AdminPrincipal;
 import com.team7.agora.global.auth.JwtProvider;
 import com.team7.agora.global.exception.BusinessException;
 import com.team7.agora.global.exception.ErrorCode;
@@ -30,7 +32,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 class AdminAuthServiceTest {
 
     @Mock
-    private UserRepository userRepository;
+    private AdminRepository adminRepository;
 
     @Mock
     private JwtProvider jwtProvider;
@@ -38,23 +40,23 @@ class AdminAuthServiceTest {
     private final PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
     private AdminAuthService createService() {
-        return new AdminAuthService(userRepository, passwordEncoder, jwtProvider);
+        return new AdminAuthService(adminRepository, passwordEncoder, jwtProvider);
     }
 
-    private User userWithRole(UserRole role) {
-        User user = User.create("admin@test.com", passwordEncoder.encode("password123!"), "관리자");
-        ReflectionTestUtils.setField(user, "id", 1L);
-        user.changeRole(role);
-        return user;
+    private Admin adminWithRole(AdminRole role) {
+        Admin admin = Admin.create("admin@test.com", passwordEncoder.encode("password123!"), "관리자", role);
+        ReflectionTestUtils.setField(admin, "id", 1L);
+        return admin;
     }
 
     @Test
     void login_returnsAccessTokenForAdminAccount() {
         // given
         AdminAuthService service = createService();
-        User admin = userWithRole(UserRole.ROOT_ADMIN);
-        when(userRepository.findByEmailIgnoreCase("admin@test.com")).thenReturn(Optional.of(admin));
-        when(jwtProvider.createToken(1L, "admin@test.com", "ROOT_ADMIN", "관리자")).thenReturn("Bearer admin-token");
+        Admin admin = adminWithRole(AdminRole.ROOT_ADMIN);
+        when(adminRepository.findByEmailIgnoreCase("admin@test.com")).thenReturn(Optional.of(admin));
+        when(jwtProvider.createToken(1L, "admin@test.com", "ROOT_ADMIN", "관리자", AccountType.ADMIN))
+                .thenReturn("Bearer admin-token");
 
         // when
         AdminLoginResponse response = service.login(new AdminLoginRequest("admin@test.com", "password123!"));
@@ -67,9 +69,10 @@ class AdminAuthServiceTest {
     void login_findsAdminByNormalizedEmail() {
         // given
         AdminAuthService service = createService();
-        User admin = userWithRole(UserRole.ROOT_ADMIN);
-        when(userRepository.findByEmailIgnoreCase("admin@test.com")).thenReturn(Optional.of(admin));
-        when(jwtProvider.createToken(1L, "admin@test.com", "ROOT_ADMIN", "관리자")).thenReturn("Bearer admin-token");
+        Admin admin = adminWithRole(AdminRole.ROOT_ADMIN);
+        when(adminRepository.findByEmailIgnoreCase("admin@test.com")).thenReturn(Optional.of(admin));
+        when(jwtProvider.createToken(1L, "admin@test.com", "ROOT_ADMIN", "관리자", AccountType.ADMIN))
+                .thenReturn("Bearer admin-token");
 
         // when
         AdminLoginResponse response = service.login(new AdminLoginRequest("  ADMIN@test.com  ", "password123!"));
@@ -82,7 +85,7 @@ class AdminAuthServiceTest {
     void login_throwsUnauthorizedWhenPasswordMismatches() {
         // given
         AdminAuthService service = createService();
-        when(userRepository.findByEmailIgnoreCase("admin@test.com")).thenReturn(Optional.of(userWithRole(UserRole.ROOT_ADMIN)));
+        when(adminRepository.findByEmailIgnoreCase("admin@test.com")).thenReturn(Optional.of(adminWithRole(AdminRole.ROOT_ADMIN)));
 
         // when & then
         assertThatThrownBy(() -> service.login(new AdminLoginRequest("admin@test.com", "wrongPassword")))
@@ -90,29 +93,29 @@ class AdminAuthServiceTest {
                 .extracting("errorCode")
                 .isEqualTo(ErrorCode.UNAUTHORIZED);
         verify(jwtProvider, never()).createToken(org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any(),
-                org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any());
+                org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any());
     }
 
     @Test
-    void login_throwsForbiddenWhenAccountIsNotAdmin() {
+    void login_throwsUnauthorizedWhenAdminAccountMissing() {
         // given
         AdminAuthService service = createService();
-        when(userRepository.findByEmailIgnoreCase("user@test.com")).thenReturn(Optional.of(userWithRole(UserRole.ROLE_USER)));
+        when(adminRepository.findByEmailIgnoreCase("user@test.com")).thenReturn(Optional.empty());
 
         // when & then
         assertThatThrownBy(() -> service.login(new AdminLoginRequest("user@test.com", "password123!")))
                 .isInstanceOf(BusinessException.class)
                 .extracting("errorCode")
-                .isEqualTo(ErrorCode.FORBIDDEN);
+                .isEqualTo(ErrorCode.UNAUTHORIZED);
     }
 
     @Test
     void login_throwsInactiveUserWhenAdminSuspended() {
         // given
         AdminAuthService service = createService();
-        User admin = userWithRole(UserRole.ROOT_ADMIN);
-        admin.changeStatus(UserStatus.SUSPENDED);
-        when(userRepository.findByEmailIgnoreCase("admin@test.com")).thenReturn(Optional.of(admin));
+        Admin admin = adminWithRole(AdminRole.ROOT_ADMIN);
+        ReflectionTestUtils.setField(admin, "status", AdminStatus.SUSPENDED);
+        when(adminRepository.findByEmailIgnoreCase("admin@test.com")).thenReturn(Optional.of(admin));
 
         // when & then
         assertThatThrownBy(() -> service.login(new AdminLoginRequest("admin@test.com", "password123!")))
@@ -134,16 +137,13 @@ class AdminAuthServiceTest {
     }
 
     @Test
-    void logout_throwsForbiddenWhenPrincipalIsNotAdmin() {
+    void logout_acceptsAdminPrincipal() {
         // given
         AdminAuthService service = createService();
-        CustomUserDetails user = new CustomUserDetails(
-                1L, "user@test.com", "encoded", UserRole.ROLE_USER, UserStatus.ACTIVE, "일반사용자");
+        AdminPrincipal admin = new AdminPrincipal(
+                1L, "admin@test.com", "encoded", AdminRole.USER_ADMIN, AdminStatus.ACTIVE, "관리자");
 
         // when & then
-        assertThatThrownBy(() -> service.logout(user))
-                .isInstanceOf(BusinessException.class)
-                .extracting("errorCode")
-                .isEqualTo(ErrorCode.FORBIDDEN);
+        assertThatCode(() -> service.logout(admin)).doesNotThrowAnyException();
     }
 }
