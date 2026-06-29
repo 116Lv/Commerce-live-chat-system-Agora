@@ -44,11 +44,11 @@ export default function AdminLoginPage() {
           <div className="admin-login-icon">
             <LogIn size={22} aria-hidden="true" />
           </div>
-          <h1>Admin Login</h1>
+          <h1>관리자 로그인</h1>
           {error ? <Alert variant="danger">{error}</Alert> : null}
           <Form className="d-grid gap-3" onSubmit={handleSubmit}>
             <Form.Group controlId="admin-email">
-              <Form.Label>Email</Form.Label>
+              <Form.Label>이메일</Form.Label>
               <Form.Control
                 name="email"
                 type="email"
@@ -59,7 +59,7 @@ export default function AdminLoginPage() {
               />
             </Form.Group>
             <Form.Group controlId="admin-password">
-              <Form.Label>Password</Form.Label>
+              <Form.Label>비밀번호</Form.Label>
               <Form.Control
                 name="password"
                 type="password"
@@ -70,7 +70,7 @@ export default function AdminLoginPage() {
               />
             </Form.Group>
             <Button type="submit" variant="primary" disabled={isLoading}>
-              {isLoading ? 'Logging in...' : 'Login'}
+              {isLoading ? '로그인 중...' : '로그인'}
             </Button>
           </Form>
         </Card.Body>

@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs';
 import { test } from 'node:test';
 
 const readPage = (name) => readFileSync(new URL(`./${name}`, import.meta.url), 'utf8');
+const readSource = (path) => readFileSync(new URL(path, import.meta.url), 'utf8');
 
 test('sell product page renders an empty state when regions are unavailable', () => {
   const source = readPage('SellProductPage.jsx');
@@ -48,4 +49,42 @@ test('trade detail only exposes user-authorized trade actions', () => {
   assert.match(source, /isCurrentUserBuyer/);
   assert.match(source, /const canReviewTrade = isCurrentUserParticipant && tradeStatus === 'COMPLETED';/);
   assert.doesNotMatch(source, /const canReviewTrade = isCurrentUserParticipant;\s/);
+});
+
+test('user layout hides protected navigation while logged out and shows signup', () => {
+  const source = readSource('../layouts/UserLayout.jsx');
+
+  assert.match(source, /useAuth/);
+  assert.match(source, /isUserAuthenticated/);
+  assert.match(source, /회원가입/);
+  assert.match(source, /로그아웃/);
+  assert.match(source, /isUserAuthenticated \? \(/);
+  assert.match(source, /<UserNavLink to="\/me">[\s\S]*?<\/>\s*\)\s*:\s*\(\s*<>[\s\S]*?<UserNavLink to="\/login">/);
+});
+
+test('home page uses Korean marketplace grid with sidebar filters', () => {
+  const source = readPage('UserPlaceholderPages.jsx');
+
+  assert.match(source, /title="상품 둘러보기"/);
+  assert.match(source, /검색 조건/);
+  assert.match(source, /상품 그리드/);
+  assert.match(source, /getProducts/);
+  assert.doesNotMatch(source, /label="Products"|label="Events"|label="Chat"/);
+  assert.doesNotMatch(source, /No featured products yet/);
+});
+
+test('auth and admin chrome use Korean labels', () => {
+  const userLogin = readSource('../features/auth/UserLoginPage.jsx');
+  const userSignup = readSource('../features/auth/UserSignupPage.jsx');
+  const adminLogin = readSource('../features/auth/AdminLoginPage.jsx');
+  const adminLayout = readSource('../layouts/AdminLayout.jsx');
+
+  assert.match(userLogin, /로그인/);
+  assert.match(userSignup, /회원가입/);
+  assert.match(adminLogin, /관리자 로그인/);
+  assert.match(adminLayout, /대시보드/);
+  assert.doesNotMatch(userLogin, /<h1>Login<\/h1>/);
+  assert.doesNotMatch(userSignup, /Already have an account/);
+  assert.doesNotMatch(adminLogin, /Admin Login/);
+  assert.doesNotMatch(adminLayout, /label: 'Dashboard'|label: 'Products'|label: 'Users'|label: 'Reports'|label: 'Payments'|label: 'Coupons'/);
 });

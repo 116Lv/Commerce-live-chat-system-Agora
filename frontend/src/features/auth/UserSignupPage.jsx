@@ -40,12 +40,12 @@ export default function UserSignupPage() {
           <div className="auth-icon">
             <UserPlus size={22} aria-hidden="true" />
           </div>
-          <p className="page-eyebrow">Account</p>
-          <h1>Sign up</h1>
+          <p className="page-eyebrow">계정</p>
+          <h1>회원가입</h1>
           {error ? <Alert variant="danger">{error}</Alert> : null}
           <Form className="d-grid gap-3" onSubmit={handleSubmit}>
             <Form.Group controlId="signup-email">
-              <Form.Label>Email</Form.Label>
+              <Form.Label>이메일</Form.Label>
               <Form.Control
                 name="email"
                 type="email"
@@ -56,7 +56,7 @@ export default function UserSignupPage() {
               />
             </Form.Group>
             <Form.Group controlId="signup-nickname">
-              <Form.Label>Nickname</Form.Label>
+              <Form.Label>닉네임</Form.Label>
               <Form.Control
                 name="nickname"
                 type="text"
@@ -67,7 +67,7 @@ export default function UserSignupPage() {
               />
             </Form.Group>
             <Form.Group controlId="signup-password">
-              <Form.Label>Password</Form.Label>
+              <Form.Label>비밀번호</Form.Label>
               <Form.Control
                 name="password"
                 type="password"
@@ -78,11 +78,11 @@ export default function UserSignupPage() {
               />
             </Form.Group>
             <Button type="submit" variant="primary" disabled={isLoading}>
-              {isLoading ? 'Creating account...' : 'Sign up'}
+              {isLoading ? '가입 중...' : '회원가입'}
             </Button>
           </Form>
           <p className="auth-footer">
-            Already have an account? <Link to="/login">Login</Link>
+            이미 계정이 있나요? <Link to="/login">로그인</Link>
           </p>
         </Card.Body>
       </Card>

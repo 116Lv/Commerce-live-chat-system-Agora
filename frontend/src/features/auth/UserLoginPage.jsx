@@ -44,12 +44,12 @@ export default function UserLoginPage() {
           <div className="auth-icon">
             <LogIn size={22} aria-hidden="true" />
           </div>
-          <p className="page-eyebrow">Account</p>
-          <h1>Login</h1>
+          <p className="page-eyebrow">계정</p>
+          <h1>로그인</h1>
           {error ? <Alert variant="danger">{error}</Alert> : null}
           <Form className="d-grid gap-3" onSubmit={handleSubmit}>
             <Form.Group controlId="user-login-email">
-              <Form.Label>Email</Form.Label>
+              <Form.Label>이메일</Form.Label>
               <Form.Control
                 name="email"
                 type="email"
@@ -60,7 +60,7 @@ export default function UserLoginPage() {
               />
             </Form.Group>
             <Form.Group controlId="user-login-password">
-              <Form.Label>Password</Form.Label>
+              <Form.Label>비밀번호</Form.Label>
               <Form.Control
                 name="password"
                 type="password"
@@ -71,11 +71,11 @@ export default function UserLoginPage() {
               />
             </Form.Group>
             <Button type="submit" variant="primary" disabled={isLoading}>
-              {isLoading ? 'Logging in...' : 'Login'}
+              {isLoading ? '로그인 중...' : '로그인'}
             </Button>
           </Form>
           <p className="auth-footer">
-            New to Agora? <Link to="/signup">Create an account</Link>
+            아직 계정이 없나요? <Link to="/signup">회원가입</Link>
           </p>
         </Card.Body>
       </Card>

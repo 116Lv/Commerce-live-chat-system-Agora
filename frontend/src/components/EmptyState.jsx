@@ -1,6 +1,6 @@
 import { Inbox } from 'lucide-react';
 
-export default function EmptyState({ title = 'No items yet', message }) {
+export default function EmptyState({ title = '표시할 항목이 없어요', message }) {
   return (
     <div className="state-panel empty-state">
       <Inbox size={28} aria-hidden="true" />

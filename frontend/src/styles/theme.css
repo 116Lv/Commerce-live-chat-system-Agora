@@ -371,6 +371,26 @@ p {
   padding: 1rem;
 }
 
+.marketplace-home-grid {
+  align-items: flex-start;
+}
+
+.filter-sidebar {
+  position: sticky;
+  top: 92px;
+  padding: 1rem;
+  border: 1px solid var(--agora-border);
+  border-radius: 8px;
+  background: var(--agora-surface);
+  box-shadow: 0 10px 30px rgb(15 23 42 / 6%);
+}
+
+.filter-sidebar h2 {
+  margin: 0 0 1rem;
+  font-size: 1rem;
+  font-weight: 800;
+}
+
 .form-card,
 .list-card {
   border-color: var(--agora-border);

@@ -1,6 +1,7 @@
-﻿import { Container, Nav, Navbar } from 'react-bootstrap';
+import { Button, Container, Nav, Navbar } from 'react-bootstrap';
 import { Link, NavLink, Outlet } from 'react-router-dom';
 import { MessageCircle, PackagePlus, Search, Ticket, UserRound } from 'lucide-react';
+import { useAuth } from '../auth/AuthContext.jsx';
 
 function UserNavLink({ to, end, children }) {
   return (
@@ -15,6 +16,8 @@ function UserNavLink({ to, end, children }) {
 }
 
 export default function UserLayout() {
+  const { isUserAuthenticated, logoutUser } = useAuth();
+
   return (
     <div className="user-shell">
       <Navbar expand="lg" className="agora-user-nav" sticky="top">
@@ -29,25 +32,40 @@ export default function UserLayout() {
                 <Search size={17} aria-hidden="true" />
                 <span>상품</span>
               </UserNavLink>
-              <UserNavLink to="/sell">
-                <PackagePlus size={17} aria-hidden="true" />
-                <span>판매</span>
-              </UserNavLink>
+              {isUserAuthenticated ? (
+                <UserNavLink to="/sell">
+                  <PackagePlus size={17} aria-hidden="true" />
+                  <span>판매</span>
+                </UserNavLink>
+              ) : null}
               <UserNavLink to="/events">
                 <Ticket size={17} aria-hidden="true" />
                 <span>쿠폰</span>
               </UserNavLink>
-              <UserNavLink to="/chat">
-                <MessageCircle size={17} aria-hidden="true" />
-                <span>채팅</span>
-              </UserNavLink>
+              {isUserAuthenticated ? (
+                <UserNavLink to="/chat">
+                  <MessageCircle size={17} aria-hidden="true" />
+                  <span>채팅</span>
+                </UserNavLink>
+              ) : null}
             </Nav>
             <Nav className="align-items-lg-center gap-lg-1">
-              <UserNavLink to="/me">
-                <UserRound size={17} aria-hidden="true" />
-                <span>마이</span>
-              </UserNavLink>
-              <UserNavLink to="/login">로그인</UserNavLink>
+              {isUserAuthenticated ? (
+                <>
+                  <UserNavLink to="/me">
+                    <UserRound size={17} aria-hidden="true" />
+                    <span>마이페이지</span>
+                  </UserNavLink>
+                  <Button type="button" variant="link" className="nav-link agora-nav-link" onClick={logoutUser}>
+                    로그아웃
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <UserNavLink to="/login">로그인</UserNavLink>
+                  <UserNavLink to="/signup">회원가입</UserNavLink>
+                </>
+              )}
             </Nav>
           </Navbar.Collapse>
         </Container>
