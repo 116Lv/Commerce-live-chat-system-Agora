@@ -67,6 +67,9 @@ public class NegoOffer extends BaseTimeEntity {
     @Column(nullable = false, length = 20)
     private NegoOfferStatus status;
 
+    @Column(nullable = false)
+    private boolean extensionRequested;
+
     private LocalDateTime respondedAt;
 
     private NegoOffer(ChatRoom chatRoom, User requester, BigDecimal offerPrice) {
@@ -74,6 +77,7 @@ public class NegoOffer extends BaseTimeEntity {
         this.requester = requester;
         this.offerPrice = offerPrice;
         this.status = NegoOfferStatus.PENDING;
+        this.extensionRequested = false;
         markCreatedNow();
         this.expiresAt = getCreatedAt().plusHours(24);
     }
@@ -111,7 +115,13 @@ public class NegoOffer extends BaseTimeEntity {
      * 구매자가 가격 제안의 응답 기한 연장을 요청한다.
      */
     public void requestExtension() {
-        validatePending();
+        if (status != NegoOfferStatus.PENDING) {
+            throw new IllegalStateException("대기 중인 가격 제안만 연장 요청할 수 있습니다.");
+        }
+        if (extensionRequested) {
+            throw new IllegalStateException("연장 요청은 한 번만 할 수 있습니다.");
+        }
+        this.extensionRequested = true;
         this.status = NegoOfferStatus.EXTENSION_REQUESTED;
     }
 
@@ -122,7 +132,7 @@ public class NegoOffer extends BaseTimeEntity {
         if (status != NegoOfferStatus.EXTENSION_REQUESTED) {
             throw new IllegalStateException("연장 요청 상태의 가격 제안만 연장 승인할 수 있습니다.");
         }
-        this.expiresAt = this.expiresAt.plusHours(12);
+        this.expiresAt = this.expiresAt.plusHours(24);
         this.status = NegoOfferStatus.EXTENDED;
     }
 

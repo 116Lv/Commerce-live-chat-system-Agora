@@ -2,6 +2,7 @@ package com.team7.agora.domain.report.repository;
 
 import com.team7.agora.domain.product.entity.Product;
 import com.team7.agora.domain.report.entity.Report;
+import com.team7.agora.domain.report.enums.ReportStatus;
 import com.team7.agora.domain.user.entity.User;
 import jakarta.persistence.LockModeType;
 import java.util.List;
@@ -19,9 +20,13 @@ import org.springframework.data.repository.query.Param;
  */
 public interface ReportRepository extends JpaRepository<Report, Long> {
 
-    boolean existsByReporterAndProduct(User reporter, Product product);
+    boolean existsByReporterAndProductAndStatus(User reporter, Product product, ReportStatus status);
 
-    boolean existsByReporterAndReportedUserAndProductIsNull(User reporter, User reportedUser);
+    boolean existsByReporterAndReportedUserAndProductIsNullAndStatus(
+        User reporter,
+        User reportedUser,
+        ReportStatus status
+    );
 
     @EntityGraph(attributePaths = {"reporter", "reportedUser"})
     List<Report> findAllByProductIsNull();
