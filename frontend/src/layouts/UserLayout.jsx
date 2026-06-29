@@ -1,4 +1,4 @@
-import { Container, Nav, Navbar } from 'react-bootstrap';
+﻿import { Container, Nav, Navbar } from 'react-bootstrap';
 import { Link, NavLink, Outlet } from 'react-router-dom';
 import { MessageCircle, PackagePlus, Search, Ticket, UserRound } from 'lucide-react';
 
@@ -27,27 +27,27 @@ export default function UserLayout() {
             <Nav className="me-auto align-items-lg-center gap-lg-1">
               <UserNavLink to="/products">
                 <Search size={17} aria-hidden="true" />
-                <span>Products</span>
+                <span>상품</span>
               </UserNavLink>
               <UserNavLink to="/sell">
                 <PackagePlus size={17} aria-hidden="true" />
-                <span>Sell</span>
+                <span>판매</span>
               </UserNavLink>
               <UserNavLink to="/events">
                 <Ticket size={17} aria-hidden="true" />
-                <span>Events</span>
+                <span>쿠폰</span>
               </UserNavLink>
               <UserNavLink to="/chat">
                 <MessageCircle size={17} aria-hidden="true" />
-                <span>Chat</span>
+                <span>채팅</span>
               </UserNavLink>
             </Nav>
             <Nav className="align-items-lg-center gap-lg-1">
               <UserNavLink to="/me">
                 <UserRound size={17} aria-hidden="true" />
-                <span>My Page</span>
+                <span>마이</span>
               </UserNavLink>
-              <UserNavLink to="/login">Login</UserNavLink>
+              <UserNavLink to="/login">로그인</UserNavLink>
             </Nav>
           </Navbar.Collapse>
         </Container>

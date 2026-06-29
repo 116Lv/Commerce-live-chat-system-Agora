@@ -357,3 +357,175 @@ p {
     padding: 1rem;
   }
 }
+
+.toolbar-panel,
+.detail-panel,
+.form-card,
+.list-card {
+  border: 1px solid var(--agora-border);
+  border-radius: 8px;
+  background: var(--agora-surface);
+}
+
+.toolbar-panel {
+  padding: 1rem;
+}
+
+.form-card,
+.list-card {
+  border-color: var(--agora-border);
+}
+
+.detail-panel {
+  padding: 1.25rem;
+}
+
+.product-detail-media {
+  display: grid;
+  min-height: 22rem;
+  place-items: center;
+  background: #edf2f0;
+  color: var(--agora-muted);
+  font-weight: 800;
+}
+
+.product-detail-media img {
+  width: 100%;
+  height: 100%;
+  max-height: 32rem;
+  object-fit: cover;
+}
+
+.product-detail-info {
+  display: grid;
+  gap: 1rem;
+}
+
+.product-detail-info h2,
+.list-card h2,
+.form-card h2 {
+  margin-bottom: 0;
+  font-size: 1.15rem;
+  font-weight: 800;
+}
+
+.product-detail-price,
+.list-price,
+.coupon-amount {
+  display: block;
+  color: var(--agora-brand-dark);
+  font-size: 1.35rem;
+  font-weight: 900;
+}
+
+.product-card-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  min-height: 1.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.product-card-tags span {
+  padding: 0.18rem 0.45rem;
+  border: 1px solid var(--agora-border);
+  border-radius: 999px;
+  color: var(--agora-muted);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.compact-list {
+  display: grid;
+  gap: 0.6rem;
+  margin: 0;
+}
+
+.compact-list div {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.compact-list dt {
+  color: var(--agora-muted);
+  font-weight: 700;
+}
+
+.compact-list dd {
+  margin: 0;
+  text-align: right;
+  font-weight: 700;
+}
+
+.compact-list-inline {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.compact-list-inline div {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.compact-list-inline dd {
+  text-align: left;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 1.25rem;
+}
+
+.profile-form-row {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.stack-list {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.list-card-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.rating-text {
+  color: var(--agora-action);
+  font-size: 1.2rem;
+}
+
+.review-content {
+  margin: 1rem 0 0.5rem;
+  white-space: pre-line;
+}
+
+.pre-line {
+  white-space: pre-line;
+}
+
+@media (max-width: 767.98px) {
+  .compact-list-inline {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .profile-form-row,
+  .list-card-row {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .form-actions {
+    flex-direction: column-reverse;
+  }
+
+  .form-actions .btn,
+  .profile-form-row .btn {
+    width: 100%;
+  }
+}
