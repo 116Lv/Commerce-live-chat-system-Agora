@@ -22,4 +22,17 @@ class CorsConfigTest {
         assertThat(cors.getAllowedMethods()).contains("GET", "POST", "PATCH", "DELETE", "OPTIONS");
         assertThat(cors.getAllowedHeaders()).contains("Authorization", "Content-Type");
     }
+
+    @Test
+    void corsConfigurationAllowsLocalhostDevelopmentPortsWhenNoOriginIsConfigured() {
+        CorsConfig config = new CorsConfig(new CorsProperties(List.of()));
+        MockHttpServletRequest request = new MockHttpServletRequest("GET", "/api/admin/auth/login");
+        request.addHeader("Origin", "http://127.0.0.1:55281");
+
+        CorsConfiguration cors = config.corsConfigurationSource().getCorsConfiguration(request);
+
+        assertThat(cors).isNotNull();
+        assertThat(cors.checkOrigin("http://127.0.0.1:55281")).isEqualTo("http://127.0.0.1:55281");
+        assertThat(cors.checkOrigin("http://localhost:5173")).isEqualTo("http://localhost:5173");
+    }
 }
