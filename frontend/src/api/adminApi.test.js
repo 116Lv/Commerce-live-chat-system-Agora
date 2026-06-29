@@ -18,10 +18,11 @@ import {
   resolveAdminProductReport,
   resolveAdminUserReport,
   settleAdminSettlement,
+  updateAdminAccountRole,
   updateAdminUserStatus,
   verifyAdminPayment
 } from './adminApi.js';
-import { replaceById } from '../pages/adminPageUtils.js';
+import { canSettlePayment, getReportTabs, replaceById } from '../pages/adminPageUtils.js';
 
 const captureRequest = () => {
   const requests = [];
@@ -61,6 +62,7 @@ test('admin API maps dashboard, product, user, report, payment, settlement, and 
   await hideAdminProduct(7, config);
   await getAdminUsers({ page: 2, size: 5 }, config);
   await updateAdminUserStatus(9, 'SUSPENDED', config);
+  await updateAdminAccountRole(9, 'PRODUCT_ADMIN', config);
   await getAdminUserReports(config);
   await getAdminProductReports(config);
   await resolveAdminUserReport(11, '처리 완료', config);
@@ -83,6 +85,7 @@ test('admin API maps dashboard, product, user, report, payment, settlement, and 
     { method: 'patch', url: '/api/admin/products/7/hide', params: undefined, data: undefined },
     { method: 'get', url: '/api/admin/users', params: { page: 2, size: 5 }, data: undefined },
     { method: 'patch', url: '/api/admin/users/9/status', params: undefined, data: { status: 'SUSPENDED' } },
+    { method: 'patch', url: '/api/admin/accounts/9/role', params: undefined, data: { role: 'PRODUCT_ADMIN' } },
     { method: 'get', url: '/api/admin/reports/users', params: undefined, data: undefined },
     { method: 'get', url: '/api/admin/reports/products', params: undefined, data: undefined },
     { method: 'post', url: '/api/admin/reports/users/11/resolve', params: undefined, data: { adminMemo: '처리 완료' } },
@@ -114,6 +117,17 @@ test('admin page row replacement updates the item returned by an action', () => 
   ]);
 });
 
+test('report tabs are scoped to admin report permissions', () => {
+  assert.deepEqual(getReportTabs({ role: 'USER_ADMIN' }).map((tab) => tab.key), ['users']);
+  assert.deepEqual(getReportTabs({ role: 'PRODUCT_ADMIN' }).map((tab) => tab.key), ['products']);
+  assert.deepEqual(getReportTabs({ role: 'ROOT_ADMIN' }).map((tab) => tab.key), ['users', 'products']);
+});
+
+test('settlement action is available only when payment rows expose settlementId', () => {
+  assert.equal(canSettlePayment({ paymentId: 1, settlementId: 11 }), true);
+  assert.equal(canSettlePayment({ paymentId: 2 }), false);
+});
+
 test('admin list APIs include backend default paging and filter params', async () => {
   const { requests, config } = captureRequest();
 
@@ -126,4 +140,20 @@ test('admin list APIs include backend default paging and filter params', async (
     { method: 'get', url: '/api/admin/users', params: { page: 0, size: 20 }, data: undefined },
     { method: 'get', url: '/api/admin/payments', params: { status: '', page: 0, size: 20 }, data: undefined }
   ]);
+});
+
+test('account role update surfaces backend authorization errors', async () => {
+  const adapter = (config) =>
+    Promise.reject({
+      config,
+      response: {
+        status: 403,
+        data: { status: 'ERROR', message: 'ROOT_ADMIN만 변경할 수 있습니다.', data: null }
+      }
+    });
+
+  await assert.rejects(
+    () => updateAdminAccountRole(3, 'USER_ADMIN', { adapter }),
+    /ROOT_ADMIN만 변경할 수 있습니다/
+  );
 });

@@ -22,6 +22,9 @@ export const getAdminUsers = (params = {}, config = {}) =>
 export const updateAdminUserStatus = (userId, status, config = {}) =>
   apiClient.patch(`/api/admin/users/${userId}/status`, { status }, config);
 
+export const updateAdminAccountRole = (userId, role, config = {}) =>
+  apiClient.patch(`/api/admin/accounts/${userId}/role`, { role }, config);
+
 export const getAdminUserReports = (config = {}) => apiClient.get('/api/admin/reports/users', config);
 
 export const getAdminProductReports = (config = {}) => apiClient.get('/api/admin/reports/products', config);

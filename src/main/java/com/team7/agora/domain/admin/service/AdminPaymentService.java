@@ -6,6 +6,8 @@ import com.team7.agora.domain.payment.entity.Payment;
 import com.team7.agora.domain.payment.enums.PaymentStatus;
 import com.team7.agora.domain.payment.repository.PaymentRepository;
 import com.team7.agora.domain.payment.service.PaymentService;
+import com.team7.agora.domain.settlement.entity.Settlement;
+import com.team7.agora.domain.settlement.repository.SettlementRepository;
 import com.team7.agora.global.auth.CustomUserDetails;
 import com.team7.agora.global.exception.BusinessException;
 import com.team7.agora.global.exception.ErrorCode;
@@ -24,16 +26,23 @@ public class AdminPaymentService {
     private final PaymentRepository paymentRepository;
     private final PaymentClient paymentClient;
     private final PaymentService paymentService;
+    private final SettlementRepository settlementRepository;
 
     /**
      * 필요한 의존성을 주입받아 컴포넌트를 생성한다.
      * @param paymentRepository 데이터를 조회하고 저장하는 리포지토리
      * @param paymentClient 외부 시스템 또는 저장소와 통신하는 클라이언트
      */
-    public AdminPaymentService(PaymentRepository paymentRepository, PaymentClient paymentClient, PaymentService paymentService) {
+    public AdminPaymentService(
+        PaymentRepository paymentRepository,
+        PaymentClient paymentClient,
+        PaymentService paymentService,
+        SettlementRepository settlementRepository
+    ) {
         this.paymentRepository = paymentRepository;
         this.paymentClient = paymentClient;
         this.paymentService = paymentService;
+        this.settlementRepository = settlementRepository;
     }
 
     /**
@@ -51,11 +60,11 @@ public class AdminPaymentService {
         validateSettlementAdmin(admin);
         if (status != null) {
             return paymentRepository.findAllByStatus(status, pageable).stream()
-                .map(AdminPaymentResponse::from)
+                .map(this::toResponse)
                 .toList();
         }
         return paymentRepository.findAll(pageable).stream()
-            .map(AdminPaymentResponse::from)
+            .map(this::toResponse)
             .toList();
     }
 
@@ -67,7 +76,7 @@ public class AdminPaymentService {
     public List<AdminPaymentResponse> getRefunds(CustomUserDetails admin) {
         validateSettlementAdmin(admin);
         return paymentRepository.findAllByStatus(PaymentStatus.REFUNDED).stream()
-            .map(AdminPaymentResponse::from)
+            .map(this::toResponse)
             .toList();
     }
 
@@ -88,7 +97,14 @@ public class AdminPaymentService {
         }
 
         paymentService.confirmByPaymentId(paymentId, payment.getPaymentKey());
-        return AdminPaymentResponse.from(payment);
+        return toResponse(payment);
+    }
+
+    private AdminPaymentResponse toResponse(Payment payment) {
+        Long settlementId = settlementRepository.findByPayment(payment)
+            .map(Settlement::getId)
+            .orElse(null);
+        return AdminPaymentResponse.from(payment, settlementId);
     }
 
     private void validateSettlementAdmin(CustomUserDetails admin) {

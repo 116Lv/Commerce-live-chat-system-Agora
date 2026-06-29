@@ -50,6 +50,31 @@ export const parseUserIds = (value) =>
     .map((item) => Number(item.trim()))
     .filter((item) => Number.isInteger(item) && item > 0);
 
+export const getReportTabs = (admin = {}) => {
+  const role = String(admin?.role || '').toUpperCase();
+
+  if (role === 'ROOT_ADMIN') {
+    return [
+      { key: 'users', title: '회원 신고' },
+      { key: 'products', title: '상품 신고' }
+    ];
+  }
+
+  if (role === 'USER_ADMIN') {
+    return [{ key: 'users', title: '회원 신고' }];
+  }
+
+  if (role === 'PRODUCT_ADMIN') {
+    return [{ key: 'products', title: '상품 신고' }];
+  }
+
+  return [];
+};
+
+export const canUpdateAdminRoles = (admin = {}) => String(admin?.role || '').toUpperCase() === 'ROOT_ADMIN';
+
+export const canSettlePayment = (payment = {}) => payment?.settlementId !== undefined && payment?.settlementId !== null;
+
 export const dashboardStats = (dashboard = {}) => {
   const menus = Array.isArray(dashboard.accessibleMenus) ? dashboard.accessibleMenus : [];
 

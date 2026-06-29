@@ -19,6 +19,7 @@ import {
   resolveAdminProductReport,
   resolveAdminUserReport,
   settleAdminSettlement,
+  updateAdminAccountRole,
   updateAdminUserStatus,
   verifyAdminPayment
 } from '../api/adminApi.js';
@@ -29,9 +30,12 @@ import MoneyText from '../components/MoneyText.jsx';
 import StatusBadge from '../components/StatusBadge.jsx';
 import { formatDateTime, statusText } from './pageUtils.jsx';
 import {
+  canSettlePayment,
+  canUpdateAdminRoles,
   dashboardStats,
   getId,
   getList,
+  getReportTabs,
   parseUserIds,
   removeFromPayload,
   replaceInPayload
@@ -39,13 +43,19 @@ import {
 
 const PAGE_SIZE = 20;
 const USER_STATUSES = ['ACTIVE', 'SUSPENDED', 'BLOCKED', 'DELETED'];
+const ADMIN_ROLES = ['ROOT_ADMIN', 'USER_ADMIN', 'PRODUCT_ADMIN', 'SETTLEMENT_ADMIN'];
 const PAYMENT_STATUSES = ['', 'READY', 'CONFIRMING', 'PAID', 'FAILED', 'CANCELLED', 'REFUNDED'];
 const COUPON_TYPES = ['FIRST_COME', 'NEW_SIGNUP', 'ADMIN_INDIVIDUAL'];
 
-function useAdminResource(loader, deps = []) {
-  const [state, setState] = useState({ data: null, error: null, loading: true });
+function useAdminResource(loader, deps = [], enabled = true) {
+  const [state, setState] = useState({ data: null, error: null, loading: enabled });
 
   const load = useCallback(async () => {
+    if (!enabled) {
+      setState({ data: null, error: null, loading: false });
+      return;
+    }
+
     setState((current) => ({ ...current, error: null, loading: true }));
 
     try {
@@ -54,7 +64,7 @@ function useAdminResource(loader, deps = []) {
     } catch (error) {
       setState({ data: null, error, loading: false });
     }
-  }, deps);
+  }, [enabled, ...deps]);
 
   useEffect(() => {
     load();
@@ -286,8 +296,10 @@ export function AdminProductsPage() {
 
 export function AdminUsersPage() {
   const users = useAdminResource(() => getAdminUsers({ page: 0, size: PAGE_SIZE }), []);
+  const me = useAdminResource(getAdminMe, []);
   const { notice, actionError, run } = useActionFeedback();
   const rows = getList(users.data);
+  const canEditRoles = canUpdateAdminRoles(me.data);
 
   const handleStatus = (user, status) => {
     const userId = getId(user, ['id', 'userId']);
@@ -296,14 +308,32 @@ export function AdminUsersPage() {
     });
   };
 
+  const handleRole = (user, role) => {
+    const userId = getId(user, ['id', 'userId']);
+    run(() => updateAdminAccountRole(userId, role), '관리자 권한을 변경했습니다.', (updated) => {
+      users.setData((current) => replaceInPayload(current, updated, 'id'));
+    });
+  };
+
   return (
     <section>
       <AdminPageHeader title="회원 관리" />
       <Feedback notice={notice} error={actionError} />
-      {users.loading ? <LoadingState label="회원을 불러오는 중" /> : null}
-      {users.error ? <ErrorState title="회원 조회 실패" message={users.error.message} onRetry={users.reload} /> : null}
-      {!users.loading && !users.error && rows.length === 0 ? <EmptyState title="회원이 없습니다" /> : null}
-      {!users.loading && !users.error && rows.length > 0 ? (
+      {users.loading || me.loading ? <LoadingState label="회원을 불러오는 중" /> : null}
+      {users.error || me.error ? (
+        <ErrorState
+          title="회원 조회 실패"
+          message={(users.error || me.error).message}
+          onRetry={() => {
+            users.reload();
+            me.reload();
+          }}
+        />
+      ) : null}
+      {!users.loading && !me.loading && !users.error && !me.error && rows.length === 0 ? (
+        <EmptyState title="회원이 없습니다" />
+      ) : null}
+      {!users.loading && !me.loading && !users.error && !me.error && rows.length > 0 ? (
         <AdminTable>
           <thead>
             <tr>
@@ -312,6 +342,7 @@ export function AdminUsersPage() {
               <th>권한</th>
               <th>상태</th>
               <th>변경</th>
+              {canEditRoles ? <th>권한 변경</th> : null}
             </tr>
           </thead>
           <tbody>
@@ -337,6 +368,22 @@ export function AdminUsersPage() {
                     ))}
                   </Form.Select>
                 </td>
+                {canEditRoles ? (
+                  <td>
+                    <Form.Select
+                      size="sm"
+                      value={user.role || ''}
+                      aria-label="관리자 권한 변경"
+                      onChange={(event) => handleRole(user, event.target.value)}
+                    >
+                      {ADMIN_ROLES.map((role) => (
+                        <option value={role} key={role}>
+                          {role}
+                        </option>
+                      ))}
+                    </Form.Select>
+                  </td>
+                ) : null}
               </tr>
             ))}
           </tbody>
@@ -405,8 +452,12 @@ function ReportTable({ rows, type, memos, setMemo, onResolve }) {
 }
 
 export function AdminReportsPage() {
-  const userReports = useAdminResource(getAdminUserReports, []);
-  const productReports = useAdminResource(getAdminProductReports, []);
+  const me = useAdminResource(getAdminMe, []);
+  const tabs = getReportTabs(me.data);
+  const canReadUserReports = tabs.some((tab) => tab.key === 'users');
+  const canReadProductReports = tabs.some((tab) => tab.key === 'products');
+  const userReports = useAdminResource(getAdminUserReports, [], canReadUserReports);
+  const productReports = useAdminResource(getAdminProductReports, [], canReadProductReports);
   const [memos, setMemos] = useState({});
   const { notice, actionError, run } = useActionFeedback();
 
@@ -424,11 +475,24 @@ export function AdminReportsPage() {
     });
   };
 
-  if (userReports.loading || productReports.loading) {
+  if (me.loading || userReports.loading || productReports.loading) {
     return <LoadingState label="신고를 불러오는 중" />;
   }
 
-  if (userReports.error || productReports.error) {
+  if (me.error) {
+    return <ErrorState title="관리자 정보 조회 실패" message={me.error.message} onRetry={me.reload} />;
+  }
+
+  if (tabs.length === 0) {
+    return (
+      <section>
+        <AdminPageHeader title="신고 관리" />
+        <EmptyState title="조회 가능한 신고 메뉴가 없습니다" />
+      </section>
+    );
+  }
+
+  if ((canReadUserReports && userReports.error) || (canReadProductReports && productReports.error)) {
     return (
       <ErrorState
         title="신고 조회 실패"
@@ -445,25 +509,29 @@ export function AdminReportsPage() {
     <section>
       <AdminPageHeader title="신고 관리" />
       <Feedback notice={notice} error={actionError} />
-      <Tabs defaultActiveKey="users" className="mb-3">
-        <Tab eventKey="users" title="회원 신고">
-          <ReportTable
-            rows={getList(userReports.data)}
-            type="user"
-            memos={memos}
-            setMemo={setMemo}
-            onResolve={(reportId, memo) => handleResolve('user', reportId, memo)}
-          />
-        </Tab>
-        <Tab eventKey="products" title="상품 신고">
-          <ReportTable
-            rows={getList(productReports.data)}
-            type="product"
-            memos={memos}
-            setMemo={setMemo}
-            onResolve={(reportId, memo) => handleResolve('product', reportId, memo)}
-          />
-        </Tab>
+      <Tabs defaultActiveKey={tabs[0].key} className="mb-3">
+        {canReadUserReports ? (
+          <Tab eventKey="users" title="회원 신고">
+            <ReportTable
+              rows={getList(userReports.data)}
+              type="user"
+              memos={memos}
+              setMemo={setMemo}
+              onResolve={(reportId, memo) => handleResolve('user', reportId, memo)}
+            />
+          </Tab>
+        ) : null}
+        {canReadProductReports ? (
+          <Tab eventKey="products" title="상품 신고">
+            <ReportTable
+              rows={getList(productReports.data)}
+              type="product"
+              memos={memos}
+              setMemo={setMemo}
+              onResolve={(reportId, memo) => handleResolve('product', reportId, memo)}
+            />
+          </Tab>
+        ) : null}
       </Tabs>
     </section>
   );
@@ -509,7 +577,7 @@ function PaymentTable({ rows, onVerify, onSettle, showVerify }) {
                       검증
                     </ActionButton>
                   ) : null}
-                  {settlementId ? (
+                  {canSettlePayment(payment) ? (
                     <ActionButton icon={CheckCircle2} variant="outline-success" onClick={() => onSettle(settlementId)}>
                       정산
                     </ActionButton>
