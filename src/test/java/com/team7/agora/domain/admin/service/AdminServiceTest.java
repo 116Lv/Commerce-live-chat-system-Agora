@@ -66,7 +66,7 @@ class AdminServiceTest {
     }
 
     @Test
-    void getDashboard_throwsForbiddenForRegularUser() {
+    void getDashboard_throwsUnauthorizedWithoutPrincipal() {
         // given
         AdminService service = createService();
 
@@ -74,6 +74,6 @@ class AdminServiceTest {
         assertThatThrownBy(() -> service.getDashboard(null))
                 .isInstanceOf(BusinessException.class)
                 .extracting("errorCode")
-                .isEqualTo(ErrorCode.FORBIDDEN);
+                .isEqualTo(ErrorCode.UNAUTHORIZED);
     }
 }

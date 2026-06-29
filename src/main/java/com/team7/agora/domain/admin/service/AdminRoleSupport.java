@@ -7,13 +7,6 @@ public final class AdminRoleSupport {
     private AdminRoleSupport() {
     }
 
-    public static boolean isAdminRole(AdminRole role) {
-        return role == AdminRole.ROOT_ADMIN
-                || role == AdminRole.USER_ADMIN
-                || role == AdminRole.PRODUCT_ADMIN
-                || role == AdminRole.SETTLEMENT_ADMIN;
-    }
-
     public static boolean isSettlementAdminRole(AdminRole role) {
         return role == AdminRole.ROOT_ADMIN || role == AdminRole.SETTLEMENT_ADMIN;
     }

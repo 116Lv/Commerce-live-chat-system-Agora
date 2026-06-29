@@ -35,8 +35,8 @@ public class AdminService {
     }
 
     private void validateAdmin(AdminPrincipal admin) {
-        if (admin == null || !AdminRoleSupport.isAdminRole(admin.getRole())) {
-            throw new BusinessException(ErrorCode.FORBIDDEN, "Admin authority is required.");
+        if (admin == null) {
+            throw new BusinessException(ErrorCode.UNAUTHORIZED);
         }
     }
 

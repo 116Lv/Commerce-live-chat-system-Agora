@@ -83,6 +83,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
     private boolean matchesRequestPath(HttpServletRequest request, AccountType accountType) {
+        // Admin and user tokens are intentionally not interchangeable across API surfaces.
         boolean adminPath = request.getRequestURI().startsWith("/api/admin");
         if (adminPath) {
             return accountType == AccountType.ADMIN;
