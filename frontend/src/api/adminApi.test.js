@@ -124,8 +124,11 @@ test('report tabs are scoped to admin report permissions', () => {
 });
 
 test('settlement action is available only when payment rows expose settlementId', () => {
-  assert.equal(canSettlePayment({ paymentId: 1, settlementId: 11 }), true);
+  assert.equal(canSettlePayment({ paymentId: 1, settlementId: 11, settlementStatus: 'READY' }), true);
   assert.equal(canSettlePayment({ paymentId: 2 }), false);
+  assert.equal(canSettlePayment({ paymentId: 3, settlementId: 12, settlementStatus: 'HELD' }), false);
+  assert.equal(canSettlePayment({ paymentId: 4, settlementId: 13, settlementStatus: 'FAILED' }), false);
+  assert.equal(canSettlePayment({ paymentId: 5, settlementId: 14, settlementStatus: 'SETTLED' }), false);
 });
 
 test('admin list APIs include backend default paging and filter params', async () => {

@@ -101,10 +101,9 @@ public class AdminPaymentService {
     }
 
     private AdminPaymentResponse toResponse(Payment payment) {
-        Long settlementId = settlementRepository.findByPayment(payment)
-            .map(Settlement::getId)
-            .orElse(null);
-        return AdminPaymentResponse.from(payment, settlementId);
+        return settlementRepository.findByPayment(payment)
+            .map(settlement -> AdminPaymentResponse.from(payment, settlement.getId(), settlement.getStatus().name()))
+            .orElseGet(() -> AdminPaymentResponse.from(payment));
     }
 
     private void validateSettlementAdmin(CustomUserDetails admin) {

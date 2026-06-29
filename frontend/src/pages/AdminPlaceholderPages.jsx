@@ -550,6 +550,7 @@ function PaymentTable({ rows, onVerify, onSettle, showVerify }) {
           <th>주문</th>
           <th>금액</th>
           <th>상태</th>
+          <th>정산</th>
           <th>요청일</th>
           <th className="text-end">작업</th>
         </tr>
@@ -569,6 +570,7 @@ function PaymentTable({ rows, onVerify, onSettle, showVerify }) {
               <td>
                 <StatusBadge status={payment.status} />
               </td>
+              <td>{payment.settlementStatus ? <StatusBadge status={payment.settlementStatus} /> : '-'}</td>
               <td>{formatDateTime(payment.requestedAt || payment.settledAt)}</td>
               <td className="text-end">
                 <ButtonGroup size="sm">

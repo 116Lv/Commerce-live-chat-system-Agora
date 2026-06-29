@@ -73,7 +73,10 @@ export const getReportTabs = (admin = {}) => {
 
 export const canUpdateAdminRoles = (admin = {}) => String(admin?.role || '').toUpperCase() === 'ROOT_ADMIN';
 
-export const canSettlePayment = (payment = {}) => payment?.settlementId !== undefined && payment?.settlementId !== null;
+export const canSettlePayment = (payment = {}) =>
+  payment?.settlementId !== undefined &&
+  payment?.settlementId !== null &&
+  String(payment?.settlementStatus || '').toUpperCase() === 'READY';
 
 export const dashboardStats = (dashboard = {}) => {
   const menus = Array.isArray(dashboard.accessibleMenus) ? dashboard.accessibleMenus : [];

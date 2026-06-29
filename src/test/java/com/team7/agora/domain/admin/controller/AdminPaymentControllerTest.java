@@ -77,6 +77,7 @@ class AdminPaymentControllerTest {
             .andExpect(jsonPath("$.status").value("SUCCESS"))
             .andExpect(jsonPath("$.data[0].paymentId").value(1L))
             .andExpect(jsonPath("$.data[0].settlementId").value(101L))
+            .andExpect(jsonPath("$.data[0].settlementStatus").value("READY"))
             .andExpect(jsonPath("$.data[0].status").value("PAID"));
 
         verify(adminPaymentService).getPayments(admin, PaymentStatus.PAID, PageRequest.of(0, 20));
@@ -90,7 +91,8 @@ class AdminPaymentControllerTest {
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.status").value("SUCCESS"))
             .andExpect(jsonPath("$.data.paymentId").value(1L))
-            .andExpect(jsonPath("$.data.settlementId").value(101L));
+            .andExpect(jsonPath("$.data.settlementId").value(101L))
+            .andExpect(jsonPath("$.data.settlementStatus").value("READY"));
     }
 
     @Test
@@ -101,6 +103,7 @@ class AdminPaymentControllerTest {
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.status").value("SUCCESS"))
             .andExpect(jsonPath("$.data[0].settlementId").value(102L))
+            .andExpect(jsonPath("$.data[0].settlementStatus").value("READY"))
             .andExpect(jsonPath("$.data[0].status").value("REFUNDED"));
 
         verify(adminPaymentService).getRefunds(eq(admin));
@@ -110,6 +113,7 @@ class AdminPaymentControllerTest {
         return new AdminPaymentResponse(
             paymentId,
             100L + paymentId,
+            "READY",
             BigDecimal.valueOf(50000),
             "order-" + paymentId,
             "payment-key-" + paymentId,
