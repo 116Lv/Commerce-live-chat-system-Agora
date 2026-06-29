@@ -12,5 +12,7 @@ public interface SettlementRepository extends JpaRepository<Settlement, Long> {
 
     boolean existsByPayment(Payment payment);
 
+    Optional<Settlement> findByPayment(Payment payment);
+
     Optional<Settlement> findByPaymentTradeId(Long tradeId);
 }

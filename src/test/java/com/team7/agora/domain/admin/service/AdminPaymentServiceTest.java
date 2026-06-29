@@ -13,6 +13,9 @@ import com.team7.agora.domain.payment.service.PaymentService;
 import com.team7.agora.domain.payment.entity.Payment;
 import com.team7.agora.domain.payment.enums.PaymentStatus;
 import com.team7.agora.domain.payment.repository.PaymentRepository;
+import com.team7.agora.domain.settlement.entity.Settlement;
+import com.team7.agora.domain.settlement.enums.SettlementStatus;
+import com.team7.agora.domain.settlement.repository.SettlementRepository;
 import com.team7.agora.domain.user.enums.UserRole;
 import com.team7.agora.domain.user.enums.UserStatus;
 import com.team7.agora.global.auth.CustomUserDetails;
@@ -41,12 +44,15 @@ class AdminPaymentServiceTest {
     @Mock
     private PaymentService paymentService;
 
+    @Mock
+    private SettlementRepository settlementRepository;
+
     private AdminPaymentService adminPaymentService;
     private CustomUserDetails settlementAdmin;
 
     @BeforeEach
     void setUp() {
-        adminPaymentService = new AdminPaymentService(paymentRepository, paymentClient, paymentService);
+        adminPaymentService = new AdminPaymentService(paymentRepository, paymentClient, paymentService, settlementRepository);
         settlementAdmin = new CustomUserDetails(
             99L,
             "settlement@admin.com",
@@ -60,12 +66,18 @@ class AdminPaymentServiceTest {
     @Test
     void getPaymentsAllowsSettlementAdmin() {
         Payment payment = payment(1L, PaymentStatus.PAID);
+        Settlement settlement = org.mockito.Mockito.mock(Settlement.class);
         when(paymentRepository.findAll(PageRequest.of(0, 20))).thenReturn(new PageImpl<>(List.of(payment)));
+        when(settlementRepository.findByPayment(payment)).thenReturn(Optional.of(settlement));
+        when(settlement.getId()).thenReturn(10L);
+        when(settlement.getStatus()).thenReturn(SettlementStatus.READY);
 
         var responses = adminPaymentService.getPayments(settlementAdmin, null, PageRequest.of(0, 20));
 
         assertThat(responses).hasSize(1);
         assertThat(responses.getFirst().paymentId()).isEqualTo(1L);
+        assertThat(responses.getFirst().settlementId()).isEqualTo(10L);
+        assertThat(responses.getFirst().settlementStatus()).isEqualTo("READY");
         assertThat(responses.getFirst().status()).isEqualTo("PAID");
     }
 

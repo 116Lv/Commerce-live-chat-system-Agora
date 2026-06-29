@@ -16,10 +16,13 @@ import com.team7.agora.domain.product.enums.ProductStatus;
 import com.team7.agora.domain.product.repository.ProductRepository;
 import com.team7.agora.domain.settlement.entity.Settlement;
 import com.team7.agora.domain.settlement.repository.SettlementRepository;
+import com.team7.agora.domain.trade.dto.request.MyTradeRole;
+import com.team7.agora.domain.trade.dto.response.MyTradeResponse;
 import com.team7.agora.domain.trade.dto.response.TradeDetailResponse;
 import com.team7.agora.domain.trade.dto.response.TradeResponse;
 import com.team7.agora.domain.trade.entity.Trade;
 import com.team7.agora.domain.trade.enums.TradeStatus;
+import com.team7.agora.domain.trade.repository.TradeQueryRepository;
 import com.team7.agora.domain.trade.repository.TradeRepository;
 import com.team7.agora.domain.user.entity.User;
 import com.team7.agora.domain.user.enums.UserStatus;
@@ -29,6 +32,8 @@ import com.team7.agora.global.exception.BusinessException;
 import com.team7.agora.global.exception.ErrorCode;
 import java.math.BigDecimal;
 import java.util.Optional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -41,6 +46,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class TradeService {
 
     private final TradeRepository tradeRepository;
+    private final TradeQueryRepository tradeQueryRepository;
     private final ProductRepository productRepository;
     private final UserRepository userRepository;
     private final ChatRoomRepository chatRoomRepository;
@@ -63,6 +69,7 @@ public class TradeService {
      */
     public TradeService(
         TradeRepository tradeRepository,
+        TradeQueryRepository tradeQueryRepository,
         ProductRepository productRepository,
         UserRepository userRepository,
         ChatRoomRepository chatRoomRepository,
@@ -73,6 +80,7 @@ public class TradeService {
         ChatRedisPublisher chatRedisPublisher
     ) {
         this.tradeRepository = tradeRepository;
+        this.tradeQueryRepository = tradeQueryRepository;
         this.productRepository = productRepository;
         this.userRepository = userRepository;
         this.chatRoomRepository = chatRoomRepository;
@@ -81,6 +89,10 @@ public class TradeService {
         this.paymentRepository = paymentRepository;
         this.chatMessageRepository = chatMessageRepository;
         this.chatRedisPublisher = chatRedisPublisher;
+    }
+
+    public Page<MyTradeResponse> getMyTrades(Long userId, MyTradeRole role, Pageable pageable) {
+        return tradeQueryRepository.findMyTrades(userId, role, pageable);
     }
 
     /**

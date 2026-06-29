@@ -12,6 +12,11 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 @EnableConfigurationProperties(CorsProperties.class)
 public class CorsConfig {
 
+    private static final List<String> LOCAL_DEVELOPMENT_ORIGIN_PATTERNS = List.of(
+        "http://localhost:*",
+        "http://127.0.0.1:*"
+    );
+
     private final CorsProperties corsProperties;
 
     public CorsConfig(CorsProperties corsProperties) {
@@ -21,7 +26,11 @@ public class CorsConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(corsProperties.allowedOrigins());
+        if (corsProperties.allowedOrigins().isEmpty()) {
+            configuration.setAllowedOriginPatterns(LOCAL_DEVELOPMENT_ORIGIN_PATTERNS);
+        } else {
+            configuration.setAllowedOrigins(corsProperties.allowedOrigins());
+        }
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("Authorization", "Content-Type", "Accept", "Origin"));
         configuration.setExposedHeaders(List.of("Authorization"));
