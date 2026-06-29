@@ -15,6 +15,8 @@ import java.time.LocalDateTime;
  */
 public record AdminPaymentResponse(
     Long paymentId,
+    Long settlementId,
+    String settlementStatus,
     BigDecimal amount,
     String orderId,
     String paymentKey,
@@ -28,8 +30,18 @@ public record AdminPaymentResponse(
      * @return 클라이언트에 반환할 API 응답
      */
     public static AdminPaymentResponse from(Payment payment) {
+        return from(payment, null, null);
+    }
+
+    public static AdminPaymentResponse from(Payment payment, Long settlementId) {
+        return from(payment, settlementId, null);
+    }
+
+    public static AdminPaymentResponse from(Payment payment, Long settlementId, String settlementStatus) {
         return new AdminPaymentResponse(
             payment.getId(),
+            settlementId,
+            settlementStatus,
             payment.getAmount(),
             payment.getOrderId(),
             payment.getPaymentKey(),

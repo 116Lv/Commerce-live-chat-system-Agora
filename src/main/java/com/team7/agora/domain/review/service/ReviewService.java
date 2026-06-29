@@ -1,7 +1,10 @@
 package com.team7.agora.domain.review.service;
 
+import com.team7.agora.domain.review.dto.request.MyReviewType;
+import com.team7.agora.domain.review.dto.response.MyReviewResponse;
 import com.team7.agora.domain.review.dto.response.ReviewResponse;
 import com.team7.agora.domain.review.entity.Review;
+import com.team7.agora.domain.review.repository.ReviewQueryRepository;
 import com.team7.agora.domain.review.repository.ReviewRepository;
 import com.team7.agora.domain.trade.entity.Trade;
 import com.team7.agora.domain.trade.repository.TradeRepository;
@@ -9,6 +12,8 @@ import com.team7.agora.domain.user.entity.User;
 import com.team7.agora.global.exception.BusinessException;
 import com.team7.agora.global.exception.ErrorCode;
 import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,6 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class ReviewService {
 
     private final ReviewRepository reviewRepository;
+    private final ReviewQueryRepository reviewQueryRepository;
     private final TradeRepository tradeRepository;
 
     /**
@@ -27,9 +33,18 @@ public class ReviewService {
      * @param reviewRepository 데이터를 조회하고 저장하는 리포지토리
      * @param tradeRepository 데이터를 조회하고 저장하는 리포지토리
      */
-    public ReviewService(ReviewRepository reviewRepository, TradeRepository tradeRepository) {
+    public ReviewService(
+        ReviewRepository reviewRepository,
+        ReviewQueryRepository reviewQueryRepository,
+        TradeRepository tradeRepository
+    ) {
         this.reviewRepository = reviewRepository;
+        this.reviewQueryRepository = reviewQueryRepository;
         this.tradeRepository = tradeRepository;
+    }
+
+    public Page<MyReviewResponse> getMyReviews(Long userId, MyReviewType type, Pageable pageable) {
+        return reviewQueryRepository.findMyReviews(userId, type, pageable);
     }
 
     /**

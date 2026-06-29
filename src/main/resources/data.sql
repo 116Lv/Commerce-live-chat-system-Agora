@@ -98,13 +98,13 @@ VALUES
     (2, 2, 3, 800000, '2099-12-31 23:59:59', 'PENDING', FALSE, '2026-06-23 09:22:00', NULL),
     (3, 3, 1, 20000, '2099-12-31 23:59:59', 'REJECTED', FALSE, '2026-06-23 10:05:00', '2026-06-23 10:10:00');
 
-INSERT INTO trades (id, product_id, seller_id, buyer_id, status, price, completed_at, payment_due_at)
+INSERT INTO trades (id, product_id, seller_id, buyer_id, status, price, created_at, completed_at, payment_due_at)
 VALUES
-    (1, 2, 1, 2, 'PAID', 580000, NULL, NULL),
-    (2, 4, 3, 2, 'COMPLETED', 60000, '2026-06-22 18:00:00', NULL),
-    (3, 5, 2, 1, 'PAYMENT_PENDING', 23000, NULL, '2026-06-24 10:30:00'),
-    (4, 7, 1, 3, 'CANCELLED', 33000, NULL, NULL),
-    (5, 3, 2, 3, 'EXPIRED', 42000, NULL, NULL);
+    (1, 2, 1, 2, 'PAID', 580000, '2026-06-23 09:16:00', NULL, NULL),
+    (2, 4, 3, 2, 'COMPLETED', 60000, '2026-06-22 17:30:00', '2026-06-22 18:00:00', NULL),
+    (3, 5, 2, 1, 'PAYMENT_PENDING', 23000, '2026-06-23 10:30:00', NULL, '2026-06-24 10:30:00'),
+    (4, 7, 1, 3, 'CANCELLED', 33000, '2026-06-23 11:00:00', NULL, NULL),
+    (5, 3, 2, 3, 'EXPIRED', 42000, '2026-06-23 11:30:00', NULL, NULL);
 
 INSERT INTO payments (id, trade_id, payer_id, amount, order_id, payment_key, status, requested_at, paid_at, refunded_at)
 VALUES
