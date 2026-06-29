@@ -45,7 +45,7 @@ export default function TradeDetailPage() {
     currentUserId != null && [trade?.buyerId, trade?.sellerId].some((participantId) => String(participantId) === currentUserId);
   const canCheckout = isCurrentUserBuyer && tradeStatus === 'PAYMENT_PENDING';
   const canCompleteTrade = isCurrentUserBuyer && tradeStatus === 'PAID';
-  const canReviewTrade = isCurrentUserParticipant;
+  const canReviewTrade = isCurrentUserParticipant && tradeStatus === 'COMPLETED';
   const canRequestRefund = isCurrentUserBuyer;
 
   const runTradeAction = async (key, action, success) => {

@@ -46,4 +46,6 @@ test('trade detail only exposes user-authorized trade actions', () => {
   assert.match(source, /canCheckout/);
   assert.match(source, /canCompleteTrade/);
   assert.match(source, /isCurrentUserBuyer/);
+  assert.match(source, /const canReviewTrade = isCurrentUserParticipant && tradeStatus === 'COMPLETED';/);
+  assert.doesNotMatch(source, /const canReviewTrade = isCurrentUserParticipant;\s/);
 });
