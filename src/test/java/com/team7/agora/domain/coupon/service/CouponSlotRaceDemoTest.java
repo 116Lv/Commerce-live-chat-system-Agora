@@ -38,7 +38,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 class CouponSlotRaceDemoTest {
 
     private static final int SLOT_COUNT = 5;
-    private static final int REQUEST_COUNT = 30;
+    private static final int REQUEST_COUNT = 300;
 
     private final CouponSlotService couponSlotService;
     private final CouponEventRepository couponEventRepository;
@@ -120,7 +120,7 @@ class CouponSlotRaceDemoTest {
             SLOT_COUNT,
             AgoraClock.now().minusMinutes(1),
             AgoraClock.now().plusMinutes(10),
-            5000, 10000, 30
+            5000, 10000, 300
         ));
     }
 
