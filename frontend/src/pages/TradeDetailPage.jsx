@@ -1,13 +1,33 @@
 import { useState } from 'react';
 import { Alert, Button, Col, Form, Row } from 'react-bootstrap';
 import { Link, useParams } from 'react-router-dom';
-import { completeTrade, expireReservation, getTradeDetail, requestRatingMessage } from '../api/tradeApi.js';
+import { completeTrade, getTradeDetail } from '../api/tradeApi.js';
 import { getRefundStatus, refundPayment } from '../api/paymentApi.js';
+import { getUserToken } from '../auth/tokenStorage.js';
 import ErrorState from '../components/ErrorState.jsx';
 import LoadingState from '../components/LoadingState.jsx';
 import MoneyText from '../components/MoneyText.jsx';
 import StatusBadge from '../components/StatusBadge.jsx';
 import { PageHeader, formatDateTime, statusText, useApiResource } from './pageUtils.jsx';
+
+const decodeBase64Url = (value) => {
+  const normalized = value.replace(/-/g, '+').replace(/_/g, '/');
+  const padded = normalized.padEnd(Math.ceil(normalized.length / 4) * 4, '=');
+
+  return globalThis.atob(padded);
+};
+
+const getCurrentUserIdFromToken = () => {
+  try {
+    const token = getUserToken()?.replace(/^Bearer\s+/i, '');
+    const payload = token ? JSON.parse(decodeBase64Url(token.split('.')[1] || '')) : null;
+    const userId = payload?.userId ?? payload?.id ?? payload?.sub;
+
+    return userId == null ? null : String(userId);
+  } catch {
+    return null;
+  }
+};
 
 export default function TradeDetailPage() {
   const { tradeId } = useParams();
@@ -18,6 +38,15 @@ export default function TradeDetailPage() {
   const [refundReason, setRefundReason] = useState('');
   const [refundStatus, setRefundStatus] = useState(null);
   const { data: trade, error, loading, reload } = useApiResource(() => getTradeDetail(tradeId), [tradeId]);
+  const currentUserId = getCurrentUserIdFromToken();
+  const tradeStatus = String(trade?.tradeStatus || trade?.status || '').toUpperCase();
+  const isCurrentUserBuyer = currentUserId != null && String(trade?.buyerId) === currentUserId;
+  const isCurrentUserParticipant =
+    currentUserId != null && [trade?.buyerId, trade?.sellerId].some((participantId) => String(participantId) === currentUserId);
+  const canCheckout = isCurrentUserBuyer && tradeStatus === 'PAYMENT_PENDING';
+  const canCompleteTrade = isCurrentUserBuyer && tradeStatus === 'PAID';
+  const canReviewTrade = isCurrentUserParticipant;
+  const canRequestRefund = isCurrentUserBuyer;
 
   const runTradeAction = async (key, action, success) => {
     setMessage('');
@@ -82,9 +111,11 @@ export default function TradeDetailPage() {
         title={`거래 #${tradeId}`}
         eyebrow="거래"
         action={
-          <Button as={Link} to={`/checkout/${tradeId}`} variant="primary">
+          canCheckout ? (
+            <Button as={Link} to={`/checkout/${tradeId}`} variant="primary">
             결제
-          </Button>
+            </Button>
+          ) : null
         }
       />
       {message ? <Alert variant="success">{message}</Alert> : null}
@@ -127,34 +158,27 @@ export default function TradeDetailPage() {
                 <dd>{formatDateTime(trade.completedAt)}</dd>
               </div>
             </dl>
-            <div className="form-actions">
-              <Button
-                variant="outline-primary"
-                disabled={Boolean(busyKey)}
-                onClick={() => runTradeAction('complete', completeTrade, '거래를 완료했어요.')}
-              >
-                {busyKey === 'complete' ? '처리 중' : '거래 완료'}
-              </Button>
-              <Button
-                variant="outline-secondary"
-                disabled={Boolean(busyKey)}
-                onClick={() => runTradeAction('expire', expireReservation, '예약을 만료했어요.')}
-              >
-                {busyKey === 'expire' ? '처리 중' : '예약 만료'}
-              </Button>
-              <Button
-                variant="outline-primary"
-                disabled={Boolean(busyKey)}
-                onClick={() => runTradeAction('rating', requestRatingMessage, '후기 요청 메시지를 보냈어요.')}
-              >
-                {busyKey === 'rating' ? '처리 중' : '후기 요청'}
-              </Button>
-              <Button as={Link} to={`/trades/${tradeId}/review`} variant="primary">
-                후기 작성
-              </Button>
-            </div>
+            {canCompleteTrade || canReviewTrade ? (
+              <div className="form-actions">
+                {canCompleteTrade ? (
+                  <Button
+                    variant="outline-primary"
+                    disabled={Boolean(busyKey)}
+                    onClick={() => runTradeAction('complete', completeTrade, '거래를 완료했어요.')}
+                  >
+                    {busyKey === 'complete' ? '처리 중' : '거래 완료'}
+                  </Button>
+                ) : null}
+                {canReviewTrade ? (
+                  <Button as={Link} to={`/trades/${tradeId}/review`} variant="primary">
+                    후기 작성
+                  </Button>
+                ) : null}
+              </div>
+            ) : null}
           </div>
         </Col>
+        {canRequestRefund ? (
         <Col xs={12} lg={5}>
           <div className="detail-panel">
             <h2 className="section-title">환불</h2>
@@ -206,6 +230,7 @@ export default function TradeDetailPage() {
             ) : null}
           </div>
         </Col>
+        ) : null}
       </Row>
     </section>
   );

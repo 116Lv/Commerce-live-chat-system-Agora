@@ -50,7 +50,10 @@ export default function ChatRoomPage() {
     setActionMessage('');
 
     try {
-      socket.sendMessage(draft.trim());
+      const result = socket.sendMessage(draft.trim());
+      if (result.queued) {
+        setActionMessage('연결이 회복되면 메시지를 보낼게요.');
+      }
       setDraft('');
     } catch (err) {
       setActionError(err.message);
@@ -92,6 +95,7 @@ export default function ChatRoomPage() {
         }
       />
       {socket.error ? <Alert variant="warning">실시간 연결 오류: {socket.error}</Alert> : null}
+      {socket.pendingCount > 0 ? <Alert variant="info">전송 대기 메시지 {socket.pendingCount}개</Alert> : null}
       {actionMessage ? <Alert variant="success">{actionMessage}</Alert> : null}
       {actionError ? <Alert variant="danger">{actionError}</Alert> : null}
       <Row className="g-3">
@@ -123,11 +127,10 @@ export default function ChatRoomPage() {
               <Form.Control
                 value={draft}
                 onChange={(event) => setDraft(event.target.value)}
-                placeholder={socket.connected ? '메시지 입력' : '연결 대기 중'}
+                placeholder={socket.connected ? '메시지 입력' : '연결되면 자동 전송'}
                 maxLength={1000}
-                disabled={!socket.connected}
               />
-              <Button type="submit" disabled={!socket.connected || !draft.trim()} aria-label="메시지 보내기">
+              <Button type="submit" disabled={!draft.trim()} aria-label="메시지 보내기">
                 <Send size={17} aria-hidden="true" />
               </Button>
               <Button as="label" variant="outline-primary" aria-label="이미지 보내기" disabled={uploading}>

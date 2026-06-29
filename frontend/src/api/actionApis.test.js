@@ -26,7 +26,12 @@ import {
 import { confirmPayment, getRefundStatus, preparePayment, refundPayment } from './paymentApi.js';
 import { createReview, getTradeReviews } from './reviewApi.js';
 import { createProductReport, createUserReport } from './reportApi.js';
-import { CHAT_DESTINATIONS } from '../features/chat/useChatSocket.js';
+import {
+  CHAT_DESTINATIONS,
+  flushPendingChatMessages,
+  queuePendingChatMessage,
+  readPendingChatMessages
+} from '../features/chat/useChatSocket.js';
 
 const captureRequest = () => {
   const requests = [];
@@ -128,4 +133,26 @@ test('chat socket constants follow backend STOMP conventions', () => {
   assert.equal(CHAT_DESTINATIONS.endpoint, '/ws');
   assert.equal(CHAT_DESTINATIONS.subscribe(3), '/sub/chat/3');
   assert.equal(CHAT_DESTINATIONS.publish(3), '/pub/chat/3/messages');
+});
+
+test('disconnected chat messages are queued for STOMP retry without HTTP fallback guessing', () => {
+  const storage = new Map();
+  const stored = {
+    getItem: (key) => storage.get(key) ?? null,
+    setItem: (key, value) => storage.set(key, value),
+    removeItem: (key) => storage.delete(key)
+  };
+  const queued = queuePendingChatMessage(3, 'hello', stored);
+
+  assert.equal(queued.content, 'hello');
+  assert.equal(queued.chatRoomId, '3');
+  assert.equal(queued.pending, true);
+  assert.equal(readPendingChatMessages(3, stored).length, 1);
+
+  const published = [];
+  const flushed = flushPendingChatMessages(3, (message) => published.push(message), stored);
+
+  assert.equal(flushed, 1);
+  assert.deepEqual(published, [{ content: 'hello' }]);
+  assert.deepEqual(readPendingChatMessages(3, stored), []);
 });

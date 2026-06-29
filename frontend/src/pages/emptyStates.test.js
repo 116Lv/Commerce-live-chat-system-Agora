@@ -37,3 +37,13 @@ test('coupon event issue action redirects unauthenticated users to login', () =>
   assert.match(source, /if \(!isUserAuthenticated\) \{/);
   assert.match(source, /navigate\('\/login'/);
 });
+
+test('trade detail only exposes user-authorized trade actions', () => {
+  const source = readPage('TradeDetailPage.jsx');
+
+  assert.doesNotMatch(source, /expireReservation/);
+  assert.doesNotMatch(source, /requestRatingMessage/);
+  assert.match(source, /canCheckout/);
+  assert.match(source, /canCompleteTrade/);
+  assert.match(source, /isCurrentUserBuyer/);
+});
