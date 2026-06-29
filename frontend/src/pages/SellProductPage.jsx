@@ -3,6 +3,7 @@ import { Alert, Button, Card, Form, Row, Col } from 'react-bootstrap';
 import { Link, useNavigate } from 'react-router-dom';
 import LoadingState from '../components/LoadingState.jsx';
 import ErrorState from '../components/ErrorState.jsx';
+import EmptyState from '../components/EmptyState.jsx';
 import { createProduct, uploadProductImage } from '../api/productApi.js';
 import { getRegions } from '../api/regionApi.js';
 import { PageHeader, getPageContent, useApiResource } from './pageUtils.jsx';
@@ -52,7 +53,8 @@ export default function SellProductPage() {
       {regionsState.error ? (
         <ErrorState title="지역을 불러오지 못했어요" message={regionsState.error.message} onRetry={regionsState.reload} />
       ) : null}
-      {!regionsState.loading && !regionsState.error ? (
+      {!regionsState.loading && !regionsState.error && regions.length === 0 ? <EmptyState title="등록 가능한 지역이 없어요" /> : null}
+      {!regionsState.loading && !regionsState.error && regions.length > 0 ? (
         <Card className="form-card">
           <Card.Body>
             {error ? <Alert variant="danger">{error}</Alert> : null}

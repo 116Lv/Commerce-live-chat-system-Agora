@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { Heart, PackagePlus, ReceiptText, Star, Ticket, UserRound } from 'lucide-react';
 import LoadingState from '../components/LoadingState.jsx';
 import ErrorState from '../components/ErrorState.jsx';
+import EmptyState from '../components/EmptyState.jsx';
 import { getMe, updateProfile } from '../api/mypageApi.js';
 import { PageHeader, useApiResource } from './pageUtils.jsx';
 
@@ -53,7 +54,8 @@ export default function MyPage() {
       {profileState.error ? (
         <ErrorState title="내 정보를 불러오지 못했어요" message={profileState.error.message} onRetry={profileState.reload} />
       ) : null}
-      {!profileState.loading && !profileState.error ? (
+      {!profileState.loading && !profileState.error && !profileState.data ? <EmptyState title="내 정보가 없어요" /> : null}
+      {!profileState.loading && !profileState.error && profileState.data ? (
         <>
           <Row className="g-3 mb-4">
             <Col xs={12} md={4}>
@@ -83,11 +85,11 @@ export default function MyPage() {
               <dl className="compact-list mb-3">
                 <div>
                   <dt>이메일</dt>
-                  <dd>{profileState.data?.email}</dd>
+                  <dd>{profileState.data.email}</dd>
                 </div>
                 <div>
                   <dt>상태</dt>
-                  <dd>{profileState.data?.status}</dd>
+                  <dd>{profileState.data.status}</dd>
                 </div>
               </dl>
               <Form onSubmit={handleSubmit}>
