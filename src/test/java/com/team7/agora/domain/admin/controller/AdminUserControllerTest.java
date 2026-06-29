@@ -10,9 +10,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.team7.agora.domain.admin.dto.response.AdminUserResponse;
 import com.team7.agora.domain.admin.service.AdminUserService;
-import com.team7.agora.domain.user.enums.UserRole;
+import com.team7.agora.domain.admin.enums.AdminRole;
+import com.team7.agora.domain.admin.enums.AdminStatus;
 import com.team7.agora.domain.user.enums.UserStatus;
-import com.team7.agora.global.auth.CustomUserDetails;
+import com.team7.agora.global.auth.AdminPrincipal;
 import java.util.List;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -51,8 +52,8 @@ class AdminUserControllerTest {
 
     @Test
     void getUsers_usesAuthenticatedAdminAndReturnsUsers() throws Exception {
-        authenticate(UserRole.USER_ADMIN);
-        when(adminUserService.getUsers(any(CustomUserDetails.class), any()))
+        authenticate(AdminRole.USER_ADMIN);
+        when(adminUserService.getUsers(any(AdminPrincipal.class), any()))
                 .thenReturn(new PageImpl<>(
                         List.of(new AdminUserResponse(1L, "user@test.com", "동네유저", "ROLE_USER", "ACTIVE")),
                         PageRequest.of(0, 20),
@@ -74,8 +75,8 @@ class AdminUserControllerTest {
 
     @Test
     void changeStatus_usesAuthenticatedAdminAndReturnsUpdatedUser() throws Exception {
-        authenticate(UserRole.USER_ADMIN);
-        when(adminUserService.changeStatus(any(CustomUserDetails.class), eq(1L), eq(UserStatus.BLOCKED)))
+        authenticate(AdminRole.USER_ADMIN);
+        when(adminUserService.changeStatus(any(AdminPrincipal.class), eq(1L), eq(UserStatus.BLOCKED)))
                 .thenReturn(new AdminUserResponse(1L, "user@test.com", "동네유저", "ROLE_USER", "BLOCKED"));
 
         mockMvc.perform(patch("/api/admin/users/{userId}/status", 1L)
@@ -89,13 +90,13 @@ class AdminUserControllerTest {
                 .andExpect(jsonPath("$.data.status").value("BLOCKED"));
     }
 
-    private void authenticate(UserRole role) {
-        CustomUserDetails principal = new CustomUserDetails(
+    private void authenticate(AdminRole role) {
+        AdminPrincipal principal = new AdminPrincipal(
                 99L,
                 "admin@test.com",
                 "encoded",
                 role,
-                UserStatus.ACTIVE,
+                AdminStatus.ACTIVE,
                 "관리자"
         );
         SecurityContextHolder.getContext().setAuthentication(

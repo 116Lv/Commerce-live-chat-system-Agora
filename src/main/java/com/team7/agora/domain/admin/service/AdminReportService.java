@@ -4,7 +4,7 @@ import com.team7.agora.domain.admin.dto.response.AdminReportListResponse;
 import com.team7.agora.domain.admin.dto.response.AdminReportResponse;
 import com.team7.agora.domain.report.entity.Report;
 import com.team7.agora.domain.report.repository.ReportRepository;
-import com.team7.agora.global.auth.CustomUserDetails;
+import com.team7.agora.global.auth.AdminPrincipal;
 import com.team7.agora.global.exception.BusinessException;
 import com.team7.agora.global.exception.ErrorCode;
 import java.util.List;
@@ -33,7 +33,7 @@ public class AdminReportService {
      * @param admin 인증된 관리자 정보
      * @return 클라이언트에 반환할 API 응답
      */
-    public List<AdminReportListResponse> getUserReports(CustomUserDetails admin) {
+    public List<AdminReportListResponse> getUserReports(AdminPrincipal admin) {
         validateUserAdmin(admin);
         return reportRepository.findAllByProductIsNull().stream()
             .map(AdminReportListResponse::from)
@@ -48,7 +48,7 @@ public class AdminReportService {
      * @return 클라이언트에 반환할 API 응답
      */
     @Transactional
-    public AdminReportResponse resolveUserReport(CustomUserDetails admin, Long reportId, String adminMemo) {
+    public AdminReportResponse resolveUserReport(AdminPrincipal admin, Long reportId, String adminMemo) {
         validateUserAdmin(admin);
         Report report = findReport(reportId);
         if (report.getProduct() != null) {
@@ -65,7 +65,7 @@ public class AdminReportService {
      * @param admin 인증된 관리자 정보
      * @return 클라이언트에 반환할 API 응답
      */
-    public List<AdminReportListResponse> getProductReports(CustomUserDetails admin) {
+    public List<AdminReportListResponse> getProductReports(AdminPrincipal admin) {
         validateProductAdmin(admin);
         return reportRepository.findAllByProductIsNotNull().stream()
             .map(AdminReportListResponse::from)
@@ -80,7 +80,7 @@ public class AdminReportService {
      * @return 클라이언트에 반환할 API 응답
      */
     @Transactional
-    public AdminReportResponse resolveProductReport(CustomUserDetails admin, Long reportId, String adminMemo) {
+    public AdminReportResponse resolveProductReport(AdminPrincipal admin, Long reportId, String adminMemo) {
         validateProductAdmin(admin);
         Report report = findReport(reportId);
         if (report.getProduct() == null) {
@@ -96,13 +96,13 @@ public class AdminReportService {
             .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "신고를 찾을 수 없습니다."));
     }
 
-    private void validateUserAdmin(CustomUserDetails admin) {
+    private void validateUserAdmin(AdminPrincipal admin) {
         if (admin == null || !AdminRoleSupport.isUserAdminRole(admin.getRole())) {
             throw new BusinessException(ErrorCode.FORBIDDEN, "유저 신고 처리는 관리자만 수행할 수 있습니다.");
         }
     }
 
-    private void validateProductAdmin(CustomUserDetails admin) {
+    private void validateProductAdmin(AdminPrincipal admin) {
         if (admin == null || !AdminRoleSupport.isProductAdminRole(admin.getRole())) {
             throw new BusinessException(ErrorCode.FORBIDDEN, "상품 신고 처리는 관리자만 수행할 수 있습니다.");
         }

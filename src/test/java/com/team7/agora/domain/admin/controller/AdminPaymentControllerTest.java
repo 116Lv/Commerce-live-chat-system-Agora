@@ -11,9 +11,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.team7.agora.domain.admin.dto.response.AdminPaymentResponse;
 import com.team7.agora.domain.admin.service.AdminPaymentService;
 import com.team7.agora.domain.payment.enums.PaymentStatus;
-import com.team7.agora.domain.user.enums.UserRole;
-import com.team7.agora.domain.user.enums.UserStatus;
-import com.team7.agora.global.auth.CustomUserDetails;
+import com.team7.agora.domain.admin.enums.AdminRole;
+import com.team7.agora.domain.admin.enums.AdminStatus;
+import com.team7.agora.global.auth.AdminPrincipal;
 import com.team7.agora.global.exception.GlobalExceptionHandler;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -38,7 +38,7 @@ class AdminPaymentControllerTest {
     private AdminPaymentService adminPaymentService;
 
     private MockMvc mockMvc;
-    private CustomUserDetails admin;
+    private AdminPrincipal admin;
 
     @BeforeEach
     void setUp() {
@@ -46,12 +46,12 @@ class AdminPaymentControllerTest {
             .setControllerAdvice(new GlobalExceptionHandler())
             .setCustomArgumentResolvers(new AuthenticationPrincipalArgumentResolver())
             .build();
-        admin = new CustomUserDetails(
+        admin = new AdminPrincipal(
             99L,
             "settlement@admin.com",
             "encoded",
-            UserRole.SETTLEMENT_ADMIN,
-            UserStatus.ACTIVE,
+            AdminRole.SETTLEMENT_ADMIN,
+            AdminStatus.ACTIVE,
             "정산관리자"
         );
         SecurityContextHolder.getContext().setAuthentication(

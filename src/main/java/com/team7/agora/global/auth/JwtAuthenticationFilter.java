@@ -1,4 +1,3 @@
-// 요청마다 JWT를 검증하고 사용자 상태 확인 후 SecurityContext에 인증을 저장하는 필터
 package com.team7.agora.global.auth;
 
 import com.team7.agora.global.exception.BusinessException;
@@ -11,31 +10,28 @@ import java.io.IOException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
-/**
- * 인증 처리를 담당하는 컴포넌트이다.
- */
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtProvider jwtProvider;
     private final UserDetailsService userDetailsService;
+    private final AdminDetailsService adminDetailsService;
 
-    /**
-     * 필요한 의존성을 주입받아 컴포넌트를 생성한다.
-     * @param jwtProvider JWT 생성과 검증을 담당하는 컴포넌트
-     * @param userDetailsService 해당 기능의 비즈니스 로직을 처리하는 서비스
-     */
     public JwtAuthenticationFilter(
         JwtProvider jwtProvider,
-        UserDetailsService userDetailsService
+        @Qualifier("customUserDetailsService") UserDetailsService userDetailsService,
+        AdminDetailsService adminDetailsService
     ) {
         this.jwtProvider = jwtProvider;
         this.userDetailsService = userDetailsService;
+        this.adminDetailsService = adminDetailsService;
     }
 
     @Override
@@ -53,10 +49,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         try {
             JwtClaims claims = jwtProvider.parse(jwtProvider.substringBearer(authorization));
-            CustomUserDetails userDetails =
-                (CustomUserDetails) userDetailsService.loadUserByUsername(claims.email());
+            if (!matchesRequestPath(request, claims.accountType())) {
+                SecurityContextHolder.clearContext();
+                AuthErrorResponseWriter.write(response, ErrorCode.FORBIDDEN);
+                return;
+            }
+            UserDetails principal = loadPrincipal(claims);
 
-            if (!userDetails.isEnabled()) {
+            if (!principal.isEnabled()) {
                 SecurityContextHolder.clearContext();
                 AuthErrorResponseWriter.write(response, ErrorCode.INACTIVE_USER);
                 return;
@@ -64,9 +64,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
             UsernamePasswordAuthenticationToken authentication =
                 new UsernamePasswordAuthenticationToken(
-                    userDetails,
+                    principal,
                     null,
-                    userDetails.getAuthorities()
+                    principal.getAuthorities()
                 );
             SecurityContextHolder.getContext().setAuthentication(authentication);
         } catch (BusinessException e) {
@@ -80,5 +80,20 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         filterChain.doFilter(request, response);
+    }
+
+    private boolean matchesRequestPath(HttpServletRequest request, AccountType accountType) {
+        boolean adminPath = request.getRequestURI().startsWith("/api/admin");
+        if (adminPath) {
+            return accountType == AccountType.ADMIN;
+        }
+        return accountType == AccountType.USER;
+    }
+
+    private UserDetails loadPrincipal(JwtClaims claims) {
+        if (claims.accountType() == AccountType.ADMIN) {
+            return adminDetailsService.loadUserByUsername(claims.email());
+        }
+        return userDetailsService.loadUserByUsername(claims.email());
     }
 }

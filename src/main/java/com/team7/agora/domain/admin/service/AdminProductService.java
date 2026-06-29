@@ -4,7 +4,7 @@ import com.team7.agora.domain.admin.dto.response.AdminProductResponse;
 import com.team7.agora.domain.product.entity.Product;
 import com.team7.agora.domain.product.repository.ProductRepository;
 import com.team7.agora.domain.report.repository.ReportRepository;
-import com.team7.agora.global.auth.CustomUserDetails;
+import com.team7.agora.global.auth.AdminPrincipal;
 import com.team7.agora.global.exception.BusinessException;
 import com.team7.agora.global.exception.ErrorCode;
 import org.springframework.data.domain.Page;
@@ -39,7 +39,7 @@ public class AdminProductService {
      * @param pageable 페이지 요청 정보
      * @return 클라이언트에 반환할 API 응답
      */
-    public Page<AdminProductResponse> getProducts(CustomUserDetails admin, boolean reportedOnly, Pageable pageable) {
+    public Page<AdminProductResponse> getProducts(AdminPrincipal admin, boolean reportedOnly, Pageable pageable) {
         validateProductAdmin(admin);
         Page<Product> products = reportedOnly
                 ? reportRepository.findDistinctReportedProducts(pageable)
@@ -54,7 +54,7 @@ public class AdminProductService {
      * @return 클라이언트에 반환할 API 응답
      */
     @Transactional
-    public AdminProductResponse hideProduct(CustomUserDetails admin, Long productId) {
+    public AdminProductResponse hideProduct(AdminPrincipal admin, Long productId) {
         validateProductAdmin(admin);
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "상품을 찾을 수 없습니다."));
@@ -62,7 +62,7 @@ public class AdminProductService {
         return AdminProductResponse.from(product);
     }
 
-    private void validateProductAdmin(CustomUserDetails admin) {
+    private void validateProductAdmin(AdminPrincipal admin) {
         if (admin == null || !AdminRoleSupport.isProductAdminRole(admin.getRole())) {
             throw new BusinessException(ErrorCode.FORBIDDEN, "상품 관리는 관리자만 수행할 수 있습니다.");
         }

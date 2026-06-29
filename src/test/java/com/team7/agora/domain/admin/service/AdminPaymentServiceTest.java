@@ -16,9 +16,9 @@ import com.team7.agora.domain.payment.repository.PaymentRepository;
 import com.team7.agora.domain.settlement.entity.Settlement;
 import com.team7.agora.domain.settlement.enums.SettlementStatus;
 import com.team7.agora.domain.settlement.repository.SettlementRepository;
-import com.team7.agora.domain.user.enums.UserRole;
-import com.team7.agora.domain.user.enums.UserStatus;
-import com.team7.agora.global.auth.CustomUserDetails;
+import com.team7.agora.domain.admin.enums.AdminRole;
+import com.team7.agora.domain.admin.enums.AdminStatus;
+import com.team7.agora.global.auth.AdminPrincipal;
 import com.team7.agora.global.exception.BusinessException;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -48,17 +48,17 @@ class AdminPaymentServiceTest {
     private SettlementRepository settlementRepository;
 
     private AdminPaymentService adminPaymentService;
-    private CustomUserDetails settlementAdmin;
+    private AdminPrincipal settlementAdmin;
 
     @BeforeEach
     void setUp() {
         adminPaymentService = new AdminPaymentService(paymentRepository, paymentClient, paymentService, settlementRepository);
-        settlementAdmin = new CustomUserDetails(
+        settlementAdmin = new AdminPrincipal(
             99L,
             "settlement@admin.com",
             "encoded",
-            UserRole.SETTLEMENT_ADMIN,
-            UserStatus.ACTIVE,
+            AdminRole.SETTLEMENT_ADMIN,
+            AdminStatus.ACTIVE,
             "정산관리자"
         );
     }
@@ -115,14 +115,14 @@ class AdminPaymentServiceTest {
     }
 
     @Test
-    void normalUserCannotReadPayments() {
-        CustomUserDetails user = new CustomUserDetails(
+    void wrongAdminRoleCannotReadPayments() {
+        AdminPrincipal user = new AdminPrincipal(
             1L,
-            "user@test.com",
+            "user-admin@test.com",
             "encoded",
-            UserRole.ROLE_USER,
-            UserStatus.ACTIVE,
-            "일반사용자"
+            AdminRole.USER_ADMIN,
+            AdminStatus.ACTIVE,
+            "사용자관리자"
         );
 
         assertThatThrownBy(() -> adminPaymentService.getPayments(user, null, PageRequest.of(0, 20)))

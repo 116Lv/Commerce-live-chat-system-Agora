@@ -4,7 +4,7 @@ package com.team7.agora.domain.admin.controller;
 import com.team7.agora.domain.admin.dto.request.AdminAccountRoleUpdateRequest;
 import com.team7.agora.domain.admin.dto.response.AdminUserResponse;
 import com.team7.agora.domain.admin.service.AdminAccountService;
-import com.team7.agora.global.auth.CustomUserDetails;
+import com.team7.agora.global.auth.AdminPrincipal;
 import com.team7.agora.global.response.ApiResponse;
 import jakarta.validation.Valid;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -40,7 +40,7 @@ public class AdminAccountController {
      */
     @PatchMapping("/{userId}/role")
     public ApiResponse<AdminUserResponse> changeRole(
-            @AuthenticationPrincipal CustomUserDetails admin,
+            @AuthenticationPrincipal AdminPrincipal admin,
             @PathVariable Long userId,
             @Valid @RequestBody AdminAccountRoleUpdateRequest request
     ) {

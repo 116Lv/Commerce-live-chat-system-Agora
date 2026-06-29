@@ -12,9 +12,9 @@ import com.team7.agora.domain.settlement.entity.Settlement;
 import com.team7.agora.domain.settlement.repository.SettlementRepository;
 import com.team7.agora.domain.trade.entity.Trade;
 import com.team7.agora.domain.user.entity.User;
-import com.team7.agora.domain.user.enums.UserRole;
-import com.team7.agora.domain.user.enums.UserStatus;
-import com.team7.agora.global.auth.CustomUserDetails;
+import com.team7.agora.domain.admin.enums.AdminRole;
+import com.team7.agora.domain.admin.enums.AdminStatus;
+import com.team7.agora.global.auth.AdminPrincipal;
 import com.team7.agora.global.exception.BusinessException;
 import java.math.BigDecimal;
 import java.util.Optional;
@@ -31,17 +31,17 @@ class AdminSettlementServiceTest {
     private SettlementRepository settlementRepository;
 
     private AdminSettlementService adminSettlementService;
-    private CustomUserDetails rootAdmin;
+    private AdminPrincipal rootAdmin;
 
     @BeforeEach
     void setUp() {
         adminSettlementService = new AdminSettlementService(settlementRepository);
-        rootAdmin = new CustomUserDetails(
+        rootAdmin = new AdminPrincipal(
             99L,
             "root@admin.com",
             "encoded",
-            UserRole.ROOT_ADMIN,
-            UserStatus.ACTIVE,
+            AdminRole.ROOT_ADMIN,
+            AdminStatus.ACTIVE,
             "최고관리자"
         );
     }
@@ -61,14 +61,14 @@ class AdminSettlementServiceTest {
     }
 
     @Test
-    void normalUserCannotSettle() {
-        CustomUserDetails user = new CustomUserDetails(
+    void wrongAdminRoleCannotSettle() {
+        AdminPrincipal user = new AdminPrincipal(
             1L,
-            "user@test.com",
+            "user-admin@test.com",
             "encoded",
-            UserRole.ROLE_USER,
-            UserStatus.ACTIVE,
-            "일반사용자"
+            AdminRole.USER_ADMIN,
+            AdminStatus.ACTIVE,
+            "사용자관리자"
         );
 
         assertThatThrownBy(() -> adminSettlementService.settle(user, 200L))

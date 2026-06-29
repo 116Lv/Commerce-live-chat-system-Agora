@@ -16,9 +16,9 @@ import com.team7.agora.domain.admin.dto.response.AdminUserResponse;
 import com.team7.agora.domain.admin.service.AdminAccountService;
 import com.team7.agora.domain.admin.service.AdminAuthService;
 import com.team7.agora.domain.admin.service.AdminService;
-import com.team7.agora.domain.user.enums.UserRole;
-import com.team7.agora.domain.user.enums.UserStatus;
-import com.team7.agora.global.auth.CustomUserDetails;
+import com.team7.agora.domain.admin.enums.AdminRole;
+import com.team7.agora.domain.admin.enums.AdminStatus;
+import com.team7.agora.global.auth.AdminPrincipal;
 import com.team7.agora.global.exception.GlobalExceptionHandler;
 import java.util.List;
 import org.junit.jupiter.api.AfterEach;
@@ -65,9 +65,9 @@ class AdminControllerTest {
         SecurityContextHolder.clearContext();
     }
 
-    private CustomUserDetails authenticate(UserRole role) {
-        CustomUserDetails principal = new CustomUserDetails(
-                1L, "admin@test.com", "encoded", role, UserStatus.ACTIVE, "관리자");
+    private AdminPrincipal authenticate(AdminRole role) {
+        AdminPrincipal principal = new AdminPrincipal(
+                1L, "admin@test.com", "encoded", role, AdminStatus.ACTIVE, "관리자");
         SecurityContextHolder.getContext().setAuthentication(
                 new UsernamePasswordAuthenticationToken(principal, null, principal.getAuthorities()));
         return principal;
@@ -93,7 +93,7 @@ class AdminControllerTest {
     @Test
     void logout_usesAuthenticatedAdmin() throws Exception {
         // given
-        CustomUserDetails principal = authenticate(UserRole.ROOT_ADMIN);
+        AdminPrincipal principal = authenticate(AdminRole.ROOT_ADMIN);
 
         // when & then
         mockMvc.perform(post("/api/admin/auth/logout"))
@@ -105,7 +105,7 @@ class AdminControllerTest {
     @Test
     void getMe_returnsAdminInfo() throws Exception {
         // given
-        authenticate(UserRole.ROOT_ADMIN);
+        authenticate(AdminRole.ROOT_ADMIN);
         when(adminService.getMe(org.mockito.ArgumentMatchers.any()))
                 .thenReturn(new AdminMeResponse(1L, "admin@test.com", "관리자", "ROOT_ADMIN"));
 
@@ -118,7 +118,7 @@ class AdminControllerTest {
     @Test
     void getDashboard_returnsRoleMenus() throws Exception {
         // given
-        authenticate(UserRole.USER_ADMIN);
+        authenticate(AdminRole.USER_ADMIN);
         when(adminService.getDashboard(org.mockito.ArgumentMatchers.any()))
                 .thenReturn(new AdminDashboardResponse("USER_ADMIN", List.of("USERS", "USER_REPORTS")));
 
@@ -131,8 +131,8 @@ class AdminControllerTest {
     @Test
     void changeRole_delegatesWithAuthenticatedRootAdmin() throws Exception {
         // given
-        CustomUserDetails principal = authenticate(UserRole.ROOT_ADMIN);
-        when(adminAccountService.changeRole(principal, 2L, UserRole.PRODUCT_ADMIN))
+        AdminPrincipal principal = authenticate(AdminRole.ROOT_ADMIN);
+        when(adminAccountService.changeRole(principal, 2L, AdminRole.PRODUCT_ADMIN))
                 .thenReturn(new AdminUserResponse(2L, "target@test.com", "대상관리자", "PRODUCT_ADMIN", "ACTIVE"));
 
         // when & then

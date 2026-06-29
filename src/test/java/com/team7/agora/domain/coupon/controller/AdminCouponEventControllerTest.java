@@ -12,9 +12,9 @@ import com.team7.agora.domain.coupon.dto.response.AdminCouponEventResponse;
 import com.team7.agora.domain.coupon.dto.response.CouponEventIssueResponse;
 import com.team7.agora.domain.coupon.enums.CouponEventType;
 import com.team7.agora.domain.coupon.service.AdminCouponEventService;
-import com.team7.agora.domain.user.enums.UserRole;
-import com.team7.agora.domain.user.enums.UserStatus;
-import com.team7.agora.global.auth.CustomUserDetails;
+import com.team7.agora.domain.admin.enums.AdminRole;
+import com.team7.agora.domain.admin.enums.AdminStatus;
+import com.team7.agora.global.auth.AdminPrincipal;
 import com.team7.agora.global.exception.BusinessException;
 import com.team7.agora.global.exception.ErrorCode;
 import com.team7.agora.global.exception.GlobalExceptionHandler;
@@ -56,9 +56,9 @@ class AdminCouponEventControllerTest {
 
     @Test
     void createReturnsCommonResponse() throws Exception {
-        authenticate(UserRole.ROOT_ADMIN);
+        authenticate(AdminRole.ROOT_ADMIN);
         when(adminCouponEventService.createEvent(
-                any(CustomUserDetails.class),
+                any(AdminPrincipal.class),
                 eq(CouponEventType.FIRST_COME),
                 eq("동네 첫 거래 선착순 쿠폰"),
                 any(LocalDateTime.class),
@@ -104,7 +104,7 @@ class AdminCouponEventControllerTest {
 
     @Test
     void createRejectsInvalidRequestBody() throws Exception {
-        authenticate(UserRole.ROOT_ADMIN);
+        authenticate(AdminRole.ROOT_ADMIN);
 
         mockMvc.perform(post("/api/admin/coupon-events")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -126,9 +126,9 @@ class AdminCouponEventControllerTest {
 
     @Test
     void createRejectsNonAdminThroughServiceGuard() throws Exception {
-        authenticate(UserRole.ROLE_USER);
+        authenticate(AdminRole.PRODUCT_ADMIN);
         when(adminCouponEventService.createEvent(
-                any(CustomUserDetails.class),
+                any(AdminPrincipal.class),
                 any(CouponEventType.class),
                 any(String.class),
                 any(LocalDateTime.class),
@@ -160,8 +160,8 @@ class AdminCouponEventControllerTest {
 
     @Test
     void issueReturnsCommonResponse() throws Exception {
-        authenticate(UserRole.USER_ADMIN);
-        when(adminCouponEventService.issueToUsers(any(CustomUserDetails.class), eq(1L), eq(List.of(10L, 11L))))
+        authenticate(AdminRole.USER_ADMIN);
+        when(adminCouponEventService.issueToUsers(any(AdminPrincipal.class), eq(1L), eq(List.of(10L, 11L))))
             .thenReturn(new CouponEventIssueResponse(1L, 2, 0));
 
         mockMvc.perform(post("/api/admin/coupon-events/{eventId}/issue", 1L)
@@ -175,16 +175,16 @@ class AdminCouponEventControllerTest {
             .andExpect(jsonPath("$.status").value("SUCCESS"))
             .andExpect(jsonPath("$.data.issuedCount").value(2));
 
-        verify(adminCouponEventService).issueToUsers(any(CustomUserDetails.class), eq(1L), eq(List.of(10L, 11L)));
+        verify(adminCouponEventService).issueToUsers(any(AdminPrincipal.class), eq(1L), eq(List.of(10L, 11L)));
     }
 
-    private void authenticate(UserRole role) {
-        CustomUserDetails principal = new CustomUserDetails(
+    private void authenticate(AdminRole role) {
+        AdminPrincipal principal = new AdminPrincipal(
             99L,
             "admin@test.com",
             "encoded",
             role,
-            UserStatus.ACTIVE,
+            AdminStatus.ACTIVE,
             "관리자"
         );
         SecurityContextHolder.getContext().setAuthentication(

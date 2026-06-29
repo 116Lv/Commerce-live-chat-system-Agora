@@ -2,7 +2,7 @@ package com.team7.agora.domain.admin.controller;
 
 import com.team7.agora.domain.admin.dto.response.AdminSettlementResponse;
 import com.team7.agora.domain.admin.service.AdminSettlementService;
-import com.team7.agora.global.auth.CustomUserDetails;
+import com.team7.agora.global.auth.AdminPrincipal;
 import com.team7.agora.global.response.ApiResponse;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -35,7 +35,7 @@ public class AdminSettlementController {
      */
     @PostMapping("/{settlementId}/settle")
     public ApiResponse<AdminSettlementResponse> settle(
-        @AuthenticationPrincipal CustomUserDetails userDetails,
+        @AuthenticationPrincipal AdminPrincipal userDetails,
         @PathVariable Long settlementId
     ) {
         AdminSettlementResponse response = adminSettlementService.settle(userDetails, settlementId);

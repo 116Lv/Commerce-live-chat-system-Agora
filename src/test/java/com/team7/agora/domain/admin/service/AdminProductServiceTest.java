@@ -14,9 +14,9 @@ import com.team7.agora.domain.product.repository.ProductRepository;
 import com.team7.agora.domain.region.entity.Region;
 import com.team7.agora.domain.report.repository.ReportRepository;
 import com.team7.agora.domain.user.entity.User;
-import com.team7.agora.domain.user.enums.UserRole;
-import com.team7.agora.domain.user.enums.UserStatus;
-import com.team7.agora.global.auth.CustomUserDetails;
+import com.team7.agora.domain.admin.enums.AdminRole;
+import com.team7.agora.domain.admin.enums.AdminStatus;
+import com.team7.agora.global.auth.AdminPrincipal;
 import com.team7.agora.global.exception.BusinessException;
 import java.math.BigDecimal;
 import java.util.List;
@@ -45,7 +45,7 @@ class AdminProductServiceTest {
         when(productRepository.findAll(PageRequest.of(0, 20)))
                 .thenReturn(new PageImpl<>(List.of(product), PageRequest.of(0, 20), 42));
 
-        Page<AdminProductResponse> responses = service.getProducts(principal(UserRole.PRODUCT_ADMIN), false, PageRequest.of(0, 20));
+        Page<AdminProductResponse> responses = service.getProducts(principal(AdminRole.PRODUCT_ADMIN), false, PageRequest.of(0, 20));
 
         assertThat(responses.getContent()).hasSize(1);
         assertThat(responses.getContent().get(0).id()).isEqualTo(1L);
@@ -62,7 +62,7 @@ class AdminProductServiceTest {
         when(reportRepository.findDistinctReportedProducts(pageable))
                 .thenReturn(new PageImpl<>(List.of(product), pageable, 3));
 
-        Page<AdminProductResponse> responses = service.getProducts(principal(UserRole.ROOT_ADMIN), true, pageable);
+        Page<AdminProductResponse> responses = service.getProducts(principal(AdminRole.ROOT_ADMIN), true, pageable);
 
         assertThat(responses.getContent()).hasSize(1);
         assertThat(responses.getContent().get(0).id()).isEqualTo(1L);
@@ -76,7 +76,7 @@ class AdminProductServiceTest {
     void getProducts_rejectsNonProductAdmin() {
         AdminProductService service = new AdminProductService(productRepository, reportRepository);
 
-        assertThatThrownBy(() -> service.getProducts(principal(UserRole.USER_ADMIN), false, PageRequest.of(0, 20)))
+        assertThatThrownBy(() -> service.getProducts(principal(AdminRole.USER_ADMIN), false, PageRequest.of(0, 20)))
                 .isInstanceOf(BusinessException.class);
     }
 
@@ -86,7 +86,7 @@ class AdminProductServiceTest {
         Product product = product(1L);
         when(productRepository.findById(1L)).thenReturn(Optional.of(product));
 
-        AdminProductResponse response = service.hideProduct(principal(UserRole.PRODUCT_ADMIN), 1L);
+        AdminProductResponse response = service.hideProduct(principal(AdminRole.PRODUCT_ADMIN), 1L);
 
         assertThat(response.status()).isEqualTo("HIDDEN");
         assertThat(product.getStatus()).isEqualTo(ProductStatus.HIDDEN);
@@ -96,7 +96,7 @@ class AdminProductServiceTest {
     void hideProduct_rejectsNonProductAdmin() {
         AdminProductService service = new AdminProductService(productRepository, reportRepository);
 
-        assertThatThrownBy(() -> service.hideProduct(principal(UserRole.USER_ADMIN), 1L))
+        assertThatThrownBy(() -> service.hideProduct(principal(AdminRole.USER_ADMIN), 1L))
                 .isInstanceOf(BusinessException.class);
     }
 
@@ -105,7 +105,7 @@ class AdminProductServiceTest {
         AdminProductService service = new AdminProductService(productRepository, reportRepository);
         when(productRepository.findById(1L)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> service.hideProduct(principal(UserRole.PRODUCT_ADMIN), 1L))
+        assertThatThrownBy(() -> service.hideProduct(principal(AdminRole.PRODUCT_ADMIN), 1L))
                 .isInstanceOf(BusinessException.class);
     }
 
@@ -124,7 +124,7 @@ class AdminProductServiceTest {
         return user;
     }
 
-    private CustomUserDetails principal(UserRole role) {
-        return new CustomUserDetails(99L, "admin@test.com", "encoded", role, UserStatus.ACTIVE, "관리자");
+    private AdminPrincipal principal(AdminRole role) {
+        return new AdminPrincipal(99L, "admin@test.com", "encoded", role, AdminStatus.ACTIVE, "관리자");
     }
 }

@@ -4,7 +4,7 @@ package com.team7.agora.domain.admin.controller;
 import com.team7.agora.domain.admin.dto.request.AdminLoginRequest;
 import com.team7.agora.domain.admin.dto.response.AdminLoginResponse;
 import com.team7.agora.domain.admin.service.AdminAuthService;
-import com.team7.agora.global.auth.CustomUserDetails;
+import com.team7.agora.global.auth.AdminPrincipal;
 import com.team7.agora.global.response.ApiResponse;
 import jakarta.validation.Valid;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -46,7 +46,7 @@ public class AdminAuthController {
      * @return 클라이언트에 반환할 API 응답
      */
     @PostMapping("/logout")
-    public ApiResponse<Void> logout(@AuthenticationPrincipal CustomUserDetails admin) {
+    public ApiResponse<Void> logout(@AuthenticationPrincipal AdminPrincipal admin) {
         adminAuthService.logout(admin);
         return ApiResponse.success("관리자 로그아웃이 완료되었습니다.", null);
     }

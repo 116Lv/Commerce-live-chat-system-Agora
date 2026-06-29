@@ -1,29 +1,28 @@
-// 관리자 역할 판별을 담당하는 지원 클래스
 package com.team7.agora.domain.admin.service;
 
-import com.team7.agora.domain.user.enums.UserRole;
+import com.team7.agora.domain.admin.enums.AdminRole;
 
-final class AdminRoleSupport {
+public final class AdminRoleSupport {
 
     private AdminRoleSupport() {
     }
 
-    static boolean isAdminRole(UserRole role) {
-        return role == UserRole.ROOT_ADMIN
-                || role == UserRole.USER_ADMIN
-                || role == UserRole.PRODUCT_ADMIN
-                || role == UserRole.SETTLEMENT_ADMIN;
+    public static boolean isAdminRole(AdminRole role) {
+        return role == AdminRole.ROOT_ADMIN
+                || role == AdminRole.USER_ADMIN
+                || role == AdminRole.PRODUCT_ADMIN
+                || role == AdminRole.SETTLEMENT_ADMIN;
     }
 
-    static boolean isSettlementAdminRole(UserRole role) {
-        return role == UserRole.ROOT_ADMIN || role == UserRole.SETTLEMENT_ADMIN;
+    public static boolean isSettlementAdminRole(AdminRole role) {
+        return role == AdminRole.ROOT_ADMIN || role == AdminRole.SETTLEMENT_ADMIN;
     }
 
-    static boolean isUserAdminRole(UserRole role) {
-        return role == UserRole.ROOT_ADMIN || role == UserRole.USER_ADMIN;
+    public static boolean isUserAdminRole(AdminRole role) {
+        return role == AdminRole.ROOT_ADMIN || role == AdminRole.USER_ADMIN;
     }
 
-    static boolean isProductAdminRole(UserRole role) {
-        return role == UserRole.ROOT_ADMIN || role == UserRole.PRODUCT_ADMIN;
+    public static boolean isProductAdminRole(AdminRole role) {
+        return role == AdminRole.ROOT_ADMIN || role == AdminRole.PRODUCT_ADMIN;
     }
 }

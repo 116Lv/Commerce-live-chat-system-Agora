@@ -6,10 +6,10 @@ import com.team7.agora.domain.report.entity.Report;
 import com.team7.agora.domain.report.enums.ReportStatus;
 import com.team7.agora.domain.report.repository.ReportRepository;
 import com.team7.agora.domain.user.entity.User;
-import com.team7.agora.domain.user.enums.UserRole;
-import com.team7.agora.domain.user.enums.UserStatus;
+import com.team7.agora.domain.admin.enums.AdminRole;
+import com.team7.agora.domain.admin.enums.AdminStatus;
 import com.team7.agora.domain.user.repository.UserRepository;
-import com.team7.agora.global.auth.CustomUserDetails;
+import com.team7.agora.global.auth.AdminPrincipal;
 import com.team7.agora.global.exception.BusinessException;
 import com.team7.agora.global.exception.ErrorCode;
 import java.util.List;
@@ -49,8 +49,8 @@ class AdminReportServiceConcurrencyIntegrationTest {
     @Test
     void concurrentResolveUserReportAllowsOnlyOneSuccessAndOneConflict() throws Exception {
         Report report = saveUserReport();
-        CustomUserDetails admin = new CustomUserDetails(
-            999L, "user-admin@test.com", "pw", UserRole.USER_ADMIN, UserStatus.ACTIVE, "유저관리자"
+        AdminPrincipal admin = new AdminPrincipal(
+            999L, "user-admin@test.com", "pw", AdminRole.USER_ADMIN, AdminStatus.ACTIVE, "유저관리자"
         );
         int requestCount = 2;
         var executor = Executors.newFixedThreadPool(requestCount);
@@ -83,7 +83,7 @@ class AdminReportServiceConcurrencyIntegrationTest {
         ExecutorService executor,
         CountDownLatch ready,
         CountDownLatch start,
-        CustomUserDetails admin,
+        AdminPrincipal admin,
         Long reportId,
         String adminMemo
     ) {

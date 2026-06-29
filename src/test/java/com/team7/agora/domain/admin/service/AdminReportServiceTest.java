@@ -13,9 +13,10 @@ import com.team7.agora.domain.region.entity.Region;
 import com.team7.agora.domain.report.entity.Report;
 import com.team7.agora.domain.report.repository.ReportRepository;
 import com.team7.agora.domain.user.entity.User;
-import com.team7.agora.domain.user.enums.UserRole;
 import com.team7.agora.domain.user.enums.UserStatus;
-import com.team7.agora.global.auth.CustomUserDetails;
+import com.team7.agora.domain.admin.enums.AdminRole;
+import com.team7.agora.domain.admin.enums.AdminStatus;
+import com.team7.agora.global.auth.AdminPrincipal;
 import com.team7.agora.global.exception.BusinessException;
 import com.team7.agora.global.exception.ErrorCode;
 import java.math.BigDecimal;
@@ -35,14 +36,14 @@ class AdminReportServiceTest {
 
     private AdminReportService adminReportService;
 
-    private final CustomUserDetails userAdmin = new CustomUserDetails(
-        99L, "user-admin@test.com", "pw", UserRole.USER_ADMIN, UserStatus.ACTIVE, "유저관리자"
+    private final AdminPrincipal userAdmin = new AdminPrincipal(
+        99L, "user-admin@test.com", "pw", AdminRole.USER_ADMIN, AdminStatus.ACTIVE, "유저관리자"
     );
-    private final CustomUserDetails productAdmin = new CustomUserDetails(
-        98L, "product-admin@test.com", "pw", UserRole.PRODUCT_ADMIN, UserStatus.ACTIVE, "상품관리자"
+    private final AdminPrincipal productAdmin = new AdminPrincipal(
+        98L, "product-admin@test.com", "pw", AdminRole.PRODUCT_ADMIN, AdminStatus.ACTIVE, "상품관리자"
     );
-    private final CustomUserDetails regularUser = new CustomUserDetails(
-        1L, "user@test.com", "pw", UserRole.ROLE_USER, UserStatus.ACTIVE, "일반유저"
+    private final AdminPrincipal settlementAdmin = new AdminPrincipal(
+        1L, "settlement-admin@test.com", "pw", AdminRole.SETTLEMENT_ADMIN, AdminStatus.ACTIVE, "정산관리자"
     );
 
     private Report userReport;
@@ -80,7 +81,7 @@ class AdminReportServiceTest {
 
     @Test
     void getUserReports_rejectsNonUserAdmin() {
-        assertThatThrownBy(() -> adminReportService.getUserReports(regularUser))
+        assertThatThrownBy(() -> adminReportService.getUserReports(settlementAdmin))
             .isInstanceOf(BusinessException.class);
     }
 
@@ -106,7 +107,7 @@ class AdminReportServiceTest {
 
     @Test
     void resolveUserReport_rejectsNonUserAdmin() {
-        assertThatThrownBy(() -> adminReportService.resolveUserReport(regularUser, 200L, "욕설 확인"))
+        assertThatThrownBy(() -> adminReportService.resolveUserReport(settlementAdmin, 200L, "욕설 확인"))
             .isInstanceOf(BusinessException.class);
     }
 
@@ -154,7 +155,7 @@ class AdminReportServiceTest {
 
     @Test
     void getProductReports_rejectsNonProductAdmin() {
-        assertThatThrownBy(() -> adminReportService.getProductReports(regularUser))
+        assertThatThrownBy(() -> adminReportService.getProductReports(settlementAdmin))
             .isInstanceOf(BusinessException.class);
     }
 
@@ -179,7 +180,7 @@ class AdminReportServiceTest {
 
     @Test
     void resolveProductReport_rejectsNonProductAdmin() {
-        assertThatThrownBy(() -> adminReportService.resolveProductReport(regularUser, 100L, "가품 판매 확인"))
+        assertThatThrownBy(() -> adminReportService.resolveProductReport(settlementAdmin, 100L, "가품 판매 확인"))
             .isInstanceOf(BusinessException.class);
     }
 

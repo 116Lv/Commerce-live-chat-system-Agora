@@ -7,11 +7,11 @@ import static org.mockito.Mockito.when;
 
 import com.team7.agora.domain.admin.dto.response.AdminDashboardResponse;
 import com.team7.agora.domain.admin.dto.response.AdminMeResponse;
-import com.team7.agora.domain.user.entity.User;
-import com.team7.agora.domain.user.enums.UserRole;
-import com.team7.agora.domain.user.enums.UserStatus;
-import com.team7.agora.domain.user.repository.UserRepository;
-import com.team7.agora.global.auth.CustomUserDetails;
+import com.team7.agora.domain.admin.entity.Admin;
+import com.team7.agora.domain.admin.enums.AdminRole;
+import com.team7.agora.domain.admin.enums.AdminStatus;
+import com.team7.agora.domain.admin.repository.AdminRepository;
+import com.team7.agora.global.auth.AdminPrincipal;
 import com.team7.agora.global.exception.BusinessException;
 import com.team7.agora.global.exception.ErrorCode;
 import java.util.Optional;
@@ -25,27 +25,26 @@ import org.springframework.test.util.ReflectionTestUtils;
 class AdminServiceTest {
 
     @Mock
-    private UserRepository userRepository;
+    private AdminRepository adminRepository;
 
     private AdminService createService() {
-        return new AdminService(userRepository);
+        return new AdminService(adminRepository);
     }
 
-    private CustomUserDetails principal(UserRole role) {
-        return new CustomUserDetails(1L, "admin@test.com", "encoded", role, UserStatus.ACTIVE, "관리자");
+    private AdminPrincipal principal(AdminRole role) {
+        return new AdminPrincipal(1L, "admin@test.com", "encoded", role, AdminStatus.ACTIVE, "관리자");
     }
 
     @Test
     void getMe_returnsAdminAccountInfo() {
         // given
         AdminService service = createService();
-        User admin = User.create("admin@test.com", "encoded", "관리자");
+        Admin admin = Admin.create("admin@test.com", "encoded", "관리자", AdminRole.ROOT_ADMIN);
         ReflectionTestUtils.setField(admin, "id", 1L);
-        admin.changeRole(UserRole.ROOT_ADMIN);
-        when(userRepository.findById(1L)).thenReturn(Optional.of(admin));
+        when(adminRepository.findById(1L)).thenReturn(Optional.of(admin));
 
         // when
-        AdminMeResponse response = service.getMe(principal(UserRole.ROOT_ADMIN));
+        AdminMeResponse response = service.getMe(principal(AdminRole.ROOT_ADMIN));
 
         // then
         assertThat(response.id()).isEqualTo(1L);
@@ -59,7 +58,7 @@ class AdminServiceTest {
         AdminService service = createService();
 
         // when
-        AdminDashboardResponse response = service.getDashboard(principal(UserRole.USER_ADMIN));
+        AdminDashboardResponse response = service.getDashboard(principal(AdminRole.USER_ADMIN));
 
         // then
         assertThat(response.role()).isEqualTo("USER_ADMIN");
@@ -72,7 +71,7 @@ class AdminServiceTest {
         AdminService service = createService();
 
         // when & then
-        assertThatThrownBy(() -> service.getDashboard(principal(UserRole.ROLE_USER)))
+        assertThatThrownBy(() -> service.getDashboard(null))
                 .isInstanceOf(BusinessException.class)
                 .extracting("errorCode")
                 .isEqualTo(ErrorCode.FORBIDDEN);
