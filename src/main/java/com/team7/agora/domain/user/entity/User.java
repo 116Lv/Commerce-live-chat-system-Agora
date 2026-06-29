@@ -14,6 +14,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import java.time.LocalDateTime;
+import java.util.UUID;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -26,6 +27,9 @@ import lombok.NoArgsConstructor;
 @Entity
 @Table(name = "users")
 public class User {
+
+    private static final String DELETED_DISPLAY_NAME = "탈퇴한 사용자";
+    private static final String DELETED_EMAIL_DOMAIN = "@agora.local";
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -113,9 +117,13 @@ public class User {
         if (this.status == status) {
             throw new BusinessException(ErrorCode.CONFLICT, "이미 같은 회원 상태입니다.");
         }
+        if (this.status == UserStatus.DELETED) {
+            throw new BusinessException(ErrorCode.CONFLICT, "탈퇴 회원은 상태를 변경할 수 없습니다.");
+        }
         this.status = status;
         if (status == UserStatus.DELETED) {
             this.deletedAt = AgoraClock.now();
+            anonymizeDeletedUser();
             return;
         }
         this.deletedAt = null;
@@ -143,5 +151,12 @@ public class User {
      */
     public void updateProfile(String nickname) {
         this.nickname = nickname;
+    }
+
+    private void anonymizeDeletedUser() {
+        String suffix = id == null ? UUID.randomUUID().toString() : String.valueOf(id);
+        this.email = "deleted-user-" + suffix + DELETED_EMAIL_DOMAIN;
+        this.phone = null;
+        this.nickname = DELETED_DISPLAY_NAME;
     }
 }

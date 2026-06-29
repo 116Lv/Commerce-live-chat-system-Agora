@@ -33,7 +33,7 @@ class AdminUserServiceTest {
         AdminUserService service = new AdminUserService(userRepository);
         User user = User.signup("user@test.com", "encoded", "동네유저", "01011112222");
         assignId(user, 1L);
-        when(userRepository.findAll(PageRequest.of(0, 20)))
+        when(userRepository.findAllByDeletedAtIsNull(PageRequest.of(0, 20)))
                 .thenReturn(new PageImpl<>(List.of(user), PageRequest.of(0, 20), 42));
 
         Page<AdminUserResponse> responses = service.getUsers(principal(UserRole.USER_ADMIN), PageRequest.of(0, 20));
@@ -47,19 +47,15 @@ class AdminUserServiceTest {
     }
 
     @Test
-    void getUsers_includesDeletedUsersForAdminStatusAudit() {
+    void getUsers_excludesDeletedUsersFromAdminList() {
         AdminUserService service = new AdminUserService(userRepository);
-        User deletedUser = User.signup("deleted@test.com", "encoded", "탈퇴유저", "01011112222");
-        assignId(deletedUser, 2L);
-        deletedUser.changeStatus(UserStatus.DELETED);
-        when(userRepository.findAll(PageRequest.of(0, 20)))
-                .thenReturn(new PageImpl<>(List.of(deletedUser), PageRequest.of(0, 20), 1));
+        when(userRepository.findAllByDeletedAtIsNull(PageRequest.of(0, 20)))
+                .thenReturn(new PageImpl<>(List.of(), PageRequest.of(0, 20), 0));
 
         Page<AdminUserResponse> responses = service.getUsers(principal(UserRole.USER_ADMIN), PageRequest.of(0, 20));
 
-        assertThat(responses.getContent()).hasSize(1);
-        assertThat(responses.getContent().get(0).id()).isEqualTo(2L);
-        assertThat(responses.getContent().get(0).status()).isEqualTo("DELETED");
+        assertThat(responses.getContent()).isEmpty();
+        assertThat(responses.getTotalElements()).isZero();
     }
 
     @Test
@@ -81,6 +77,20 @@ class AdminUserServiceTest {
 
         assertThat(response.status()).isEqualTo("BLOCKED");
         assertThat(user.getStatus()).isEqualTo(UserStatus.BLOCKED);
+    }
+
+    @Test
+    void changeStatusToDeletedAnonymizesPiiInResponse() {
+        AdminUserService service = new AdminUserService(userRepository);
+        User user = User.signup("user@test.com", "encoded", "동네유저", "01011112222");
+        assignId(user, 1L);
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+
+        AdminUserResponse response = service.changeStatus(principal(UserRole.USER_ADMIN), 1L, UserStatus.DELETED);
+
+        assertThat(response.email()).isNotEqualTo("user@test.com");
+        assertThat(response.email()).startsWith("deleted-user-");
+        assertThat(response.nickname()).isEqualTo("탈퇴한 사용자");
     }
 
     @Test
