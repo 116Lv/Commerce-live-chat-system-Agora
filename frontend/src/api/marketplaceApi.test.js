@@ -1,4 +1,4 @@
-﻿import assert from 'node:assert/strict';
+import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import {
   createProduct,
@@ -87,7 +87,7 @@ test('product image upload sends a multipart image field', async () => {
 
   assert.equal(requests[0].method, 'post');
   assert.equal(requests[0].url, '/api/products/7/images');
-  assert.equal(requests[0].headers['Content-Type'], 'multipart/form-data');
+  assert.notEqual(requests[0].headers?.['Content-Type'], 'multipart/form-data');
   assert.equal(requests[0].data.get('image').size, image.size);
   assert.equal(requests[0].data.get('image').type, image.type);
 });

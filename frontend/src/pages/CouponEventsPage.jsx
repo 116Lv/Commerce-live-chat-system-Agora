@@ -1,19 +1,29 @@
-﻿import { useState } from 'react';
+import { useState } from 'react';
 import { Alert, Button, Card, Col, Row } from 'react-bootstrap';
+import { useLocation, useNavigate } from 'react-router-dom';
 import LoadingState from '../components/LoadingState.jsx';
 import ErrorState from '../components/ErrorState.jsx';
 import EmptyState from '../components/EmptyState.jsx';
 import { getCouponEvents, issueCoupon } from '../api/couponApi.js';
+import { useAuth } from '../auth/AuthContext.jsx';
 import { PageHeader, formatDateTime, getPageContent, statusText, useApiResource } from './pageUtils.jsx';
 
 export default function CouponEventsPage() {
   const { data, error, loading, reload } = useApiResource(() => getCouponEvents(), []);
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { isUserAuthenticated } = useAuth();
   const [message, setMessage] = useState('');
   const [actionError, setActionError] = useState('');
   const [issuingId, setIssuingId] = useState(null);
   const events = getPageContent(data);
 
   const handleIssue = async (eventId) => {
+    if (!isUserAuthenticated) {
+      navigate('/login', { state: { from: location } });
+      return;
+    }
+
     setIssuingId(eventId);
     setMessage('');
     setActionError('');

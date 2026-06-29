@@ -1,6 +1,6 @@
-﻿import { useState } from 'react';
+import { useState } from 'react';
 import { Alert, Button, Col, Row } from 'react-bootstrap';
-import { Link, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { Heart } from 'lucide-react';
 import MoneyText from '../components/MoneyText.jsx';
 import StatusBadge from '../components/StatusBadge.jsx';
@@ -8,16 +8,25 @@ import LoadingState from '../components/LoadingState.jsx';
 import ErrorState from '../components/ErrorState.jsx';
 import EmptyState from '../components/EmptyState.jsx';
 import { getProduct, likeProduct } from '../api/productApi.js';
-import { PageHeader, getProductId, statusText, useApiResource } from './pageUtils.jsx';
+import { useAuth } from '../auth/AuthContext.jsx';
+import { PageHeader, statusText, useApiResource } from './pageUtils.jsx';
 
 export default function ProductDetailPage() {
   const { productId } = useParams();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { isUserAuthenticated } = useAuth();
   const [actionMessage, setActionMessage] = useState('');
   const [actionError, setActionError] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const { data: product, error, loading, reload } = useApiResource(() => getProduct(productId), [productId]);
 
   const handleLike = async () => {
+    if (!isUserAuthenticated) {
+      navigate('/login', { state: { from: location } });
+      return;
+    }
+
     setSubmitting(true);
     setActionMessage('');
     setActionError('');
@@ -47,15 +56,7 @@ export default function ProductDetailPage() {
 
   return (
     <section>
-      <PageHeader
-        title={product.title || '상품'}
-        eyebrow="상품 상세"
-        action={
-          <Button as={Link} to={`/products/${getProductId(product)}/edit`} variant="outline-primary">
-            수정
-          </Button>
-        }
-      />
+      <PageHeader title={product.title || '상품'} eyebrow="상품 상세" />
       {actionMessage ? <Alert variant="success">{actionMessage}</Alert> : null}
       {actionError ? <Alert variant="danger">{actionError}</Alert> : null}
       <Row className="g-4">

@@ -22,10 +22,7 @@ export const uploadProductImage = (productId, image, config = {}) => {
   const formData = new FormData();
   formData.append('image', image);
 
-  return apiClient.post(`/api/products/${productId}/images`, formData, {
-    ...config,
-    headers: { ...config.headers, 'Content-Type': 'multipart/form-data' }
-  });
+  return apiClient.post(`/api/products/${productId}/images`, formData, config);
 };
 
 export const likeProduct = (productId, config = {}) =>
