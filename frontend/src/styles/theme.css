@@ -505,6 +505,76 @@ p {
   white-space: pre-line;
 }
 
+.section-title {
+  margin-bottom: 0.75rem;
+  font-size: 1.1rem;
+  font-weight: 800;
+}
+
+.product-action-group,
+.nego-actions {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.product-action-group .btn,
+.nego-actions .btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.chat-room-panel {
+  display: grid;
+  gap: 1rem;
+}
+
+.message-list {
+  display: grid;
+  gap: 0.75rem;
+  max-height: 32rem;
+  overflow: auto;
+  padding-right: 0.25rem;
+}
+
+.message-item {
+  padding: 0.85rem;
+  border: 1px solid var(--agora-border);
+  border-radius: 8px;
+  background: #fbfdfc;
+}
+
+.message-item p {
+  margin-bottom: 0;
+  white-space: pre-line;
+}
+
+.message-meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.35rem;
+  color: var(--agora-muted);
+  font-size: 0.86rem;
+}
+
+.message-meta strong {
+  color: var(--agora-ink);
+}
+
+.chat-compose {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: 0.5rem;
+}
+
+.nego-offer-summary {
+  padding: 0.85rem;
+  border: 1px solid var(--agora-border);
+  border-radius: 8px;
+  background: #fbfdfc;
+}
+
 .pre-line {
   white-space: pre-line;
 }
@@ -527,5 +597,19 @@ p {
   .form-actions .btn,
   .profile-form-row .btn {
     width: 100%;
+  }
+
+  .chat-compose {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .product-action-group,
+  .nego-actions {
+    width: 100%;
+  }
+
+  .product-action-group .btn,
+  .nego-actions .btn {
+    flex: 1 1 45%;
   }
 }

@@ -67,13 +67,27 @@ export const formatDateTime = (value) => {
 export const statusText = (status) => {
   const labels = {
     ACTIVE: '진행중',
+    ACCEPTED: '수락됨',
     AVAILABLE: '판매중',
+    CANCELLED: '취소',
+    CONFIRMING: '확인중',
     COMPLETED: '완료',
+    EXTENDED: '연장됨',
+    EXTENSION_REQUESTED: '연장 요청',
     EXPIRED: '만료',
+    FAILED: '실패',
+    HELD: '보류',
     ISSUED: '발급됨',
+    OFFER_ACCEPTED: '제안 수락',
+    PAID: '결제완료',
+    PAYMENT_PENDING: '결제대기',
     PENDING: '대기',
+    READY: '준비',
+    REFUNDED: '환불',
+    REJECTED: '거절',
     RESERVED: '예약중',
     SELLING: '판매중',
+    SETTLED: '정산완료',
     SOLD: '판매완료',
     USED: '사용됨'
   };

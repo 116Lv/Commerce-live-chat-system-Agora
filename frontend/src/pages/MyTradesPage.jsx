@@ -1,5 +1,6 @@
-﻿import { useState } from 'react';
+import { useState } from 'react';
 import { ButtonGroup, Card, ToggleButton } from 'react-bootstrap';
+import { Link } from 'react-router-dom';
 import MoneyText from '../components/MoneyText.jsx';
 import LoadingState from '../components/LoadingState.jsx';
 import ErrorState from '../components/ErrorState.jsx';
@@ -52,7 +53,9 @@ export default function MyTradesPage() {
               <Card.Body>
                 <div className="list-card-row">
                   <div>
-                    <Card.Title as="h2">{trade.productTitle}</Card.Title>
+                    <Card.Title as="h2">
+                      <Link to={`/trades/${trade.tradeId}`}>{trade.productTitle || `거래 #${trade.tradeId}`}</Link>
+                    </Card.Title>
                     <p className="text-muted mb-0">{trade.counterpartNickname || '상대 없음'}</p>
                   </div>
                   <MoneyText amount={trade.tradePrice ?? trade.productPrice} className="list-price" />

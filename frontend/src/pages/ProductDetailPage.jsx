@@ -1,14 +1,17 @@
 import { useState } from 'react';
-import { Alert, Button, Col, Row } from 'react-bootstrap';
+import { Alert, Button, ButtonGroup, Col, Row } from 'react-bootstrap';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
-import { Heart } from 'lucide-react';
+import { Flag, Heart, MessageCircle, ShoppingCart } from 'lucide-react';
 import MoneyText from '../components/MoneyText.jsx';
 import StatusBadge from '../components/StatusBadge.jsx';
 import LoadingState from '../components/LoadingState.jsx';
 import ErrorState from '../components/ErrorState.jsx';
 import EmptyState from '../components/EmptyState.jsx';
 import { getProduct, likeProduct } from '../api/productApi.js';
+import { openChatRoom } from '../api/chatApi.js';
+import { startTrade } from '../api/tradeApi.js';
 import { useAuth } from '../auth/AuthContext.jsx';
+import ReportModal from '../features/reports/ReportModal.jsx';
 import { PageHeader, statusText, useApiResource } from './pageUtils.jsx';
 
 export default function ProductDetailPage() {
@@ -18,16 +21,25 @@ export default function ProductDetailPage() {
   const { isUserAuthenticated } = useAuth();
   const [actionMessage, setActionMessage] = useState('');
   const [actionError, setActionError] = useState('');
-  const [submitting, setSubmitting] = useState(false);
+  const [submitting, setSubmitting] = useState('');
+  const [showReport, setShowReport] = useState(false);
   const { data: product, error, loading, reload } = useApiResource(() => getProduct(productId), [productId]);
 
-  const handleLike = async () => {
+  const requireAuth = () => {
     if (!isUserAuthenticated) {
       navigate('/login', { state: { from: location } });
+      return false;
+    }
+
+    return true;
+  };
+
+  const handleLike = async () => {
+    if (!requireAuth()) {
       return;
     }
 
-    setSubmitting(true);
+    setSubmitting('like');
     setActionMessage('');
     setActionError('');
 
@@ -38,8 +50,54 @@ export default function ProductDetailPage() {
     } catch (err) {
       setActionError(err.message);
     } finally {
-      setSubmitting(false);
+      setSubmitting('');
     }
+  };
+
+  const handleOpenChat = async () => {
+    if (!requireAuth()) {
+      return;
+    }
+
+    setSubmitting('chat');
+    setActionMessage('');
+    setActionError('');
+
+    try {
+      const room = await openChatRoom(productId);
+      navigate(`/chat/${room.chatRoomId}`);
+    } catch (err) {
+      setActionError(err.message);
+    } finally {
+      setSubmitting('');
+    }
+  };
+
+  const handleStartTrade = async () => {
+    if (!requireAuth()) {
+      return;
+    }
+
+    setSubmitting('trade');
+    setActionMessage('');
+    setActionError('');
+
+    try {
+      const trade = await startTrade(productId);
+      navigate(`/trades/${trade.tradeId}`);
+    } catch (err) {
+      setActionError(err.message);
+    } finally {
+      setSubmitting('');
+    }
+  };
+
+  const handleReport = () => {
+    if (!requireAuth()) {
+      return;
+    }
+
+    setShowReport(true);
   };
 
   if (loading) {
@@ -86,9 +144,20 @@ export default function ProductDetailPage() {
                 <dd>{product.regionName || product.region || '-'}</dd>
               </div>
             </dl>
-            <Button onClick={handleLike} disabled={submitting} variant="primary">
-              <Heart size={17} aria-hidden="true" /> 관심
-            </Button>
+            <ButtonGroup className="product-action-group" aria-label="상품 작업">
+              <Button onClick={handleLike} disabled={Boolean(submitting)} variant="outline-primary">
+                <Heart size={17} aria-hidden="true" /> 관심
+              </Button>
+              <Button onClick={handleOpenChat} disabled={Boolean(submitting)} variant="outline-primary">
+                <MessageCircle size={17} aria-hidden="true" /> 채팅
+              </Button>
+              <Button onClick={handleStartTrade} disabled={Boolean(submitting)} variant="primary">
+                <ShoppingCart size={17} aria-hidden="true" /> 거래
+              </Button>
+              <Button onClick={handleReport} disabled={Boolean(submitting)} variant="outline-danger">
+                <Flag size={17} aria-hidden="true" /> 신고
+              </Button>
+            </ButtonGroup>
           </div>
         </Col>
       </Row>
@@ -96,6 +165,7 @@ export default function ProductDetailPage() {
         <h2>설명</h2>
         <p className="mb-0 pre-line">{product.description || '설명이 없어요.'}</p>
       </div>
+      <ReportModal show={showReport} onHide={() => setShowReport(false)} productId={Number(productId)} />
     </section>
   );
 }
