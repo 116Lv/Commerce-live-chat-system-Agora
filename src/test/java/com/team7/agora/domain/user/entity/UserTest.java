@@ -30,23 +30,28 @@ class UserTest {
     }
 
     @Test
-    void changeStatusToDeletedSetsDeletedAt() {
+    void changeStatusToDeletedAnonymizesPiiAndUsesDeletedDisplayName() {
         User user = User.signup("user@test.com", "encoded", "nickname", "01011112222");
 
         user.changeStatus(UserStatus.DELETED);
 
         assertThat(user.getStatus()).isEqualTo(UserStatus.DELETED);
         assertThat(user.getDeletedAt()).isNotNull();
+        assertThat(user.getEmail()).startsWith("deleted-user-");
+        assertThat(user.getEmail()).endsWith("@agora.local");
+        assertThat(user.getEmail()).doesNotContain("user@test.com", "test.com");
+        assertThat(user.getPhone()).isNull();
+        assertThat(user.getNickname()).isEqualTo("탈퇴한 사용자");
     }
 
     @Test
-    void changeStatusFromDeletedClearsDeletedAt() {
+    void changeStatusFromDeletedIsRejected() {
         User user = User.signup("user@test.com", "encoded", "nickname", "01011112222");
         user.changeStatus(UserStatus.DELETED);
 
-        user.changeStatus(UserStatus.ACTIVE);
-
-        assertThat(user.getStatus()).isEqualTo(UserStatus.ACTIVE);
-        assertThat(user.getDeletedAt()).isNull();
+        assertThatThrownBy(() -> user.changeStatus(UserStatus.ACTIVE))
+                .isInstanceOf(BusinessException.class)
+                .extracting("errorCode")
+                .isEqualTo(ErrorCode.CONFLICT);
     }
 }

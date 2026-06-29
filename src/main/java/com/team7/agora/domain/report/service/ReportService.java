@@ -4,6 +4,7 @@ import com.team7.agora.domain.product.entity.Product;
 import com.team7.agora.domain.product.repository.ProductRepository;
 import com.team7.agora.domain.report.dto.response.ReportResponse;
 import com.team7.agora.domain.report.entity.Report;
+import com.team7.agora.domain.report.enums.ReportStatus;
 import com.team7.agora.domain.report.repository.ReportRepository;
 import com.team7.agora.domain.user.entity.User;
 import com.team7.agora.domain.user.enums.UserStatus;
@@ -58,7 +59,7 @@ public class ReportService {
             throw new BusinessException(ErrorCode.INVALID_REQUEST, "내 상품은 신고할 수 없습니다.");
         }
 
-        if (reportRepository.existsByReporterAndProduct(reporter, product)) {
+        if (reportRepository.existsByReporterAndProductAndStatus(reporter, product, ReportStatus.PENDING)) {
             throw new BusinessException(ErrorCode.CONFLICT, "이미 신고한 상품입니다.");
         }
 
@@ -84,7 +85,11 @@ public class ReportService {
         User reportedUser = userRepository.findByIdForUpdate(reportedUserId)
             .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "신고 대상 회원을 찾을 수 없습니다."));
 
-        if (reportRepository.existsByReporterAndReportedUserAndProductIsNull(reporter, reportedUser)) {
+        if (reportRepository.existsByReporterAndReportedUserAndProductIsNullAndStatus(
+            reporter,
+            reportedUser,
+            ReportStatus.PENDING
+        )) {
             throw new BusinessException(ErrorCode.CONFLICT, "이미 신고한 회원입니다.");
         }
 

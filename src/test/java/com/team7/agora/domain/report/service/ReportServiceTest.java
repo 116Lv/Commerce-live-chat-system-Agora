@@ -4,6 +4,7 @@ import static com.team7.agora.support.TestEntityIds.assignId;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.team7.agora.domain.product.entity.Product;
@@ -11,6 +12,7 @@ import com.team7.agora.domain.product.repository.ProductRepository;
 import com.team7.agora.domain.region.entity.Region;
 import com.team7.agora.domain.report.dto.response.ReportResponse;
 import com.team7.agora.domain.report.entity.Report;
+import com.team7.agora.domain.report.enums.ReportStatus;
 import com.team7.agora.domain.report.repository.ReportRepository;
 import com.team7.agora.domain.user.entity.User;
 import com.team7.agora.domain.user.enums.UserStatus;
@@ -61,7 +63,11 @@ class ReportServiceTest {
     void createUserReport_storesPendingReport() {
         when(userRepository.findByIdAndStatusAndDeletedAtIsNull(1L, UserStatus.ACTIVE)).thenReturn(Optional.of(reporter));
         when(userRepository.findByIdForUpdate(3L)).thenReturn(Optional.of(reportedUser));
-        when(reportRepository.existsByReporterAndReportedUserAndProductIsNull(reporter, reportedUser)).thenReturn(false);
+        when(reportRepository.existsByReporterAndReportedUserAndProductIsNullAndStatus(
+            reporter,
+            reportedUser,
+            ReportStatus.PENDING
+        )).thenReturn(false);
         when(reportRepository.save(any(Report.class))).thenAnswer(invocation -> {
             Report report = invocation.getArgument(0);
             assignId(report, 200L);
@@ -75,6 +81,11 @@ class ReportServiceTest {
         assertThat(response.reportedUserId()).isEqualTo(3L);
         assertThat(response.productId()).isNull();
         assertThat(response.status()).isEqualTo("PENDING");
+        verify(reportRepository).existsByReporterAndReportedUserAndProductIsNullAndStatus(
+            reporter,
+            reportedUser,
+            ReportStatus.PENDING
+        );
     }
 
     @Test
@@ -87,7 +98,8 @@ class ReportServiceTest {
     void createProductReport_storesPendingReport() {
         when(userRepository.findByIdAndStatusAndDeletedAtIsNull(1L, UserStatus.ACTIVE)).thenReturn(Optional.of(reporter));
         when(productRepository.findByIdForUpdateAndDeletedAtIsNull(10L)).thenReturn(Optional.of(product));
-        when(reportRepository.existsByReporterAndProduct(reporter, product)).thenReturn(false);
+        when(reportRepository.existsByReporterAndProductAndStatus(reporter, product, ReportStatus.PENDING))
+            .thenReturn(false);
         when(reportRepository.save(any(Report.class))).thenAnswer(invocation -> {
             Report report = invocation.getArgument(0);
             assignId(report, 100L);
@@ -101,6 +113,7 @@ class ReportServiceTest {
         assertThat(response.reportedUserId()).isEqualTo(2L);
         assertThat(response.productId()).isEqualTo(10L);
         assertThat(response.status()).isEqualTo("PENDING");
+        verify(reportRepository).existsByReporterAndProductAndStatus(reporter, product, ReportStatus.PENDING);
     }
 
     @Test
@@ -116,20 +129,31 @@ class ReportServiceTest {
     void createUserReport_rejectsDuplicateReport() {
         when(userRepository.findByIdAndStatusAndDeletedAtIsNull(1L, UserStatus.ACTIVE)).thenReturn(Optional.of(reporter));
         when(userRepository.findByIdForUpdate(3L)).thenReturn(Optional.of(reportedUser));
-        when(reportRepository.existsByReporterAndReportedUserAndProductIsNull(reporter, reportedUser)).thenReturn(true);
+        when(reportRepository.existsByReporterAndReportedUserAndProductIsNullAndStatus(
+            reporter,
+            reportedUser,
+            ReportStatus.PENDING
+        )).thenReturn(true);
 
         assertThatThrownBy(() -> reportService.createUserReport(1L, 3L, "중복 신고"))
             .isInstanceOf(BusinessException.class);
+        verify(reportRepository).existsByReporterAndReportedUserAndProductIsNullAndStatus(
+            reporter,
+            reportedUser,
+            ReportStatus.PENDING
+        );
     }
 
     @Test
     void createProductReport_rejectsDuplicateReport() {
         when(userRepository.findByIdAndStatusAndDeletedAtIsNull(1L, UserStatus.ACTIVE)).thenReturn(Optional.of(reporter));
         when(productRepository.findByIdForUpdateAndDeletedAtIsNull(10L)).thenReturn(Optional.of(product));
-        when(reportRepository.existsByReporterAndProduct(reporter, product)).thenReturn(true);
+        when(reportRepository.existsByReporterAndProductAndStatus(reporter, product, ReportStatus.PENDING))
+            .thenReturn(true);
 
         assertThatThrownBy(() -> reportService.createProductReport(1L, 10L, "중복 신고"))
             .isInstanceOf(BusinessException.class);
+        verify(reportRepository).existsByReporterAndProductAndStatus(reporter, product, ReportStatus.PENDING);
     }
 
     @Test

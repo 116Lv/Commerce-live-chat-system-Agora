@@ -92,11 +92,11 @@ VALUES
     (5, 2, 1, '/uploads/chat/seed-chat-image.jpg', 'IMAGE', '2026-06-23 09:22:00'),
     (6, 3, 1, '헬멧 오늘 저녁 거래 가능할까요?', 'TEXT', '2026-06-23 10:01:00');
 
-INSERT INTO nego_offers (id, chat_room_id, requester_id, offer_price, expires_at, status, created_at, responded_at)
+INSERT INTO nego_offers (id, chat_room_id, requester_id, offer_price, expires_at, status, extension_requested, created_at, responded_at)
 VALUES
-    (1, 1, 2, 580000, '2099-12-31 23:59:59', 'ACCEPTED', '2026-06-23 09:14:00', '2026-06-23 09:15:00'),
-    (2, 2, 3, 800000, '2099-12-31 23:59:59', 'PENDING', '2026-06-23 09:22:00', NULL),
-    (3, 3, 1, 20000, '2099-12-31 23:59:59', 'REJECTED', '2026-06-23 10:05:00', '2026-06-23 10:10:00');
+    (1, 1, 2, 580000, '2099-12-31 23:59:59', 'ACCEPTED', FALSE, '2026-06-23 09:14:00', '2026-06-23 09:15:00'),
+    (2, 2, 3, 800000, '2099-12-31 23:59:59', 'PENDING', FALSE, '2026-06-23 09:22:00', NULL),
+    (3, 3, 1, 20000, '2099-12-31 23:59:59', 'REJECTED', FALSE, '2026-06-23 10:05:00', '2026-06-23 10:10:00');
 
 INSERT INTO trades (id, product_id, seller_id, buyer_id, status, price, created_at, completed_at, payment_due_at)
 VALUES
