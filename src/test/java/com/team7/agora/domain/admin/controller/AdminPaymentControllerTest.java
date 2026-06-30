@@ -92,7 +92,8 @@ class AdminPaymentControllerTest {
             .andExpect(jsonPath("$.status").value("SUCCESS"))
             .andExpect(jsonPath("$.data.paymentId").value(1L))
             .andExpect(jsonPath("$.data.settlementId").value(101L))
-            .andExpect(jsonPath("$.data.settlementStatus").value("READY"));
+            .andExpect(jsonPath("$.data.settlementStatus").value("READY"))
+            .andExpect(jsonPath("$.data.status").value("PAID"));
     }
 
     @Test

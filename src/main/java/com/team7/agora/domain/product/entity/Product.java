@@ -1,5 +1,6 @@
 package com.team7.agora.domain.product.entity;
 
+import com.team7.agora.domain.product.enums.ProductApprovalStatus;
 import com.team7.agora.domain.product.enums.ProductStatus;
 import com.team7.agora.domain.region.entity.Region;
 import com.team7.agora.domain.user.entity.User;
@@ -67,6 +68,10 @@ public class Product {
     @Column(nullable = false, length = 20)
     private ProductStatus status;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private ProductApprovalStatus approvalStatus;
+
     @Column(nullable = false)
     private int viewCount;
 
@@ -83,6 +88,7 @@ public class Product {
         this.price = price;
         this.category = category;
         this.status = ProductStatus.SELLING;
+        this.approvalStatus = ProductApprovalStatus.PENDING;
         this.viewCount = 0;
         this.likeCount = 0;
     }
@@ -152,6 +158,16 @@ public class Product {
         this.status = ProductStatus.SELLING;
     }
 
+    public void approve() {
+        this.approvalStatus = ProductApprovalStatus.APPROVED;
+        this.status = ProductStatus.SELLING;
+    }
+
+    public void rejectApproval() {
+        this.approvalStatus = ProductApprovalStatus.REJECTED;
+        this.status = ProductStatus.HIDDEN;
+    }
+
     /**
      * 상품 또는 거래를 판매 완료 상태로 변경한다.
      */
@@ -164,6 +180,7 @@ public class Product {
      */
     public void hide() {
         this.status = ProductStatus.HIDDEN;
+        this.approvalStatus = ProductApprovalStatus.REJECTED;
     }
 
     /**

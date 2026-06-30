@@ -9,8 +9,12 @@ import static org.mockito.Mockito.when;
 
 import com.team7.agora.domain.product.dto.request.ProductCreateRequest;
 import com.team7.agora.domain.product.dto.request.ProductUpdateRequest;
+import com.team7.agora.domain.product.dto.response.ProductResponse;
 import com.team7.agora.domain.product.entity.Product;
+import com.team7.agora.domain.product.enums.ProductApprovalStatus;
 import com.team7.agora.domain.product.enums.ProductStatus;
+import com.team7.agora.domain.product.repository.ProductImageRepository;
+import com.team7.agora.domain.product.repository.ProductLikeRepository;
 import com.team7.agora.domain.product.repository.ProductRepository;
 import com.team7.agora.domain.region.entity.Region;
 import com.team7.agora.domain.region.repository.RegionRepository;
@@ -47,9 +51,27 @@ class ProductServiceTest {
     @Mock
     private ProductSearchService productSearchService;
 
+    @Mock
+    private ProductLikeRepository productLikeRepository;
+
+    @Mock
+    private ProductImageRepository productImageRepository;
+
+    private ProductService newService() {
+        return new ProductService(
+            productRepository,
+            userRepository,
+            regionRepository,
+            userRegionRepository,
+            productSearchService,
+            productLikeRepository,
+            productImageRepository
+        );
+    }
+
     @Test
     void create_savesProductWithSellerAndRegion() {
-        ProductService productService = new ProductService(productRepository, userRepository, regionRepository, userRegionRepository, productSearchService);
+        ProductService productService = newService();
         User seller = User.signup("seller@test.com", "encoded", "판매자", "01011112222");
         Region region = Region.create("서울 강남구 역삼동", "1168010100", "서울", "강남구", "역삼동");
         ProductCreateRequest request = new ProductCreateRequest(
@@ -71,11 +93,12 @@ class ProductServiceTest {
         assertThat(product.getTitle()).isEqualTo("자전거");
         assertThat(product.getPrice()).isEqualByComparingTo("73000");
         assertThat(product.getStatus()).isEqualTo(ProductStatus.SELLING);
+        assertThat(product.getApprovalStatus()).isEqualTo(ProductApprovalStatus.PENDING);
     }
 
     @Test
     void create_evictsSearchCache() {
-        ProductService productService = new ProductService(productRepository, userRepository, regionRepository, userRegionRepository, productSearchService);
+        ProductService productService = newService();
         User seller = User.signup("seller@test.com", "encoded", "판매자", "01011112222");
         Region region = Region.create("서울 강남구 역삼동", "1168010100", "서울", "강남구", "역삼동");
         ProductCreateRequest request = new ProductCreateRequest(
@@ -96,7 +119,7 @@ class ProductServiceTest {
 
     @Test
     void create_rejectsNonActiveSeller() {
-        ProductService productService = new ProductService(productRepository, userRepository, regionRepository, userRegionRepository, productSearchService);
+        ProductService productService = newService();
         ProductCreateRequest request = new ProductCreateRequest(
             "자전거",
             "상태 좋은 중고 자전거입니다.",
@@ -114,7 +137,7 @@ class ProductServiceTest {
 
     @Test
     void update_throwsForbiddenWhenRequesterIsNotSeller() {
-        ProductService productService = new ProductService(productRepository, userRepository, regionRepository, userRegionRepository, productSearchService);
+        ProductService productService = newService();
         User seller = User.signup("seller@test.com", "encoded", "판매자", "01011112222");
         assignId(seller, 1L);
         Product product = Product.create(
@@ -137,7 +160,7 @@ class ProductServiceTest {
 
     @Test
     void update_evictsSearchCache() {
-        ProductService productService = new ProductService(productRepository, userRepository, regionRepository, userRegionRepository, productSearchService);
+        ProductService productService = newService();
         User seller = User.signup("seller@test.com", "encoded", "판매자", "01011112222");
         assignId(seller, 1L);
         Product product = Product.create(
@@ -159,7 +182,7 @@ class ProductServiceTest {
 
     @Test
     void update_rejectsReservedProduct() {
-        ProductService productService = new ProductService(productRepository, userRepository, regionRepository, userRegionRepository, productSearchService);
+        ProductService productService = newService();
         User seller = User.signup("seller@test.com", "encoded", "seller", "01011112222");
         assignId(seller, 1L);
         Product product = Product.create(
@@ -182,8 +205,56 @@ class ProductServiceTest {
     }
 
     @Test
+    void updateStatus_marksProductReservedWhenRequesterIsSeller() {
+        ProductService productService = newService();
+        User seller = User.signup("seller@test.com", "encoded", "seller", "01011112222");
+        assignId(seller, 1L);
+        Product product = Product.create(
+            seller,
+            Region.create("서울 강남구 삼성동", "1168010100", "서울", "강남구", "삼성동"),
+            "자전거",
+            "상태 좋은 중고 자전거입니다.",
+            BigDecimal.valueOf(73000),
+            "SPORTS"
+        );
+        assignId(product, 10L);
+        when(productRepository.findByIdAndDeletedAtIsNull(10L)).thenReturn(Optional.of(product));
+        when(userRepository.findByIdAndStatusAndDeletedAtIsNull(1L, UserStatus.ACTIVE)).thenReturn(Optional.of(seller));
+
+        ProductResponse response = productService.updateStatus(1L, 10L, ProductStatus.RESERVED);
+
+        assertThat(product.getStatus()).isEqualTo(ProductStatus.RESERVED);
+        assertThat(response.status()).isEqualTo(ProductStatus.RESERVED);
+        assertThat(response.statusLabel()).isEqualTo("예약중");
+        verify(productSearchService).evictSearchCache();
+    }
+
+    @Test
+    void updateStatus_rejectsUnsupportedSellerStatus() {
+        ProductService productService = newService();
+        User seller = User.signup("seller@test.com", "encoded", "seller", "01011112222");
+        assignId(seller, 1L);
+        Product product = Product.create(
+            seller,
+            Region.create("서울 강남구 삼성동", "1168010100", "서울", "강남구", "삼성동"),
+            "자전거",
+            "상태 좋은 중고 자전거입니다.",
+            BigDecimal.valueOf(73000),
+            "SPORTS"
+        );
+        assignId(product, 10L);
+        when(productRepository.findByIdAndDeletedAtIsNull(10L)).thenReturn(Optional.of(product));
+        when(userRepository.findByIdAndStatusAndDeletedAtIsNull(1L, UserStatus.ACTIVE)).thenReturn(Optional.of(seller));
+
+        assertThatThrownBy(() -> productService.updateStatus(1L, 10L, ProductStatus.HIDDEN))
+            .isInstanceOf(BusinessException.class)
+            .extracting("errorCode")
+            .isEqualTo(ErrorCode.INVALID_REQUEST);
+    }
+
+    @Test
     void update_rejectsNonActiveSeller() {
-        ProductService productService = new ProductService(productRepository, userRepository, regionRepository, userRegionRepository, productSearchService);
+        ProductService productService = newService();
         User seller = User.signup("seller@test.com", "encoded", "판매자", "01011112222");
         assignId(seller, 1L);
         Product product = Product.create(
@@ -206,7 +277,7 @@ class ProductServiceTest {
 
     @Test
     void delete_marksProductDeletedWhenRequesterIsSeller() {
-        ProductService productService = new ProductService(productRepository, userRepository, regionRepository, userRegionRepository, productSearchService);
+        ProductService productService = newService();
         User seller = User.signup("seller@test.com", "encoded", "판매자", "01011112222");
         assignId(seller, 1L);
         Product product = Product.create(
@@ -227,7 +298,7 @@ class ProductServiceTest {
 
     @Test
     void delete_rejectsWhenRequesterIsNotSeller() {
-        ProductService productService = new ProductService(productRepository, userRepository, regionRepository, userRegionRepository, productSearchService);
+        ProductService productService = newService();
         User seller = User.signup("seller@test.com", "encoded", "판매자", "01011112222");
         assignId(seller, 1L);
         Product product = Product.create(
@@ -248,7 +319,7 @@ class ProductServiceTest {
 
     @Test
     void delete_evictsSearchCache() {
-        ProductService productService = new ProductService(productRepository, userRepository, regionRepository, userRegionRepository, productSearchService);
+        ProductService productService = newService();
         User seller = User.signup("seller@test.com", "encoded", "판매자", "01011112222");
         assignId(seller, 1L);
         Product product = Product.create(
@@ -269,7 +340,7 @@ class ProductServiceTest {
 
     @Test
     void delete_rejectsNonActiveSeller() {
-        ProductService productService = new ProductService(productRepository, userRepository, regionRepository, userRegionRepository, productSearchService);
+        ProductService productService = newService();
         User seller = User.signup("seller@test.com", "encoded", "판매자", "01011112222");
         assignId(seller, 1L);
         Product product = Product.create(

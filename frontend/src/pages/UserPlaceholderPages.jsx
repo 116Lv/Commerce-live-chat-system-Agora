@@ -9,6 +9,7 @@ import ProductCard from '../components/ProductCard.jsx';
 import { getProducts, searchProducts } from '../api/productApi.js';
 import { getRegions } from '../api/regionApi.js';
 import { PageHeader, getPageContent, useApiResource } from './pageUtils.jsx';
+import { PRODUCT_CATEGORIES, getChildRegionOptions, getRegionSelectOptions } from './productFormUtils.js';
 
 const HOME_QUERY = { keyword: '', category: '', regionId: '', page: 0, size: 20 };
 
@@ -24,6 +25,7 @@ function PlaceholderPage({ title, eyebrow, emptyTitle = '표시할 항목이 없
 export function HomePage() {
   const [draft, setDraft] = useState(HOME_QUERY);
   const [query, setQuery] = useState(HOME_QUERY);
+  const [selectedParentRegionId, setSelectedParentRegionId] = useState('');
   const params = useMemo(
     () => ({
       keyword: query.keyword.trim(),
@@ -41,6 +43,10 @@ export function HomePage() {
   );
   const regionsState = useApiResource(() => getRegions(), []);
   const products = getPageContent(productsState.data);
+  const regions = getPageContent(regionsState.data);
+  const parentRegionOptions = getRegionSelectOptions(regions);
+  const childRegionOptions = getChildRegionOptions(regions, selectedParentRegionId);
+  const hasChildRegionOptions = childRegionOptions.length > 0;
 
   const handleSubmit = (event) => {
     event.preventDefault();
@@ -50,6 +56,14 @@ export function HomePage() {
   const handleReset = () => {
     setDraft(HOME_QUERY);
     setQuery(HOME_QUERY);
+    setSelectedParentRegionId('');
+  };
+
+  const handleParentRegionChange = (event) => {
+    const value = event.target.value;
+    const nextChildren = getChildRegionOptions(regions, value);
+    setSelectedParentRegionId(value);
+    setDraft((current) => ({ ...current, regionId: nextChildren.length > 0 ? '' : value }));
   };
 
   return (
@@ -79,27 +93,50 @@ export function HomePage() {
               </Form.Group>
               <Form.Group controlId="home-category">
                 <Form.Label>카테고리</Form.Label>
-                <Form.Control
+                <Form.Select
                   value={draft.category}
                   onChange={(event) => setDraft((current) => ({ ...current, category: event.target.value }))}
-                  placeholder="예: 디지털"
-                />
-              </Form.Group>
-              <Form.Group controlId="home-region">
-                <Form.Label>지역</Form.Label>
-                <Form.Select
-                  value={draft.regionId}
-                  onChange={(event) => setDraft((current) => ({ ...current, regionId: event.target.value }))}
-                  disabled={regionsState.loading || Boolean(regionsState.error)}
                 >
-                  <option value="">전체 지역</option>
-                  {getPageContent(regionsState.data).map((region) => (
-                    <option key={region.regionId} value={region.regionId}>
-                      {region.name}
+                  <option value="">전체 카테고리</option>
+                  {PRODUCT_CATEGORIES.map((category) => (
+                    <option key={category.value} value={category.value}>
+                      {category.label}
                     </option>
                   ))}
                 </Form.Select>
               </Form.Group>
+              <Form.Group controlId="home-region">
+                <Form.Label>지역</Form.Label>
+                <Form.Select
+                  value={selectedParentRegionId}
+                  onChange={handleParentRegionChange}
+                  disabled={regionsState.loading || Boolean(regionsState.error)}
+                >
+                  <option value="">전체 지역</option>
+                  {parentRegionOptions.map((region) => (
+                    <option key={region.value} value={region.value}>
+                      {region.label}
+                    </option>
+                  ))}
+                </Form.Select>
+              </Form.Group>
+              {hasChildRegionOptions ? (
+                <Form.Group controlId="home-child-region">
+                  <Form.Label>세부 지역</Form.Label>
+                  <Form.Select
+                    value={draft.regionId}
+                    onChange={(event) => setDraft((current) => ({ ...current, regionId: event.target.value }))}
+                    disabled={regionsState.loading || Boolean(regionsState.error)}
+                  >
+                    <option value="">전체 세부 지역</option>
+                    {childRegionOptions.map((region) => (
+                      <option key={region.value} value={region.value}>
+                        {region.label}
+                      </option>
+                    ))}
+                  </Form.Select>
+                </Form.Group>
+              ) : null}
               <div className="d-grid gap-2">
                 <Button type="submit">
                   <Search size={17} aria-hidden="true" />

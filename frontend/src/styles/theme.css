@@ -50,6 +50,7 @@ p {
 }
 
 .agora-user-nav {
+  min-height: 4.75rem;
   border-bottom: 1px solid var(--agora-border);
   background: rgba(255, 255, 255, 0.96);
   backdrop-filter: blur(10px);
@@ -62,17 +63,76 @@ p {
   color: var(--agora-brand-dark);
 }
 
+.agora-brand {
+  display: inline-flex;
+  align-items: center;
+  min-height: 3.25rem;
+  font-size: 1.55rem;
+}
+
 .agora-nav-link {
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
+  min-height: 2.55rem;
   border-radius: 8px;
   color: var(--agora-muted);
   font-weight: 600;
 }
 
+.account-dropdown .dropdown-toggle {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem;
+  border-radius: 8px;
+  color: var(--agora-muted);
+  font-weight: 700;
+}
+
+.account-dropdown .dropdown-toggle::after {
+  margin-left: 0.55rem;
+}
+
+.account-dropdown-toggle,
+.account-dropdown .dropdown-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.account-dropdown .dropdown-menu {
+  min-width: 12rem;
+  border-color: var(--agora-border);
+  border-radius: 8px;
+  box-shadow: 0 12px 30px rgb(15 23 42 / 10%);
+}
+
+.account-dropdown .dropdown-item {
+  min-height: 2.4rem;
+  color: var(--agora-muted);
+  font-weight: 700;
+}
+
+.account-dropdown .dropdown-item.active,
+.account-dropdown .dropdown-item:active,
+.account-dropdown .dropdown-item:hover,
+.account-dropdown .dropdown-item:focus {
+  background: #e8f4ef;
+  color: var(--agora-brand-dark);
+}
+
+.account-label {
+  max-width: 10rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .agora-nav-link.active,
-.agora-nav-link:hover {
+.agora-nav-link:hover,
+.account-dropdown .dropdown-toggle.show,
+.account-dropdown .dropdown-toggle:hover,
+.account-dropdown .dropdown-toggle:focus {
   color: var(--agora-brand-dark);
   background: #e8f4ef;
 }
@@ -150,12 +210,38 @@ p {
 }
 
 .product-card {
+  position: relative;
   border-color: var(--agora-border);
   border-radius: 8px;
+  cursor: pointer;
   overflow: hidden;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease,
+    transform 0.15s ease;
+}
+
+.product-card:hover,
+.product-card:focus-within {
+  border-color: var(--agora-brand);
+  box-shadow: 0 12px 30px rgb(15 23 42 / 10%);
+  transform: translateY(-1px);
+}
+
+.product-card-link {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  border-radius: inherit;
+}
+
+.product-card-link:focus-visible {
+  outline: 3px solid rgb(22 129 95 / 35%);
+  outline-offset: -3px;
 }
 
 .product-card-media {
+  position: relative;
   display: grid;
   place-items: center;
   aspect-ratio: 4 / 3;
@@ -168,6 +254,41 @@ p {
   width: 100%;
   height: 100%;
   object-fit: cover;
+}
+
+.product-card-heart {
+  position: absolute;
+  top: 0.65rem;
+  right: 0.65rem;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  min-height: 2rem;
+  padding: 0.3rem 0.55rem;
+  border: 1px solid rgb(255 255 255 / 70%);
+  border-radius: 999px;
+  background: rgb(255 255 255 / 92%);
+  color: var(--agora-brand-dark);
+  font-size: 0.85rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.product-card-heart:hover,
+.product-card-heart:focus-visible {
+  background: #ffffff;
+  color: var(--agora-action);
+}
+
+.product-card-heart.is-liked {
+  border-color: rgb(22 129 95 / 28%);
+  background: #e8f4ef;
+  color: var(--agora-action);
+}
+
+.product-status-badge {
+  white-space: nowrap;
 }
 
 .product-card h2 {
@@ -201,9 +322,24 @@ p {
   gap: 0.25rem;
 }
 
+.product-card-detail-affordance {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  color: var(--agora-brand-dark);
+  font-size: 0.9rem;
+  font-weight: 800;
+}
+
 .product-card .card-footer {
+  position: relative;
   border-top: 1px solid var(--agora-border);
   background: var(--agora-surface);
+}
+
+.product-card .card-footer .btn {
+  position: relative;
+  z-index: 2;
 }
 
 .admin-shell {
@@ -220,8 +356,12 @@ p {
 }
 
 .admin-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
   margin-bottom: 1.25rem;
   font-size: 1.15rem;
+  font-weight: 900;
 }
 
 .admin-nav {
@@ -246,9 +386,75 @@ p {
   background: #e8f4ef;
 }
 
+.admin-content {
+  min-width: 0;
+}
+
+.admin-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 1rem;
+  min-height: 4.25rem;
+  padding: 0.75rem 2rem;
+  border-bottom: 1px solid var(--agora-border);
+  background: #ffffff;
+}
+
+.admin-topbar > div {
+  display: grid;
+  text-align: right;
+}
+
+.admin-topbar span {
+  color: var(--agora-muted);
+  font-size: 0.9rem;
+}
+
+.admin-avatar {
+  display: inline-grid;
+  width: 2.35rem;
+  height: 2.35rem;
+  place-items: center;
+  border-radius: 999px;
+  background: var(--agora-brand-dark);
+  color: #ffffff;
+  font-weight: 900;
+}
+
+.admin-account-dropdown .dropdown-toggle {
+  display: inline-flex;
+  align-items: center;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.admin-account-dropdown .dropdown-toggle::after {
+  display: none;
+}
+
+.admin-account-dropdown .dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
 .admin-main {
   min-width: 0;
   padding: 2rem;
+}
+
+.admin-report-toolbar {
+  display: grid;
+  grid-template-columns: auto minmax(14rem, 24rem);
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.verification-result {
+  white-space: nowrap;
 }
 
 .admin-stat-card {
@@ -334,6 +540,20 @@ p {
 }
 
 @media (max-width: 767.98px) {
+  .agora-user-nav {
+    min-height: 4.25rem;
+  }
+
+  .agora-brand {
+    min-height: 2.8rem;
+    font-size: 1.35rem;
+  }
+
+  .account-dropdown .dropdown-toggle,
+  .account-dropdown .dropdown-menu {
+    width: 100%;
+  }
+
   .page-header {
     align-items: stretch;
     flex-direction: column;
@@ -353,8 +573,17 @@ p {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .admin-topbar {
+    justify-content: space-between;
+    padding: 0.75rem 1rem;
+  }
+
   .admin-main {
     padding: 1rem;
+  }
+
+  .admin-report-toolbar {
+    grid-template-columns: 1fr;
   }
 }
 
@@ -369,6 +598,35 @@ p {
 
 .toolbar-panel {
   padding: 1rem;
+}
+
+.admin-product-toolbar,
+.admin-approval-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.admin-product-toolbar .form-select {
+  max-width: 240px;
+}
+
+.admin-product-actions,
+.admin-approval-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.admin-product-detail dd {
+  min-width: 0;
+}
+
+.admin-approval-request-form .form-label {
+  font-size: 0.85rem;
 }
 
 .marketplace-home-grid {
@@ -438,6 +696,52 @@ p {
   font-weight: 900;
 }
 
+.admin-coupon-event-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.admin-coupon-event-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.admin-coupon-event-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 1rem;
+  color: var(--agora-muted);
+  font-size: 0.9rem;
+}
+
+.admin-coupon-progress {
+  height: 0.45rem;
+  max-width: 420px;
+}
+
+.admin-coupon-issue-form {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.75rem;
+}
+
+.coupon-target-chip-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.coupon-target-chip {
+  border: 1px solid var(--agora-border);
+  font-weight: 700;
+}
+
+.coupon-target-chip-invalid {
+  border-color: transparent;
+}
+
 .product-card-tags {
   display: flex;
   flex-wrap: wrap;
@@ -498,9 +802,230 @@ p {
   margin-top: 1.25rem;
 }
 
+.empty-state-with-action {
+  display: grid;
+  justify-items: center;
+  gap: 1rem;
+}
+
+.seller-product-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-top: 0.65rem;
+}
+
+.seller-product-status {
+  min-width: 0;
+  color: var(--agora-muted);
+  font-size: 0.9rem;
+  font-weight: 800;
+}
+
+.seller-product-status-note {
+  margin: 0.15rem 0 0;
+  color: var(--agora-muted);
+  font-size: 0.8rem;
+}
+
+.product-form-layout {
+  align-items: flex-start;
+}
+
+.product-form-side {
+  display: grid;
+  gap: 1rem;
+}
+
+.product-form-preview {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.product-form-preview .product-card {
+  cursor: default;
+}
+
+.product-form-preview .product-card:hover,
+.product-form-preview .product-card:focus-within {
+  border-color: var(--agora-border);
+  box-shadow: none;
+  transform: none;
+}
+
+.product-price-input {
+  position: relative;
+}
+
+.product-price-input .form-control {
+  padding-right: 2.5rem;
+}
+
+.product-price-suffix {
+  position: absolute;
+  top: 50%;
+  right: 0.85rem;
+  color: var(--agora-muted);
+  font-weight: 800;
+  pointer-events: none;
+  transform: translateY(-50%);
+}
+
+.description-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.description-guide,
+.description-counter {
+  color: var(--agora-muted);
+  font-size: 0.9rem;
+}
+
+.description-guide {
+  margin-bottom: 0.45rem;
+}
+
+.description-counter {
+  flex: 0 0 auto;
+  font-weight: 800;
+}
+
+.product-image-upload {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.product-image-dropzone {
+  position: relative;
+  display: grid;
+  min-height: 12rem;
+  place-items: center;
+  overflow: hidden;
+  border: 1px dashed var(--agora-border);
+  border-radius: 8px;
+  background: #fbfdfc;
+  color: var(--agora-muted);
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.product-image-dropzone:hover {
+  border-color: var(--agora-brand);
+  background: #f1f8f5;
+}
+
+.product-image-dropzone img {
+  width: 100%;
+  height: 100%;
+  max-height: 20rem;
+  object-fit: cover;
+}
+
+.product-image-main-badge {
+  position: absolute;
+  top: 0.75rem;
+  left: 0.75rem;
+  padding: 0.25rem 0.55rem;
+  border-radius: 999px;
+  background: rgb(23 34 31 / 86%);
+  color: #ffffff;
+  font-size: 0.8rem;
+  font-weight: 800;
+}
+
 .profile-form-row {
   display: flex;
   gap: 0.5rem;
+}
+
+.coupon-filter-tabs {
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.coupon-filter-tabs .btn {
+  border-radius: 8px !important;
+  font-weight: 800;
+}
+
+.coupon-ticket-card {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--agora-border);
+  border-radius: 8px;
+  background:
+    radial-gradient(circle at left 4.5rem, var(--agora-page) 0 0.75rem, transparent 0.8rem),
+    radial-gradient(circle at right 4.5rem, var(--agora-page) 0 0.75rem, transparent 0.8rem),
+    var(--agora-surface);
+  box-shadow: 0 12px 30px rgb(15 23 42 / 6%);
+}
+
+.coupon-ticket-card::after {
+  position: absolute;
+  top: 4.5rem;
+  right: 1rem;
+  left: 1rem;
+  border-top: 1px dashed var(--agora-border);
+  content: "";
+}
+
+.coupon-ticket-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  min-height: 3.35rem;
+  margin-bottom: 1.2rem;
+}
+
+.coupon-ticket-header h2 {
+  margin-bottom: 0;
+  font-size: 1.05rem;
+  font-weight: 900;
+}
+
+.coupon-condition {
+  min-height: 2.6rem;
+  margin-bottom: 1rem;
+  color: var(--agora-muted);
+  font-weight: 800;
+}
+
+.coupon-ticket-meta {
+  margin-bottom: 1rem;
+}
+
+.coupon-progress {
+  display: grid;
+  gap: 0.35rem;
+  margin-bottom: 1rem;
+  color: var(--agora-muted);
+  font-size: 0.9rem;
+  font-weight: 800;
+}
+
+.coupon-progress .progress {
+  height: 0.55rem;
+  border-radius: 999px;
+  background: #edf2f0;
+}
+
+.coupon-progress .progress-bar {
+  background: var(--agora-action);
+}
+
+.coupon-expiring-soon {
+  border-color: #f97316;
+}
+
+.coupon-expiry-note {
+  margin: -0.25rem 0 0.75rem;
+  color: #c2410c;
+  font-weight: 900;
 }
 
 .stack-list {
@@ -513,6 +1038,137 @@ p {
   align-items: flex-start;
   justify-content: space-between;
   gap: 1rem;
+}
+
+.chat-room-list-card .card-body {
+  padding: 1rem;
+}
+
+.chat-room-row,
+.chat-room-product-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.chat-room-product-card {
+  margin-bottom: 0.75rem;
+  padding: 0.9rem;
+  border: 1px solid var(--agora-border);
+  border-radius: 8px;
+  background: var(--agora-surface);
+}
+
+.chat-room-row-main,
+.chat-room-product-card-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.chat-room-product-card-main {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.chat-room-product-card h2 {
+  margin-bottom: 0.2rem;
+  font-size: 1rem;
+  font-weight: 850;
+}
+
+.chat-room-product-card p,
+.chat-room-participants,
+.chat-room-last-message,
+.chat-room-last-time {
+  color: var(--agora-muted);
+}
+
+.chat-room-product-card p,
+.chat-room-participants,
+.chat-room-last-message {
+  margin-bottom: 0;
+}
+
+.chat-room-product-card-meta,
+.chat-room-row-status,
+.chat-room-row-footer,
+.chat-room-message-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.chat-room-product-card-meta,
+.chat-room-row-status {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.chat-room-product-thumb {
+  display: grid;
+  flex: 0 0 4.5rem;
+  width: 4.5rem;
+  aspect-ratio: 1;
+  place-items: center;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #edf2f0;
+  color: var(--agora-brand-dark);
+  font-weight: 900;
+}
+
+.chat-room-product-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.chat-room-message-row {
+  justify-content: space-between;
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--agora-border);
+}
+
+.chat-room-last-message {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chat-room-last-message-type {
+  margin-right: 0.45rem;
+  color: var(--agora-brand-dark);
+  font-size: 0.78rem;
+  font-weight: 900;
+}
+
+.chat-room-last-time,
+.chat-room-read-state {
+  flex: 0 0 auto;
+  font-size: 0.86rem;
+}
+
+.chat-room-row-footer {
+  justify-content: flex-end;
+  margin-top: 0.75rem;
+}
+
+.chat-room-row-footer .list-price {
+  margin-right: auto;
+  font-size: 1.05rem;
+}
+
+.chat-room-unread-badge {
+  min-width: 1.7rem;
+}
+
+.chat-room-read-state {
+  color: var(--agora-muted);
+  font-weight: 800;
 }
 
 .rating-text {
@@ -555,13 +1211,43 @@ p {
   max-height: 32rem;
   overflow: auto;
   padding-right: 0.25rem;
+  align-items: start;
 }
 
 .message-item {
+  width: min(78%, 34rem);
   padding: 0.85rem;
   border: 1px solid var(--agora-border);
   border-radius: 8px;
   background: #fbfdfc;
+}
+
+.message-item-own {
+  justify-self: end;
+  border-color: rgba(32, 129, 226, 0.24);
+  background: #f3f8ff;
+}
+
+.message-item-other {
+  justify-self: start;
+}
+
+.message-item-system {
+  width: min(100%, 28rem);
+  justify-self: center;
+  border-color: rgba(91, 108, 124, 0.18);
+  background: #f4f6f8;
+  color: var(--agora-muted);
+  text-align: center;
+}
+
+.message-item-pending {
+  opacity: 0.82;
+}
+
+.message-item-failed {
+  border-color: rgba(214, 69, 65, 0.35);
+  background: #fff7f6;
 }
 
 .message-item p {
@@ -582,6 +1268,44 @@ p {
   color: var(--agora-ink);
 }
 
+.chat-image-message {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.chat-image-preview {
+  display: block;
+  max-width: 100%;
+  max-height: 18rem;
+  border-radius: 8px;
+  object-fit: contain;
+  background: #f4f6f8;
+}
+
+.chat-image-fallback,
+.message-delivery-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-top: 0.45rem;
+  color: var(--agora-muted);
+  font-size: 0.82rem;
+}
+
+.message-delivery-status-failed {
+  color: #b42318;
+}
+
+.message-delivery-status .btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0;
+  color: #b42318;
+  font-size: 0.82rem;
+  text-decoration: none;
+}
+
 .chat-compose {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto auto;
@@ -593,6 +1317,25 @@ p {
   border: 1px solid var(--agora-border);
   border-radius: 8px;
   background: #fbfdfc;
+}
+
+.nego-payment-cta,
+.advanced-payment-confirm {
+  padding: 0.85rem;
+  border: 1px solid var(--agora-border);
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.advanced-payment-confirm summary {
+  color: var(--agora-brand-dark);
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.checkout-order-summary {
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--agora-border);
 }
 
 .pre-line {
@@ -610,6 +1353,19 @@ p {
     flex-direction: column;
   }
 
+  .chat-room-row,
+  .chat-room-product-card,
+  .chat-room-product-card-main,
+  .chat-room-message-row {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .chat-room-row-status,
+  .chat-room-product-card-meta {
+    justify-content: flex-start;
+  }
+
   .form-actions {
     flex-direction: column-reverse;
   }
@@ -621,6 +1377,10 @@ p {
 
   .chat-compose {
     grid-template-columns: minmax(0, 1fr);
+  }
+
+  .message-item {
+    width: min(100%, 32rem);
   }
 
   .product-action-group,

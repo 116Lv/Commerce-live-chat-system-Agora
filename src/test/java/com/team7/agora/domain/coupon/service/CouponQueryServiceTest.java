@@ -42,6 +42,13 @@ class CouponQueryServiceTest {
         assertThat(responses).hasSize(1);
         assertThat(responses.get(0).type()).isEqualTo("FIRST_COME");
         assertThat(responses.get(0).discountAmount()).isEqualTo(5000);
+        assertThat(responses.get(0).remainingQuantity()).isEqualTo(5);
+        assertThat(responses.get(0).issueRate()).isEqualTo(0.0);
+        assertThat(responses.get(0).canIssue()).isTrue();
+        assertThat(responses.get(0).ended()).isFalse();
+        assertThat(responses.get(0).soldOut()).isFalse();
+        assertThat(responses.get(0).statusLabel()).isEqualTo("Active");
+        assertThat(responses.get(0).typeLabel()).isEqualTo("First come");
     }
 
     @Test
@@ -64,6 +71,9 @@ class CouponQueryServiceTest {
         assertThat(responses).hasSize(1);
         assertThat(responses.get(0).couponId()).isEqualTo(100L);
         assertThat(responses.get(0).expiresAt()).isNotNull();
+        assertThat(responses.get(0).statusLabel()).isEqualTo("Issued");
+        assertThat(responses.get(0).usable()).isTrue();
+        assertThat(responses.get(0).expired()).isFalse();
     }
 
     private CouponQueryService newService() {

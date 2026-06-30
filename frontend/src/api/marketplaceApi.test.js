@@ -11,6 +11,7 @@ import {
   searchProducts,
   unlikeProduct,
   updateProduct,
+  updateProductStatus,
   uploadProductImage
 } from './productApi.js';
 import { getCouponEvents, getMyCoupons, issueCoupon } from './couponApi.js';
@@ -45,6 +46,7 @@ test('product API maps marketplace endpoints', async () => {
   await getProduct(7, config);
   await createProduct(product, config);
   await updateProduct(7, { title: 'Bike', description: 'Good condition', price: 30000, category: 'Sports' }, config);
+  await updateProductStatus(7, 'RESERVED', config);
   await deleteProduct(7, config);
   await likeProduct(7, config);
   await unlikeProduct(7, config);
@@ -64,6 +66,7 @@ test('product API maps marketplace endpoints', async () => {
         params: undefined,
         data: { title: 'Bike', description: 'Good condition', price: 30000, category: 'Sports' }
       },
+      { method: 'patch', url: '/api/products/7/status', params: undefined, data: { status: 'RESERVED' } },
       { method: 'delete', url: '/api/products/7', params: undefined, data: undefined },
       { method: 'post', url: '/api/products/7/likes', params: undefined, data: null },
       { method: 'delete', url: '/api/products/7/likes', params: undefined, data: undefined },

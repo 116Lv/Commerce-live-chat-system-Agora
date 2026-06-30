@@ -9,7 +9,9 @@ import static org.mockito.Mockito.verify;
 
 import com.team7.agora.domain.product.dto.response.ProductLikeResponse;
 import com.team7.agora.domain.product.entity.Product;
+import com.team7.agora.domain.product.entity.ProductImage;
 import com.team7.agora.domain.product.entity.ProductLike;
+import com.team7.agora.domain.product.repository.ProductImageRepository;
 import com.team7.agora.domain.product.repository.ProductLikeRepository;
 import com.team7.agora.domain.product.repository.ProductRepository;
 import com.team7.agora.domain.region.entity.Region;
@@ -39,12 +41,15 @@ class ProductLikeServiceTest {
     @Mock
     private UserRepository userRepository;
 
+    @Mock
+    private ProductImageRepository productImageRepository;
+
     private ProductLikeService service;
     private User user;
     private Product product;
 
     private void setUpFixtures() {
-        service = new ProductLikeService(productRepository, productLikeRepository, userRepository);
+        service = new ProductLikeService(productRepository, productLikeRepository, userRepository, productImageRepository);
         User seller = User.signup("seller@test.com", "password", "판매자", "01011112222");
         assignId(seller, 1L);
         user = User.signup("user@test.com", "password", "구매자", "01033334444");
@@ -128,14 +133,22 @@ class ProductLikeServiceTest {
         setUpFixtures();
         ProductLike productLike = ProductLike.create(product, user);
         assignId(productLike, 100L);
+        ProductImage image = ProductImage.create(product, "https://cdn.test/products/10-main.jpg", 0);
+        assignId(image, 200L);
 
         when(userRepository.findByIdAndStatusAndDeletedAtIsNull(2L, UserStatus.ACTIVE)).thenReturn(Optional.of(user));
         when(productLikeRepository.findAllByUser(user)).thenReturn(List.of(productLike));
+        when(productImageRepository.findAllByProductIdInOrderByProductIdAscSortOrderAsc(List.of(10L)))
+            .thenReturn(List.of(image));
 
         var responses = service.getMyLikedProducts(2L);
 
         assertThat(responses).hasSize(1);
         assertThat(responses.get(0).productId()).isEqualTo(10L);
+        assertThat(responses.get(0).liked()).isTrue();
+        assertThat(responses.get(0).sellerId()).isEqualTo(1L);
+        assertThat(responses.get(0).regionName()).isEqualTo(product.getRegion().getName());
+        assertThat(responses.get(0).primaryImageUrl()).isEqualTo("https://cdn.test/products/10-main.jpg");
     }
 
     @Test

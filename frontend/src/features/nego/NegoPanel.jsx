@@ -1,38 +1,97 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Alert, Button, ButtonGroup, Form } from 'react-bootstrap';
+import { Link } from 'react-router-dom';
 import {
   acceptOffer,
   approveOfferExtension,
   createOffer,
-  expireOffer,
+  getCurrentOffer,
   rejectOffer,
   rejectOfferExtension,
   requestOfferExtension
 } from '../../api/negoApi.js';
+import { getUserToken } from '../../auth/tokenStorage.js';
 import MoneyText from '../../components/MoneyText.jsx';
 import StatusBadge from '../../components/StatusBadge.jsx';
 import { formatDateTime } from '../../pages/pageUtils.jsx';
+import {
+  buildPaymentHref,
+  getOfferActions,
+  getOfferPriceValidation,
+  getRemainingTimeLabel,
+  inferOfferRole,
+  parseOfferPriceInput
+} from './negoPanelUtils.js';
 
-const actions = [
-  { key: 'accept', label: '수락', handler: acceptOffer },
-  { key: 'reject', label: '거절', handler: rejectOffer },
-  { key: 'extension', label: '연장 요청', handler: requestOfferExtension },
-  { key: 'extensionApprove', label: '연장 승인', handler: approveOfferExtension },
-  { key: 'extensionReject', label: '연장 거절', handler: rejectOfferExtension },
-  { key: 'expire', label: '만료', handler: expireOffer }
-];
+const actionHandlers = {
+  accept: acceptOffer,
+  reject: rejectOffer,
+  extension: requestOfferExtension,
+  extensionApprove: approveOfferExtension,
+  extensionReject: rejectOfferExtension
+};
 
-export default function NegoPanel({ chatRoomId, onOfferChange }) {
+const decodeBase64Url = (value) => {
+  const normalized = value.replace(/-/g, '+').replace(/_/g, '/');
+  const padded = normalized.padEnd(Math.ceil(normalized.length / 4) * 4, '=');
+
+  return globalThis.atob(padded);
+};
+
+const getCurrentUserIdFromToken = () => {
+  try {
+    const token = getUserToken()?.replace(/^Bearer\s+/i, '');
+    const payload = token ? JSON.parse(decodeBase64Url(token.split('.')[1] || '')) : null;
+    const userId = payload?.userId ?? payload?.id ?? payload?.sub;
+
+    return userId == null ? null : String(userId);
+  } catch {
+    return null;
+  }
+};
+
+export default function NegoPanel({ chatRoomId, onOfferChange, productPrice }) {
   const [offerPrice, setOfferPrice] = useState('');
-  const [offerId, setOfferId] = useState('');
   const [offer, setOffer] = useState(null);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const [busyKey, setBusyKey] = useState('');
+  const currentUserId = useMemo(() => getCurrentUserIdFromToken(), []);
+  const offerRole = inferOfferRole(offer, currentUserId);
+  const offerActions = getOfferActions(offer, { role: offerRole });
+  const paymentHref = buildPaymentHref(offer);
+  const remainingTimeLabel = getRemainingTimeLabel(offer?.expiresAt);
+
+  useEffect(() => {
+    let disposed = false;
+
+    const loadCurrentOffer = async () => {
+      setError('');
+
+      try {
+        const response = await getCurrentOffer(chatRoomId);
+        if (!disposed) {
+          setOffer(response || null);
+          onOfferChange?.(response || null);
+        }
+      } catch (err) {
+        if (!disposed && err.status !== 404) {
+          setError(err.message);
+        }
+      }
+    };
+
+    if (chatRoomId) {
+      loadCurrentOffer();
+    }
+
+    return () => {
+      disposed = true;
+    };
+  }, [chatRoomId, onOfferChange]);
 
   const updateOffer = (nextOffer, nextMessage) => {
     setOffer(nextOffer);
-    setOfferId(nextOffer?.offerId ? String(nextOffer.offerId) : offerId);
     setMessage(nextMessage);
     onOfferChange?.(nextOffer);
   };
@@ -41,10 +100,17 @@ export default function NegoPanel({ chatRoomId, onOfferChange }) {
     event.preventDefault();
     setError('');
     setMessage('');
+
+    const validationMessage = getOfferPriceValidation(offerPrice, { productPrice });
+    if (validationMessage) {
+      setError(validationMessage);
+      return;
+    }
+
     setBusyKey('create');
 
     try {
-      const response = await createOffer(chatRoomId, { offerPrice: Number(offerPrice) });
+      const response = await createOffer(chatRoomId, { offerPrice: parseOfferPriceInput(offerPrice) });
       setOfferPrice('');
       updateOffer(response, '가격 제안을 보냈어요.');
     } catch (err) {
@@ -54,9 +120,9 @@ export default function NegoPanel({ chatRoomId, onOfferChange }) {
     }
   };
 
-  const runAction = async (action) => {
-    if (!offerId.trim()) {
-      setError('제안 ID를 입력해 주세요.');
+  const runAction = async (targetOffer, action) => {
+    if (!targetOffer?.offerId) {
+      setError('처리할 제안 정보를 찾을 수 없어요.');
       return;
     }
 
@@ -65,7 +131,7 @@ export default function NegoPanel({ chatRoomId, onOfferChange }) {
     setBusyKey(action.key);
 
     try {
-      const response = await action.handler(offerId.trim());
+      const response = await actionHandlers[action.key](targetOffer.offerId);
       updateOffer(response, `${action.label} 처리했어요.`);
     } catch (err) {
       setError(err.message);
@@ -97,35 +163,45 @@ export default function NegoPanel({ chatRoomId, onOfferChange }) {
       </Form>
 
       {offer ? (
-        <div className="nego-offer-summary mt-3">
+        <div className="nego-offer-summary mt-3" data-offer-id={offer.offerId}>
           <div className="d-flex justify-content-between align-items-start gap-2">
             <div>
               <strong>제안 #{offer.offerId}</strong>
-              <p className="mb-0 text-muted small">만료 {formatDateTime(offer.expiresAt)}</p>
+              <p className="mb-0 text-muted small">
+                만료 {formatDateTime(offer.expiresAt)}
+                {remainingTimeLabel ? ` · ${remainingTimeLabel}` : ''}
+              </p>
             </div>
             <StatusBadge status={offer.status} />
           </div>
           <MoneyText amount={offer.offerPrice} className="list-price mt-2" />
+          {paymentHref ? (
+            <div className="nego-payment-cta mt-3">
+              <p className="mb-2 text-muted small">
+                제안이 수락됐어요. 결제 화면에서 주문 정보를 확인하고 결제를 이어가세요.
+              </p>
+              <Button as={Link} to={paymentHref} variant="primary">
+                결제하기
+              </Button>
+            </div>
+          ) : null}
+          {offerActions.length > 0 ? (
+            <ButtonGroup className="nego-actions mt-3" aria-label="가격 제안 처리">
+              {offerActions.map((action) => (
+                <Button
+                  key={action.key}
+                  type="button"
+                  variant={action.variant}
+                  disabled={Boolean(busyKey)}
+                  onClick={() => runAction(offer, action)}
+                >
+                  {busyKey === action.key ? '처리 중' : action.label}
+                </Button>
+              ))}
+            </ButtonGroup>
+          ) : null}
         </div>
       ) : null}
-
-      <Form.Group controlId="offerId" className="mt-3">
-        <Form.Label>처리할 제안 ID</Form.Label>
-        <Form.Control value={offerId} onChange={(event) => setOfferId(event.target.value)} placeholder="offerId" />
-      </Form.Group>
-      <ButtonGroup className="nego-actions mt-2" aria-label="가격 제안 처리">
-        {actions.map((action) => (
-          <Button
-            key={action.key}
-            type="button"
-            variant="outline-primary"
-            disabled={!offerId.trim() || Boolean(busyKey)}
-            onClick={() => runAction(action)}
-          >
-            {busyKey === action.key ? '처리 중' : action.label}
-          </Button>
-        ))}
-      </ButtonGroup>
     </div>
   );
 }
