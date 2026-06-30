@@ -14,7 +14,14 @@ public record CouponEventResponse(
     int validDays,
     LocalDateTime startAt,
     LocalDateTime endAt,
-    String status
+    String status,
+    int remainingQuantity,
+    double issueRate,
+    boolean canIssue,
+    boolean ended,
+    boolean soldOut,
+    String statusLabel,
+    String typeLabel
 ) {
 
     public static CouponEventResponse from(CouponEvent couponEvent) {
@@ -29,7 +36,14 @@ public record CouponEventResponse(
             couponEvent.getValidDays(),
             couponEvent.getStartAt(),
             couponEvent.getEndAt(),
-            couponEvent.getStatus().name()
+            couponEvent.getStatus().name(),
+            CouponResponseDisplay.remainingQuantity(couponEvent),
+            CouponResponseDisplay.issueRate(couponEvent),
+            CouponResponseDisplay.canIssue(couponEvent),
+            CouponResponseDisplay.ended(couponEvent),
+            CouponResponseDisplay.soldOut(couponEvent),
+            CouponResponseDisplay.eventStatusLabel(couponEvent),
+            CouponResponseDisplay.eventTypeLabel(couponEvent.getType())
         );
     }
 }

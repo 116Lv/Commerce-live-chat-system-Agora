@@ -14,6 +14,7 @@ import com.team7.agora.global.exception.ErrorCode;
 import java.util.List;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
@@ -86,18 +87,22 @@ public class AdminPaymentService {
      * @param paymentId 결제 ID
      * @return 클라이언트에 반환할 API 응답
      */
-    @Transactional
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public AdminPaymentResponse verifyPayment(AdminPrincipal admin, Long paymentId) {
         validateSettlementAdmin(admin);
-        Payment payment = paymentRepository.findById(paymentId)
-            .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "결제를 찾을 수 없습니다."));
+        Payment payment = findPayment(paymentId);
 
         if (payment.getPaymentKey() == null) {
             throw new BusinessException(ErrorCode.INVALID_REQUEST, "결제 키가 없는 결제는 재검증할 수 없습니다.");
         }
 
         paymentService.confirmByPaymentId(paymentId, payment.getPaymentKey());
-        return toResponse(payment);
+        return toResponse(findPayment(paymentId));
+    }
+
+    private Payment findPayment(Long paymentId) {
+        return paymentRepository.findById(paymentId)
+            .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "결제를 찾을 수 없습니다."));
     }
 
     private AdminPaymentResponse toResponse(Payment payment) {

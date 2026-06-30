@@ -1,22 +1,79 @@
-import { NavLink, Outlet } from 'react-router-dom';
-import { CreditCard, Flag, LayoutDashboard, ShoppingBag, Tags, UsersRound } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { NavDropdown } from 'react-bootstrap';
+import { NavLink, Outlet, useNavigate } from 'react-router-dom';
+import {
+  CreditCard,
+  ClipboardCheck,
+  Flag,
+  LayoutDashboard,
+  LogOut,
+  Shield,
+  ShoppingBag,
+  Tags,
+  UserCog,
+  UsersRound
+} from 'lucide-react';
+import { getAdminMe } from '../api/adminApi.js';
+import { useAuth } from '../auth/AuthContext.jsx';
+import { formatAdminRole } from '../pages/adminPageUtils.js';
 
 const adminLinks = [
-  { to: '/admin', label: '대시보드', icon: LayoutDashboard, end: true },
-  { to: '/admin/products', label: '상품', icon: ShoppingBag },
-  { to: '/admin/users', label: '회원', icon: UsersRound },
-  { to: '/admin/reports', label: '신고', icon: Flag },
-  { to: '/admin/payments', label: '결제', icon: CreditCard },
-  { to: '/admin/coupons', label: '쿠폰', icon: Tags }
+  { to: '/admin', label: '대시보드', icon: LayoutDashboard, end: true, allowedRoles: ['ROOT_ADMIN', 'USER_ADMIN', 'PRODUCT_ADMIN', 'SETTLEMENT_ADMIN'] },
+  { to: '/admin/products', label: '상품 관리', icon: ShoppingBag, allowedRoles: ['ROOT_ADMIN', 'PRODUCT_ADMIN'] },
+  { to: '/admin/users', label: '회원 관리', icon: UsersRound, allowedRoles: ['ROOT_ADMIN', 'USER_ADMIN'] },
+  { to: '/admin/reports', label: '신고 관리', icon: Flag, allowedRoles: ['ROOT_ADMIN', 'USER_ADMIN', 'PRODUCT_ADMIN'] },
+  { to: '/admin/payments', label: '결제 관리', icon: CreditCard, allowedRoles: ['ROOT_ADMIN', 'SETTLEMENT_ADMIN'] },
+  { to: '/admin/coupons', label: '쿠폰 관리', icon: Tags, allowedRoles: ['ROOT_ADMIN'] },
+  { to: '/admin/accounts', label: '관리자 계정', icon: UserCog, allowedRoles: ['ROOT_ADMIN'] },
+  { to: '/admin/approval-requests', label: 'Approval management', icon: ClipboardCheck, allowedRoles: ['ROOT_ADMIN'] },
+  { to: '/admin/my-approval-requests', label: 'My approval requests', icon: ClipboardCheck, allowedRoles: ['ROOT_ADMIN', 'USER_ADMIN', 'PRODUCT_ADMIN', 'SETTLEMENT_ADMIN'] }
 ];
 
+const canSeeLink = (role, link) => link.allowedRoles.includes(String(role || '').toUpperCase());
+
 export default function AdminLayout() {
+  const navigate = useNavigate();
+  const { logoutAdmin } = useAuth();
+  const [admin, setAdmin] = useState(null);
+
+  useEffect(() => {
+    let ignore = false;
+
+    getAdminMe()
+      .then((data) => {
+        if (!ignore) {
+          setAdmin(data);
+        }
+      })
+      .catch(() => {
+        if (!ignore) {
+          setAdmin(null);
+        }
+      });
+
+    return () => {
+      ignore = true;
+    };
+  }, []);
+
+  const role = admin?.role || '';
+  const visibleLinks = adminLinks.filter((link) => canSeeLink(role, link));
+  const avatarText = String(admin?.nickname || admin?.email || 'A').slice(0, 1).toUpperCase();
+
+  const handleLogout = async () => {
+    await logoutAdmin();
+    navigate('/admin/login', { replace: true });
+  };
+
   return (
     <div className="admin-shell">
       <aside className="admin-sidebar" aria-label="관리자 메뉴">
-        <div className="admin-brand">Agora 관리자</div>
+        <div className="admin-brand">
+          <Shield size={20} aria-hidden="true" />
+          <span>Agora 관리자</span>
+        </div>
         <nav className="admin-nav">
-          {adminLinks.map(({ to, label, icon: Icon, end }) => (
+          {visibleLinks.map(({ to, label, icon: Icon, end }) => (
             <NavLink
               key={to}
               to={to}
@@ -29,9 +86,38 @@ export default function AdminLayout() {
           ))}
         </nav>
       </aside>
-      <main className="admin-main">
-        <Outlet />
-      </main>
+      <div className="admin-content">
+        <header className="admin-topbar">
+          <div>
+            <strong>{formatAdminRole(role)}</strong>
+            <span>{admin?.email || '관리자 정보를 불러오는 중'}</span>
+          </div>
+          <NavDropdown
+            align="end"
+            className="admin-account-dropdown"
+            title={
+              <span className="admin-avatar" aria-label="관리자 계정 메뉴">
+                {avatarText}
+              </span>
+            }
+          >
+            <NavDropdown.Header>{admin?.nickname || admin?.email || '관리자'}</NavDropdown.Header>
+            {String(role).toUpperCase() === 'ROOT_ADMIN' ? (
+              <NavDropdown.Item as={NavLink} to="/admin/accounts">
+                관리자 계정
+              </NavDropdown.Item>
+            ) : null}
+            {String(role).toUpperCase() === 'ROOT_ADMIN' ? <NavDropdown.Divider /> : null}
+            <NavDropdown.Item onClick={handleLogout}>
+              <LogOut size={16} aria-hidden="true" />
+              로그아웃
+            </NavDropdown.Item>
+          </NavDropdown>
+        </header>
+        <main className="admin-main">
+          <Outlet />
+        </main>
+      </div>
     </div>
   );
 }

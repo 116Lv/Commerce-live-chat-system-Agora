@@ -3,6 +3,7 @@ package com.team7.agora.domain.trade.repository;
 import com.team7.agora.domain.product.entity.Product;
 import com.team7.agora.domain.trade.entity.Trade;
 import com.team7.agora.domain.trade.enums.TradeStatus;
+import com.team7.agora.domain.user.entity.User;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -26,6 +27,8 @@ public interface TradeRepository extends JpaRepository<Trade, Long> {
     boolean existsByProductAndStatusNot(Product product, TradeStatus status);
 
     Optional<Trade> findByProduct(Product product);
+
+    Optional<Trade> findByProductAndBuyer(Product product, User buyer);
 
     List<Trade> findAllByStatusAndPaymentDueAtLessThanEqual(TradeStatus status, LocalDateTime now);
 }

@@ -79,7 +79,14 @@ class AdminCouponEventControllerTest {
                 5000,
                 10000,
                 30,
-                "ACTIVE"
+                "ACTIVE",
+                10,
+                0.0,
+                true,
+                false,
+                false,
+                "Active",
+                "First come"
             ));
 
         mockMvc.perform(post("/api/admin/coupon-events")
@@ -99,7 +106,9 @@ class AdminCouponEventControllerTest {
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.status").value("SUCCESS"))
             .andExpect(jsonPath("$.data.eventId").value(1L))
-            .andExpect(jsonPath("$.data.type").value("FIRST_COME"));
+            .andExpect(jsonPath("$.data.type").value("FIRST_COME"))
+            .andExpect(jsonPath("$.data.remainingQuantity").value(10))
+            .andExpect(jsonPath("$.data.canIssue").value(true));
     }
 
     @Test

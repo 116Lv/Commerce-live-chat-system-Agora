@@ -9,9 +9,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.team7.agora.domain.admin.dto.response.AdminProductResponse;
-import com.team7.agora.domain.admin.service.AdminProductService;
 import com.team7.agora.domain.admin.enums.AdminRole;
 import com.team7.agora.domain.admin.enums.AdminStatus;
+import com.team7.agora.domain.admin.service.AdminProductService;
 import com.team7.agora.global.auth.AdminPrincipal;
 import java.math.BigDecimal;
 import java.util.List;
@@ -52,21 +52,33 @@ class AdminProductControllerTest {
     @Test
     void getProducts_usesAuthenticatedAdminAndReturnsProducts() throws Exception {
         authenticate(AdminRole.PRODUCT_ADMIN);
-        when(adminProductService.getProducts(any(AdminPrincipal.class), eq(true), any()))
+        when(adminProductService.getProducts(any(AdminPrincipal.class), eq(true), eq("PENDING"), any()))
                 .thenReturn(new PageImpl<>(
-                        List.of(new AdminProductResponse(1L, "중고 자전거", BigDecimal.valueOf(100000), 10L, "SELLING")),
+                        List.of(new AdminProductResponse(
+                                1L,
+                                "Bike",
+                                BigDecimal.valueOf(100000),
+                                10L,
+                                "seller",
+                                "SELLING",
+                                "Selling",
+                                "PENDING"
+                        )),
                         PageRequest.of(0, 20),
                         42
                 ));
 
         mockMvc.perform(get("/api/admin/products")
                         .param("reportedOnly", "true")
+                        .param("approvalStatus", "PENDING")
                         .param("page", "0")
                         .param("size", "20"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("SUCCESS"))
                 .andExpect(jsonPath("$.data.content[0].id").value(1L))
-                .andExpect(jsonPath("$.data.content[0].title").value("중고 자전거"))
+                .andExpect(jsonPath("$.data.content[0].title").value("Bike"))
+                .andExpect(jsonPath("$.data.content[0].sellerNickname").value("seller"))
+                .andExpect(jsonPath("$.data.content[0].approvalStatus").value("PENDING"))
                 .andExpect(jsonPath("$.data.page").value(0))
                 .andExpect(jsonPath("$.data.size").value(20))
                 .andExpect(jsonPath("$.data.totalElements").value(42))
@@ -77,13 +89,44 @@ class AdminProductControllerTest {
     void hideProduct_usesAuthenticatedAdminAndReturnsHiddenProduct() throws Exception {
         authenticate(AdminRole.PRODUCT_ADMIN);
         when(adminProductService.hideProduct(any(AdminPrincipal.class), eq(1L)))
-                .thenReturn(new AdminProductResponse(1L, "중고 자전거", BigDecimal.valueOf(100000), 10L, "HIDDEN"));
+                .thenReturn(new AdminProductResponse(
+                        1L,
+                        "Bike",
+                        BigDecimal.valueOf(100000),
+                        10L,
+                        "seller",
+                        "HIDDEN",
+                        "Hidden",
+                        "REJECTED"
+                ));
 
         mockMvc.perform(patch("/api/admin/products/{productId}/hide", 1L))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("SUCCESS"))
                 .andExpect(jsonPath("$.data.id").value(1L))
                 .andExpect(jsonPath("$.data.status").value("HIDDEN"));
+    }
+
+    @Test
+    void approveProduct_usesAuthenticatedAdminAndReturnsApprovedProduct() throws Exception {
+        authenticate(AdminRole.PRODUCT_ADMIN);
+        when(adminProductService.approveProduct(any(AdminPrincipal.class), eq(1L)))
+                .thenReturn(new AdminProductResponse(
+                        1L,
+                        "Bike",
+                        BigDecimal.valueOf(100000),
+                        10L,
+                        "seller",
+                        "SELLING",
+                        "Selling",
+                        "APPROVED"
+                ));
+
+        mockMvc.perform(patch("/api/admin/products/{productId}/approve", 1L))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("SUCCESS"))
+                .andExpect(jsonPath("$.data.id").value(1L))
+                .andExpect(jsonPath("$.data.approvalStatus").value("APPROVED"));
     }
 
     private void authenticate(AdminRole role) {
@@ -93,7 +136,7 @@ class AdminProductControllerTest {
                 "encoded",
                 role,
                 AdminStatus.ACTIVE,
-                "관리자"
+                "admin"
         );
         SecurityContextHolder.getContext().setAuthentication(
                 new UsernamePasswordAuthenticationToken(principal, null, principal.getAuthorities())

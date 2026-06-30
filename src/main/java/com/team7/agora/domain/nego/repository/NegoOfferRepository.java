@@ -24,6 +24,11 @@ public interface NegoOfferRepository extends JpaRepository<NegoOffer, Long> {
 
     Optional<NegoOffer> findFirstByChatRoomIdAndStatusOrderByCreatedAtDesc(Long chatRoomId, NegoOfferStatus status);
 
+    Optional<NegoOffer> findFirstByChatRoomIdAndStatusInOrderByCreatedAtDesc(
+        Long chatRoomId,
+        Collection<NegoOfferStatus> statuses
+    );
+
     boolean existsByChatRoomAndRequesterAndStatusIn(
         ChatRoom chatRoom,
         User requester,

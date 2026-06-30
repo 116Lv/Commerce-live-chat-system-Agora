@@ -115,6 +115,19 @@ class AdminPaymentServiceTest {
     }
 
     @Test
+    void verifyPaymentReloadsPaymentAfterConfirmationBeforeBuildingAdminResponse() {
+        Payment ready = payment(5L, PaymentStatus.READY);
+        Payment paid = payment(5L, PaymentStatus.PAID);
+        when(paymentRepository.findById(5L)).thenReturn(Optional.of(ready), Optional.of(paid));
+
+        var response = adminPaymentService.verifyPayment(settlementAdmin, 5L);
+
+        assertThat(response.status()).isEqualTo("PAID");
+        verify(paymentService).confirmByPaymentId(5L, "payment-key-5");
+        verify(settlementRepository).findByPayment(paid);
+    }
+
+    @Test
     void wrongAdminRoleCannotReadPayments() {
         AdminPrincipal user = new AdminPrincipal(
             1L,

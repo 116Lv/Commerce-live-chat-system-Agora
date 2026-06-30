@@ -6,6 +6,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.verify;
 
@@ -18,9 +19,11 @@ import com.team7.agora.domain.nego.entity.NegoOffer;
 import com.team7.agora.domain.nego.enums.NegoOfferStatus;
 import com.team7.agora.domain.nego.repository.NegoOfferRepository;
 import com.team7.agora.domain.product.entity.Product;
+import com.team7.agora.domain.product.enums.ProductApprovalStatus;
 import com.team7.agora.domain.region.entity.Region;
 import com.team7.agora.domain.product.repository.ProductRepository;
 import com.team7.agora.domain.trade.entity.Trade;
+import com.team7.agora.domain.trade.repository.TradeRepository;
 import com.team7.agora.domain.trade.service.TradeService;
 import com.team7.agora.domain.user.entity.User;
 import com.team7.agora.global.auth.AuthUser;
@@ -56,6 +59,9 @@ class NegoServiceTest {
     private TradeService tradeService;
 
     @Mock
+    private TradeRepository tradeRepository;
+
+    @Mock
     private ChatSystemMessageService chatSystemMessageService;
 
     private NegoService negoService;
@@ -71,6 +77,7 @@ class NegoServiceTest {
             chatRoomRepository,
             productRepository,
             tradeService,
+            tradeRepository,
             chatSystemMessageService
         );
         seller = User.signup("seller@test.com", "password", "판매자", "01011112222");
@@ -82,6 +89,7 @@ class NegoServiceTest {
         Region region = Region.create("서울 강남구 역삼동", "1168010100", "서울", "강남구", "역삼동");
         Product product = Product.create(seller, region, "자전거", "상태 좋아요", BigDecimal.valueOf(50000), "스포츠");
         assignId(product, 10L);
+        product.approve();
         chatRoom = ChatRoom.open(product, buyer);
         assignId(chatRoom, 100L);
     }
@@ -90,7 +98,7 @@ class NegoServiceTest {
     void createOfferAllowsBuyerParticipant() {
         when(chatRoomRepository.findByIdAndStatusForUpdate(100L, ChatRoomStatus.ACTIVE))
             .thenReturn(Optional.of(chatRoom));
-        when(productRepository.findByIdForUpdateAndDeletedAtIsNull(10L))
+        when(productRepository.findByIdForUpdateAndDeletedAtIsNullAndApprovalStatus(10L, ProductApprovalStatus.APPROVED))
             .thenReturn(Optional.of(chatRoom.getProduct()));
         when(negoOfferRepository.save(any(NegoOffer.class))).thenAnswer(invocation -> {
             NegoOffer offer = invocation.getArgument(0);
@@ -105,7 +113,8 @@ class NegoServiceTest {
         assertThat(response.offerPrice()).isEqualByComparingTo(BigDecimal.valueOf(45000));
         assertThat(response.status()).isEqualTo("PENDING");
         InOrder inOrder = inOrder(productRepository, negoOfferRepository);
-        inOrder.verify(productRepository).findByIdForUpdateAndDeletedAtIsNull(10L);
+        inOrder.verify(productRepository)
+            .findByIdForUpdateAndDeletedAtIsNullAndApprovalStatus(10L, ProductApprovalStatus.APPROVED);
         inOrder.verify(negoOfferRepository).existsByChatRoomAndRequesterAndStatusIn(
             chatRoom,
             buyer,
@@ -119,7 +128,7 @@ class NegoServiceTest {
     void createOfferSetsExpirationAfter24Hours() {
         when(chatRoomRepository.findByIdAndStatusForUpdate(100L, ChatRoomStatus.ACTIVE))
             .thenReturn(Optional.of(chatRoom));
-        when(productRepository.findByIdForUpdateAndDeletedAtIsNull(10L))
+        when(productRepository.findByIdForUpdateAndDeletedAtIsNullAndApprovalStatus(10L, ProductApprovalStatus.APPROVED))
             .thenReturn(Optional.of(chatRoom.getProduct()));
         when(negoOfferRepository.save(any(NegoOffer.class))).thenAnswer(invocation -> {
             NegoOffer offer = invocation.getArgument(0);
@@ -152,7 +161,7 @@ class NegoServiceTest {
         chatRoom.getProduct().markReserved();
         when(chatRoomRepository.findByIdAndStatusForUpdate(100L, ChatRoomStatus.ACTIVE))
             .thenReturn(Optional.of(chatRoom));
-        when(productRepository.findByIdForUpdateAndDeletedAtIsNull(10L))
+        when(productRepository.findByIdForUpdateAndDeletedAtIsNullAndApprovalStatus(10L, ProductApprovalStatus.APPROVED))
             .thenReturn(Optional.of(chatRoom.getProduct()));
 
         assertThatThrownBy(() -> negoService.createOffer(2L, 100L, BigDecimal.valueOf(45000)))
@@ -163,7 +172,7 @@ class NegoServiceTest {
     void createOfferRejectsWhenRequesterAlreadyHasActiveOfferInRoom() {
         when(chatRoomRepository.findByIdAndStatusForUpdate(100L, ChatRoomStatus.ACTIVE))
             .thenReturn(Optional.of(chatRoom));
-        when(productRepository.findByIdForUpdateAndDeletedAtIsNull(10L))
+        when(productRepository.findByIdForUpdateAndDeletedAtIsNullAndApprovalStatus(10L, ProductApprovalStatus.APPROVED))
             .thenReturn(Optional.of(chatRoom.getProduct()));
         when(negoOfferRepository.existsByChatRoomAndRequesterAndStatusIn(chatRoom, buyer, NegoOffer.ACTIVE_STATUSES))
             .thenReturn(true);
@@ -186,11 +195,29 @@ class NegoServiceTest {
         reservedProduct.markReserved();
         when(chatRoomRepository.findByIdAndStatusForUpdate(100L, ChatRoomStatus.ACTIVE))
             .thenReturn(Optional.of(chatRoom));
-        when(productRepository.findByIdForUpdateAndDeletedAtIsNull(10L))
+        when(productRepository.findByIdForUpdateAndDeletedAtIsNullAndApprovalStatus(10L, ProductApprovalStatus.APPROVED))
             .thenReturn(Optional.of(reservedProduct));
 
         assertThatThrownBy(() -> negoService.createOffer(2L, 100L, BigDecimal.valueOf(45000)))
             .isInstanceOf(BusinessException.class);
+    }
+
+    @Test
+    void createOfferUsesApprovedProductLockQueryAndTreatsUnapprovedTargetAsNotFound() {
+        when(chatRoomRepository.findByIdAndStatusForUpdate(100L, ChatRoomStatus.ACTIVE))
+            .thenReturn(Optional.of(chatRoom));
+        when(productRepository.findByIdForUpdateAndDeletedAtIsNullAndApprovalStatus(10L, ProductApprovalStatus.APPROVED))
+            .thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> negoService.createOffer(2L, 100L, BigDecimal.valueOf(45000)))
+            .isInstanceOfSatisfying(BusinessException.class, exception ->
+                assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.NOT_FOUND)
+            );
+        verify(productRepository)
+            .findByIdForUpdateAndDeletedAtIsNullAndApprovalStatus(10L, ProductApprovalStatus.APPROVED);
+        verify(productRepository, never()).findByIdForUpdateAndDeletedAtIsNull(10L);
+        verify(negoOfferRepository, never()).save(any(NegoOffer.class));
+        verify(chatSystemMessageService, never()).send(any(), any(), any());
     }
 
     @Test
@@ -199,6 +226,51 @@ class NegoServiceTest {
             .thenReturn(Optional.of(chatRoom));
 
         assertThatThrownBy(() -> negoService.createOffer(1L, 100L, BigDecimal.valueOf(45000)))
+            .isInstanceOf(BusinessException.class);
+    }
+
+    @Test
+    void getCurrentOfferReturnsLatestActiveOfferForParticipant() {
+        NegoOffer offer = NegoOffer.create(chatRoom, buyer, BigDecimal.valueOf(45000));
+        assignId(offer, 1000L);
+        when(chatRoomRepository.findByIdAndStatus(100L, ChatRoomStatus.ACTIVE))
+            .thenReturn(Optional.of(chatRoom));
+        when(negoOfferRepository.findFirstByChatRoomIdAndStatusInOrderByCreatedAtDesc(100L, NegoService.CURRENT_OFFER_STATUSES))
+            .thenReturn(Optional.of(offer));
+
+        NegoOfferResponse response = negoService.getCurrentOffer(2L, 100L);
+
+        assertThat(response.offerId()).isEqualTo(1000L);
+        assertThat(response.status()).isEqualTo("PENDING");
+    }
+
+    @Test
+    void getCurrentOfferReturnsAcceptedOfferWithTradeIdForParticipant() {
+        NegoOffer offer = NegoOffer.create(chatRoom, buyer, BigDecimal.valueOf(45000));
+        assignId(offer, 1000L);
+        offer.accept();
+        Trade trade = Trade.start(chatRoom.getProduct(), seller, buyer, BigDecimal.valueOf(45000));
+        assignId(trade, 2000L);
+        when(chatRoomRepository.findByIdAndStatus(100L, ChatRoomStatus.ACTIVE))
+            .thenReturn(Optional.of(chatRoom));
+        when(negoOfferRepository.findFirstByChatRoomIdAndStatusInOrderByCreatedAtDesc(100L, NegoService.CURRENT_OFFER_STATUSES))
+            .thenReturn(Optional.of(offer));
+        when(tradeRepository.findByProductAndBuyer(chatRoom.getProduct(), buyer))
+            .thenReturn(Optional.of(trade));
+
+        NegoOfferResponse response = negoService.getCurrentOffer(2L, 100L);
+
+        assertThat(response.offerId()).isEqualTo(1000L);
+        assertThat(response.status()).isEqualTo("ACCEPTED");
+        assertThat(response.tradeId()).isEqualTo(2000L);
+    }
+
+    @Test
+    void getCurrentOfferRejectsNonParticipant() {
+        when(chatRoomRepository.findByIdAndStatus(100L, ChatRoomStatus.ACTIVE))
+            .thenReturn(Optional.of(chatRoom));
+
+        assertThatThrownBy(() -> negoService.getCurrentOffer(3L, 100L))
             .isInstanceOf(BusinessException.class);
     }
 
@@ -444,7 +516,7 @@ class NegoServiceTest {
     private void assertInvalidOfferPriceRejected(BigDecimal offerPrice) {
         when(chatRoomRepository.findByIdAndStatusForUpdate(100L, ChatRoomStatus.ACTIVE))
             .thenReturn(Optional.of(chatRoom));
-        when(productRepository.findByIdForUpdateAndDeletedAtIsNull(10L))
+        when(productRepository.findByIdForUpdateAndDeletedAtIsNullAndApprovalStatus(10L, ProductApprovalStatus.APPROVED))
             .thenReturn(Optional.of(chatRoom.getProduct()));
         lenient().when(negoOfferRepository.save(any(NegoOffer.class))).thenAnswer(invocation -> {
             NegoOffer offer = invocation.getArgument(0);

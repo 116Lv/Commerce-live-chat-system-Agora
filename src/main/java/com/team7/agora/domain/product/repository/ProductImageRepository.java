@@ -2,7 +2,10 @@ package com.team7.agora.domain.product.repository;
 
 import com.team7.agora.domain.product.entity.Product;
 import com.team7.agora.domain.product.entity.ProductImage;
+import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 /**
  * 상품 이미지 데이터 저장과 조회를 담당하는 저장소 인터페이스이다.
@@ -10,4 +13,13 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface ProductImageRepository extends JpaRepository<ProductImage, Long> {
 
     int countByProduct(Product product);
+
+    @Query("""
+        select pi
+        from ProductImage pi
+        join fetch pi.product p
+        where p.id in :productIds
+        order by p.id asc, pi.sortOrder asc
+        """)
+    List<ProductImage> findAllByProductIdInOrderByProductIdAscSortOrderAsc(@Param("productIds") List<Long> productIds);
 }

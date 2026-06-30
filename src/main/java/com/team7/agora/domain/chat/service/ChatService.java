@@ -6,8 +6,12 @@ import com.team7.agora.domain.chat.entity.ChatMessage;
 import com.team7.agora.domain.chat.entity.ChatRoom;
 import com.team7.agora.domain.chat.enums.ChatRoomStatus;
 import com.team7.agora.domain.chat.repository.ChatMessageRepository;
+import com.team7.agora.domain.chat.repository.ChatRoomUnreadCount;
 import com.team7.agora.domain.chat.repository.ChatRoomRepository;
 import com.team7.agora.domain.product.entity.Product;
+import com.team7.agora.domain.product.entity.ProductImage;
+import com.team7.agora.domain.product.enums.ProductApprovalStatus;
+import com.team7.agora.domain.product.repository.ProductImageRepository;
 import com.team7.agora.domain.product.repository.ProductRepository;
 import com.team7.agora.domain.user.entity.User;
 import com.team7.agora.domain.user.enums.UserStatus;
@@ -15,7 +19,11 @@ import com.team7.agora.domain.user.repository.UserRepository;
 import com.team7.agora.global.exception.BusinessException;
 import com.team7.agora.global.exception.ErrorCode;
 import com.team7.agora.global.storage.ImageStorageClient;
+import java.time.LocalDateTime;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -33,6 +41,7 @@ public class ChatService {
     private final ChatRoomRepository chatRoomRepository;
     private final ChatMessageRepository chatMessageRepository;
     private final ProductRepository productRepository;
+    private final ProductImageRepository productImageRepository;
     private final UserRepository userRepository;
     private final ImageStorageClient imageStorageClient;
 
@@ -48,12 +57,14 @@ public class ChatService {
         ChatRoomRepository chatRoomRepository,
         ChatMessageRepository chatMessageRepository,
         ProductRepository productRepository,
+        ProductImageRepository productImageRepository,
         UserRepository userRepository,
         ImageStorageClient imageStorageClient
     ) {
         this.chatRoomRepository = chatRoomRepository;
         this.chatMessageRepository = chatMessageRepository;
         this.productRepository = productRepository;
+        this.productImageRepository = productImageRepository;
         this.userRepository = userRepository;
         this.imageStorageClient = imageStorageClient;
     }
@@ -66,18 +77,30 @@ public class ChatService {
      */
     @Transactional
     public ChatRoomResponse openRoom(Long userId, Long productId) {
-        Product product = productRepository.findByIdAndDeletedAtIsNull(productId)
+        Product product = productRepository.findByIdAndDeletedAtIsNullAndApprovalStatus(productId, ProductApprovalStatus.APPROVED)
+            .or(() -> rejectSellerSelfChat(userId, productId))
             .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "상품을 찾을 수 없습니다."));
 
         if (product.isSeller(userId)) {
             throw new BusinessException(ErrorCode.INVALID_REQUEST, "내 상품에는 채팅을 시작할 수 없습니다.");
         }
 
+        if (product.getApprovalStatus() != ProductApprovalStatus.APPROVED) {
+            throw new BusinessException(ErrorCode.FORBIDDEN, "Only approved products can open chat rooms.");
+        }
+
         User buyer = findActiveUser(userId);
         ChatRoom chatRoom = chatRoomRepository.findByProductAndSellerAndBuyer(product, product.getSeller(), buyer)
             .orElseGet(() -> createRoomOrFindExisting(product, buyer));
 
-        return ChatRoomResponse.from(chatRoom);
+        return toRoomResponse(chatRoom, userId);
+    }
+
+    private Optional<Product> rejectSellerSelfChat(Long userId, Long productId) {
+        if (productRepository.existsByIdAndSellerIdAndDeletedAtIsNull(productId, userId)) {
+            throw new BusinessException(ErrorCode.INVALID_REQUEST, "내 상품에는 채팅을 시작할 수 없습니다.");
+        }
+        return Optional.empty();
     }
 
     private ChatRoom createRoomOrFindExisting(Product product, User buyer) {
@@ -154,8 +177,18 @@ public class ChatService {
      */
     public List<ChatRoomResponse> getMyRooms(Long userId) {
         User user = findUser(userId);
-        return chatRoomRepository.findAllBySellerOrBuyer(user, user).stream()
-            .map(ChatRoomResponse::from)
+        List<ChatRoom> chatRooms = chatRoomRepository.findAllBySellerOrBuyer(user, user);
+        Map<Long, String> primaryImageUrls = findPrimaryImageUrls(chatRooms);
+        Map<Long, ChatMessage> lastMessages = findLastMessages(chatRooms);
+        Map<Long, Long> unreadCounts = countUnreadMessages(chatRooms, userId);
+
+        return chatRooms.stream()
+            .map(chatRoom -> toRoomResponse(
+                chatRoom,
+                primaryImageUrls.get(chatRoom.getProduct().getId()),
+                lastMessages.get(chatRoom.getId()),
+                unreadCounts.getOrDefault(chatRoom.getId(), 0L)
+            ))
             .toList();
     }
 
@@ -174,7 +207,114 @@ public class ChatService {
         }
 
         chatRoom.markRead(userId);
-        return ChatRoomResponse.from(chatRoom);
+        return toRoomResponse(chatRoom, userId);
+    }
+
+    private ChatRoomResponse toRoomResponse(ChatRoom chatRoom, Long viewerId) {
+        String primaryImageUrl = findPrimaryImageUrls(List.of(chatRoom)).get(chatRoom.getProduct().getId());
+        return toRoomResponse(chatRoom, viewerId, primaryImageUrl);
+    }
+
+    private ChatRoomResponse toRoomResponse(ChatRoom chatRoom, Long viewerId, String productThumbnailUrl) {
+        Optional<ChatMessage> lastMessage = findLastMessage(chatRoom);
+        long unreadCount = countUnreadMessages(chatRoom, viewerId);
+
+        return toRoomResponse(chatRoom, productThumbnailUrl, lastMessage.orElse(null), unreadCount);
+    }
+
+    private ChatRoomResponse toRoomResponse(
+        ChatRoom chatRoom,
+        String productThumbnailUrl,
+        ChatMessage lastMessage,
+        long unreadCount
+    ) {
+        return ChatRoomResponse.from(chatRoom, productThumbnailUrl, lastMessage, unreadCount);
+    }
+
+    private Optional<ChatMessage> findLastMessage(ChatRoom chatRoom) {
+        Optional<ChatMessage> lastMessage = chatMessageRepository.findFirstByChatRoomOrderByIdDesc(chatRoom);
+        return lastMessage == null ? Optional.empty() : lastMessage;
+    }
+
+    private long countUnreadMessages(ChatRoom chatRoom, Long viewerId) {
+        LocalDateTime lastReadAt = null;
+
+        if (chatRoom.getSeller().getId().equals(viewerId)) {
+            lastReadAt = chatRoom.getSellerLastReadAt();
+        } else if (chatRoom.getBuyer().getId().equals(viewerId)) {
+            lastReadAt = chatRoom.getBuyerLastReadAt();
+        }
+
+        return chatMessageRepository.countUnreadMessagesForUser(chatRoom, viewerId, lastReadAt);
+    }
+
+    private Map<Long, ChatMessage> findLastMessages(List<ChatRoom> chatRooms) {
+        List<Long> chatRoomIds = chatRooms.stream()
+            .map(ChatRoom::getId)
+            .distinct()
+            .toList();
+        Map<Long, ChatMessage> lastMessages = new LinkedHashMap<>();
+
+        if (chatRoomIds.isEmpty()) {
+            return lastMessages;
+        }
+
+        List<ChatMessage> messages = chatMessageRepository.findLatestMessagesByChatRoomIds(chatRoomIds);
+        if (messages == null) {
+            return lastMessages;
+        }
+
+        for (ChatMessage message : messages) {
+            lastMessages.put(message.getChatRoom().getId(), message);
+        }
+
+        return lastMessages;
+    }
+
+    private Map<Long, Long> countUnreadMessages(List<ChatRoom> chatRooms, Long viewerId) {
+        List<Long> chatRoomIds = chatRooms.stream()
+            .map(ChatRoom::getId)
+            .distinct()
+            .toList();
+        Map<Long, Long> unreadCounts = new LinkedHashMap<>();
+
+        if (chatRoomIds.isEmpty()) {
+            return unreadCounts;
+        }
+
+        List<ChatRoomUnreadCount> counts = chatMessageRepository.countUnreadMessagesByChatRoomIds(chatRoomIds, viewerId);
+        if (counts == null) {
+            return unreadCounts;
+        }
+
+        for (ChatRoomUnreadCount count : counts) {
+            unreadCounts.put(count.chatRoomId(), count.unreadCount() == null ? 0L : count.unreadCount());
+        }
+
+        return unreadCounts;
+    }
+
+    private Map<Long, String> findPrimaryImageUrls(List<ChatRoom> chatRooms) {
+        List<Long> productIds = chatRooms.stream()
+            .map(chatRoom -> chatRoom.getProduct().getId())
+            .distinct()
+            .toList();
+        Map<Long, String> primaryImageUrls = new LinkedHashMap<>();
+
+        if (productIds.isEmpty()) {
+            return primaryImageUrls;
+        }
+
+        List<ProductImage> images = productImageRepository.findAllByProductIdInOrderByProductIdAscSortOrderAsc(productIds);
+        if (images == null) {
+            return primaryImageUrls;
+        }
+
+        for (ProductImage image : images) {
+            primaryImageUrls.putIfAbsent(image.getProduct().getId(), image.getImageUrl());
+        }
+
+        return primaryImageUrls;
     }
 
     private ChatRoom findActiveRoom(Long chatRoomId) {

@@ -85,6 +85,14 @@ public class PaymentService {
         if (!trade.getBuyer().getId().equals(payerId)) {
             throw new PaymentException(ErrorCode.FORBIDDEN, "구매자만 결제를 준비할 수 있습니다.");
         }
+        Payment existingPayment = paymentRepository.findByTrade(trade).orElse(null);
+        if (existingPayment != null) {
+            if (existingPayment.getStatus() == PaymentStatus.READY
+                || existingPayment.getStatus() == PaymentStatus.CONFIRMING) {
+                return PaymentResponse.from(existingPayment);
+            }
+            throw new PaymentException(ErrorCode.CONFLICT, "이미 결제가 생성된 거래입니다.");
+        }
         if (trade.getStatus() != TradeStatus.PAYMENT_PENDING) {
             throw new PaymentException(ErrorCode.INVALID_REQUEST, "결제 대기 중인 거래만 결제할 수 있습니다.");
         }
@@ -182,6 +190,9 @@ public class PaymentService {
     private ConfirmationAttempt reserveConfirmation(Payment payment) {
         if (payment.getStatus() == PaymentStatus.PAID) {
             return new ConfirmationAttempt(payment.getId(), payment.getOrderId(), payment.getAmount(), PaymentResponse.from(payment));
+        }
+        if (payment.getStatus() == PaymentStatus.CONFIRMING) {
+            throw new PaymentException(ErrorCode.CONFLICT, "approval in progress");
         }
         payment.markConfirming();
         return new ConfirmationAttempt(payment.getId(), payment.getOrderId(), payment.getAmount(), null);

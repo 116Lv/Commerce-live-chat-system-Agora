@@ -1,6 +1,7 @@
 package com.team7.agora.domain.product.controller;
 
 import com.team7.agora.domain.product.dto.request.ProductCreateRequest;
+import com.team7.agora.domain.product.dto.request.ProductStatusUpdateRequest;
 import com.team7.agora.domain.product.dto.request.ProductUpdateRequest;
 import com.team7.agora.domain.product.dto.response.ProductResponse;
 import com.team7.agora.domain.product.service.ProductService;
@@ -62,8 +63,12 @@ public class ProductController {
      * @return 클라이언트에 반환할 API 응답
      */
     @GetMapping("/{productId}")
-    public ResponseEntity<ApiResponse<ProductResponse>> getProduct(@PathVariable Long productId) {
-        ProductResponse response = productService.getProduct(productId);
+    public ResponseEntity<ApiResponse<ProductResponse>> getProduct(
+        @AuthenticationPrincipal CustomUserDetails userDetails,
+        @PathVariable Long productId
+    ) {
+        Long viewerId = userDetails == null ? null : userDetails.getUserId();
+        ProductResponse response = productService.getProduct(viewerId, productId);
         return ResponseEntity.ok(ApiResponse.success("상품을 조회했습니다.", response));
     }
 
@@ -102,6 +107,16 @@ public class ProductController {
     ) {
         ProductResponse response = productService.update(userDetails.getUserId(), productId, request);
         return ResponseEntity.ok(ApiResponse.success("상품이 수정되었습니다.", response));
+    }
+
+    @PatchMapping("/{productId}/status")
+    public ResponseEntity<ApiResponse<ProductResponse>> updateStatus(
+        @AuthenticationPrincipal CustomUserDetails userDetails,
+        @PathVariable Long productId,
+        @Valid @RequestBody ProductStatusUpdateRequest request
+    ) {
+        ProductResponse response = productService.updateStatus(userDetails.getUserId(), productId, request.status());
+        return ResponseEntity.ok(ApiResponse.success("상품 상태가 변경되었습니다.", response));
     }
 
     /**

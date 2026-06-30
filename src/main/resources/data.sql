@@ -33,16 +33,16 @@ VALUES
     (9, 3, 5, FALSE),
     (10, 5, 5, TRUE);
 
-INSERT INTO products (id, seller_id, region_id, title, description, price, category, status, view_count, like_count, deleted_at)
+INSERT INTO products (id, seller_id, region_id, title, description, price, category, status, approval_status, view_count, like_count, deleted_at)
 VALUES
-    (1, 1, 1, '아이폰 15 128GB 블랙', '상태 좋고 배터리 성능 92%입니다. 직거래 선호합니다.', 850000, '디지털기기', 'SELLING', 31, 2, NULL),
-    (2, 1, 1, '맥북 에어 M2 13인치', '문서 작업 위주로 사용했습니다. 생활 기스 조금 있습니다.', 720000, '디지털기기', 'SOLD', 54, 1, NULL),
-    (3, 2, 3, '캠핑 의자 2개 세트', '가볍고 접이식이라 캠핑 입문자에게 좋아요.', 45000, '스포츠/레저', 'SELLING', 12, 1, NULL),
-    (4, 3, 2, '원목 책상', '이사 정리로 내놓습니다. 직접 가져가셔야 합니다.', 60000, '가구/인테리어', 'SOLD', 40, 1, NULL),
-    (5, 2, 4, '자전거 헬멧', '사이즈 M, 사용감 적습니다.', 25000, '스포츠/레저', 'RESERVED', 8, 0, NULL),
-    (6, 3, 5, '커피 원두 1kg', '선물 받았는데 마시지 않아 판매합니다.', 18000, '생활/식품', 'HIDDEN', 5, 0, NULL),
-    (7, 1, 2, '무선 키보드', '저소음 무선 키보드입니다.', 35000, '디지털기기', 'SELLING', 18, 0, NULL),
-    (8, 2, 3, '삭제된 테스트 상품', '삭제 상품 조회 제외 테스트용입니다.', 10000, '기타', 'DELETED', 0, 0, '2026-06-20 12:00:00');
+    (1, 1, 1, '아이폰 15 128GB 블랙', '상태 좋고 배터리 성능 92%입니다. 직거래 선호합니다.', 850000, '디지털기기', 'SELLING', 'APPROVED', 31, 2, NULL),
+    (2, 1, 1, '맥북 에어 M2 13인치', '문서 작업 위주로 사용했습니다. 생활 기스 조금 있습니다.', 720000, '디지털기기', 'SOLD', 'APPROVED', 54, 1, NULL),
+    (3, 2, 3, '캠핑 의자 2개 세트', '가볍고 접이식이라 캠핑 입문자에게 좋아요.', 45000, '스포츠/레저', 'SELLING', 'APPROVED', 12, 1, NULL),
+    (4, 3, 2, '원목 책상', '이사 정리로 내놓습니다. 직접 가져가셔야 합니다.', 60000, '가구/인테리어', 'SOLD', 'APPROVED', 40, 1, NULL),
+    (5, 2, 4, '자전거 헬멧', '사이즈 M, 사용감 적습니다.', 25000, '스포츠/레저', 'RESERVED', 'APPROVED', 8, 0, NULL),
+    (6, 3, 5, '커피 원두 1kg', '선물 받았는데 마시지 않아 판매합니다.', 18000, '생활/식품', 'HIDDEN', 'REJECTED', 5, 0, NULL),
+    (7, 1, 2, '무선 키보드', '저소음 무선 키보드입니다.', 35000, '디지털기기', 'SELLING', 'APPROVED', 18, 0, NULL),
+    (8, 2, 3, '삭제된 테스트 상품', '삭제 상품 조회 제외 테스트용입니다.', 10000, '기타', 'DELETED', 'REJECTED', 0, 0, '2026-06-20 12:00:00');
 
 INSERT INTO product_images (id, product_id, image_url, sort_order)
 VALUES

@@ -1,6 +1,7 @@
 package com.team7.agora.domain.product.repository;
 
 import com.team7.agora.domain.product.entity.Product;
+import com.team7.agora.domain.product.enums.ProductApprovalStatus;
 import com.team7.agora.domain.product.enums.ProductStatus;
 import com.team7.agora.domain.search.dto.ProductSearchCondition;
 import com.team7.agora.domain.search.dto.ProductSearchResponse;
@@ -24,15 +25,59 @@ public interface ProductRepository extends JpaRepository<Product, Long>, Product
 
     Optional<Product> findByIdAndDeletedAtIsNull(Long id);
 
+    Optional<Product> findByIdAndDeletedAtIsNullAndApprovalStatus(Long id, ProductApprovalStatus approvalStatus);
+
+    boolean existsByIdAndSellerIdAndDeletedAtIsNull(Long id, Long sellerId);
+
+    @EntityGraph(attributePaths = {"seller", "region"})
+    @Query("select p from Product p where p.id = :id and p.deletedAt is null")
+    Optional<Product> findWithSellerAndRegionByIdAndDeletedAtIsNull(@Param("id") Long id);
+
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select p from Product p where p.id = :id and p.deletedAt is null")
     Optional<Product> findByIdForUpdateAndDeletedAtIsNull(@Param("id") Long id);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+        select p from Product p
+        where p.id = :id
+          and p.deletedAt is null
+          and p.approvalStatus = :approvalStatus
+        """)
+    Optional<Product> findByIdForUpdateAndDeletedAtIsNullAndApprovalStatus(
+        @Param("id") Long id,
+        @Param("approvalStatus") ProductApprovalStatus approvalStatus
+    );
 
     @EntityGraph(attributePaths = {"seller", "region"})
     Page<Product> findAllByDeletedAtIsNullAndStatusNot(ProductStatus status, Pageable pageable);
 
     @EntityGraph(attributePaths = {"seller", "region"})
+    Page<Product> findAllByDeletedAtIsNullAndStatusNotAndApprovalStatus(
+        ProductStatus status,
+        ProductApprovalStatus approvalStatus,
+        Pageable pageable
+    );
+
+    @EntityGraph(attributePaths = {"seller", "region"})
+    Page<Product> findAllByStatus(ProductStatus status, Pageable pageable);
+
+    @EntityGraph(attributePaths = {"seller", "region"})
+    Page<Product> findAllByApprovalStatus(ProductApprovalStatus approvalStatus, Pageable pageable);
+
+    @EntityGraph(attributePaths = {"seller", "region"})
+    Page<Product> findAllByStatusNotIn(List<ProductStatus> statuses, Pageable pageable);
+
+    @EntityGraph(attributePaths = {"seller", "region"})
     Page<Product> findAllByRegionIdInAndDeletedAtIsNullAndStatusNot(List<Long> regionIds, ProductStatus status, Pageable pageable);
+
+    @EntityGraph(attributePaths = {"seller", "region"})
+    Page<Product> findAllByRegionIdInAndDeletedAtIsNullAndStatusNotAndApprovalStatus(
+        List<Long> regionIds,
+        ProductStatus status,
+        ProductApprovalStatus approvalStatus,
+        Pageable pageable
+    );
 
     @EntityGraph(attributePaths = {"seller", "region"})
     List<Product> findAllBySellerAndDeletedAtIsNull(User seller);

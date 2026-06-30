@@ -4,7 +4,11 @@ import com.team7.agora.domain.product.dto.request.ProductCreateRequest;
 import com.team7.agora.domain.product.dto.request.ProductUpdateRequest;
 import com.team7.agora.domain.product.dto.response.ProductResponse;
 import com.team7.agora.domain.product.entity.Product;
+import com.team7.agora.domain.product.entity.ProductImage;
+import com.team7.agora.domain.product.enums.ProductApprovalStatus;
 import com.team7.agora.domain.product.enums.ProductStatus;
+import com.team7.agora.domain.product.repository.ProductImageRepository;
+import com.team7.agora.domain.product.repository.ProductLikeRepository;
 import com.team7.agora.domain.product.repository.ProductRepository;
 import com.team7.agora.domain.region.entity.Region;
 import com.team7.agora.domain.region.entity.UserRegion;
@@ -16,7 +20,11 @@ import com.team7.agora.domain.user.enums.UserStatus;
 import com.team7.agora.domain.user.repository.UserRepository;
 import com.team7.agora.global.exception.BusinessException;
 import com.team7.agora.global.exception.ErrorCode;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -34,6 +42,8 @@ public class ProductService {
     private final RegionRepository regionRepository;
     private final UserRegionRepository userRegionRepository;
     private final ProductSearchService productSearchService;
+    private final ProductLikeRepository productLikeRepository;
+    private final ProductImageRepository productImageRepository;
 
     /**
      * 필요한 의존성을 주입받아 컴포넌트를 생성한다.
@@ -48,13 +58,17 @@ public class ProductService {
         UserRepository userRepository,
         RegionRepository regionRepository,
         UserRegionRepository userRegionRepository,
-        ProductSearchService productSearchService
+        ProductSearchService productSearchService,
+        ProductLikeRepository productLikeRepository,
+        ProductImageRepository productImageRepository
     ) {
         this.productRepository = productRepository;
         this.userRepository = userRepository;
         this.regionRepository = regionRepository;
         this.userRegionRepository = userRegionRepository;
         this.productSearchService = productSearchService;
+        this.productLikeRepository = productLikeRepository;
+        this.productImageRepository = productImageRepository;
     }
 
     /**
@@ -99,6 +113,16 @@ public class ProductService {
         return ProductResponse.from(product);
     }
 
+    @Transactional
+    public ProductResponse updateStatus(Long requesterId, Long productId, ProductStatus status) {
+        Product product = getActiveProduct(productId);
+        validateSeller(product, requesterId);
+        getActiveUser(requesterId);
+        applySellerStatus(product, status);
+        productSearchService.evictSearchCache();
+        return ProductResponse.from(product);
+    }
+
     /**
      * 데이터를 삭제한다.
      * @param requesterId 가격 제안을 생성한 구매자 ID
@@ -119,7 +143,18 @@ public class ProductService {
      * @return 클라이언트에 반환할 API 응답
      */
     public ProductResponse getProduct(Long productId) {
-        return ProductResponse.from(getActiveProduct(productId));
+        return getProduct(null, productId);
+    }
+
+    public ProductResponse getProduct(Long viewerId, Long productId) {
+        Product product = productRepository.findWithSellerAndRegionByIdAndDeletedAtIsNull(productId)
+            .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "상품을 찾을 수 없습니다."));
+        if (product.getApprovalStatus() != ProductApprovalStatus.APPROVED && !product.isSeller(viewerId)) {
+            throw new BusinessException(ErrorCode.NOT_FOUND, "상품을 찾을 수 없습니다.");
+        }
+        boolean liked = viewerId != null && productLikeRepository.existsByProductIdAndUserId(productId, viewerId);
+        String primaryImageUrl = findPrimaryImageUrls(List.of(productId)).get(productId);
+        return ProductResponse.from(product, liked, primaryImageUrl);
     }
 
     /**
@@ -132,11 +167,18 @@ public class ProductService {
     public List<ProductResponse> getProducts(Long viewerId, Long regionId, Pageable pageable) {
         List<Long> regionIds = resolveRegionIds(viewerId, regionId);
         Page<Product> products = (regionIds == null)
-            ? productRepository.findAllByDeletedAtIsNullAndStatusNot(ProductStatus.HIDDEN, pageable)
-            : productRepository.findAllByRegionIdInAndDeletedAtIsNullAndStatusNot(regionIds, ProductStatus.HIDDEN, pageable);
-        return products.stream()
-            .map(ProductResponse::from)
-            .toList();
+            ? productRepository.findAllByDeletedAtIsNullAndStatusNotAndApprovalStatus(
+                ProductStatus.HIDDEN,
+                ProductApprovalStatus.APPROVED,
+                pageable
+            )
+            : productRepository.findAllByRegionIdInAndDeletedAtIsNullAndStatusNotAndApprovalStatus(
+                regionIds,
+                ProductStatus.HIDDEN,
+                ProductApprovalStatus.APPROVED,
+                pageable
+            );
+        return toResponses(products.getContent(), viewerId);
     }
 
     /**
@@ -146,9 +188,44 @@ public class ProductService {
      */
     public List<ProductResponse> getMyProducts(Long sellerId) {
         User seller = getUser(sellerId);
-        return productRepository.findAllBySellerAndDeletedAtIsNull(seller).stream()
-            .map(ProductResponse::from)
+        return toResponses(productRepository.findAllBySellerAndDeletedAtIsNull(seller), null);
+    }
+
+    private List<ProductResponse> toResponses(List<Product> products, Long viewerId) {
+        if (products.isEmpty()) {
+            return List.of();
+        }
+        List<Long> productIds = products.stream()
+            .map(Product::getId)
             .toList();
+        Set<Long> likedProductIds = likedProductIds(viewerId, productIds);
+        Map<Long, String> primaryImageUrls = findPrimaryImageUrls(productIds);
+
+        return products.stream()
+            .map(product -> ProductResponse.from(
+                product,
+                likedProductIds.contains(product.getId()),
+                primaryImageUrls.get(product.getId())
+            ))
+            .toList();
+    }
+
+    private Set<Long> likedProductIds(Long viewerId, List<Long> productIds) {
+        if (viewerId == null || productIds.isEmpty()) {
+            return Set.of();
+        }
+        return new HashSet<>(productLikeRepository.findLikedProductIdsByUserIdAndProductIdIn(viewerId, productIds));
+    }
+
+    private Map<Long, String> findPrimaryImageUrls(List<Long> productIds) {
+        Map<Long, String> primaryImageUrls = new LinkedHashMap<>();
+        if (productIds.isEmpty()) {
+            return primaryImageUrls;
+        }
+        for (ProductImage image : productImageRepository.findAllByProductIdInOrderByProductIdAscSortOrderAsc(productIds)) {
+            primaryImageUrls.putIfAbsent(image.getProduct().getId(), image.getImageUrl());
+        }
+        return primaryImageUrls;
     }
 
     private List<Long> resolveRegionIds(Long viewerId, Long regionId) {
@@ -196,5 +273,21 @@ public class ProductService {
         if (product.getStatus() != ProductStatus.SELLING) {
             throw new BusinessException(ErrorCode.CONFLICT, "판매 중인 상품만 수정할 수 있습니다.");
         }
+    }
+
+    private void applySellerStatus(Product product, ProductStatus status) {
+        if (status == ProductStatus.SELLING) {
+            product.restoreSelling();
+            return;
+        }
+        if (status == ProductStatus.RESERVED) {
+            product.markReserved();
+            return;
+        }
+        if (status == ProductStatus.SOLD) {
+            product.markSold();
+            return;
+        }
+        throw new BusinessException(ErrorCode.INVALID_REQUEST, "판매자가 변경할 수 없는 상품 상태입니다.");
     }
 }

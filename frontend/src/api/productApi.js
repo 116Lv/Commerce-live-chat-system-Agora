@@ -16,6 +16,9 @@ export const createProduct = (product, config = {}) => apiClient.post('/api/prod
 export const updateProduct = (productId, product, config = {}) =>
   apiClient.patch(`/api/products/${productId}`, product, config);
 
+export const updateProductStatus = (productId, status, config = {}) =>
+  apiClient.patch(`/api/products/${productId}/status`, { status }, config);
+
 export const deleteProduct = (productId, config = {}) => apiClient.delete(`/api/products/${productId}`, config);
 
 export const uploadProductImage = (productId, image, config = {}) => {

@@ -8,6 +8,7 @@ import com.team7.agora.global.auth.CustomUserDetails;
 import com.team7.agora.global.response.ApiResponse;
 import jakarta.validation.Valid;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -50,5 +51,14 @@ public class NegoChatRoomController {
             request.offerPrice()
         );
         return ApiResponse.success("가격 제안이 등록되었습니다.", response);
+    }
+
+    @GetMapping("/{chatRoomId}/nego-offers/current")
+    public ApiResponse<NegoOfferResponse> getCurrentOffer(
+        @AuthenticationPrincipal CustomUserDetails userDetails,
+        @PathVariable Long chatRoomId
+    ) {
+        NegoOfferResponse response = negoService.getCurrentOffer(userDetails.getUserId(), chatRoomId);
+        return ApiResponse.success("현재 가격 제안을 조회했습니다.", response);
     }
 }

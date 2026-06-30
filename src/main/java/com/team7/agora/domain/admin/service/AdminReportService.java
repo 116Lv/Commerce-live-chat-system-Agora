@@ -34,8 +34,14 @@ public class AdminReportService {
      * @return 클라이언트에 반환할 API 응답
      */
     public List<AdminReportListResponse> getUserReports(AdminPrincipal admin) {
+        return getUserReports(admin, null, null);
+    }
+
+    public List<AdminReportListResponse> getUserReports(AdminPrincipal admin, String status, String search) {
         validateUserAdmin(admin);
         return reportRepository.findAllByProductIsNull().stream()
+            .filter(report -> matchesStatus(report, status))
+            .filter(report -> matchesSearch(report, search))
             .map(AdminReportListResponse::from)
             .toList();
     }
@@ -66,10 +72,50 @@ public class AdminReportService {
      * @return 클라이언트에 반환할 API 응답
      */
     public List<AdminReportListResponse> getProductReports(AdminPrincipal admin) {
+        return getProductReports(admin, null, null);
+    }
+
+    public List<AdminReportListResponse> getProductReports(AdminPrincipal admin, String status, String search) {
         validateProductAdmin(admin);
         return reportRepository.findAllByProductIsNotNull().stream()
+            .filter(report -> matchesStatus(report, status))
+            .filter(report -> matchesSearch(report, search))
             .map(AdminReportListResponse::from)
             .toList();
+    }
+
+    private boolean matchesStatus(Report report, String status) {
+        if (status == null || status.isBlank()) {
+            return true;
+        }
+        return report.getStatus().name().equalsIgnoreCase(status.trim());
+    }
+
+    private boolean matchesSearch(Report report, String search) {
+        if (search == null || search.isBlank()) {
+            return true;
+        }
+
+        String keyword = search.trim().toLowerCase();
+        return contains(report.getId(), keyword)
+            || contains(report.getReporter().getId(), keyword)
+            || contains(report.getReportedUser().getId(), keyword)
+            || (report.getProduct() != null && contains(report.getProduct().getId(), keyword))
+            || contains(report.getStatus().name(), keyword)
+            || contains(report.getReason(), keyword)
+            || contains(report.getReporter().getEmail(), keyword)
+            || contains(report.getReporter().getNickname(), keyword)
+            || contains(report.getReportedUser().getEmail(), keyword)
+            || contains(report.getReportedUser().getNickname(), keyword)
+            || (report.getProduct() != null && contains(report.getProduct().getTitle(), keyword));
+    }
+
+    private boolean contains(Long value, String keyword) {
+        return value != null && String.valueOf(value).contains(keyword);
+    }
+
+    private boolean contains(String value, String keyword) {
+        return value != null && value.toLowerCase().contains(keyword);
     }
 
     /**
