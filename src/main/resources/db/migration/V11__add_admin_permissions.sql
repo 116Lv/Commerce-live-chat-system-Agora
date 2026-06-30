@@ -3,5 +3,5 @@ CREATE TABLE IF NOT EXISTS admin_permissions (
     permission VARCHAR(40) NOT NULL,
     PRIMARY KEY (admin_id, permission),
     CONSTRAINT fk_admin_permissions_admin
-        FOREIGN KEY (admin_id) REFERENCES admins (id)
+        FOREIGN KEY (admin_id) REFERENCES admins (id) ON DELETE CASCADE
 );

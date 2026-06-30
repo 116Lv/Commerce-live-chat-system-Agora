@@ -24,6 +24,7 @@ CREATE TABLE IF NOT EXISTS admin_coupon_approval_payloads (
     exceeds_remaining_quantity BIT NOT NULL,
     PRIMARY KEY (id),
     UNIQUE KEY uk_admin_coupon_approval_payload_request (approval_request_id),
+    -- Soft reference by design: keep approval history readable even if coupon event rows are later archived or removed.
     KEY idx_admin_coupon_approval_payload_event (coupon_event_id),
     CONSTRAINT fk_admin_coupon_approval_payload_request
         FOREIGN KEY (approval_request_id) REFERENCES admin_approval_requests (id)
