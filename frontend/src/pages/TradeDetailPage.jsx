@@ -1,8 +1,8 @@
-import { useState } from 'react';
-import { Alert, Button, Col, Form, Row } from 'react-bootstrap';
+import { useEffect, useState } from 'react';
+import { Alert, Button, Col, Row } from 'react-bootstrap';
 import { Link, useParams } from 'react-router-dom';
 import { completeTrade, getTradeDetail } from '../api/tradeApi.js';
-import { getRefundStatus, refundPayment } from '../api/paymentApi.js';
+import { getSmileScore } from '../api/mypageApi.js';
 import { getUserToken } from '../auth/tokenStorage.js';
 import ErrorState from '../components/ErrorState.jsx';
 import LoadingState from '../components/LoadingState.jsx';
@@ -34,19 +34,47 @@ export default function TradeDetailPage() {
   const [message, setMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
   const [busyKey, setBusyKey] = useState('');
-  const [paymentId, setPaymentId] = useState('');
-  const [refundReason, setRefundReason] = useState('');
-  const [refundStatus, setRefundStatus] = useState(null);
+  const [counterpartSmileScore, setCounterpartSmileScore] = useState(null);
   const { data: trade, error, loading, reload } = useApiResource(() => getTradeDetail(tradeId), [tradeId]);
   const currentUserId = getCurrentUserIdFromToken();
   const tradeStatus = String(trade?.tradeStatus || trade?.status || '').toUpperCase();
+  const paymentStatus = String(trade?.paymentStatus || '').toUpperCase();
   const isCurrentUserBuyer = currentUserId != null && String(trade?.buyerId) === currentUserId;
   const isCurrentUserParticipant =
     currentUserId != null && [trade?.buyerId, trade?.sellerId].some((participantId) => String(participantId) === currentUserId);
+  const counterpartUserId = isCurrentUserBuyer ? trade?.sellerId : trade?.buyerId;
   const canCheckout = isCurrentUserBuyer && tradeStatus === 'PAYMENT_PENDING';
   const canCompleteTrade = isCurrentUserBuyer && tradeStatus === 'PAID';
-  const canReviewTrade = isCurrentUserParticipant && tradeStatus === 'COMPLETED';
-  const canRequestRefund = isCurrentUserBuyer;
+  const canReviewTrade = isCurrentUserBuyer && tradeStatus === 'COMPLETED';
+  const canRequestRefund = isCurrentUserBuyer && paymentStatus === 'PAID';
+
+  useEffect(() => {
+    let disposed = false;
+
+    const loadCounterpartSmileScore = async () => {
+      if (!counterpartUserId || !isCurrentUserParticipant) {
+        setCounterpartSmileScore(null);
+        return;
+      }
+
+      try {
+        const response = await getSmileScore(counterpartUserId);
+        if (!disposed) {
+          setCounterpartSmileScore(response.smileScore);
+        }
+      } catch {
+        if (!disposed) {
+          setCounterpartSmileScore(null);
+        }
+      }
+    };
+
+    loadCounterpartSmileScore();
+
+    return () => {
+      disposed = true;
+    };
+  }, [counterpartUserId, isCurrentUserParticipant]);
 
   const runTradeAction = async (key, action, success) => {
     setMessage('');
@@ -64,45 +92,12 @@ export default function TradeDetailPage() {
     }
   };
 
-  const handleRefund = async (event) => {
-    event.preventDefault();
-    setMessage('');
-    setErrorMessage('');
-    setBusyKey('refund');
-
-    try {
-      const response = await refundPayment(paymentId, { reason: refundReason });
-      setMessage('환불 요청이 처리됐어요.');
-      setRefundStatus(response);
-    } catch (err) {
-      setErrorMessage(err.message);
-    } finally {
-      setBusyKey('');
-    }
-  };
-
-  const handleRefundStatus = async () => {
-    setMessage('');
-    setErrorMessage('');
-    setBusyKey('refundStatus');
-
-    try {
-      const response = await getRefundStatus(paymentId);
-      setRefundStatus(response);
-      setMessage('환불 상태를 확인했어요.');
-    } catch (err) {
-      setErrorMessage(err.message);
-    } finally {
-      setBusyKey('');
-    }
-  };
-
   if (loading) {
     return <LoadingState label="거래 불러오는 중" />;
   }
 
   if (error) {
-    return <ErrorState title="거래를 불러오지 못했어요" message={error.message} onRetry={reload} />;
+    return <ErrorState title="거래를 불러오지 못했습니다" message={error.message} onRetry={reload} />;
   }
 
   return (
@@ -113,7 +108,7 @@ export default function TradeDetailPage() {
         action={
           canCheckout ? (
             <Button as={Link} to={`/checkout/${tradeId}`} variant="primary">
-            결제
+              결제
             </Button>
           ) : null
         }
@@ -150,6 +145,10 @@ export default function TradeDetailPage() {
                 <dd>{statusText(trade.paymentStatus)}</dd>
               </div>
               <div>
+                <dt>상대 스마일</dt>
+                <dd>{counterpartSmileScore == null ? '-' : String(counterpartSmileScore) + '점'}</dd>
+              </div>
+              <div>
                 <dt>정산 상태</dt>
                 <dd>{statusText(trade.settlementStatus)}</dd>
               </div>
@@ -164,7 +163,7 @@ export default function TradeDetailPage() {
                   <Button
                     variant="outline-primary"
                     disabled={Boolean(busyKey)}
-                    onClick={() => runTradeAction('complete', completeTrade, '거래를 완료했어요.')}
+                    onClick={() => runTradeAction('complete', completeTrade, '거래를 완료했습니다.')}
                   >
                     {busyKey === 'complete' ? '처리 중' : '거래 완료'}
                   </Button>
@@ -179,57 +178,14 @@ export default function TradeDetailPage() {
           </div>
         </Col>
         {canRequestRefund ? (
-        <Col xs={12} lg={5}>
-          <div className="detail-panel">
-            <h2 className="section-title">환불</h2>
-            <Form onSubmit={handleRefund} className="stack-list">
-              <Form.Group controlId="refundPaymentId">
-                <Form.Label>결제 ID</Form.Label>
-                <Form.Control
-                  type="number"
-                  min="1"
-                  value={paymentId}
-                  onChange={(event) => setPaymentId(event.target.value)}
-                  required
-                />
-              </Form.Group>
-              <Form.Group controlId="refundReason">
-                <Form.Label>환불 사유</Form.Label>
-                <Form.Control
-                  value={refundReason}
-                  onChange={(event) => setRefundReason(event.target.value)}
-                  maxLength={500}
-                  required
-                />
-              </Form.Group>
-              <div className="form-actions">
-                <Button
-                  type="button"
-                  variant="outline-primary"
-                  disabled={!paymentId || Boolean(busyKey)}
-                  onClick={handleRefundStatus}
-                >
-                  상태 조회
-                </Button>
-                <Button type="submit" disabled={Boolean(busyKey)}>
-                  {busyKey === 'refund' ? '요청 중' : '환불 요청'}
-                </Button>
-              </div>
-            </Form>
-            {refundStatus ? (
-              <dl className="compact-list mt-3">
-                <div>
-                  <dt>환불 상태</dt>
-                  <dd>{statusText(refundStatus.status)}</dd>
-                </div>
-                <div>
-                  <dt>환불일</dt>
-                  <dd>{formatDateTime(refundStatus.refundedAt)}</dd>
-                </div>
-              </dl>
-            ) : null}
-          </div>
-        </Col>
+          <Col xs={12} lg={5}>
+            <div className="detail-panel">
+              <h2 className="section-title">환불 안내</h2>
+              <p className="text-muted mb-0">
+                환불은 관리자 승인 및 결제사 검증 이후 처리됩니다. 환불이 필요하면 관리자에게 문의해 주세요.
+              </p>
+            </div>
+          </Col>
         ) : null}
       </Row>
     </section>

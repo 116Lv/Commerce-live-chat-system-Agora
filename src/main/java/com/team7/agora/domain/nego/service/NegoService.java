@@ -8,6 +8,7 @@ import com.team7.agora.domain.nego.dto.response.NegoOfferResponse;
 import com.team7.agora.domain.nego.entity.NegoOffer;
 import com.team7.agora.domain.nego.enums.NegoOfferStatus;
 import com.team7.agora.domain.nego.repository.NegoOfferRepository;
+import com.team7.agora.domain.payment.repository.PaymentRepository;
 import com.team7.agora.domain.product.entity.Product;
 import com.team7.agora.domain.product.enums.ProductApprovalStatus;
 import com.team7.agora.domain.product.enums.ProductStatus;
@@ -45,6 +46,7 @@ public class NegoService {
     private final ProductRepository productRepository;
     private final TradeService tradeService;
     private final TradeRepository tradeRepository;
+    private final PaymentRepository paymentRepository;
     private final ChatSystemMessageService chatSystemMessageService;
 
     /**
@@ -60,6 +62,7 @@ public class NegoService {
         ProductRepository productRepository,
         TradeService tradeService,
         TradeRepository tradeRepository,
+        PaymentRepository paymentRepository,
         ChatSystemMessageService chatSystemMessageService
     ) {
         this.negoOfferRepository = negoOfferRepository;
@@ -67,6 +70,7 @@ public class NegoService {
         this.productRepository = productRepository;
         this.tradeService = tradeService;
         this.tradeRepository = tradeRepository;
+        this.paymentRepository = paymentRepository;
         this.chatSystemMessageService = chatSystemMessageService;
     }
 
@@ -137,7 +141,7 @@ public class NegoService {
         }
 
         return tradeRepository.findByProductAndBuyer(offer.getChatRoom().getProduct(), offer.getRequester())
-            .map(trade -> NegoOfferResponse.from(offer, trade))
+            .map(trade -> NegoOfferResponse.from(offer, trade, paymentRepository.findByTrade(trade).orElse(null)))
             .orElseGet(() -> NegoOfferResponse.from(offer));
     }
 
@@ -192,6 +196,25 @@ public class NegoService {
         offer.reject();
         chatSystemMessageService.send(offer.getChatRoom(), offer.getChatRoom().getSeller(), "제안이 거절되었습니다.");
         return NegoOfferResponse.from(offer);
+    }
+
+    @Transactional
+    public NegoOfferResponse cancelOffer(Long userId, Long offerId) {
+        NegoOffer offer = findOfferForUpdate(offerId);
+        if (!offer.getChatRoom().isParticipant(userId)) {
+            throw new BusinessException(ErrorCode.FORBIDDEN, "가격 제안 참여자만 취소할 수 있습니다.");
+        }
+
+        Trade trade = null;
+        if (offer.getStatus() == NegoOfferStatus.ACCEPTED) {
+            trade = tradeRepository.findByProductAndBuyer(offer.getChatRoom().getProduct(), offer.getRequester())
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "취소할 거래를 찾을 수 없습니다."));
+            trade.cancel();
+        }
+
+        offer.cancel();
+        chatSystemMessageService.send(offer.getChatRoom(), offer.getChatRoom().getSeller(), "가격 제안이 취소되었습니다.");
+        return NegoOfferResponse.from(offer, trade);
     }
 
     /**

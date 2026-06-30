@@ -1,6 +1,7 @@
 package com.team7.agora.domain.nego.dto.response;
 
 import com.team7.agora.domain.nego.entity.NegoOffer;
+import com.team7.agora.domain.payment.entity.Payment;
 import com.team7.agora.domain.trade.entity.Trade;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -23,6 +24,8 @@ public record NegoOfferResponse(
     Long requesterId,
     BigDecimal offerPrice,
     String status,
+    String tradeStatus,
+    String paymentStatus,
     LocalDateTime createdAt,
     LocalDateTime expiresAt,
     LocalDateTime respondedAt
@@ -38,10 +41,23 @@ public record NegoOfferResponse(
     }
 
     public static NegoOfferResponse from(NegoOffer offer, Trade trade) {
-        return from(offer, trade == null ? null : trade.getId());
+        return from(offer, trade, null);
+    }
+
+    public static NegoOfferResponse from(NegoOffer offer, Trade trade, Payment payment) {
+        return from(
+            offer,
+            trade == null ? null : trade.getId(),
+            trade == null ? null : trade.getStatus().name(),
+            payment == null ? null : payment.getStatus().name()
+        );
     }
 
     private static NegoOfferResponse from(NegoOffer offer, Long tradeId) {
+        return from(offer, tradeId, null, null);
+    }
+
+    private static NegoOfferResponse from(NegoOffer offer, Long tradeId, String tradeStatus, String paymentStatus) {
         return new NegoOfferResponse(
             offer.getId(),
             tradeId,
@@ -49,6 +65,8 @@ public record NegoOfferResponse(
             offer.getRequester().getId(),
             offer.getOfferPrice(),
             offer.getStatus().name(),
+            tradeStatus,
+            paymentStatus,
             offer.getCreatedAt(),
             offer.getExpiresAt(),
             offer.getRespondedAt()

@@ -1,12 +1,15 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Alert, Button, ButtonGroup, Col, Row } from 'react-bootstrap';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
-import { Flag, Heart, MessageCircle, ShoppingCart } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Flag, Heart, MessageCircle, ShoppingCart } from 'lucide-react';
+import { Swiper, SwiperSlide } from 'swiper/react';
+import 'swiper/css';
 import MoneyText from '../components/MoneyText.jsx';
 import LoadingState from '../components/LoadingState.jsx';
 import ErrorState from '../components/ErrorState.jsx';
 import EmptyState from '../components/EmptyState.jsx';
 import { getProduct, likeProduct, unlikeProduct } from '../api/productApi.js';
+import { getSmileScore } from '../api/mypageApi.js';
 import { openChatRoom } from '../api/chatApi.js';
 import { startTrade } from '../api/tradeApi.js';
 import { useAuth } from '../auth/AuthContext.jsx';
@@ -28,7 +31,38 @@ export default function ProductDetailPage() {
   const [actionError, setActionError] = useState('');
   const [submitting, setSubmitting] = useState('');
   const [showReport, setShowReport] = useState(false);
+  const [activeImageIndex, setActiveImageIndex] = useState(0);
+  const [sellerSmileScore, setSellerSmileScore] = useState(null);
+  const imageSwiperRef = useRef(null);
   const { data: product, error, loading, reload } = useApiResource(() => getProduct(productId), [productId]);
+
+  useEffect(() => {
+    let disposed = false;
+
+    const loadSellerSmileScore = async () => {
+      if (!product?.sellerId) {
+        setSellerSmileScore(null);
+        return;
+      }
+
+      try {
+        const response = await getSmileScore(product.sellerId);
+        if (!disposed) {
+          setSellerSmileScore(response.smileScore);
+        }
+      } catch {
+        if (!disposed) {
+          setSellerSmileScore(null);
+        }
+      }
+    };
+
+    loadSellerSmileScore();
+
+    return () => {
+      disposed = true;
+    };
+  }, [product?.sellerId]);
 
   const requireAuth = () => {
     if (!isUserAuthenticated) {
@@ -106,6 +140,14 @@ export default function ProductDetailPage() {
     setShowReport(true);
   };
 
+  const handlePreviousImage = () => {
+    imageSwiperRef.current?.slidePrev();
+  };
+
+  const handleNextImage = () => {
+    imageSwiperRef.current?.slideNext();
+  };
+
   if (loading) {
     return <LoadingState label="상품 불러오는 중" />;
   }
@@ -120,6 +162,12 @@ export default function ProductDetailPage() {
 
   const categoryLabel = getProductCategoryLabel(product);
   const imageUrl = getProductImageUrl(product);
+  const productImageUrls = Array.isArray(product.imageUrls) && product.imageUrls.length > 0
+    ? product.imageUrls
+    : imageUrl
+      ? [imageUrl]
+      : [];
+  const hasMultipleImages = productImageUrls.length > 1;
   const liked = Boolean(product.liked);
   const likeCount = product.likeCount ?? 0;
   const regionLabel = getProductRegionLabel(product);
@@ -133,7 +181,49 @@ export default function ProductDetailPage() {
       <Row className="g-4">
         <Col xs={12} lg={7}>
           <div className="detail-panel product-detail-media">
-            {imageUrl ? <img src={imageUrl} alt={`${product.title} 이미지`} /> : <span>이미지 없음</span>}
+            {productImageUrls.length > 0 ? (
+              <div className="product-detail-carousel">
+                {hasMultipleImages ? (
+                  <>
+                    <button
+                      type="button"
+                      className="product-detail-carousel-button product-detail-carousel-prev"
+                      onClick={handlePreviousImage}
+                      aria-label="이전 이미지"
+                    >
+                      <ChevronLeft size={22} aria-hidden="true" />
+                    </button>
+                    <button
+                      type="button"
+                      className="product-detail-carousel-button product-detail-carousel-next"
+                      onClick={handleNextImage}
+                      aria-label="다음 이미지"
+                    >
+                      <ChevronRight size={22} aria-hidden="true" />
+                    </button>
+                  </>
+                ) : null}
+                <Swiper
+                  onSwiper={(swiper) => {
+                    imageSwiperRef.current = swiper;
+                  }}
+                  onSlideChange={(swiper) => setActiveImageIndex(swiper.activeIndex)}
+                >
+                  {productImageUrls.map((url, index) => (
+                    <SwiperSlide key={`${url}-${index}`}>
+                      <img src={url} alt={`${product.title} 이미지 ${index + 1}`} />
+                    </SwiperSlide>
+                  ))}
+                </Swiper>
+                {hasMultipleImages ? (
+                  <span className="product-detail-image-counter">
+                    {activeImageIndex + 1} / {productImageUrls.length}
+                  </span>
+                ) : null}
+              </div>
+            ) : (
+              <span>이미지 없음</span>
+            )}
           </div>
         </Col>
         <Col xs={12} lg={5}>
@@ -159,6 +249,10 @@ export default function ProductDetailPage() {
               <div>
                 <dt>판매자</dt>
                 <dd>{product.sellerNickname || product.sellerId || '-'}</dd>
+              </div>
+              <div>
+                <dt>스마일</dt>
+                <dd>{sellerSmileScore == null ? '-' : String(sellerSmileScore) + '점'}</dd>
               </div>
               <div>
                 <dt>관심</dt>

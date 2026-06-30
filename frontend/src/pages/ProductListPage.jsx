@@ -1,22 +1,27 @@
 ﻿import { useMemo, useState } from 'react';
 import { Button, Col, Form, Row } from 'react-bootstrap';
-import { Link } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Search } from 'lucide-react';
 import ProductCard from '../components/ProductCard.jsx';
 import LoadingState from '../components/LoadingState.jsx';
 import ErrorState from '../components/ErrorState.jsx';
 import EmptyState from '../components/EmptyState.jsx';
-import { getProducts, searchProducts } from '../api/productApi.js';
+import { getProducts, likeProduct, searchProducts, unlikeProduct } from '../api/productApi.js';
 import { getRegions } from '../api/regionApi.js';
+import { useAuth } from '../auth/AuthContext.jsx';
 import { PageHeader, getPageContent, useApiResource } from './pageUtils.jsx';
 import { PRODUCT_CATEGORIES, getChildRegionOptions, getRegionSelectOptions } from './productFormUtils.js';
 
 const DEFAULT_QUERY = { keyword: '', category: '', regionId: '', page: 0, size: 20 };
 
 export default function ProductListPage() {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { isUserAuthenticated } = useAuth();
   const [draft, setDraft] = useState(DEFAULT_QUERY);
   const [query, setQuery] = useState(DEFAULT_QUERY);
   const [selectedParentRegionId, setSelectedParentRegionId] = useState('');
+  const [productOverrides, setProductOverrides] = useState({});
   const params = useMemo(
     () => ({
       keyword: query.keyword.trim(),
@@ -33,7 +38,10 @@ export default function ProductListPage() {
     [params]
   );
   const regionsState = useApiResource(() => getRegions(), []);
-  const products = getPageContent(productsState.data);
+  const products = getPageContent(productsState.data).map((product) => {
+    const productId = product.productId ?? product.id;
+    return productOverrides[productId] ? { ...product, ...productOverrides[productId] } : product;
+  });
   const regions = getPageContent(regionsState.data);
   const parentRegionOptions = getRegionSelectOptions(regions);
   const childRegionOptions = getChildRegionOptions(regions, selectedParentRegionId);
@@ -49,6 +57,35 @@ export default function ProductListPage() {
     const nextChildren = getChildRegionOptions(regions, value);
     setSelectedParentRegionId(value);
     setDraft((current) => ({ ...current, regionId: nextChildren.length > 0 ? '' : value }));
+  };
+
+  const handleProductLikeToggle = async (product) => {
+    const productId = product.productId ?? product.id;
+    if (!productId) {
+      return;
+    }
+    if (!isUserAuthenticated) {
+      navigate('/login', { state: { from: location } });
+      return;
+    }
+
+    const liked = Boolean(product.liked);
+    const likeCount = product.likeCount ?? 0;
+    const optimistic = { liked: !liked, likeCount: liked ? Math.max(0, likeCount - 1) : likeCount + 1 };
+    setProductOverrides((current) => ({ ...current, [productId]: optimistic }));
+
+    try {
+      const response = await (liked ? unlikeProduct(productId) : likeProduct(productId));
+      setProductOverrides((current) => ({
+        ...current,
+        [productId]: {
+          liked: Boolean(response.liked),
+          likeCount: response.likeCount ?? optimistic.likeCount
+        }
+      }));
+    } catch {
+      setProductOverrides((current) => ({ ...current, [productId]: { liked, likeCount } }));
+    }
   };
 
   return (
@@ -136,7 +173,7 @@ export default function ProductListPage() {
         <Row className="g-3">
           {products.map((product) => (
             <Col key={product.productId ?? product.id} xs={12} sm={6} lg={4} xl={3}>
-              <ProductCard product={product} />
+              <ProductCard product={product} onLikeToggle={handleProductLikeToggle} />
             </Col>
           ))}
         </Row>

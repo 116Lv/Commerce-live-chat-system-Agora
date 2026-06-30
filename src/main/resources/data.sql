@@ -80,6 +80,18 @@ VALUES
     (6, 2, NULL, 'AVAILABLE', NULL, NULL),
     (7, 3, NULL, 'AVAILABLE', NULL, NULL);
 
+INSERT INTO coupons (id, coupon_event_id, user_id, status, issued_at, expires_at)
+SELECT X, 1, NULL, 'AVAILABLE', NULL, NULL
+FROM SYSTEM_RANGE(8, 103);
+
+INSERT INTO coupons (id, coupon_event_id, user_id, status, issued_at, expires_at)
+SELECT X, 2, NULL, 'AVAILABLE', NULL, NULL
+FROM SYSTEM_RANGE(104, 151);
+
+INSERT INTO coupons (id, coupon_event_id, user_id, status, issued_at, expires_at)
+SELECT X, 3, NULL, 'AVAILABLE', NULL, NULL
+FROM SYSTEM_RANGE(152, 160);
+
 INSERT INTO chat_rooms (id, product_id, seller_id, buyer_id, status, created_at, seller_last_read_at, buyer_last_read_at)
 VALUES
     (1, 2, 1, 2, 'ACTIVE', '2026-06-23 09:10:00', '2026-06-23 09:12:00', '2026-06-23 09:13:00'),
@@ -133,3 +145,21 @@ VALUES
     (1, 2, 1, 1, '상품 설명과 실제 상태가 다를 수 있어 신고합니다.', 'PENDING', NULL, '2026-06-23 10:00:00', NULL),
     (2, 3, 5, 5, '반복적으로 부적절한 메시지를 보냅니다.', 'RESOLVED', '신고 확인 후 사용자 차단 처리', '2026-06-22 16:00:00', '2026-06-22 16:30:00'),
     (3, 1, 3, 4, '거래 완료 후 연락이 원활하지 않았습니다.', 'REJECTED', '증거 부족으로 반려', '2026-06-21 13:00:00', '2026-06-21 14:00:00');
+
+ALTER TABLE users ALTER COLUMN id RESTART WITH 6;
+ALTER TABLE admins ALTER COLUMN id RESTART WITH 5;
+ALTER TABLE regions ALTER COLUMN id RESTART WITH 6;
+ALTER TABLE user_regions ALTER COLUMN id RESTART WITH 11;
+ALTER TABLE products ALTER COLUMN id RESTART WITH 9;
+ALTER TABLE product_images ALTER COLUMN id RESTART WITH 7;
+ALTER TABLE product_likes ALTER COLUMN id RESTART WITH 6;
+ALTER TABLE coupon_events ALTER COLUMN id RESTART WITH 4;
+ALTER TABLE coupons ALTER COLUMN id RESTART WITH 161;
+ALTER TABLE chat_rooms ALTER COLUMN id RESTART WITH 4;
+ALTER TABLE chat_messages ALTER COLUMN id RESTART WITH 7;
+ALTER TABLE nego_offers ALTER COLUMN id RESTART WITH 4;
+ALTER TABLE trades ALTER COLUMN id RESTART WITH 6;
+ALTER TABLE payments ALTER COLUMN id RESTART WITH 6;
+ALTER TABLE settlements ALTER COLUMN id RESTART WITH 4;
+ALTER TABLE reviews ALTER COLUMN id RESTART WITH 3;
+ALTER TABLE reports ALTER COLUMN id RESTART WITH 4;

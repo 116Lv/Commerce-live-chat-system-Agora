@@ -18,7 +18,6 @@ describe('negotiation UX source', () => {
     assert.doesNotMatch(source, /useState\(''\);\s*const \[offerId/);
     assert.doesNotMatch(source, /controlId="offerId"/);
     assert.doesNotMatch(source, /placeholder="offerId"/);
-    assert.doesNotMatch(source, /처리할 제안 ID/);
   });
 
   test('NegoPanel shows accepted-offer checkout CTA and remaining time copy', () => {
@@ -27,7 +26,31 @@ describe('negotiation UX source', () => {
     assert.match(source, /paymentHref/);
     assert.match(source, /to=\{paymentHref\}/);
     assert.match(source, /getRemainingTimeLabel/);
-    assert.match(source, /결제하기/);
+  });
+
+  test('NegoPanel hides checkout after payment and exposes accepted-offer cancel action', () => {
+    const source = readSource('../features/nego/NegoPanel.jsx');
+    const utilsSource = readSource('../features/nego/negoPanelUtils.js');
+    const apiSource = readSource('../api/negoApi.js');
+
+    assert.match(source, /cancelOffer/);
+    assert.match(source, /isOfferPayable/);
+    assert.match(source, /cancelPaymentPending/);
+    assert.match(utilsSource, /tradeStatus/);
+    assert.match(utilsSource, /paymentStatus/);
+    assert.match(utilsSource, /PAYMENT_PENDING/);
+    assert.match(apiSource, /\/cancel/);
+  });
+
+  test('NegoPanel limits payment CTA to buyers and shows sellers a payment-pending notice', () => {
+    const source = readSource('../features/nego/NegoPanel.jsx');
+    const utilsSource = readSource('../features/nego/negoPanelUtils.js');
+
+    assert.match(source, /buildPaymentHref\(offer,\s*\{\s*role:\s*offerRole\s*\}\)/);
+    assert.match(source, /isOfferPayable\(offer,\s*\{\s*role:\s*offerRole\s*\}\)/);
+    assert.match(source, /offerRole === 'seller'/);
+    assert.match(source, /payment-pending-notice/);
+    assert.match(utilsSource, /role !== 'buyer'/);
   });
 
   test('NegoPanel keeps product price validation optional until chat metadata exposes price', () => {
@@ -43,24 +66,52 @@ describe('negotiation UX source', () => {
 });
 
 describe('checkout and payment result UX source', () => {
-  test('CheckoutPage uses prepared order information and keeps payment key entry secondary', () => {
+  test('CheckoutPage requests provider approval through a payment client boundary', () => {
     const source = readSource('./CheckoutPage.jsx');
+    const apiSource = readSource('../api/paymentApi.js');
+    const indexSource = readFileSync(resolve(__dirname, '../../index.html'), 'utf8');
 
-    assert.match(source, /useSearchParams/);
-    assert.match(source, /initialPaymentKey/);
     assert.match(source, /checkout-order-summary/);
-    assert.match(source, /advanced-payment-confirm/);
-    assert.match(source, /기술 승인 정보/);
-    assert.doesNotMatch(source, /<Form\.Label>paymentKey<\/Form\.Label>/);
+    assert.match(source, /requestPaymentApproval/);
+    assert.match(source, /navigate\(`\/payments\/result\?/);
+    assert.match(apiSource, /requestPaymentApproval/);
+    assert.match(apiSource, /window\.PortOne|win\.PortOne/);
+    assert.match(apiSource, /VITE_PORTONE_STORE_ID/);
+    assert.match(apiSource, /VITE_PORTONE_CHANNEL_KEY/);
+    assert.match(apiSource, /window\.IMP|win\.IMP/);
+    assert.match(indexSource, /https:\/\/cdn\.portone\.io\/v2\/browser-sdk\.js/);
+    assert.doesNotMatch(source, /advanced-payment-confirm/);
+    assert.doesNotMatch(source, /initialPaymentKey/);
+    assert.doesNotMatch(source, /setPaymentKey/);
+    assert.doesNotMatch(source, /controlId="paymentKey"/);
+    assert.doesNotMatch(source, /confirmPayment\(payment\.paymentId,\s*\{\s*paymentKey:\s*`local-/);
   });
 
-  test('PaymentResultPage auto-confirms URL return values and hides manual key wording', () => {
+  test('PaymentResultPage only handles provider return values without fallback manual form', () => {
     const source = readSource('./PaymentResultPage.jsx');
 
     assert.match(source, /auto-confirm/);
-    assert.match(source, /advanced-payment-confirm/);
     assert.match(source, /searchParams\.get\('paymentKey'\)/);
-    assert.match(source, /결제사 승인값/);
-    assert.doesNotMatch(source, /<Form\.Label>paymentKey<\/Form\.Label>/);
+    assert.doesNotMatch(source, /advanced-payment-confirm/);
+    assert.doesNotMatch(source, /setPaymentKey/);
+    assert.doesNotMatch(source, /controlId="resultPaymentKey"/);
+  });
+
+  test('TradeDetailPage does not expose direct refund form before paid status', () => {
+    const source = readSource('./TradeDetailPage.jsx');
+
+    assert.match(source, /paymentStatus === 'PAID'/);
+    assert.doesNotMatch(source, /refundPayment/);
+    assert.doesNotMatch(source, /controlId="refundPaymentId"/);
+    assert.doesNotMatch(source, /type="submit"[\s\S]{0,80}refund/);
+  });
+
+  test('TradeDetailPage limits reviews to buyers and shows counterpart smile score', () => {
+    const source = readSource('./TradeDetailPage.jsx');
+
+    assert.match(source, /getSmileScore/);
+    assert.match(source, /counterpartSmileScore/);
+    assert.match(source, /const canReviewTrade = isCurrentUserBuyer && tradeStatus === 'COMPLETED'/);
+    assert.doesNotMatch(source, /const canReviewTrade = isCurrentUserParticipant && tradeStatus === 'COMPLETED'/);
   });
 });

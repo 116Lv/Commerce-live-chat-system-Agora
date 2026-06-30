@@ -1,22 +1,19 @@
 import { useEffect, useState } from 'react';
-import { Alert, Button, Form } from 'react-bootstrap';
-import { Link, useParams, useSearchParams } from 'react-router-dom';
-import { confirmPayment, preparePayment } from '../api/paymentApi.js';
+import { Alert, Button } from 'react-bootstrap';
+import { Link, useNavigate, useParams } from 'react-router-dom';
+import { preparePayment, requestPaymentApproval } from '../api/paymentApi.js';
 import MoneyText from '../components/MoneyText.jsx';
 import StatusBadge from '../components/StatusBadge.jsx';
 import { PageHeader, statusText } from './pageUtils.jsx';
 
 export default function CheckoutPage() {
   const { tradeId } = useParams();
-  const [searchParams] = useSearchParams();
-  const initialPaymentKey = searchParams.get('paymentKey') || '';
+  const navigate = useNavigate();
   const [payment, setPayment] = useState(null);
-  const [paymentKey, setPaymentKey] = useState(initialPaymentKey);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
   const [confirming, setConfirming] = useState(false);
-  const [autoConfirmAttempted, setAutoConfirmAttempted] = useState(false);
 
   useEffect(() => {
     let disposed = false;
@@ -48,8 +45,8 @@ export default function CheckoutPage() {
     };
   }, [tradeId]);
 
-  const confirmPreparedPayment = async (approvalKey = paymentKey) => {
-    if (!payment?.paymentId || !approvalKey.trim()) {
+  const handlePaymentApproval = async () => {
+    if (!payment?.paymentId || !payment?.orderId) {
       return;
     }
 
@@ -58,9 +55,15 @@ export default function CheckoutPage() {
     setConfirming(true);
 
     try {
-      const response = await confirmPayment(payment.paymentId, { paymentKey: approvalKey.trim() });
-      setPayment(response);
-      setMessage('결제가 확인됐어요.');
+      const approval = await requestPaymentApproval(payment, {
+        redirectUrl: `${window.location.origin}/payments/result`
+      });
+      const params = new URLSearchParams({
+        paymentId: String(approval.paymentId),
+        paymentKey: approval.paymentKey
+      });
+
+      navigate(`/payments/result?${params.toString()}`);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -68,17 +71,7 @@ export default function CheckoutPage() {
     }
   };
 
-  useEffect(() => {
-    if (payment && initialPaymentKey && !autoConfirmAttempted) {
-      setAutoConfirmAttempted(true);
-      confirmPreparedPayment(initialPaymentKey);
-    }
-  }, [autoConfirmAttempted, initialPaymentKey, payment]);
-
-  const handleConfirm = async (event) => {
-    event.preventDefault();
-    await confirmPreparedPayment();
-  };
+  const isPaid = String(payment?.status || '').toUpperCase() === 'PAID';
 
   return (
     <section>
@@ -108,30 +101,22 @@ export default function CheckoutPage() {
               </div>
             </dl>
             <p className="text-muted mt-3 mb-0">
-              결제창을 완료하면 결과 화면으로 돌아와 자동으로 승인됩니다. 돌아온 주소에 승인값이 포함되어 있으면 여기서도 바로 확인해요.
+              결제창을 열어 주문 정보를 확인하고 결제를 진행해 주세요.
             </p>
-            <details className="advanced-payment-confirm mt-3">
-              <summary>기술 승인 정보 직접 입력</summary>
-              <Form onSubmit={handleConfirm} className="stack-list mt-3">
-                <Form.Group controlId="paymentKey">
-                  <Form.Label>결제사 승인값</Form.Label>
-                  <Form.Control
-                    value={paymentKey}
-                    onChange={(event) => setPaymentKey(event.target.value)}
-                    placeholder="결제 완료 후 받은 승인값"
-                    required
-                  />
-                </Form.Group>
-                <div className="form-actions">
-                  <Button as={Link} to={`/trades/${tradeId}`} variant="outline-secondary">
-                    거래로 이동
-                  </Button>
-                  <Button type="submit" disabled={confirming || !paymentKey.trim()}>
-                    {confirming ? '확인 중' : '승인 확인'}
-                  </Button>
-                </div>
-              </Form>
-            </details>
+            <div className="form-actions">
+              <Button as={Link} to={`/trades/${tradeId}`} variant="outline-secondary">
+                거래로 이동
+              </Button>
+              {isPaid ? (
+                <Button as={Link} to={`/trades/${tradeId}`} variant="primary">
+                  결제 내역 보기
+                </Button>
+              ) : (
+                <Button type="button" onClick={handlePaymentApproval} disabled={confirming || !payment.orderId}>
+                  {confirming ? '확인 중' : '결제하기'}
+                </Button>
+              )}
+            </div>
           </>
         ) : null}
       </div>

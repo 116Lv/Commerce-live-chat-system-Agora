@@ -3,7 +3,8 @@ import { describe, test } from 'node:test';
 import {
   buildPaymentHref,
   getOfferActions,
-  getOfferPriceValidation
+  getOfferPriceValidation,
+  isOfferPayable
 } from './negoPanelUtils.js';
 
 describe('negotiation panel helpers', () => {
@@ -48,9 +49,35 @@ describe('negotiation panel helpers', () => {
     assert.equal(getOfferPriceValidation('50000'), '');
   });
 
-  test('builds checkout href only when accepted offer has a trade id', () => {
-    assert.equal(buildPaymentHref({ status: 'ACCEPTED', tradeId: 17 }), '/checkout/17');
-    assert.equal(buildPaymentHref({ status: 'PENDING', tradeId: 17 }), '');
-    assert.equal(buildPaymentHref({ status: 'ACCEPTED' }), '');
+  test('builds checkout href only when buyer has an accepted offer with a trade id', () => {
+    assert.equal(buildPaymentHref({ status: 'ACCEPTED', tradeId: 17 }, { role: 'buyer' }), '/checkout/17');
+    assert.equal(buildPaymentHref({ status: 'ACCEPTED', tradeId: 17 }), '');
+    assert.equal(buildPaymentHref({ status: 'PENDING', tradeId: 17 }, { role: 'buyer' }), '');
+    assert.equal(buildPaymentHref({ status: 'ACCEPTED' }, { role: 'buyer' }), '');
+  });
+
+  test('allows checkout only for buyer while accepted offer is payment pending', () => {
+    const offer = { status: 'ACCEPTED', tradeId: 17, tradeStatus: 'PAYMENT_PENDING' };
+
+    assert.equal(buildPaymentHref(offer, { role: 'buyer' }), '/checkout/17');
+    assert.equal(isOfferPayable(offer, { role: 'buyer' }), true);
+    assert.equal(buildPaymentHref(offer, { role: 'seller' }), '');
+    assert.equal(isOfferPayable(offer, { role: 'seller' }), false);
+  });
+
+  test('hides checkout and offer actions after payment is paid', () => {
+    const offer = { status: 'ACCEPTED', tradeId: 17, tradeStatus: 'PAID', paymentStatus: 'PAID' };
+
+    assert.equal(buildPaymentHref(offer, { role: 'buyer' }), '');
+    assert.equal(isOfferPayable(offer, { role: 'buyer' }), false);
+    assert.deepEqual(getOfferActions(offer, { role: 'buyer' }), []);
+    assert.deepEqual(getOfferActions(offer, { role: 'seller' }), []);
+  });
+
+  test('keeps accepted payment-pending cancel action available to buyer and seller', () => {
+    const offer = { status: 'ACCEPTED', tradeId: 17, tradeStatus: 'PAYMENT_PENDING' };
+
+    assert.deepEqual(getOfferActions(offer, { role: 'buyer' }).map((action) => action.key), ['cancelPaymentPending']);
+    assert.deepEqual(getOfferActions(offer, { role: 'seller' }).map((action) => action.key), ['cancelPaymentPending']);
   });
 });

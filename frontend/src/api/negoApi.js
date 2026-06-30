@@ -10,6 +10,8 @@ export const acceptOffer = (offerId, config = {}) => apiClient.patch(`/api/nego-
 
 export const rejectOffer = (offerId, config = {}) => apiClient.patch(`/api/nego-offers/${offerId}/reject`, null, config);
 
+export const cancelOffer = (offerId, config = {}) => apiClient.patch(`/api/nego-offers/${offerId}/cancel`, null, config);
+
 export const requestOfferExtension = (offerId, config = {}) =>
   apiClient.patch(`/api/nego-offers/${offerId}/extension-request`, null, config);
 
