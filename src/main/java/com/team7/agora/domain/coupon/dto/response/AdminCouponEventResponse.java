@@ -14,7 +14,14 @@ public record AdminCouponEventResponse(
     int discountAmount,
     int minOrderAmount,
     int validDays,
-    String status
+    String status,
+    int remainingQuantity,
+    double issueRate,
+    boolean canIssue,
+    boolean ended,
+    boolean soldOut,
+    String statusLabel,
+    String typeLabel
 ) {
 
     public static AdminCouponEventResponse from(CouponEvent event) {
@@ -29,7 +36,14 @@ public record AdminCouponEventResponse(
             event.getDiscountAmount(),
             event.getMinOrderAmount(),
             event.getValidDays(),
-            event.getStatus().name()
+            event.getStatus().name(),
+            CouponResponseDisplay.remainingQuantity(event),
+            CouponResponseDisplay.issueRate(event),
+            CouponResponseDisplay.canIssue(event),
+            CouponResponseDisplay.ended(event),
+            CouponResponseDisplay.soldOut(event),
+            CouponResponseDisplay.eventStatusLabel(event),
+            CouponResponseDisplay.eventTypeLabel(event.getType())
         );
     }
 }

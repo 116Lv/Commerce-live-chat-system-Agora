@@ -11,6 +11,9 @@ public record MyCouponResponse(
     int discountAmount,
     int minOrderAmount,
     String status,
+    String statusLabel,
+    boolean usable,
+    boolean expired,
     LocalDateTime issuedAt,
     LocalDateTime expiresAt
 ) {
@@ -24,6 +27,9 @@ public record MyCouponResponse(
             event.getDiscountAmount(),
             event.getMinOrderAmount(),
             coupon.getStatus().name(),
+            CouponResponseDisplay.couponStatusLabel(coupon.getStatus(), coupon.getExpiresAt()),
+            CouponResponseDisplay.isUsable(coupon.getStatus(), coupon.getExpiresAt()),
+            CouponResponseDisplay.isExpired(coupon.getStatus(), coupon.getExpiresAt()),
             coupon.getIssuedAt(),
             coupon.getExpiresAt()
         );

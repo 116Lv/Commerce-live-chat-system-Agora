@@ -120,6 +120,57 @@ class PaymentServiceTest {
     }
 
     @Test
+    void prepareReturnsExistingReadyPaymentForBuyerWhenCheckoutReloads() {
+        Payment payment = Payment.ready(trade, buyer, BigDecimal.valueOf(50000), "order-1");
+        assignId(payment, 1000L);
+        when(tradeRepository.findByIdForUpdate(100L)).thenReturn(Optional.of(trade));
+        when(paymentRepository.findByTrade(trade)).thenReturn(Optional.of(payment));
+
+        PaymentResponse response = paymentService.prepare(2L, 100L);
+
+        assertThat(response.paymentId()).isEqualTo(1000L);
+        assertThat(response.status()).isEqualTo("READY");
+        assertThat(response.orderId()).isEqualTo("order-1");
+        verify(paymentRepository, never()).save(any(Payment.class));
+    }
+
+    @Test
+    void prepareReturnsExistingConfirmingPaymentForBuyerWhenProviderReturnsToCheckout() {
+        Payment payment = Payment.ready(trade, buyer, BigDecimal.valueOf(50000), "order-1");
+        assignId(payment, 1000L);
+        payment.markConfirming();
+        when(tradeRepository.findByIdForUpdate(100L)).thenReturn(Optional.of(trade));
+        when(paymentRepository.findByTrade(trade)).thenReturn(Optional.of(payment));
+
+        PaymentResponse response = paymentService.prepare(2L, 100L);
+
+        assertThat(response.paymentId()).isEqualTo(1000L);
+        assertThat(response.status()).isEqualTo("CONFIRMING");
+        verify(paymentRepository, never()).save(any(Payment.class));
+    }
+
+    @Test
+    void confirmExistingConfirmingPaymentThrowsConflictWithoutCallingPaymentClientAgain() {
+        Payment payment = Payment.ready(trade, buyer, BigDecimal.valueOf(50000), "order-1");
+        assignId(payment, 1000L);
+        payment.markConfirming();
+        when(tradeRepository.findByIdForUpdate(100L)).thenReturn(Optional.of(trade));
+        when(paymentRepository.findByTrade(trade)).thenReturn(Optional.of(payment));
+        when(paymentRepository.findByIdForUpdate(1000L)).thenReturn(Optional.of(payment));
+
+        PaymentResponse prepared = paymentService.prepare(2L, 100L);
+
+        assertThat(prepared.status()).isEqualTo("CONFIRMING");
+        assertThatThrownBy(() -> paymentService.confirm(2L, prepared.paymentId(), "payment-key"))
+            .isInstanceOfSatisfying(PaymentException.class, exception ->
+                assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.CONFLICT)
+            )
+            .hasMessageContaining("approval in progress");
+        verify(paymentClient, never()).confirm(any(), any(), any());
+        verify(settlementRepository, never()).save(any(Settlement.class));
+    }
+
+    @Test
     void confirmMarksPaidAndCreatesSettlement() {
         Payment payment = Payment.ready(trade, buyer, BigDecimal.valueOf(50000), "order-1");
         assignId(payment, 1000L);

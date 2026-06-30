@@ -1,46 +1,102 @@
-﻿import { Button, Card } from 'react-bootstrap';
-import { Heart, MessageCircle } from 'lucide-react';
+import { Button, Card } from 'react-bootstrap';
+import { ArrowRight, Heart } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import MoneyText from './MoneyText.jsx';
-import StatusBadge from './StatusBadge.jsx';
+import {
+  getProductCategoryLabel,
+  getProductImageUrl,
+  getProductPrice,
+  getProductRegionLabel,
+  getProductStatusLabel,
+  getProductTitle
+} from '../pages/productFormUtils.js';
 
-export default function ProductCard({ product, footerActionLabel = '보기', footerActionTo }) {
+export default function ProductCard({
+  disableNavigation = false,
+  product,
+  footerActionDisabled = false,
+  footerActionLabel = '보기',
+  footerActionOnClick,
+  footerActionTo,
+  footerActionVariant = 'outline-primary'
+}) {
   const item = product || {};
   const productId = item.productId ?? item.id ?? '#';
-  const imageAlt = item.title ? `${item.title} 이미지` : '상품 이미지';
+  const detailTo = `/products/${productId}`;
+  const title = getProductTitle(item);
+  const imageAlt = title ? `${title} 이미지` : '상품 이미지';
+  const imageUrl = getProductImageUrl(item);
+  const price = getProductPrice(item);
   const likeCount = item.likeCount ?? 0;
-  const chatCount = item.chatCount ?? 0;
+  const categoryLabel = getProductCategoryLabel(item);
+  const regionLabel = getProductRegionLabel(item);
+  const statusLabel = getProductStatusLabel(item);
+
+  const stopCardNavigation = (event) => {
+    event.stopPropagation();
+  };
+
+  const handleFooterAction = (event) => {
+    stopCardNavigation(event);
+    footerActionOnClick?.(event);
+  };
 
   return (
     <Card className="product-card h-100">
+      {disableNavigation ? null : (
+        <Link
+          className="product-card-link"
+          to={detailTo}
+          data-product-card-link={detailTo}
+          aria-label={`${title || '상품'} 상세 보기`}
+        />
+      )}
       <div className="product-card-media">
-        {item.imageUrl ? <img src={item.imageUrl} alt={imageAlt} /> : <span>이미지 없음</span>}
+        {imageUrl ? <img src={imageUrl} alt={imageAlt} /> : <span>이미지 없음</span>}
+        <span
+          className={`product-card-heart ${item.liked ? 'is-liked' : ''}`}
+          aria-label={`관심 ${likeCount}개`}
+          onClick={stopCardNavigation}
+        >
+          <Heart size={15} aria-hidden="true" />
+          {likeCount}
+        </span>
       </div>
       <Card.Body>
         <div className="d-flex justify-content-between gap-2 align-items-start mb-2">
-          <Card.Title as="h2">{item.title || '제목 없음'}</Card.Title>
-          {item.status ? <StatusBadge status={item.status} /> : null}
+          <Card.Title as="h2">{title || '제목 없음'}</Card.Title>
+          {item.status ? <span className="badge bg-secondary product-status-badge">{statusLabel}</span> : null}
         </div>
         <div className="product-card-tags">
-          {item.regionName || item.region ? <span>{item.regionName || item.region}</span> : null}
-          {item.category ? <span>{item.category}</span> : null}
+          {regionLabel && regionLabel !== '-' ? <span>{regionLabel}</span> : null}
+          {categoryLabel && categoryLabel !== '-' ? <span>{categoryLabel}</span> : null}
         </div>
-        <MoneyText amount={item.price} className="product-card-price" />
-        <div className="product-card-meta" aria-label="상품 활동">
-          <span aria-label={`관심 ${likeCount}개`}>
-            <Heart size={15} aria-hidden="true" />
-            {likeCount}
-          </span>
-          <span aria-label={`채팅 ${chatCount}개`}>
-            <MessageCircle size={15} aria-hidden="true" />
-            {chatCount}
-          </span>
+        <MoneyText amount={price} className="product-card-price" />
+        <div className="product-card-detail-affordance">
+          상세 보기 <ArrowRight size={15} aria-hidden="true" />
         </div>
       </Card.Body>
       <Card.Footer>
-        <Button as={Link} to={footerActionTo || `/products/${productId}`} variant="outline-primary" size="sm">
-          {footerActionLabel}
-        </Button>
+        {footerActionOnClick ? (
+          <Button type="button" variant={footerActionVariant} size="sm" disabled={footerActionDisabled} onClick={handleFooterAction}>
+            {footerActionLabel}
+          </Button>
+        ) : disableNavigation ? (
+          <Button type="button" variant={footerActionVariant} size="sm" disabled={footerActionDisabled} onClick={stopCardNavigation}>
+            {footerActionLabel}
+          </Button>
+        ) : (
+          <Button
+            as={Link}
+            to={footerActionTo || detailTo}
+            variant={footerActionVariant}
+            size="sm"
+            disabled={footerActionDisabled}
+            onClick={stopCardNavigation}
+          >
+            {footerActionLabel}
+          </Button>
+        )}
       </Card.Footer>
     </Card>
   );

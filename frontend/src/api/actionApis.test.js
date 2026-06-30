@@ -12,6 +12,7 @@ import {
   approveOfferExtension,
   createOffer,
   expireOffer,
+  getCurrentOffer,
   rejectOffer,
   rejectOfferExtension,
   requestOfferExtension
@@ -77,6 +78,7 @@ test('negotiation API maps offer creation and actions', async () => {
   const { requests, config } = captureRequest();
 
   await createOffer(3, { offerPrice: 12000 }, config);
+  await getCurrentOffer(3, config);
   await acceptOffer(4, config);
   await rejectOffer(4, config);
   await requestOfferExtension(4, config);
@@ -86,6 +88,7 @@ test('negotiation API maps offer creation and actions', async () => {
 
   assert.deepEqual(requests.map(summarizeRequest), [
     { method: 'post', url: '/api/chat/rooms/3/nego-offers', params: undefined, data: { offerPrice: 12000 } },
+    { method: 'get', url: '/api/chat/rooms/3/nego-offers/current', params: undefined, data: undefined },
     { method: 'patch', url: '/api/nego-offers/4/accept', params: undefined, data: null },
     { method: 'patch', url: '/api/nego-offers/4/reject', params: undefined, data: null },
     { method: 'patch', url: '/api/nego-offers/4/extension-request', params: undefined, data: null },
@@ -152,7 +155,9 @@ test('disconnected chat messages are queued for STOMP retry without HTTP fallbac
   const published = [];
   const flushed = flushPendingChatMessages(3, (message) => published.push(message), stored);
 
-  assert.equal(flushed, 1);
-  assert.deepEqual(published, [{ content: 'hello' }]);
+  assert.equal(flushed.sentCount, 1);
+  assert.equal(flushed.failedCount, 0);
+  assert.equal(flushed.pendingCount, 0);
+  assert.deepEqual(published, [{ clientMessageId: queued.clientMessageId, content: 'hello', messageType: 'TEXT' }]);
   assert.deepEqual(readPendingChatMessages(3, stored), []);
 });

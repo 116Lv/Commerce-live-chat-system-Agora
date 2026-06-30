@@ -129,19 +129,32 @@ class AdminControllerTest {
     }
 
     @Test
-    void changeRole_delegatesWithAuthenticatedRootAdmin() throws Exception {
-        // given
+    void changeRole_rejectsDirectRolePatchBecauseApprovalIsRequired() throws Exception {
         AdminPrincipal principal = authenticate(AdminRole.ROOT_ADMIN);
         when(adminAccountService.changeRole(principal, 2L, AdminRole.PRODUCT_ADMIN))
-                .thenReturn(new AdminUserResponse(2L, "target@test.com", "대상관리자", "PRODUCT_ADMIN", "ACTIVE"));
+                .thenThrow(new com.team7.agora.global.exception.BusinessException(
+                        com.team7.agora.global.exception.ErrorCode.CONFLICT,
+                        "Role changes require approval."
+                ));
 
-        // when & then
         mockMvc.perform(patch("/api/admin/accounts/2/role")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {"role":"PRODUCT_ADMIN"}
                                 """))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.status").value("ERROR"));
+    }
+
+    @Test
+    void getAccounts_delegatesWithAuthenticatedRootAdmin() throws Exception {
+        AdminPrincipal principal = authenticate(AdminRole.ROOT_ADMIN);
+        when(adminAccountService.getAccounts(principal))
+                .thenReturn(List.of(new AdminUserResponse(2L, "target@test.com", "계정관리자", "USER_ADMIN", "ACTIVE")));
+
+        mockMvc.perform(get("/api/admin/accounts"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.role").value("PRODUCT_ADMIN"));
+                .andExpect(jsonPath("$.data[0].email").value("target@test.com"))
+                .andExpect(jsonPath("$.data[0].role").value("USER_ADMIN"));
     }
 }

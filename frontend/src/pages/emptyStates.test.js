@@ -59,7 +59,8 @@ test('user layout hides protected navigation while logged out and shows signup',
   assert.match(source, /회원가입/);
   assert.match(source, /로그아웃/);
   assert.match(source, /isUserAuthenticated \? \(/);
-  assert.match(source, /<UserNavLink to="\/me">[\s\S]*?<\/>\s*\)\s*:\s*\(\s*<>[\s\S]*?<UserNavLink to="\/login">/);
+  assert.match(source, /<NavDropdown[\s\S]*?account-dropdown[\s\S]*?\)\s*:\s*\(\s*<>[\s\S]*?<UserNavLink to="\/login">/);
+  assert.doesNotMatch(source, /<UserNavLink to="\/me">/);
 });
 
 test('home page uses Korean marketplace grid with sidebar filters', () => {

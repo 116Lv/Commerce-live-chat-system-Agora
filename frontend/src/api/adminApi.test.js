@@ -2,6 +2,10 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import {
   createCouponEvent,
+  approveAdminApprovalRequest,
+  approveAdminProduct,
+  getAdminApprovalRequests,
+  getAdminAccounts,
   getAdminCouponEvent,
   getAdminCouponEventCoupons,
   getAdminCouponEvents,
@@ -11,10 +15,15 @@ import {
   getAdminProducts,
   getAdminProductReports,
   getAdminRefunds,
+  getMyAdminApprovalRequests,
   getAdminUserReports,
   getAdminUsers,
   hideAdminProduct,
   issueCouponEventToUsers,
+  normalizeCouponEventPayload,
+  normalizeCouponIssuePayload,
+  rejectAdminApprovalRequest,
+  requestAdminRoleChangeApproval,
   resolveAdminProductReport,
   resolveAdminUserReport,
   settleAdminSettlement,
@@ -58,13 +67,20 @@ test('admin API maps dashboard, product, user, report, payment, settlement, and 
 
   await getAdminMe(config);
   await getAdminDashboard(config);
-  await getAdminProducts({ reportedOnly: true, page: 1, size: 10 }, config);
+  await getAdminProducts({ reportedOnly: true, approvalStatus: 'REJECTED', page: 1, size: 10 }, config);
   await hideAdminProduct(7, config);
+  await approveAdminProduct(7, config);
   await getAdminUsers({ page: 2, size: 5 }, config);
+  await getAdminAccounts(config);
   await updateAdminUserStatus(9, 'SUSPENDED', config);
   await updateAdminAccountRole(9, 'PRODUCT_ADMIN', config);
-  await getAdminUserReports(config);
-  await getAdminProductReports(config);
+  await getAdminApprovalRequests({ status: 'PENDING' }, config);
+  await getMyAdminApprovalRequests(config);
+  await requestAdminRoleChangeApproval({ targetAdminId: 9, requestedRole: 'SETTLEMENT_ADMIN', reason: 'Need backup' }, config);
+  await approveAdminApprovalRequest(21, 'Approved', config);
+  await rejectAdminApprovalRequest(22, 'Missing reason', config);
+  await getAdminUserReports({ status: 'PENDING', search: 'seller' }, config);
+  await getAdminProductReports({ status: 'RESOLVED' }, config);
   await resolveAdminUserReport(11, '처리 완료', config);
   await resolveAdminProductReport(12, '상품 숨김', config);
   await getAdminPayments({ status: 'PAID', page: 0, size: 20 }, config);
@@ -81,13 +97,25 @@ test('admin API maps dashboard, product, user, report, payment, settlement, and 
   assert.deepEqual(requests.map(summarizeRequest), [
     { method: 'get', url: '/api/admin/me', params: undefined, data: undefined },
     { method: 'get', url: '/api/admin/dashboard', params: undefined, data: undefined },
-    { method: 'get', url: '/api/admin/products', params: { reportedOnly: true, page: 1, size: 10 }, data: undefined },
+    { method: 'get', url: '/api/admin/products', params: { reportedOnly: true, approvalStatus: 'REJECTED', page: 1, size: 10 }, data: undefined },
     { method: 'patch', url: '/api/admin/products/7/hide', params: undefined, data: undefined },
+    { method: 'patch', url: '/api/admin/products/7/approve', params: undefined, data: undefined },
     { method: 'get', url: '/api/admin/users', params: { page: 2, size: 5 }, data: undefined },
+    { method: 'get', url: '/api/admin/accounts', params: undefined, data: undefined },
     { method: 'patch', url: '/api/admin/users/9/status', params: undefined, data: { status: 'SUSPENDED' } },
     { method: 'patch', url: '/api/admin/accounts/9/role', params: undefined, data: { role: 'PRODUCT_ADMIN' } },
-    { method: 'get', url: '/api/admin/reports/users', params: undefined, data: undefined },
-    { method: 'get', url: '/api/admin/reports/products', params: undefined, data: undefined },
+    { method: 'get', url: '/api/admin/approval-requests', params: { status: 'PENDING' }, data: undefined },
+    { method: 'get', url: '/api/admin/my-approval-requests', params: undefined, data: undefined },
+    {
+      method: 'post',
+      url: '/api/admin/my-approval-requests/role-change',
+      params: undefined,
+      data: { targetAdminId: 9, requestedRole: 'SETTLEMENT_ADMIN', reason: 'Need backup' }
+    },
+    { method: 'post', url: '/api/admin/approval-requests/21/approve', params: undefined, data: { memo: 'Approved' } },
+    { method: 'post', url: '/api/admin/approval-requests/22/reject', params: undefined, data: { memo: 'Missing reason' } },
+    { method: 'get', url: '/api/admin/reports/users', params: { status: 'PENDING', search: 'seller' }, data: undefined },
+    { method: 'get', url: '/api/admin/reports/products', params: { status: 'RESOLVED' }, data: undefined },
     { method: 'post', url: '/api/admin/reports/users/11/resolve', params: undefined, data: { adminMemo: '처리 완료' } },
     { method: 'post', url: '/api/admin/reports/products/12/resolve', params: undefined, data: { adminMemo: '상품 숨김' } },
     { method: 'get', url: '/api/admin/payments', params: { status: 'PAID', page: 0, size: 20 }, data: undefined },
@@ -143,6 +171,64 @@ test('admin list APIs include backend default paging and filter params', async (
     { method: 'get', url: '/api/admin/users', params: { page: 0, size: 20 }, data: undefined },
     { method: 'get', url: '/api/admin/payments', params: { status: '', page: 0, size: 20 }, data: undefined }
   ]);
+});
+
+test('admin account and report APIs expose dedicated admin account list and optional report filters', async () => {
+  const { requests, config } = captureRequest();
+
+  await getAdminAccounts(config);
+  await getAdminUserReports({ status: 'PENDING', search: 'blocked' }, config);
+  await getAdminProductReports({ status: '', search: '' }, config);
+
+  assert.deepEqual(requests.map(summarizeRequest), [
+    { method: 'get', url: '/api/admin/accounts', params: undefined, data: undefined },
+    { method: 'get', url: '/api/admin/reports/users', params: { status: 'PENDING', search: 'blocked' }, data: undefined },
+    { method: 'get', url: '/api/admin/reports/products', params: {}, data: undefined }
+  ]);
+});
+
+test('coupon API normalizes formatted admin UI numbers while preserving raw enum values', async () => {
+  const { requests, config } = captureRequest();
+
+  await createCouponEvent(
+    {
+      type: 'ADMIN_INDIVIDUAL',
+      name: ' 여름 쿠폰 ',
+      startAt: '2026-07-01T09:00',
+      endAt: '2026-07-31T23:00',
+      totalQuantity: '1,000',
+      discountAmount: '5,000',
+      minOrderAmount: '10,000',
+      validDays: '30'
+    },
+    config
+  );
+  await issueCouponEventToUsers(31, ['1', 2, 'abc', 3], config);
+
+  assert.deepEqual(requests.map(summarizeRequest), [
+    {
+      method: 'post',
+      url: '/api/admin/coupon-events',
+      params: undefined,
+      data: {
+        type: 'ADMIN_INDIVIDUAL',
+        name: '여름 쿠폰',
+        startAt: '2026-07-01T09:00',
+        endAt: '2026-07-31T23:00',
+        totalQuantity: 1000,
+        discountAmount: 5000,
+        minOrderAmount: 10000,
+        validDays: 30
+      }
+    },
+    { method: 'post', url: '/api/admin/coupon-events/31/issue', params: undefined, data: { userIds: [1, 2, 3] } }
+  ]);
+
+  assert.deepEqual(normalizeCouponEventPayload({ type: 'FIRST_COME', totalQuantity: '2,500' }), {
+    type: 'FIRST_COME',
+    totalQuantity: 2500
+  });
+  assert.deepEqual(normalizeCouponIssuePayload(['5', 'x', 6]), { userIds: [5, 6] });
 });
 
 test('account role update surfaces backend authorization errors', async () => {

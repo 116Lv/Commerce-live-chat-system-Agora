@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -14,8 +15,12 @@ import com.team7.agora.domain.chat.entity.ChatMessage;
 import com.team7.agora.domain.chat.entity.ChatRoom;
 import com.team7.agora.domain.chat.enums.ChatRoomStatus;
 import com.team7.agora.domain.chat.repository.ChatMessageRepository;
+import com.team7.agora.domain.chat.repository.ChatRoomUnreadCount;
 import com.team7.agora.domain.chat.repository.ChatRoomRepository;
 import com.team7.agora.domain.product.entity.Product;
+import com.team7.agora.domain.product.entity.ProductImage;
+import com.team7.agora.domain.product.enums.ProductApprovalStatus;
+import com.team7.agora.domain.product.repository.ProductImageRepository;
 import com.team7.agora.domain.product.repository.ProductRepository;
 import com.team7.agora.domain.region.entity.Region;
 import com.team7.agora.domain.user.entity.User;
@@ -51,6 +56,9 @@ class ChatServiceTest {
     private ProductRepository productRepository;
 
     @Mock
+    private ProductImageRepository productImageRepository;
+
+    @Mock
     private UserRepository userRepository;
 
     @Mock
@@ -68,6 +76,7 @@ class ChatServiceTest {
             chatRoomRepository,
             chatMessageRepository,
             productRepository,
+            productImageRepository,
             userRepository,
             imageStorageClient
         );
@@ -80,11 +89,13 @@ class ChatServiceTest {
         Region region = Region.create("서울 강남구 역삼동", "1168010100", "서울", "강남구", "역삼동");
         product = Product.create(seller, region, "자전거", "상태 좋아요", BigDecimal.valueOf(50000), "스포츠");
         assignId(product, 10L);
+        product.approve();
     }
 
     @Test
     void openRoomCreatesRoomForBuyerAndSeller() {
-        when(productRepository.findByIdAndDeletedAtIsNull(10L)).thenReturn(Optional.of(product));
+        when(productRepository.findByIdAndDeletedAtIsNullAndApprovalStatus(10L, ProductApprovalStatus.APPROVED))
+            .thenReturn(Optional.of(product));
         when(userRepository.findByIdAndStatusAndDeletedAtIsNull(2L, UserStatus.ACTIVE)).thenReturn(Optional.of(buyer));
         when(chatRoomRepository.findByProductAndSellerAndBuyer(product, seller, buyer)).thenReturn(Optional.empty());
         when(chatRoomRepository.save(any(ChatRoom.class))).thenAnswer(invocation -> {
@@ -105,7 +116,8 @@ class ChatServiceTest {
         ChatRoom existingRoom = ChatRoom.open(product, buyer);
         assignId(existingRoom, 100L);
 
-        when(productRepository.findByIdAndDeletedAtIsNull(10L)).thenReturn(Optional.of(product));
+        when(productRepository.findByIdAndDeletedAtIsNullAndApprovalStatus(10L, ProductApprovalStatus.APPROVED))
+            .thenReturn(Optional.of(product));
         when(userRepository.findByIdAndStatusAndDeletedAtIsNull(2L, UserStatus.ACTIVE)).thenReturn(Optional.of(buyer));
         when(chatRoomRepository.findByProductAndSellerAndBuyer(product, seller, buyer))
             .thenReturn(Optional.empty(), Optional.of(existingRoom));
@@ -121,7 +133,8 @@ class ChatServiceTest {
 
     @Test
     void openRoomRejectsProductSeller() {
-        when(productRepository.findByIdAndDeletedAtIsNull(10L)).thenReturn(Optional.of(product));
+        when(productRepository.findByIdAndDeletedAtIsNullAndApprovalStatus(10L, ProductApprovalStatus.APPROVED))
+            .thenReturn(Optional.of(product));
 
         assertThatThrownBy(() -> chatService.openRoom(1L, 10L))
             .isInstanceOf(BusinessException.class);
@@ -129,13 +142,45 @@ class ChatServiceTest {
 
     @Test
     void openRoomRejectsNonActiveBuyer() {
-        when(productRepository.findByIdAndDeletedAtIsNull(10L)).thenReturn(Optional.of(product));
+        when(productRepository.findByIdAndDeletedAtIsNullAndApprovalStatus(10L, ProductApprovalStatus.APPROVED))
+            .thenReturn(Optional.of(product));
         when(userRepository.findByIdAndStatusAndDeletedAtIsNull(2L, UserStatus.ACTIVE)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> chatService.openRoom(2L, 10L))
             .isInstanceOf(BusinessException.class)
             .extracting("errorCode")
             .isEqualTo(ErrorCode.NOT_FOUND);
+    }
+
+    @Test
+    void openRoomUsesApprovedProductQueryAndTreatsUnapprovedBuyerTargetAsNotFound() {
+        when(productRepository.findByIdAndDeletedAtIsNullAndApprovalStatus(11L, ProductApprovalStatus.APPROVED))
+            .thenReturn(Optional.empty());
+        when(productRepository.existsByIdAndSellerIdAndDeletedAtIsNull(11L, 2L)).thenReturn(false);
+
+        assertThatThrownBy(() -> chatService.openRoom(2L, 11L))
+            .isInstanceOfSatisfying(BusinessException.class, exception ->
+                assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.NOT_FOUND)
+            );
+        verify(productRepository).findByIdAndDeletedAtIsNullAndApprovalStatus(11L, ProductApprovalStatus.APPROVED);
+        verify(productRepository, never()).findByIdAndDeletedAtIsNull(11L);
+        verify(userRepository, never()).findByIdAndStatusAndDeletedAtIsNull(any(), any());
+        verify(chatRoomRepository, never()).save(any(ChatRoom.class));
+    }
+
+    @Test
+    void openRoomPreservesSellerSelfChatRejectionWithoutLoadingUnapprovedProduct() {
+        when(productRepository.findByIdAndDeletedAtIsNullAndApprovalStatus(11L, ProductApprovalStatus.APPROVED))
+            .thenReturn(Optional.empty());
+        when(productRepository.existsByIdAndSellerIdAndDeletedAtIsNull(11L, 1L)).thenReturn(true);
+
+        assertThatThrownBy(() -> chatService.openRoom(1L, 11L))
+            .isInstanceOfSatisfying(BusinessException.class, exception ->
+                assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.INVALID_REQUEST)
+            );
+        verify(productRepository, never()).findByIdAndDeletedAtIsNull(11L);
+        verify(userRepository, never()).findByIdAndStatusAndDeletedAtIsNull(any(), any());
+        verify(chatRoomRepository, never()).save(any(ChatRoom.class));
     }
 
     @Test
@@ -252,6 +297,77 @@ class ChatServiceTest {
 
         assertThat(responses).hasSize(1);
         assertThat(responses.get(0).chatRoomId()).isEqualTo(100L);
+    }
+
+    @Test
+    void getMyRoomsIncludesProductParticipantsLastMessageAndUnreadCount() {
+        ChatRoom chatRoom = ChatRoom.open(product, buyer);
+        assignId(chatRoom, 100L);
+        ChatMessage message = ChatMessage.send(chatRoom, seller, "Still available?");
+        assignId(message, 900L);
+        ProductImage image = ProductImage.create(product, "/uploads/products/bike.jpg", 0);
+
+        when(userRepository.findById(2L)).thenReturn(Optional.of(buyer));
+        when(chatRoomRepository.findAllBySellerOrBuyer(buyer, buyer)).thenReturn(List.of(chatRoom));
+        when(productImageRepository.findAllByProductIdInOrderByProductIdAscSortOrderAsc(List.of(10L)))
+            .thenReturn(List.of(image));
+        when(chatMessageRepository.findLatestMessagesByChatRoomIds(List.of(100L))).thenReturn(List.of(message));
+        when(chatMessageRepository.countUnreadMessagesByChatRoomIds(List.of(100L), 2L))
+            .thenReturn(List.of(new ChatRoomUnreadCount(100L, 2L)));
+
+        var responses = chatService.getMyRooms(2L);
+
+        assertThat(responses).hasSize(1);
+        ChatRoomResponse response = responses.get(0);
+        assertThat(response.productTitle()).isEqualTo(product.getTitle());
+        assertThat(response.productPrice()).isEqualByComparingTo(product.getPrice());
+        assertThat(response.productStatus()).isEqualTo(product.getStatus().name());
+        assertThat(response.productThumbnailUrl()).isEqualTo("/uploads/products/bike.jpg");
+        assertThat(response.sellerNickname()).isEqualTo(seller.getNickname());
+        assertThat(response.buyerNickname()).isEqualTo(buyer.getNickname());
+        assertThat(response.lastMessageId()).isEqualTo(900L);
+        assertThat(response.lastMessagePreview()).isEqualTo("Still available?");
+        assertThat(response.lastMessageType()).isEqualTo("TEXT");
+        assertThat(response.lastMessageSenderId()).isEqualTo(1L);
+        assertThat(response.lastMessageSenderNickname()).isEqualTo(seller.getNickname());
+        assertThat(response.lastMessageCreatedAt()).isNotNull();
+        assertThat(response.unreadCount()).isEqualTo(2L);
+        verify(chatMessageRepository, never()).findFirstByChatRoomOrderByIdDesc(any(ChatRoom.class));
+        verify(chatMessageRepository, never()).countUnreadMessagesForUser(any(ChatRoom.class), eq(2L), any());
+    }
+
+    @Test
+    void getMyRoomsBatchesMessageMetadataForMultipleRooms() {
+        Product secondProduct = Product.create(seller, product.getRegion(), "Helmet", "Clean", BigDecimal.valueOf(15000), "Sports");
+        assignId(secondProduct, 11L);
+        ChatRoom firstRoom = ChatRoom.open(product, buyer);
+        assignId(firstRoom, 100L);
+        ChatRoom secondRoom = ChatRoom.open(secondProduct, buyer);
+        assignId(secondRoom, 101L);
+        ChatMessage firstMessage = ChatMessage.send(firstRoom, seller, "First room");
+        assignId(firstMessage, 900L);
+        ChatMessage secondMessage = ChatMessage.send(secondRoom, seller, "Second room");
+        assignId(secondMessage, 901L);
+
+        when(userRepository.findById(2L)).thenReturn(Optional.of(buyer));
+        when(chatRoomRepository.findAllBySellerOrBuyer(buyer, buyer)).thenReturn(List.of(firstRoom, secondRoom));
+        when(chatMessageRepository.findLatestMessagesByChatRoomIds(List.of(100L, 101L)))
+            .thenReturn(List.of(firstMessage, secondMessage));
+        when(chatMessageRepository.countUnreadMessagesByChatRoomIds(List.of(100L, 101L), 2L))
+            .thenReturn(List.of(new ChatRoomUnreadCount(100L, 1L), new ChatRoomUnreadCount(101L, 3L)));
+
+        var responses = chatService.getMyRooms(2L);
+
+        assertThat(responses).hasSize(2);
+        assertThat(responses).extracting(ChatRoomResponse::lastMessagePreview)
+            .containsExactly("First room", "Second room");
+        assertThat(responses).extracting(ChatRoomResponse::unreadCount)
+            .containsExactly(1L, 3L);
+        verify(chatMessageRepository).findLatestMessagesByChatRoomIds(List.of(100L, 101L));
+        verify(chatMessageRepository).countUnreadMessagesByChatRoomIds(List.of(100L, 101L), 2L);
+        verify(chatMessageRepository, never()).findFirstByChatRoomOrderByIdDesc(any(ChatRoom.class));
+        verify(chatMessageRepository, never()).countUnreadMessagesForUser(any(ChatRoom.class), eq(2L), any());
+        verify(productImageRepository).findAllByProductIdInOrderByProductIdAscSortOrderAsc(List.of(10L, 11L));
     }
 
     @Test

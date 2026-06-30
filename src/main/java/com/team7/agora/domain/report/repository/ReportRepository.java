@@ -1,6 +1,7 @@
 package com.team7.agora.domain.report.repository;
 
 import com.team7.agora.domain.product.entity.Product;
+import com.team7.agora.domain.product.enums.ProductApprovalStatus;
 import com.team7.agora.domain.report.entity.Report;
 import com.team7.agora.domain.report.enums.ReportStatus;
 import com.team7.agora.domain.user.entity.User;
@@ -43,4 +44,23 @@ public interface ReportRepository extends JpaRepository<Report, Long> {
             countQuery = "select count(distinct r.product) from Report r where r.product is not null"
     )
     Page<Product> findDistinctReportedProducts(Pageable pageable);
+
+    @Query(
+            value = """
+                    select distinct r.product
+                    from Report r
+                    where r.product is not null
+                    and r.product.approvalStatus = :approvalStatus
+                    """,
+            countQuery = """
+                    select count(distinct r.product)
+                    from Report r
+                    where r.product is not null
+                    and r.product.approvalStatus = :approvalStatus
+                    """
+    )
+    Page<Product> findDistinctReportedProductsByApprovalStatus(
+            @Param("approvalStatus") ProductApprovalStatus approvalStatus,
+            Pageable pageable
+    );
 }

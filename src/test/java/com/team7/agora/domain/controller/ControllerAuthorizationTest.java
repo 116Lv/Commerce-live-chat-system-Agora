@@ -29,12 +29,14 @@ class ControllerAuthorizationTest {
 
     @Test
     void adminReportControllerRequiresReportAdminAuthorization() throws NoSuchMethodException {
-        assertThat(preAuthorizeValue("getUserReports", com.team7.agora.global.auth.AdminPrincipal.class))
+        assertThat(preAuthorizeValue("getUserReports", com.team7.agora.global.auth.AdminPrincipal.class,
+                String.class, String.class))
                 .isEqualTo("hasAnyAuthority('ROOT_ADMIN', 'USER_ADMIN')");
         assertThat(preAuthorizeValue("resolveUserReport", com.team7.agora.global.auth.AdminPrincipal.class,
                 Long.class, com.team7.agora.domain.admin.dto.request.AdminReportResolveRequest.class))
                 .isEqualTo("hasAnyAuthority('ROOT_ADMIN', 'USER_ADMIN')");
-        assertThat(preAuthorizeValue("getProductReports", com.team7.agora.global.auth.AdminPrincipal.class))
+        assertThat(preAuthorizeValue("getProductReports", com.team7.agora.global.auth.AdminPrincipal.class,
+                String.class, String.class))
                 .isEqualTo("hasAnyAuthority('ROOT_ADMIN', 'PRODUCT_ADMIN')");
         assertThat(preAuthorizeValue("resolveProductReport", com.team7.agora.global.auth.AdminPrincipal.class,
                 Long.class, com.team7.agora.domain.admin.dto.request.AdminReportResolveRequest.class))

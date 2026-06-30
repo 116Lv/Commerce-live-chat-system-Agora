@@ -1,7 +1,46 @@
-import { Button, Container, Nav, Navbar } from 'react-bootstrap';
+import { Container, Nav, Navbar, NavDropdown } from 'react-bootstrap';
 import { Link, NavLink, Outlet } from 'react-router-dom';
-import { MessageCircle, PackagePlus, Search, Ticket, UserRound } from 'lucide-react';
+import { Heart, ListChecks, LogOut, MessageCircle, PackagePlus, Search, Ticket, UserRound } from 'lucide-react';
 import { useAuth } from '../auth/AuthContext.jsx';
+
+const ACCOUNT_LINKS = [
+  { to: '/me', label: '내 정보', icon: UserRound },
+  { to: '/me/products', label: '내 상품', icon: PackagePlus },
+  { to: '/me/likes', label: '관심 상품', icon: Heart },
+  { to: '/chat', label: '채팅', icon: MessageCircle },
+  { to: '/me/trades', label: '거래 내역', icon: ListChecks }
+];
+
+function decodeTokenPayload(token) {
+  if (!token || typeof globalThis.atob !== 'function') {
+    return null;
+  }
+
+  try {
+    const [, payload] = token.split('.');
+
+    if (!payload) {
+      return null;
+    }
+
+    const normalizedPayload = payload.replace(/-/g, '+').replace(/_/g, '/');
+    const paddedPayload = normalizedPayload.padEnd(Math.ceil(normalizedPayload.length / 4) * 4, '=');
+    const decodedPayload = globalThis.atob(paddedPayload);
+    const json = decodeURIComponent(
+      Array.from(decodedPayload, (character) => `%${character.charCodeAt(0).toString(16).padStart(2, '0')}`).join('')
+    );
+
+    return JSON.parse(json);
+  } catch {
+    return null;
+  }
+}
+
+function getAccountLabel(userToken) {
+  const payload = decodeTokenPayload(userToken);
+
+  return payload?.nickname || payload?.name || payload?.email || '내 계정';
+}
 
 function UserNavLink({ to, end, children }) {
   return (
@@ -16,7 +55,8 @@ function UserNavLink({ to, end, children }) {
 }
 
 export default function UserLayout() {
-  const { isUserAuthenticated, logoutUser } = useAuth();
+  const { isUserAuthenticated, logoutUser, userToken } = useAuth();
+  const accountLabel = getAccountLabel(userToken);
 
   return (
     <div className="user-shell">
@@ -51,15 +91,29 @@ export default function UserLayout() {
             </Nav>
             <Nav className="align-items-lg-center gap-lg-1">
               {isUserAuthenticated ? (
-                <>
-                  <UserNavLink to="/me">
-                    <UserRound size={17} aria-hidden="true" />
-                    <span>마이페이지</span>
-                  </UserNavLink>
-                  <Button type="button" variant="link" className="nav-link agora-nav-link" onClick={logoutUser}>
-                    로그아웃
-                  </Button>
-                </>
+                <NavDropdown
+                  id="account-dropdown"
+                  align="end"
+                  className="account-dropdown"
+                  title={
+                    <span className="account-dropdown-toggle">
+                      <UserRound size={18} aria-hidden="true" />
+                      <span className="account-label">{accountLabel}</span>
+                    </span>
+                  }
+                >
+                  {ACCOUNT_LINKS.map(({ to, label, icon: Icon }) => (
+                    <NavDropdown.Item key={to} as={NavLink} to={to}>
+                      <Icon size={16} aria-hidden="true" />
+                      <span>{label}</span>
+                    </NavDropdown.Item>
+                  ))}
+                  <NavDropdown.Divider />
+                  <NavDropdown.Item as="button" type="button" onClick={logoutUser}>
+                    <LogOut size={16} aria-hidden="true" />
+                    <span>로그아웃</span>
+                  </NavDropdown.Item>
+                </NavDropdown>
               ) : (
                 <>
                   <UserNavLink to="/login">로그인</UserNavLink>

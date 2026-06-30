@@ -12,10 +12,14 @@ import com.team7.agora.domain.admin.service.AdminRoleSupport;
 import com.team7.agora.global.auth.AdminPrincipal;
 import com.team7.agora.global.exception.BusinessException;
 import com.team7.agora.global.exception.ErrorCode;
+import com.team7.agora.global.time.AgoraClock;
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.IntStream;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
@@ -51,6 +55,7 @@ public class AdminCouponEventService {
         int validDays
     ) {
         validateAdminAuthority(admin);
+        validateCreateFields(type, name, totalQuantity, discountAmount, minOrderAmount, validDays);
         validateEventWindow(startAt, endAt);
 
         CouponEvent event = couponEventRepository.save(
@@ -76,13 +81,15 @@ public class AdminCouponEventService {
         return AdminCouponEventResponse.from(findEvent(eventId));
     }
 
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public CouponEventIssueResponse issueToUsers(AdminPrincipal admin, Long eventId, List<Long> userIds) {
         validateAdminAuthority(admin);
-        validateIssueTargetCount(userIds);
+        validateIssueTargets(userIds);
         CouponEvent event = findEvent(eventId);
         if (event.getType() != CouponEventType.ADMIN_INDIVIDUAL) {
             throw new BusinessException(ErrorCode.INVALID_REQUEST, "관리자 개별 발급 이벤트만 지정 발급할 수 있습니다.");
         }
+        event.validateIssueable(AgoraClock.now());
         return couponSlotService.assignSlots(eventId, userIds);
     }
 
@@ -99,15 +106,58 @@ public class AdminCouponEventService {
             .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "쿠폰 이벤트를 찾을 수 없습니다."));
     }
 
+    private void validateCreateFields(
+        CouponEventType type,
+        String name,
+        int totalQuantity,
+        int discountAmount,
+        int minOrderAmount,
+        int validDays
+    ) {
+        if (type == null) {
+            throw new BusinessException(ErrorCode.INVALID_REQUEST, "Coupon event type is required.");
+        }
+        if (name == null || name.isBlank()) {
+            throw new BusinessException(ErrorCode.INVALID_REQUEST, "Coupon event name is required.");
+        }
+        if (totalQuantity <= 0) {
+            throw new BusinessException(ErrorCode.INVALID_REQUEST, "Total quantity must be positive.");
+        }
+        if (discountAmount <= 0) {
+            throw new BusinessException(ErrorCode.INVALID_REQUEST, "Discount amount must be positive.");
+        }
+        if (minOrderAmount < 0) {
+            throw new BusinessException(ErrorCode.INVALID_REQUEST, "Minimum order amount cannot be negative.");
+        }
+        if (validDays <= 0) {
+            throw new BusinessException(ErrorCode.INVALID_REQUEST, "Valid days must be positive.");
+        }
+    }
+
     private void validateEventWindow(LocalDateTime startAt, LocalDateTime endAt) {
+        if (startAt == null || endAt == null) {
+            throw new BusinessException(ErrorCode.INVALID_REQUEST, "Coupon event start and end time are required.");
+        }
         if (!startAt.isBefore(endAt)) {
             throw new BusinessException(ErrorCode.INVALID_REQUEST, "이벤트 시작 시각은 종료 시각보다 빨라야 합니다.");
         }
     }
 
-    private void validateIssueTargetCount(List<Long> userIds) {
+    private void validateIssueTargets(List<Long> userIds) {
+        if (userIds == null || userIds.isEmpty()) {
+            throw new BusinessException(ErrorCode.INVALID_REQUEST, "At least one issue target user is required.");
+        }
         if (userIds.size() > MAX_ADMIN_ISSUE_USER_COUNT) {
             throw new BusinessException(ErrorCode.INVALID_REQUEST, "관리자 개별 발급은 한 번에 100명까지만 가능합니다.");
+        }
+        Set<Long> uniqueUserIds = new HashSet<>();
+        for (Long userId : userIds) {
+            if (userId == null) {
+                throw new BusinessException(ErrorCode.INVALID_REQUEST, "Issue target user id is required.");
+            }
+            if (!uniqueUserIds.add(userId)) {
+                throw new BusinessException(ErrorCode.INVALID_REQUEST, "Issue target user ids must be unique.");
+            }
         }
     }
 

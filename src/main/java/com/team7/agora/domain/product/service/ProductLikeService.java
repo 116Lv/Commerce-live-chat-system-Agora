@@ -4,15 +4,19 @@ package com.team7.agora.domain.product.service;
 import com.team7.agora.domain.product.dto.response.ProductLikeResponse;
 import com.team7.agora.domain.product.dto.response.ProductResponse;
 import com.team7.agora.domain.product.entity.Product;
+import com.team7.agora.domain.product.entity.ProductImage;
 import com.team7.agora.domain.product.entity.ProductLike;
 import com.team7.agora.domain.product.exception.ProductException;
+import com.team7.agora.domain.product.repository.ProductImageRepository;
 import com.team7.agora.domain.product.repository.ProductLikeRepository;
 import com.team7.agora.domain.product.repository.ProductRepository;
 import com.team7.agora.domain.user.entity.User;
 import com.team7.agora.domain.user.enums.UserStatus;
 import com.team7.agora.domain.user.repository.UserRepository;
 import com.team7.agora.global.exception.ErrorCode;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,6 +31,7 @@ public class ProductLikeService {
     private final ProductRepository productRepository;
     private final ProductLikeRepository productLikeRepository;
     private final UserRepository userRepository;
+    private final ProductImageRepository productImageRepository;
 
     /**
      * 필요한 의존성을 주입받아 컴포넌트를 생성한다.
@@ -37,11 +42,13 @@ public class ProductLikeService {
     public ProductLikeService(
         ProductRepository productRepository,
         ProductLikeRepository productLikeRepository,
-        UserRepository userRepository
+        UserRepository userRepository,
+        ProductImageRepository productImageRepository
     ) {
         this.productRepository = productRepository;
         this.productLikeRepository = productLikeRepository;
         this.userRepository = userRepository;
+        this.productImageRepository = productImageRepository;
     }
 
     /**
@@ -94,10 +101,24 @@ public class ProductLikeService {
      */
     public List<ProductResponse> getMyLikedProducts(Long userId) {
         User user = getUser(userId);
-        return productLikeRepository.findAllByUser(user).stream()
+        List<Product> products = productLikeRepository.findAllByUser(user).stream()
             .map(ProductLike::getProduct)
-            .map(ProductResponse::from)
             .toList();
+        Map<Long, String> primaryImageUrls = findPrimaryImageUrls(products.stream().map(Product::getId).toList());
+        return products.stream()
+            .map(product -> ProductResponse.from(product, true, primaryImageUrls.get(product.getId())))
+            .toList();
+    }
+
+    private Map<Long, String> findPrimaryImageUrls(List<Long> productIds) {
+        Map<Long, String> primaryImageUrls = new LinkedHashMap<>();
+        if (productIds.isEmpty()) {
+            return primaryImageUrls;
+        }
+        for (ProductImage image : productImageRepository.findAllByProductIdInOrderByProductIdAscSortOrderAsc(productIds)) {
+            primaryImageUrls.putIfAbsent(image.getProduct().getId(), image.getImageUrl());
+        }
+        return primaryImageUrls;
     }
 
     private Product getActiveProduct(Long productId) {
