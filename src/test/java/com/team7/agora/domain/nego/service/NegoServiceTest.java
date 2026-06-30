@@ -23,6 +23,7 @@ import com.team7.agora.domain.product.enums.ProductApprovalStatus;
 import com.team7.agora.domain.region.entity.Region;
 import com.team7.agora.domain.product.repository.ProductRepository;
 import com.team7.agora.domain.trade.entity.Trade;
+import com.team7.agora.domain.trade.enums.TradeStatus;
 import com.team7.agora.domain.trade.repository.TradeRepository;
 import com.team7.agora.domain.trade.service.TradeService;
 import com.team7.agora.domain.user.entity.User;
@@ -34,7 +35,6 @@ import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.Collections;
-import java.util.List;
 import java.util.Optional;
 import org.mockito.InOrder;
 import org.junit.jupiter.api.BeforeEach;
@@ -263,11 +263,7 @@ class NegoServiceTest {
         when(tradeRepository.findFirstByProductAndBuyerAndStatusInOrderByIdDesc(
             chatRoom.getProduct(),
             buyer,
-            List.of(
-                com.team7.agora.domain.trade.enums.TradeStatus.PAYMENT_PENDING,
-                com.team7.agora.domain.trade.enums.TradeStatus.PAID,
-                com.team7.agora.domain.trade.enums.TradeStatus.COMPLETED
-            )
+            TradeStatus.blockingStatuses()
         ))
             .thenReturn(Optional.of(trade));
 
@@ -293,11 +289,7 @@ class NegoServiceTest {
         when(tradeRepository.findFirstByProductAndBuyerAndStatusInOrderByIdDesc(
             chatRoom.getProduct(),
             buyer,
-            List.of(
-                com.team7.agora.domain.trade.enums.TradeStatus.PAYMENT_PENDING,
-                com.team7.agora.domain.trade.enums.TradeStatus.PAID,
-                com.team7.agora.domain.trade.enums.TradeStatus.COMPLETED
-            )
+            TradeStatus.blockingStatuses()
         )).thenReturn(Optional.of(trade));
 
         NegoOfferResponse response = negoService.getCurrentOffer(2L, 100L);
@@ -307,11 +299,7 @@ class NegoServiceTest {
         verify(tradeRepository).findFirstByProductAndBuyerAndStatusInOrderByIdDesc(
             chatRoom.getProduct(),
             buyer,
-            List.of(
-                com.team7.agora.domain.trade.enums.TradeStatus.PAYMENT_PENDING,
-                com.team7.agora.domain.trade.enums.TradeStatus.PAID,
-                com.team7.agora.domain.trade.enums.TradeStatus.COMPLETED
-            )
+            TradeStatus.blockingStatuses()
         );
     }
 
@@ -328,7 +316,7 @@ class NegoServiceTest {
         when(tradeRepository.findFirstByProductAndBuyerAndStatusOrderByIdDesc(
             chatRoom.getProduct(),
             buyer,
-            com.team7.agora.domain.trade.enums.TradeStatus.PAYMENT_PENDING
+            TradeStatus.PAYMENT_PENDING
         )).thenReturn(Optional.of(trade));
 
         NegoOfferResponse response = negoService.cancelOffer(2L, 1000L);
@@ -341,7 +329,7 @@ class NegoServiceTest {
         verify(tradeRepository).findFirstByProductAndBuyerAndStatusOrderByIdDesc(
             chatRoom.getProduct(),
             buyer,
-            com.team7.agora.domain.trade.enums.TradeStatus.PAYMENT_PENDING
+            TradeStatus.PAYMENT_PENDING
         );
     }
 
