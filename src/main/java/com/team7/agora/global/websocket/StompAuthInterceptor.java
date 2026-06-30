@@ -5,6 +5,7 @@ import com.team7.agora.global.auth.AccountType;
 import com.team7.agora.global.auth.AuthUser;
 import com.team7.agora.global.auth.JwtClaims;
 import com.team7.agora.global.auth.JwtProvider;
+import java.util.Map;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.simp.stomp.StompCommand;
@@ -20,6 +21,7 @@ import org.springframework.stereotype.Component;
 public class StompAuthInterceptor implements ChannelInterceptor {
 
     private static final String AUTHORIZATION_HEADER = "Authorization";
+    private static final String SESSION_PRINCIPAL_KEY = "STOMP_PRINCIPAL";
 
     private final JwtProvider jwtProvider;
 
@@ -40,22 +42,39 @@ public class StompAuthInterceptor implements ChannelInterceptor {
     @Override
     public Message<?> preSend(Message<?> message, MessageChannel channel) {
         StompHeaderAccessor accessor = StompHeaderAccessor.wrap(message);
-        if (accessor.getCommand() != StompCommand.CONNECT) {
-            return message;
+
+        if (StompCommand.CONNECT.equals(accessor.getCommand())) {
+            String authorization = accessor.getFirstNativeHeader(AUTHORIZATION_HEADER);
+            JwtClaims claims = jwtProvider.parse(jwtProvider.substringBearer(authorization));
+            if (claims.accountType() != AccountType.USER) {
+                return null;
+            }
+            AuthUser authUser = new AuthUser(
+                claims.userId(),
+                claims.email(),
+                claims.role(),
+                claims.nickname()
+            );
+            StompPrincipal principal = new StompPrincipal(authUser);
+            accessor.setUser(principal);
+            // SEND 등 이후 프레임에서 꺼낼 수 있도록 세션 속성에 저장한다.
+            Map<String, Object> attrs = accessor.getSessionAttributes();
+            if (attrs != null) {
+                attrs.put(SESSION_PRINCIPAL_KEY, principal);
+            }
+            return MessageBuilder.createMessage(message.getPayload(), accessor.getMessageHeaders());
         }
 
-        String authorization = accessor.getFirstNativeHeader(AUTHORIZATION_HEADER);
-        JwtClaims claims = jwtProvider.parse(jwtProvider.substringBearer(authorization));
-        if (claims.accountType() != AccountType.USER) {
-            return null;
+        // CONNECT 이외 프레임(SEND, SUBSCRIBE 등)은 세션 속성에서 user를 복원한다.
+        Map<String, Object> attrs = accessor.getSessionAttributes();
+        if (attrs != null) {
+            StompPrincipal principal = (StompPrincipal) attrs.get(SESSION_PRINCIPAL_KEY);
+            if (principal != null) {
+                accessor.setUser(principal);
+                return MessageBuilder.createMessage(message.getPayload(), accessor.getMessageHeaders());
+            }
         }
-        AuthUser authUser = new AuthUser(
-            claims.userId(),
-            claims.email(),
-            claims.role(),
-            claims.nickname()
-        );
-        accessor.setUser(new StompPrincipal(authUser));
-        return MessageBuilder.createMessage(message.getPayload(), accessor.getMessageHeaders());
+
+        return message;
     }
 }
