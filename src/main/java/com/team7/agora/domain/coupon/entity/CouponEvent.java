@@ -69,7 +69,8 @@ public class CouponEvent extends BaseTimeEntity {
         LocalDateTime endAt,
         int discountAmount,
         int minOrderAmount,
-        int validDays
+        int validDays,
+        CouponEventStatus status
     ) {
         markCreatedNow();
         this.type = type;
@@ -81,7 +82,7 @@ public class CouponEvent extends BaseTimeEntity {
         this.discountAmount = discountAmount;
         this.minOrderAmount = minOrderAmount;
         this.validDays = validDays;
-        this.status = CouponEventStatus.ACTIVE;
+        this.status = status;
     }
 
     public static CouponEvent create(
@@ -94,7 +95,40 @@ public class CouponEvent extends BaseTimeEntity {
         int minOrderAmount,
         int validDays
     ) {
-        return new CouponEvent(type, name, totalQuantity, startAt, endAt, discountAmount, minOrderAmount, validDays);
+        return new CouponEvent(
+            type,
+            name,
+            totalQuantity,
+            startAt,
+            endAt,
+            discountAmount,
+            minOrderAmount,
+            validDays,
+            CouponEventStatus.ACTIVE
+        );
+    }
+
+    public static CouponEvent createPending(
+        CouponEventType type,
+        String name,
+        int totalQuantity,
+        LocalDateTime startAt,
+        LocalDateTime endAt,
+        int discountAmount,
+        int minOrderAmount,
+        int validDays
+    ) {
+        return new CouponEvent(
+            type,
+            name,
+            totalQuantity,
+            startAt,
+            endAt,
+            discountAmount,
+            minOrderAmount,
+            validDays,
+            CouponEventStatus.PENDING_APPROVAL
+        );
     }
 
     public void issue() {
@@ -118,7 +152,42 @@ public class CouponEvent extends BaseTimeEntity {
         return type != CouponEventType.ADMIN_INDIVIDUAL;
     }
 
+    public void approve() {
+        if (status != CouponEventStatus.PENDING_APPROVAL) {
+            throw invalidStatusTransition("approve");
+        }
+        this.status = CouponEventStatus.ACTIVE;
+    }
+
+    public void reject() {
+        if (status != CouponEventStatus.PENDING_APPROVAL) {
+            throw invalidStatusTransition("reject");
+        }
+        this.status = CouponEventStatus.REJECTED;
+    }
+
+    public void requestStop() {
+        if (status != CouponEventStatus.ACTIVE) {
+            throw invalidStatusTransition("request stop");
+        }
+        this.status = CouponEventStatus.STOP_REQUESTED;
+    }
+
+    public void stop() {
+        if (status != CouponEventStatus.STOP_REQUESTED) {
+            throw invalidStatusTransition("stop");
+        }
+        this.status = CouponEventStatus.STOPPED;
+    }
+
     public void end() {
+        if (status != CouponEventStatus.ACTIVE) {
+            throw invalidStatusTransition("end");
+        }
         this.status = CouponEventStatus.ENDED;
+    }
+
+    private BusinessException invalidStatusTransition(String action) {
+        return new BusinessException(ErrorCode.CONFLICT, "Cannot " + action + " coupon event from " + status + ".");
     }
 }

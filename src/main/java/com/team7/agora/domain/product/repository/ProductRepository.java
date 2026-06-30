@@ -66,6 +66,23 @@ public interface ProductRepository extends JpaRepository<Product, Long>, Product
     Page<Product> findAllByApprovalStatus(ProductApprovalStatus approvalStatus, Pageable pageable);
 
     @EntityGraph(attributePaths = {"seller", "region"})
+    @Query("""
+        select p from Product p
+        join p.seller seller
+        where (:keyword is null or lower(p.title) like lower(concat('%', :keyword, '%')))
+          and (:sellerKeyword is null or lower(seller.nickname) like lower(concat('%', :sellerKeyword, '%')))
+          and (:status is null or p.status = :status)
+          and (:approvalStatus is null or p.approvalStatus = :approvalStatus)
+        """)
+    Page<Product> findAdminProducts(
+        @Param("keyword") String keyword,
+        @Param("sellerKeyword") String sellerKeyword,
+        @Param("status") ProductStatus status,
+        @Param("approvalStatus") ProductApprovalStatus approvalStatus,
+        Pageable pageable
+    );
+
+    @EntityGraph(attributePaths = {"seller", "region"})
     Page<Product> findAllByStatusNotIn(List<ProductStatus> statuses, Pageable pageable);
 
     @EntityGraph(attributePaths = {"seller", "region"})

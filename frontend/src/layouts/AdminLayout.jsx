@@ -18,18 +18,21 @@ import { useAuth } from '../auth/AuthContext.jsx';
 import { formatAdminRole } from '../pages/adminPageUtils.js';
 
 const adminLinks = [
-  { to: '/admin', label: '대시보드', icon: LayoutDashboard, end: true, allowedRoles: ['ROOT_ADMIN', 'USER_ADMIN', 'PRODUCT_ADMIN', 'SETTLEMENT_ADMIN'] },
-  { to: '/admin/products', label: '상품 관리', icon: ShoppingBag, allowedRoles: ['ROOT_ADMIN', 'PRODUCT_ADMIN'] },
-  { to: '/admin/users', label: '회원 관리', icon: UsersRound, allowedRoles: ['ROOT_ADMIN', 'USER_ADMIN'] },
-  { to: '/admin/reports', label: '신고 관리', icon: Flag, allowedRoles: ['ROOT_ADMIN', 'USER_ADMIN', 'PRODUCT_ADMIN'] },
-  { to: '/admin/payments', label: '결제 관리', icon: CreditCard, allowedRoles: ['ROOT_ADMIN', 'SETTLEMENT_ADMIN'] },
-  { to: '/admin/coupons', label: '쿠폰 관리', icon: Tags, allowedRoles: ['ROOT_ADMIN'] },
-  { to: '/admin/accounts', label: '관리자 계정', icon: UserCog, allowedRoles: ['ROOT_ADMIN'] },
-  { to: '/admin/approval-requests', label: 'Approval management', icon: ClipboardCheck, allowedRoles: ['ROOT_ADMIN'] },
-  { to: '/admin/my-approval-requests', label: 'My approval requests', icon: ClipboardCheck, allowedRoles: ['ROOT_ADMIN', 'USER_ADMIN', 'PRODUCT_ADMIN', 'SETTLEMENT_ADMIN'] }
+  { to: '/admin', label: '대시보드', icon: LayoutDashboard, end: true },
+  { to: '/admin/products', label: '상품 관리', icon: ShoppingBag, requiredPermissions: ['PRODUCT_MANAGE'] },
+  { to: '/admin/users', label: '회원 관리', icon: UsersRound, requiredPermissions: ['USER_MANAGE'] },
+  { to: '/admin/reports', label: '신고 관리', icon: Flag, requiredPermissions: ['REPORT_MANAGE'] },
+  { to: '/admin/payments', label: '결제 관리', icon: CreditCard, requiredPermissions: ['PAYMENT_MANAGE'] },
+  { to: '/admin/coupons', label: '쿠폰 관리', icon: Tags, requiredPermissions: ['COUPON_MANAGE'] },
+  { to: '/admin/accounts', label: '관리자 계정', icon: UserCog, requiredPermissions: ['ADMIN_ACCOUNT_MANAGE'] },
+  { to: '/admin/approval-requests', label: '승인 관리', icon: ClipboardCheck, requiredPermissions: ['APPROVAL_MANAGE'] },
+  { to: '/admin/my-approval-requests', label: '내 승인 요청', icon: ClipboardCheck }
 ];
 
-const canSeeLink = (role, link) => link.allowedRoles.includes(String(role || '').toUpperCase());
+const hasPermission = (permissions, permission) => permissions.includes(permission);
+const canSeeLink = (permissions, link) => (
+  !link.requiredPermissions || link.requiredPermissions.some((permission) => hasPermission(permissions, permission))
+);
 
 export default function AdminLayout() {
   const navigate = useNavigate();
@@ -57,7 +60,9 @@ export default function AdminLayout() {
   }, []);
 
   const role = admin?.role || '';
-  const visibleLinks = adminLinks.filter((link) => canSeeLink(role, link));
+  const permissions = Array.isArray(admin?.permissions) ? admin.permissions : [];
+  const visibleLinks = adminLinks.filter((link) => canSeeLink(permissions, link));
+  const canManageAccounts = hasPermission(permissions, 'ADMIN_ACCOUNT_MANAGE');
   const avatarText = String(admin?.nickname || admin?.email || 'A').slice(0, 1).toUpperCase();
 
   const handleLogout = async () => {
@@ -102,12 +107,12 @@ export default function AdminLayout() {
             }
           >
             <NavDropdown.Header>{admin?.nickname || admin?.email || '관리자'}</NavDropdown.Header>
-            {String(role).toUpperCase() === 'ROOT_ADMIN' ? (
+            {canManageAccounts ? (
               <NavDropdown.Item as={NavLink} to="/admin/accounts">
                 관리자 계정
               </NavDropdown.Item>
             ) : null}
-            {String(role).toUpperCase() === 'ROOT_ADMIN' ? <NavDropdown.Divider /> : null}
+            {canManageAccounts ? <NavDropdown.Divider /> : null}
             <NavDropdown.Item onClick={handleLogout}>
               <LogOut size={16} aria-hidden="true" />
               로그아웃
