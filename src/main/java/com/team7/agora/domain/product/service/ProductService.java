@@ -153,8 +153,9 @@ public class ProductService {
             throw new BusinessException(ErrorCode.NOT_FOUND, "상품을 찾을 수 없습니다.");
         }
         boolean liked = viewerId != null && productLikeRepository.existsByProductIdAndUserId(productId, viewerId);
-        String primaryImageUrl = findPrimaryImageUrls(List.of(productId)).get(productId);
-        return ProductResponse.from(product, liked, primaryImageUrl);
+        List<String> imageUrls = findImageUrls(productId);
+        String primaryImageUrl = imageUrls.isEmpty() ? null : imageUrls.get(0);
+        return ProductResponse.from(product, liked, primaryImageUrl, imageUrls);
     }
 
     /**
@@ -226,6 +227,12 @@ public class ProductService {
             primaryImageUrls.putIfAbsent(image.getProduct().getId(), image.getImageUrl());
         }
         return primaryImageUrls;
+    }
+
+    private List<String> findImageUrls(Long productId) {
+        return productImageRepository.findAllByProductIdInOrderByProductIdAscSortOrderAsc(List.of(productId)).stream()
+            .map(ProductImage::getImageUrl)
+            .toList();
     }
 
     private List<Long> resolveRegionIds(Long viewerId, Long regionId) {

@@ -99,6 +99,14 @@ class ReviewServiceTest {
     }
 
     @Test
+    void createReviewRejectsSellerReviewingOwnSoldProduct() {
+        when(tradeRepository.findById(100L)).thenReturn(Optional.of(trade));
+
+        assertThatThrownBy(() -> reviewService.create(1L, 100L, 5, "seller review"))
+            .isInstanceOf(BusinessException.class);
+    }
+
+    @Test
     void getTradeReviewsReturnsReviewsForParticipant() {
         Review review = Review.create(trade, buyer, seller, 5, "친절해요");
         assignId(review, 1000L);

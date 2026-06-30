@@ -17,6 +17,7 @@ import com.team7.agora.domain.user.entity.User;
 import com.team7.agora.global.exception.BusinessException;
 import com.team7.agora.global.storage.ImageStorageClient;
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -72,6 +73,31 @@ class ProductImageServiceTest {
         assertThat(response.imageId()).isEqualTo(100L);
         assertThat(response.imageUrl()).isEqualTo("/uploads/products/abc.jpg");
         assertThat(response.sortOrder()).isEqualTo(0);
+    }
+
+    @Test
+    void uploadAllSavesImagesInRequestOrder() {
+        setUpFixtures();
+        MultipartFile first = new MockMultipartFile("images", "first.jpg", "image/jpeg", "first".getBytes());
+        MultipartFile second = new MockMultipartFile("images", "second.jpg", "image/jpeg", "second".getBytes());
+
+        when(productRepository.findByIdAndDeletedAtIsNull(10L)).thenReturn(Optional.of(product));
+        when(productImageRepository.countByProduct(product)).thenReturn(0);
+        when(imageStorageClient.store("products", first)).thenReturn("/uploads/products/first.jpg");
+        when(imageStorageClient.store("products", second)).thenReturn("/uploads/products/second.jpg");
+        when(productImageRepository.save(any(ProductImage.class))).thenAnswer(invocation -> {
+            ProductImage image = invocation.getArgument(0);
+            assignId(image, image.getSortOrder() == 0 ? 100L : 101L);
+            return image;
+        });
+
+        List<ProductImageResponse> responses = service.uploadAll(1L, 10L, List.of(first, second));
+
+        assertThat(responses).hasSize(2);
+        assertThat(responses.get(0).imageUrl()).isEqualTo("/uploads/products/first.jpg");
+        assertThat(responses.get(0).sortOrder()).isEqualTo(0);
+        assertThat(responses.get(1).imageUrl()).isEqualTo("/uploads/products/second.jpg");
+        assertThat(responses.get(1).sortOrder()).isEqualTo(1);
     }
 
     @Test

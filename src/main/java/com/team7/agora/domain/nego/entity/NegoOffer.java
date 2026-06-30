@@ -177,7 +177,9 @@ public class NegoOffer extends BaseTimeEntity {
      * 도메인 객체를 취소 상태로 변경한다.
      */
     public void cancel() {
-        validatePending();
+        if (!ACTIVE_STATUSES.contains(status) && status != NegoOfferStatus.ACCEPTED) {
+            throw new IllegalStateException("?묐떟 媛?ν븳 媛寃??쒖븞 ?곹깭媛 ?꾨떃?덈떎.");
+        }
         this.status = NegoOfferStatus.CANCELLED;
         this.respondedAt = AgoraClock.now();
     }

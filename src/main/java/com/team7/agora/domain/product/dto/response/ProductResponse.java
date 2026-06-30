@@ -4,6 +4,7 @@ import com.team7.agora.domain.product.entity.Product;
 import com.team7.agora.domain.product.enums.ProductApprovalStatus;
 import com.team7.agora.domain.product.enums.ProductStatus;
 import java.math.BigDecimal;
+import java.util.List;
 
 /**
  * 상품 응답 본문을 표현하는 DTO이다.
@@ -34,8 +35,13 @@ public record ProductResponse(
     String thumbnailUrl,
     String statusLabel,
     String categoryLabel,
-    ProductApprovalStatus approvalStatus
+    ProductApprovalStatus approvalStatus,
+    List<String> imageUrls
 ) {
+
+    public ProductResponse {
+        imageUrls = imageUrls == null ? List.of() : List.copyOf(imageUrls);
+    }
 
     public ProductResponse(
         Long productId,
@@ -65,7 +71,8 @@ public record ProductResponse(
             null,
             statusLabel(status),
             category,
-            null
+            null,
+            List.of()
         );
     }
 
@@ -83,6 +90,10 @@ public record ProductResponse(
     }
 
     public static ProductResponse from(Product product, boolean liked, String primaryImageUrl) {
+        return from(product, liked, primaryImageUrl, List.of());
+    }
+
+    public static ProductResponse from(Product product, boolean liked, String primaryImageUrl, List<String> imageUrls) {
         return new ProductResponse(
             product.getId(),
             product.getTitle(),
@@ -103,7 +114,8 @@ public record ProductResponse(
             primaryImageUrl,
             statusLabel(product.getStatus()),
             product.getCategory(),
-            product.getApprovalStatus()
+            product.getApprovalStatus(),
+            imageUrls
         );
     }
 

@@ -12,7 +12,8 @@ import {
   unlikeProduct,
   updateProduct,
   updateProductStatus,
-  uploadProductImage
+  uploadProductImage,
+  uploadProductImages
 } from './productApi.js';
 import { getCouponEvents, getMyCoupons, issueCoupon } from './couponApi.js';
 import { getRegions, updatePreferredRegions } from './regionApi.js';
@@ -82,7 +83,7 @@ test('product API maps marketplace endpoints', async () => {
   );
 });
 
-test('product image upload sends a multipart image field', async () => {
+test('product image upload helper sends one multipart images field', async () => {
   const { requests, config } = captureRequest();
   const image = new Blob(['image-bytes'], { type: 'image/png' });
 
@@ -91,8 +92,24 @@ test('product image upload sends a multipart image field', async () => {
   assert.equal(requests[0].method, 'post');
   assert.equal(requests[0].url, '/api/products/7/images');
   assert.notEqual(requests[0].headers?.['Content-Type'], 'multipart/form-data');
-  assert.equal(requests[0].data.get('image').size, image.size);
-  assert.equal(requests[0].data.get('image').type, image.type);
+  assert.equal(requests[0].data.get('images').size, image.size);
+  assert.equal(requests[0].data.get('images').type, image.type);
+});
+
+test('product images upload sends multiple multipart images fields', async () => {
+  const { requests, config } = captureRequest();
+  const first = new Blob(['first-image'], { type: 'image/png' });
+  const second = new Blob(['second-image'], { type: 'image/jpeg' });
+
+  await uploadProductImages(7, [first, second], config);
+
+  assert.equal(requests[0].method, 'post');
+  assert.equal(requests[0].url, '/api/products/7/images');
+  assert.notEqual(requests[0].headers?.['Content-Type'], 'multipart/form-data');
+  assert.deepEqual(
+    requests[0].data.getAll('images').map((image) => image.type),
+    ['image/png', 'image/jpeg']
+  );
 });
 
 test('coupon and region APIs map user endpoints', async () => {
