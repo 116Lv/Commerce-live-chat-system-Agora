@@ -25,7 +25,11 @@ public interface TradeRepository extends JpaRepository<Trade, Long> {
 
     boolean existsByProduct(Product product);
 
+    boolean existsByProductAndStatusNot(Product product, TradeStatus status);
+
     Optional<Trade> findByProduct(Product product);
+
+    Optional<Trade> findByProductAndBuyer(Product product, User buyer);
 
     Optional<Trade> findFirstByProductAndBuyerAndStatusOrderByIdDesc(Product product, User buyer, TradeStatus status);
 
