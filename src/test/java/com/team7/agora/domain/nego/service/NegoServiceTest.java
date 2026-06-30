@@ -34,6 +34,7 @@ import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 import org.mockito.InOrder;
 import org.junit.jupiter.api.BeforeEach;
@@ -259,7 +260,15 @@ class NegoServiceTest {
             .thenReturn(Optional.of(chatRoom));
         when(negoOfferRepository.findFirstByChatRoomIdAndStatusInOrderByCreatedAtDesc(100L, NegoService.CURRENT_OFFER_STATUSES))
             .thenReturn(Optional.of(offer));
-        when(tradeRepository.findByProductAndBuyer(chatRoom.getProduct(), buyer))
+        when(tradeRepository.findFirstByProductAndBuyerAndStatusInOrderByIdDesc(
+            chatRoom.getProduct(),
+            buyer,
+            List.of(
+                com.team7.agora.domain.trade.enums.TradeStatus.PAYMENT_PENDING,
+                com.team7.agora.domain.trade.enums.TradeStatus.PAID,
+                com.team7.agora.domain.trade.enums.TradeStatus.COMPLETED
+            )
+        ))
             .thenReturn(Optional.of(trade));
 
         NegoOfferResponse response = negoService.getCurrentOffer(2L, 100L);
@@ -268,6 +277,42 @@ class NegoServiceTest {
         assertThat(response.status()).isEqualTo("ACCEPTED");
         assertThat(response.tradeId()).isEqualTo(2000L);
         assertThat(response.tradeStatus()).isEqualTo("PAYMENT_PENDING");
+    }
+
+    @Test
+    void getCurrentOfferUsesLatestBlockingTradeWhenResolvingAcceptedOfferTrade() {
+        NegoOffer offer = NegoOffer.create(chatRoom, buyer, BigDecimal.valueOf(45000));
+        assignId(offer, 1000L);
+        offer.accept();
+        Trade trade = Trade.start(chatRoom.getProduct(), seller, buyer, BigDecimal.valueOf(45000));
+        assignId(trade, 2001L);
+        when(chatRoomRepository.findByIdAndStatus(100L, ChatRoomStatus.ACTIVE))
+            .thenReturn(Optional.of(chatRoom));
+        when(negoOfferRepository.findFirstByChatRoomIdAndStatusInOrderByCreatedAtDesc(100L, NegoService.CURRENT_OFFER_STATUSES))
+            .thenReturn(Optional.of(offer));
+        when(tradeRepository.findFirstByProductAndBuyerAndStatusInOrderByIdDesc(
+            chatRoom.getProduct(),
+            buyer,
+            List.of(
+                com.team7.agora.domain.trade.enums.TradeStatus.PAYMENT_PENDING,
+                com.team7.agora.domain.trade.enums.TradeStatus.PAID,
+                com.team7.agora.domain.trade.enums.TradeStatus.COMPLETED
+            )
+        )).thenReturn(Optional.of(trade));
+
+        NegoOfferResponse response = negoService.getCurrentOffer(2L, 100L);
+
+        assertThat(response.tradeId()).isEqualTo(2001L);
+        assertThat(response.tradeStatus()).isEqualTo("PAYMENT_PENDING");
+        verify(tradeRepository).findFirstByProductAndBuyerAndStatusInOrderByIdDesc(
+            chatRoom.getProduct(),
+            buyer,
+            List.of(
+                com.team7.agora.domain.trade.enums.TradeStatus.PAYMENT_PENDING,
+                com.team7.agora.domain.trade.enums.TradeStatus.PAID,
+                com.team7.agora.domain.trade.enums.TradeStatus.COMPLETED
+            )
+        );
     }
 
     @Test
@@ -280,7 +325,11 @@ class NegoServiceTest {
         assignId(trade, 2000L);
 
         when(negoOfferRepository.findByIdForUpdate(1000L)).thenReturn(Optional.of(offer));
-        when(tradeRepository.findByProductAndBuyer(chatRoom.getProduct(), buyer)).thenReturn(Optional.of(trade));
+        when(tradeRepository.findFirstByProductAndBuyerAndStatusOrderByIdDesc(
+            chatRoom.getProduct(),
+            buyer,
+            com.team7.agora.domain.trade.enums.TradeStatus.PAYMENT_PENDING
+        )).thenReturn(Optional.of(trade));
 
         NegoOfferResponse response = negoService.cancelOffer(2L, 1000L);
 
@@ -289,6 +338,11 @@ class NegoServiceTest {
         assertThat(response.tradeStatus()).isEqualTo("CANCELLED");
         assertThat(trade.getStatus()).isEqualTo(com.team7.agora.domain.trade.enums.TradeStatus.CANCELLED);
         assertThat(chatRoom.getProduct().getStatus()).isEqualTo(com.team7.agora.domain.product.enums.ProductStatus.SELLING);
+        verify(tradeRepository).findFirstByProductAndBuyerAndStatusOrderByIdDesc(
+            chatRoom.getProduct(),
+            buyer,
+            com.team7.agora.domain.trade.enums.TradeStatus.PAYMENT_PENDING
+        );
     }
 
     @Test

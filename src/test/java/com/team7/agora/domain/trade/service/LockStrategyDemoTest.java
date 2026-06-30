@@ -172,7 +172,10 @@ class LockStrategyDemoTest {
     private void naiveStartTrade(Long productId, Long offerId) {
         Product product = productRepository.findById(productId).orElseThrow(); // 락 없는 조회
         if (product.getStatus() != ProductStatus.SELLING
-            || tradeRepository.existsByProductAndStatusNot(product, TradeStatus.CANCELLED)) {
+            || tradeRepository.existsByProductAndStatusIn(
+                product,
+                List.of(TradeStatus.PAYMENT_PENDING, TradeStatus.PAID, TradeStatus.COMPLETED)
+            )) {
             return;
         }
         sleepQuietly(20);
