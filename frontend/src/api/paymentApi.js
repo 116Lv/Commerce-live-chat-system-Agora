@@ -10,3 +10,118 @@ export const refundPayment = (paymentId, payload, config = {}) =>
   apiClient.post(`/api/payments/${paymentId}/refund`, payload, config);
 
 export const getRefundStatus = (paymentId, config = {}) => apiClient.get(`/api/payments/${paymentId}/refund`, config);
+
+const getBrowserWindow = () => (typeof window === 'undefined' ? null : window);
+
+const getPaymentName = (payment) =>
+  payment.orderName || payment.productName || payment.itemName || `Order ${payment.orderId || payment.paymentId}`;
+
+const getPaymentKeyFromApproval = (approval = {}) =>
+  approval.paymentKey || approval.transactionId || approval.txId || approval.imp_uid || approval.merchant_uid;
+
+const getPortOneStoreId = (payment) => payment.storeId || import.meta.env?.VITE_PORTONE_STORE_ID;
+
+const getPortOneChannelKey = (payment) => payment.channelKey || import.meta.env?.VITE_PORTONE_CHANNEL_KEY;
+
+const getLocalMode = (payment) => {
+  const mode = String(payment?.paymentMode || payment?.pgMode || payment?.mode || '').toUpperCase();
+
+  return mode === 'LOCAL' || mode === 'TEST' || payment?.localPayment === true;
+};
+
+const buildResult = (payment, approval, local = false) => {
+  const paymentKey = getPaymentKeyFromApproval(approval);
+
+  if (!paymentKey) {
+    throw new Error('PG 승인 정보를 확인할 수 없습니다.');
+  }
+
+  return {
+    paymentId: payment.paymentId,
+    paymentKey,
+    local
+  };
+};
+
+const requestPortOnePayment = async (payment, win, redirectUrl) => {
+  const storeId = getPortOneStoreId(payment);
+  const channelKey = getPortOneChannelKey(payment);
+
+  if (!storeId || !channelKey) {
+    throw new Error('PortOne 결제 설정을 확인할 수 없습니다.');
+  }
+
+  const approval = await win.PortOne.requestPayment({
+    storeId,
+    channelKey,
+    paymentId: payment.orderId || String(payment.paymentId),
+    orderName: getPaymentName(payment),
+    totalAmount: Number(payment.amount || 0),
+    currency: payment.currency || 'CURRENCY_KRW',
+    payMethod: payment.payMethod || 'CARD',
+    customer: payment.customer,
+    redirectUrl
+  });
+
+  if (approval?.code || approval?.error_code) {
+    throw new Error(approval.message || approval.error_msg || 'PG 결제 승인이 취소되었습니다.');
+  }
+
+  return buildResult(payment, approval);
+};
+
+const requestImpPayment = (payment, win, redirectUrl) =>
+  new Promise((resolve, reject) => {
+    if (payment.merchantCode || payment.impMerchantCode) {
+      win.IMP.init(payment.merchantCode || payment.impMerchantCode);
+    }
+
+    win.IMP.request_pay(
+      {
+        pg: payment.pg,
+        pay_method: payment.payMethod || 'card',
+        merchant_uid: payment.orderId || String(payment.paymentId),
+        name: getPaymentName(payment),
+        amount: Number(payment.amount || 0),
+        buyer_email: payment.buyerEmail,
+        buyer_name: payment.buyerName,
+        buyer_tel: payment.buyerTel,
+        m_redirect_url: redirectUrl
+      },
+      (approval) => {
+        if (!approval?.success) {
+          reject(new Error(approval?.error_msg || 'PG 결제 승인이 취소되었습니다.'));
+          return;
+        }
+
+        try {
+          resolve(buildResult(payment, approval));
+        } catch (err) {
+          reject(err);
+        }
+      }
+    );
+  });
+
+export const requestPaymentApproval = async (payment, options = {}) => {
+  if (!payment?.paymentId || !payment?.orderId) {
+    throw new Error('결제 주문 정보를 확인할 수 없습니다.');
+  }
+
+  const win = options.window || getBrowserWindow();
+  const redirectUrl = options.redirectUrl;
+
+  if (getLocalMode(payment)) {
+    return buildResult(payment, { paymentKey: `local-${payment.orderId}` }, true);
+  }
+
+  if (win?.PortOne?.requestPayment) {
+    return requestPortOnePayment(payment, win, redirectUrl);
+  }
+
+  if (win?.IMP?.request_pay) {
+    return requestImpPayment(payment, win, redirectUrl);
+  }
+
+  throw new Error('사용 가능한 PG 결제 SDK를 찾을 수 없습니다.');
+};

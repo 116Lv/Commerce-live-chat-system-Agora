@@ -9,6 +9,8 @@ import com.team7.agora.domain.product.repository.ProductImageRepository;
 import com.team7.agora.domain.product.repository.ProductRepository;
 import com.team7.agora.global.exception.ErrorCode;
 import com.team7.agora.global.storage.ImageStorageClient;
+import java.util.ArrayList;
+import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -61,5 +63,26 @@ public class ProductImageService {
         ProductImage productImage = productImageRepository.save(ProductImage.create(product, imageUrl, sortOrder));
 
         return ProductImageResponse.from(productImage);
+    }
+
+    @Transactional
+    public List<ProductImageResponse> uploadAll(Long sellerId, Long productId, List<MultipartFile> files) {
+        Product product = productRepository.findByIdAndDeletedAtIsNull(productId)
+            .orElseThrow(() -> new ProductException(ErrorCode.NOT_FOUND, "상품을 찾을 수 없습니다."));
+
+        if (!product.isSeller(sellerId)) {
+            throw new ProductException(ErrorCode.FORBIDDEN, "상품 판매자만 이미지를 업로드할 수 있습니다.");
+        }
+
+        int sortOrder = productImageRepository.countByProduct(product);
+        List<ProductImageResponse> responses = new ArrayList<>();
+
+        for (MultipartFile file : files) {
+            String imageUrl = imageStorageClient.store("products", file);
+            ProductImage productImage = productImageRepository.save(ProductImage.create(product, imageUrl, sortOrder++));
+            responses.add(ProductImageResponse.from(productImage));
+        }
+
+        return responses;
     }
 }

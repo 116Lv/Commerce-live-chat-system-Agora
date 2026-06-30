@@ -62,6 +62,9 @@ class NegoServiceTest {
     private TradeRepository tradeRepository;
 
     @Mock
+    private com.team7.agora.domain.payment.repository.PaymentRepository paymentRepository;
+
+    @Mock
     private ChatSystemMessageService chatSystemMessageService;
 
     private NegoService negoService;
@@ -78,6 +81,7 @@ class NegoServiceTest {
             productRepository,
             tradeService,
             tradeRepository,
+            paymentRepository,
             chatSystemMessageService
         );
         seller = User.signup("seller@test.com", "password", "판매자", "01011112222");
@@ -263,6 +267,28 @@ class NegoServiceTest {
         assertThat(response.offerId()).isEqualTo(1000L);
         assertThat(response.status()).isEqualTo("ACCEPTED");
         assertThat(response.tradeId()).isEqualTo(2000L);
+        assertThat(response.tradeStatus()).isEqualTo("PAYMENT_PENDING");
+    }
+
+    @Test
+    void cancelAcceptedOfferCancelsPaymentPendingTradeAndReopensProduct() {
+        NegoOffer offer = NegoOffer.create(chatRoom, buyer, BigDecimal.valueOf(45000));
+        assignId(offer, 1000L);
+        offer.accept();
+        chatRoom.getProduct().markReserved();
+        Trade trade = Trade.start(chatRoom.getProduct(), seller, buyer, BigDecimal.valueOf(45000));
+        assignId(trade, 2000L);
+
+        when(negoOfferRepository.findByIdForUpdate(1000L)).thenReturn(Optional.of(offer));
+        when(tradeRepository.findByProductAndBuyer(chatRoom.getProduct(), buyer)).thenReturn(Optional.of(trade));
+
+        NegoOfferResponse response = negoService.cancelOffer(2L, 1000L);
+
+        assertThat(response.status()).isEqualTo("CANCELLED");
+        assertThat(response.tradeId()).isEqualTo(2000L);
+        assertThat(response.tradeStatus()).isEqualTo("CANCELLED");
+        assertThat(trade.getStatus()).isEqualTo(com.team7.agora.domain.trade.enums.TradeStatus.CANCELLED);
+        assertThat(chatRoom.getProduct().getStatus()).isEqualTo(com.team7.agora.domain.product.enums.ProductStatus.SELLING);
     }
 
     @Test

@@ -1,11 +1,12 @@
-import { useEffect, useRef, useState } from 'react';
+﻿import { useEffect, useState } from 'react';
 import { Alert, Button, Card, Col, Form, Row } from 'react-bootstrap';
 import { Link, useParams } from 'react-router-dom';
 import ProductCard from '../components/ProductCard.jsx';
 import LoadingState from '../components/LoadingState.jsx';
 import ErrorState from '../components/ErrorState.jsx';
 import EmptyState from '../components/EmptyState.jsx';
-import { getProduct, updateProduct, uploadProductImage } from '../api/productApi.js';
+import ProductImageDropzone from '../components/ProductImageDropzone.jsx';
+import { getProduct, updateProduct, uploadProductImages } from '../api/productApi.js';
 import { PageHeader, useApiResource } from './pageUtils.jsx';
 import {
   PRODUCT_CATEGORIES,
@@ -21,13 +22,12 @@ const EDIT_VALIDATION_REGION_ID = 1;
 export default function EditProductPage() {
   const { productId } = useParams();
   const productState = useApiResource(() => getProduct(productId), [productId]);
-  const [form, setForm] = useState({ title: '', description: '', price: '', category: '', regionId: '', image: null });
+  const [form, setForm] = useState({ title: '', description: '', price: '', category: '', regionId: '', images: [] });
   const [fieldErrors, setFieldErrors] = useState({});
-  const [selectedImagePreview, setSelectedImagePreview] = useState('');
+  const [selectedImagePreviews, setSelectedImagePreviews] = useState([]);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
-  const fileInputRef = useRef(null);
 
   useEffect(() => {
     if (productState.data) {
@@ -39,23 +39,23 @@ export default function EditProductPage() {
         price: formatPriceInput(productState.data.price ?? ''),
         category: productState.data.category || '',
         regionId: nextRegionId,
-        image: null
+        images: []
       });
       setFieldErrors({});
     }
   }, [productState.data]);
 
   useEffect(() => {
-    if (!form.image) {
-      setSelectedImagePreview('');
+    if (form.images.length === 0) {
+      setSelectedImagePreviews([]);
       return undefined;
     }
 
-    const previewUrl = URL.createObjectURL(form.image);
-    setSelectedImagePreview(previewUrl);
+    const previews = form.images.map((image) => ({ file: image, url: URL.createObjectURL(image) }));
+    setSelectedImagePreviews(previews);
 
-    return () => URL.revokeObjectURL(previewUrl);
-  }, [form.image]);
+    return () => previews.forEach((preview) => URL.revokeObjectURL(preview.url));
+  }, [form.images]);
 
   const updateField = (name, value) => {
     setForm((current) => ({ ...current, [name]: value }));
@@ -72,17 +72,11 @@ export default function EditProductPage() {
 
   const handlePriceChange = (event) => updateField('price', formatPriceInput(event.target.value));
 
-  const handleImageChange = (event) => updateField('image', event.target.files?.[0] || null);
-
-  const resetSelectedImageInput = () => {
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
-  };
-
-  const removeSelectedImage = () => {
-    updateField('image', null);
-    resetSelectedImageInput();
+  const removeSelectedImage = (indexToRemove = 0) => {
+    updateField(
+      'images',
+      form.images.filter((_, index) => index !== indexToRemove)
+    );
   };
 
   const handleSubmit = async (event) => {
@@ -110,14 +104,13 @@ export default function EditProductPage() {
         category: form.category
       });
 
-      if (form.image) {
-        await uploadProductImage(productId, form.image);
+      if (form.images.length > 0) {
+        await uploadProductImages(productId, form.images);
       }
 
       setMessage('수정했어요.');
       await productState.reload();
-      resetSelectedImageInput();
-      updateField('image', null);
+      updateField('images', []);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -137,6 +130,7 @@ export default function EditProductPage() {
     return <EmptyState title="상품이 없어요" />;
   }
 
+  const selectedImagePreview = selectedImagePreviews[0]?.url || '';
   const visibleImageUrl = selectedImagePreview || getProductImageUrl(productState.data);
   const persistedRegionLabel = getProductRegionLabel(productState.data);
   const previewProduct = {
@@ -213,7 +207,7 @@ export default function EditProductPage() {
                     <Form.Label>지역</Form.Label>
                     <Form.Control value={persistedRegionLabel} disabled aria-describedby="edit-product-region-help" />
                     <Form.Text id="edit-product-region-help" muted>
-                      지역 변경은 새 상품 등록에서만 가능해요.
+                      지역 변경은 새 상품 등록에서만 가능해요
                     </Form.Text>
                   </Col>
                   <Col xs={12}>
@@ -227,7 +221,7 @@ export default function EditProductPage() {
                       rows={5}
                       value={form.description}
                       onChange={(event) => updateField('description', event.target.value)}
-                      placeholder="예: 구매 시기, 하자 여부, 구성품, 선호하는 거래 방식을 적어 주세요."
+                      placeholder="구매 시기, 하자 여부, 구성품, 선호하는 거래 방식을 적어 주세요."
                       maxLength={2000}
                       isInvalid={Boolean(fieldErrors.description)}
                       disabled={submitting}
@@ -242,26 +236,14 @@ export default function EditProductPage() {
           <Col xs={12} lg={5}>
             <div className="product-form-side">
               <Form.Label>이미지</Form.Label>
-              <div className="product-image-upload">
-                <Form.Control
-                  ref={fileInputRef}
-                  id="edit-product-image"
-                  className="visually-hidden"
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageChange}
-                  disabled={submitting}
-                />
-                <label className="product-image-dropzone" htmlFor="edit-product-image">
-                  {visibleImageUrl ? <img src={visibleImageUrl} alt="상품 이미지 미리보기" /> : <span>사진 추가</span>}
-                  {visibleImageUrl ? <span className="product-image-main-badge">대표 이미지</span> : null}
-                </label>
-                {form.image ? (
-                  <Button type="button" variant="outline-secondary" size="sm" onClick={removeSelectedImage} disabled={submitting}>
-                    선택한 이미지 제거
-                  </Button>
-                ) : null}
-              </div>
+              <ProductImageDropzone
+                images={form.images}
+                previews={selectedImagePreviews}
+                mainImageUrl={visibleImageUrl}
+                disabled={submitting}
+                onChange={(images) => updateField('images', images)}
+                onRemove={removeSelectedImage}
+              />
               <div className="product-form-preview">
                 <ProductCard product={previewProduct} footerActionLabel="미리보기" footerActionDisabled disableNavigation />
               </div>

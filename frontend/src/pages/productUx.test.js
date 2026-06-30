@@ -60,13 +60,25 @@ describe('product list and card UX source', () => {
     assert.doesNotMatch(source, /onKeyDown/);
   });
 
-  test('ProductCard renders a heart overlay that stops propagation', () => {
+  test('ProductCard renders an actionable heart button that stops propagation', () => {
     const source = readSource('../components/ProductCard.jsx');
 
     assert.match(source, /product-card-heart/);
     assert.match(source, /stopPropagation\(\)/);
     assert.match(source, /<Heart/);
-    assert.doesNotMatch(source, /<button[\s\S]{0,120}product-card-heart/);
+    assert.match(source, /onLikeToggle/);
+    assert.match(source, /<button[\s\S]{0,180}product-card-heart/);
+    assert.match(source, /handleLikeToggle/);
+  });
+
+  test('ProductListPage wires card like actions to product APIs and local state', () => {
+    const source = readSource('./ProductListPage.jsx');
+
+    assert.match(source, /likeProduct/);
+    assert.match(source, /unlikeProduct/);
+    assert.match(source, /setProductOverrides/);
+    assert.match(source, /handleProductLikeToggle/);
+    assert.match(source, /onLikeToggle=\{handleProductLikeToggle\}/);
   });
 });
 
@@ -78,6 +90,9 @@ describe('header and report modal UX source', () => {
     assert.match(source, /account-dropdown/);
     assert.match(source, /getAccountLabel/);
     assert.match(source, /logoutUser/);
+    assert.match(source, /useNavigate/);
+    assert.match(source, /handleLogout/);
+    assert.match(source, /navigate\('\/', \{ replace: true \}\)/);
     assert.doesNotMatch(source, /<UserNavLink to="\/me">/);
   });
 
@@ -166,22 +181,22 @@ describe('sell and edit product form UX source', () => {
   test('product form pages expose image preview and local remove affordances', () => {
     for (const [pageName, relativePath] of formPages) {
       const source = readSource(relativePath);
+      const dropzoneSource = readSource('../components/ProductImageDropzone.jsx');
 
       assert.match(source, /URL\.createObjectURL/, `${pageName} should create a local preview URL`);
       assert.match(source, /URL\.revokeObjectURL/, `${pageName} should clean up local preview URLs`);
-      assert.match(source, /product-image-upload/, `${pageName} should render a custom upload box`);
-      assert.match(source, /product-image-main-badge/, `${pageName} should show the main-image badge`);
+      assert.match(source, /ProductImageDropzone/, `${pageName} should render the shared image dropzone`);
+      assert.match(dropzoneSource, /product-image-upload/, `${pageName} should render a custom upload box`);
+      assert.match(dropzoneSource, /product-image-main-badge/, `${pageName} should show the main-image badge`);
       assert.match(source, /removeSelectedImage/, `${pageName} should provide selected local image removal`);
-      assert.match(source, /visually-hidden/, `${pageName} should visually hide the raw file input`);
+      assert.match(dropzoneSource, /useDropzone/, `${pageName} should use dropzone file input handling`);
     }
   });
 
-  test('edit product form resets selected file input after successful save', () => {
+  test('edit product form clears selected dropzone images after successful save', () => {
     const source = readSource('./EditProductPage.jsx');
 
-    assert.match(source, /resetSelectedImageInput/);
-    assert.match(source, /await productState\.reload\(\);[\s\S]{0,120}resetSelectedImageInput\(\)/);
-    assert.match(source, /fileInputRef\.current\.value = ''/);
+    assert.match(source, /await productState\.reload\(\);[\s\S]{0,120}updateField\('images', \[\]\)/);
   });
 
   test('product form pages show description guidance, max length, and counter markers', () => {
@@ -256,6 +271,30 @@ describe('product detail, favorites, and seller UX source', () => {
     assert.match(source, /getProductRegionLabel/);
     assert.match(source, /getProductStatusLabel/);
     assert.match(source, /sellerNickname/);
+  });
+
+  test('ProductDetailPage displays seller smile score', () => {
+    const source = readSource('./ProductDetailPage.jsx');
+    const apiSource = readSource('../api/mypageApi.js');
+
+    assert.match(apiSource, /getSmileScore/);
+    assert.match(source, /getSmileScore/);
+    assert.match(source, /sellerSmileScore/);
+    assert.match(source, /스마일/);
+  });
+
+  test('ProductDetailPage renders uploaded images as an overlaid counter carousel', () => {
+    const source = readSource('./ProductDetailPage.jsx');
+
+    assert.match(source, /Swiper/);
+    assert.match(source, /SwiperSlide/);
+    assert.match(source, /product\.imageUrls/);
+    assert.match(source, /product-detail-carousel-button/);
+    assert.match(source, /product-detail-image-counter/);
+    assert.match(source, /activeImageIndex/);
+    assert.match(source, /imageSwiperRef/);
+    assert.match(source, /slidePrev\(\)/);
+    assert.match(source, /slideNext\(\)/);
   });
 
   test('LikedProductsPage removes unliked cards immediately and shows product CTA empty state', () => {

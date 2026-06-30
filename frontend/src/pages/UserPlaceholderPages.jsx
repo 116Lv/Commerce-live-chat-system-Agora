@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
-import { Button, Col, Form, Row } from 'react-bootstrap';
-import { Link } from 'react-router-dom';
+import { Alert, Button, Col, Form, Row } from 'react-bootstrap';
+import { Link, useLocation } from 'react-router-dom';
 import { Search } from 'lucide-react';
 import EmptyState from '../components/EmptyState.jsx';
 import ErrorState from '../components/ErrorState.jsx';
@@ -23,6 +23,7 @@ function PlaceholderPage({ title, eyebrow, emptyTitle = '표시할 항목이 없
 }
 
 export function HomePage() {
+  const location = useLocation();
   const [draft, setDraft] = useState(HOME_QUERY);
   const [query, setQuery] = useState(HOME_QUERY);
   const [selectedParentRegionId, setSelectedParentRegionId] = useState('');
@@ -47,6 +48,7 @@ export function HomePage() {
   const parentRegionOptions = getRegionSelectOptions(regions);
   const childRegionOptions = getChildRegionOptions(regions, selectedParentRegionId);
   const hasChildRegionOptions = childRegionOptions.length > 0;
+  const productRegistrationMessage = location.state?.productRegistrationMessage;
 
   const handleSubmit = (event) => {
     event.preventDefault();
@@ -77,6 +79,7 @@ export function HomePage() {
           </Button>
         }
       />
+      {productRegistrationMessage ? <Alert variant="success">{productRegistrationMessage}</Alert> : null}
 
       <Row className="g-4 marketplace-home-grid">
         <Col xs={12} lg={3}>

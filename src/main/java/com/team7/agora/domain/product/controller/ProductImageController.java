@@ -4,7 +4,10 @@ package com.team7.agora.domain.product.controller;
 import com.team7.agora.domain.product.dto.response.ProductImageResponse;
 import com.team7.agora.domain.product.service.ProductImageService;
 import com.team7.agora.global.auth.CustomUserDetails;
+import com.team7.agora.global.exception.BusinessException;
+import com.team7.agora.global.exception.ErrorCode;
 import com.team7.agora.global.response.ApiResponse;
+import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -36,18 +39,26 @@ public class ProductImageController {
      * 상품 이미지 정보를 생성하거나 준비하는 POST /api/products/{productId}/images 요청을 처리한다.
      * @param userDetails 현재 로그인한 사용자 정보
      * @param productId 대상 상품 ID
-     * @param image 업로드할 이미지 파일
+     * @param images 업로드할 이미지 파일 목록
      * @return 클라이언트에 반환할 API 응답
      */
     @PostMapping("/{productId}/images")
-    public ResponseEntity<ApiResponse<ProductImageResponse>> upload(
+    public ResponseEntity<ApiResponse<List<ProductImageResponse>>> upload(
         @AuthenticationPrincipal CustomUserDetails userDetails,
         @PathVariable Long productId,
-        @RequestParam("image") MultipartFile image
+        @RequestParam(value = "images", required = false) List<MultipartFile> images
     ) {
-        ProductImageResponse response = productImageService.upload(userDetails.getUserId(), productId, image);
+        List<MultipartFile> uploadImages = validateImages(images);
+        List<ProductImageResponse> response = productImageService.uploadAll(userDetails.getUserId(), productId, uploadImages);
         return ResponseEntity
             .status(HttpStatus.CREATED)
             .body(ApiResponse.success("상품 이미지가 업로드되었습니다.", response));
+    }
+
+    private List<MultipartFile> validateImages(List<MultipartFile> images) {
+        if (images == null || images.isEmpty()) {
+            throw new BusinessException(ErrorCode.INVALID_REQUEST, "업로드할 이미지가 없습니다.");
+        }
+        return images;
     }
 }
