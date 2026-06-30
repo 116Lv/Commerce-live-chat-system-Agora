@@ -1,25 +1,207 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Alert, Button, Col, Form, Row } from 'react-bootstrap';
+import { Alert, Badge, Button, Col, Form, Row } from 'react-bootstrap';
 import { Link, useParams } from 'react-router-dom';
-import { ImagePlus, Send } from 'lucide-react';
-import { getMessages, markRoomRead, uploadChatImage } from '../api/chatApi.js';
+import { ImagePlus, RotateCcw, Send } from 'lucide-react';
+import { getMessages, getMyRooms, markRoomRead, uploadChatImage } from '../api/chatApi.js';
+import { getUserToken } from '../auth/tokenStorage.js';
 import EmptyState from '../components/EmptyState.jsx';
 import ErrorState from '../components/ErrorState.jsx';
 import LoadingState from '../components/LoadingState.jsx';
 import NegoPanel from '../features/nego/NegoPanel.jsx';
-import useChatSocket from '../features/chat/useChatSocket.js';
-import { PageHeader, formatDateTime, useApiResource } from './pageUtils.jsx';
+import useChatSocket, { CHAT_DELIVERY_STATUS } from '../features/chat/useChatSocket.js';
+import { PageHeader, formatDateTime, statusText, useApiResource } from './pageUtils.jsx';
+
+const getMessageKey = (message, index = 0) =>
+  message.clientMessageId ?? message.messageId ?? `local-${index}-${message.createdAt ?? ''}-${message.content ?? ''}`;
+
+const getMessageTime = (message) => {
+  const timestamp = Date.parse(message.createdAt || '');
+  return Number.isNaN(timestamp) ? 0 : timestamp;
+};
+
+const isLocalDeliveryMessage = (message) =>
+  message.source === 'local' ||
+  message.deliveryStatus === CHAT_DELIVERY_STATUS.PENDING ||
+  message.deliveryStatus === CHAT_DELIVERY_STATUS.FAILED;
+
+const removeLocalMessagesByClientId = (messages, clientMessageIds = []) => {
+  const ids = new Set(clientMessageIds.filter(Boolean));
+
+  if (ids.size === 0) {
+    return messages;
+  }
+
+  return messages.filter((message) => !ids.has(message.clientMessageId));
+};
 
 const dedupeMessages = (messages) => {
   const byKey = new Map();
 
   messages.forEach((message, index) => {
-    const key = message.messageId ?? `local-${index}-${message.createdAt ?? ''}-${message.content ?? ''}`;
-    byKey.set(key, message);
+    byKey.set(getMessageKey(message, index), message);
   });
 
-  return Array.from(byKey.values()).sort((a, b) => Number(a.messageId ?? 0) - Number(b.messageId ?? 0));
+  return Array.from(byKey.values()).sort((a, b) => {
+    const timeDelta = getMessageTime(a) - getMessageTime(b);
+
+    if (timeDelta !== 0) {
+      return timeDelta;
+    }
+
+    return Number(a.messageId ?? 0) - Number(b.messageId ?? 0);
+  });
 };
+
+const getCurrentUserIdFromToken = () => {
+  try {
+    const token = getUserToken()?.replace(/^Bearer\s+/i, '');
+    const payload = JSON.parse(globalThis.atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
+    const userId = payload?.userId ?? payload?.id ?? payload?.sub;
+
+    return userId == null ? null : String(userId);
+  } catch {
+    return null;
+  }
+};
+
+const isSystemMessage = (message) => String(message.messageType || '').toUpperCase() === 'SYSTEM';
+
+const isOwnMessage = (message, currentUserId) => {
+  if (typeof message.isMine === 'boolean') {
+    return message.isMine;
+  }
+
+  if (typeof message.mine === 'boolean') {
+    return message.mine;
+  }
+
+  if (typeof message.ownedByCurrentUser === 'boolean') {
+    return message.ownedByCurrentUser;
+  }
+
+  return currentUserId != null && [message.senderId, message.userId].some((id) => id != null && String(id) === currentUserId);
+};
+
+const canReconcileServerEcho = (message, currentUserId) =>
+  currentUserId != null && !isLocalDeliveryMessage(message) && isOwnMessage(message, currentUserId);
+
+const isMatchingLocalEcho = (localMessage, serverMessage) =>
+  isLocalDeliveryMessage(localMessage) &&
+  String(localMessage.messageType || 'TEXT').toUpperCase() === String(serverMessage.messageType || 'TEXT').toUpperCase() &&
+  String(localMessage.content ?? '') === String(serverMessage.content ?? '');
+
+const reconcileServerEchoWithLocalMessages = (messages, serverMessage, currentUserId) => {
+  if (!canReconcileServerEcho(serverMessage, currentUserId)) {
+    return messages;
+  }
+
+  return messages.filter((message) => !isMatchingLocalEcho(message, serverMessage));
+};
+
+const isSafeChatImageUrl = (value) => {
+  try {
+    const url = new URL(value, window.location.origin);
+    const safeProtocols = new Set(['http:', 'https:', 'blob:']);
+
+    if (url.protocol === 'javascript:') {
+      return false;
+    }
+
+    return safeProtocols.has(url.protocol);
+  } catch {
+    return false;
+  }
+};
+
+const getMessageClassName = (message, currentUserId) =>
+  [
+    'message-item',
+    isSystemMessage(message) ? 'message-item-system' : '',
+    isOwnMessage(message, currentUserId) ? 'message-item-own' : 'message-item-other',
+    message.deliveryStatus === CHAT_DELIVERY_STATUS.PENDING ? 'message-item-pending' : '',
+    message.deliveryStatus === CHAT_DELIVERY_STATUS.FAILED ? 'message-item-failed' : ''
+  ]
+    .filter(Boolean)
+    .join(' ');
+
+const formatProductPrice = (value) => {
+  const amount = Number(value);
+
+  if (!Number.isFinite(amount)) {
+    return 'Price unavailable';
+  }
+
+  return new Intl.NumberFormat('ko-KR', {
+    style: 'currency',
+    currency: 'KRW',
+    maximumFractionDigits: 0
+  }).format(amount);
+};
+
+function ChatRoomProductCard({ room }) {
+  if (!room) {
+    return null;
+  }
+
+  return (
+    <div className="chat-room-product-card">
+      <div className="chat-room-product-thumb" aria-hidden="true">
+        {room.productThumbnailUrl ? (
+          <img src={room.productThumbnailUrl} alt="" loading="lazy" />
+        ) : (
+          <span>{String(room.productTitle || '상품').slice(0, 1)}</span>
+        )}
+      </div>
+      <div className="chat-room-product-card-main">
+        <div>
+          <h2>{room.productTitle || `Product #${room.productId}`}</h2>
+          <p>{[room.sellerNickname, room.buyerNickname].filter(Boolean).join(' · ') || 'Participants unavailable'}</p>
+        </div>
+        <div className="chat-room-product-card-meta">
+          <strong>{formatProductPrice(room.productPrice)}</strong>
+          {room.productStatus ? <Badge bg="light" text="dark">{statusText(room.productStatus)}</Badge> : null}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ChatImageMessage({ message }) {
+  const canPreview = isSafeChatImageUrl(message.content);
+
+  if (!canPreview) {
+    return <span className="chat-image-fallback">Image link unavailable</span>;
+  }
+
+  return (
+    <div className="chat-image-message">
+      <img className="chat-image-preview" src={message.content} alt="Chat attachment" loading="lazy" />
+      <a href={message.content} target="_blank" rel="noreferrer">
+        Open image
+      </a>
+    </div>
+  );
+}
+
+function DeliveryStatus({ message, onRetry }) {
+  if (message.deliveryStatus === CHAT_DELIVERY_STATUS.PENDING) {
+    return <span className="message-delivery-status">Sending...</span>;
+  }
+
+  if (message.deliveryStatus === CHAT_DELIVERY_STATUS.FAILED) {
+    return (
+      <span className="message-delivery-status message-delivery-status-failed">
+        Failed
+        <Button type="button" variant="link" size="sm" onClick={() => onRetry(message)}>
+          <RotateCcw size={14} aria-hidden="true" />
+          Retry
+        </Button>
+      </span>
+    );
+  }
+
+  return null;
+}
 
 export default function ChatRoomPage() {
   const { chatRoomId } = useParams();
@@ -29,17 +211,46 @@ export default function ChatRoomPage() {
   const [actionError, setActionError] = useState('');
   const [uploading, setUploading] = useState(false);
   const { data, error, loading, reload } = useApiResource(() => getMessages(chatRoomId, { size: 100 }), [chatRoomId]);
+  const { data: roomList = [] } = useApiResource(() => getMyRooms(), [chatRoomId]);
+  const currentUserId = useMemo(() => getCurrentUserIdFromToken(), []);
+  const chatRoomMetadata = useMemo(
+    () => (Array.isArray(roomList) ? roomList.find((room) => String(room.chatRoomId) === String(chatRoomId)) : null),
+    [chatRoomId, roomList]
+  );
 
   useEffect(() => {
     if (Array.isArray(data)) {
-      setMessages(data);
+      setMessages((current) => {
+        const localMessages = current.filter(
+          (message) => isLocalDeliveryMessage(message) && String(message.chatRoomId) === String(chatRoomId)
+        );
+        const unreconciledLocalMessages = data.reduce(
+          (remainingLocalMessages, serverMessage) =>
+            reconcileServerEchoWithLocalMessages(remainingLocalMessages, serverMessage, currentUserId),
+          localMessages
+        );
+
+        return dedupeMessages([...data, ...unreconciledLocalMessages]);
+      });
       markRoomRead(chatRoomId).catch(() => {});
     }
-  }, [chatRoomId, data]);
+  }, [chatRoomId, currentUserId, data]);
 
-  const appendMessage = useCallback((message) => {
-    setMessages((current) => dedupeMessages([...current, message]));
-  }, []);
+  const appendMessage = useCallback(
+    (message) => {
+      if (message?.removeClientMessageIds) {
+        setMessages((current) => removeLocalMessagesByClientId(current, message.removeClientMessageIds));
+        return;
+      }
+
+      setMessages((current) => {
+        const reconciled = reconcileServerEchoWithLocalMessages(current, message, currentUserId);
+
+        return dedupeMessages([...reconciled, message]);
+      });
+    },
+    [currentUserId]
+  );
 
   const socket = useChatSocket(chatRoomId, appendMessage);
   const renderedMessages = useMemo(() => dedupeMessages(messages), [messages]);
@@ -50,11 +261,45 @@ export default function ChatRoomPage() {
     setActionMessage('');
 
     try {
-      const result = socket.sendMessage(draft.trim());
-      if (result.queued) {
-        setActionMessage('연결이 회복되면 메시지를 보낼게요.');
+      const content = draft.trim();
+      const result = socket.sendMessage(content);
+
+      if (result.message && !result.transient) {
+        appendMessage(result.message);
       }
+
+      if (result.queued) {
+        setActionMessage('Message queued. It will send when the chat reconnects.');
+      } else if (result.failed) {
+        setActionError(result.errorMessage || 'Message could not be sent. Please retry.');
+      }
+
       setDraft('');
+    } catch (err) {
+      setActionError(err.message);
+    }
+  };
+
+  const handleRetryMessage = (message) => {
+    setActionError('');
+    setActionMessage('');
+
+    try {
+      const result = socket.retryMessage(message);
+
+      if (result.removeClientMessageIds?.length > 0) {
+        appendMessage({ source: 'local-control', removeClientMessageIds: result.removeClientMessageIds });
+      }
+
+      if (result.message && !result.transient) {
+        appendMessage(result.message);
+      }
+
+      if (result.queued) {
+        setActionMessage('Message queued. It will send when the chat reconnects.');
+      } else if (result.failed) {
+        setActionError(result.errorMessage || 'Message could not be resent. Please try again.');
+      }
     } catch (err) {
       setActionError(err.message);
     }
@@ -74,7 +319,7 @@ export default function ChatRoomPage() {
     try {
       const response = await uploadChatImage(chatRoomId, image);
       appendMessage(response);
-      setActionMessage('이미지를 보냈어요.');
+      setActionMessage('Image sent.');
     } catch (err) {
       setActionError(err.message);
     } finally {
@@ -86,54 +331,60 @@ export default function ChatRoomPage() {
   return (
     <section>
       <PageHeader
-        title={`채팅방 #${chatRoomId}`}
-        eyebrow="메시지"
+        title={`Chat room #${chatRoomId}`}
+        eyebrow="Messages"
         action={
           <Button as={Link} to="/chat" variant="outline-primary">
-            목록
+            Rooms
           </Button>
         }
       />
-      {socket.error ? <Alert variant="warning">실시간 연결 오류: {socket.error}</Alert> : null}
-      {socket.pendingCount > 0 ? <Alert variant="info">전송 대기 메시지 {socket.pendingCount}개</Alert> : null}
+      {socket.error ? <Alert variant="warning">Realtime chat: {socket.error}</Alert> : null}
+      {socket.pendingCount > 0 ? <Alert variant="info">Queued messages: {socket.pendingCount}</Alert> : null}
       {actionMessage ? <Alert variant="success">{actionMessage}</Alert> : null}
       {actionError ? <Alert variant="danger">{actionError}</Alert> : null}
       <Row className="g-3">
         <Col xs={12} lg={8}>
+          <ChatRoomProductCard room={chatRoomMetadata} />
           <div className="detail-panel chat-room-panel">
-            {loading ? <LoadingState label="메시지 불러오는 중" /> : null}
-            {error ? <ErrorState title="메시지를 불러오지 못했어요" message={error.message} onRetry={reload} /> : null}
-            {!loading && !error && renderedMessages.length === 0 ? <EmptyState title="메시지가 없어요" /> : null}
+            {loading ? <LoadingState label="Loading messages" /> : null}
+            {error ? <ErrorState title="Could not load messages" message={error.message} onRetry={reload} /> : null}
+            {!loading && !error && renderedMessages.length === 0 ? <EmptyState title="No messages yet" /> : null}
             {!loading && !error && renderedMessages.length > 0 ? (
               <div className="message-list">
-                {renderedMessages.map((message) => (
-                  <article key={message.messageId ?? `${message.createdAt}-${message.content}`} className="message-item">
-                    <div className="message-meta">
-                      <strong>{message.senderNickname || `사용자 ${message.senderId || '-'}`}</strong>
-                      <span>{formatDateTime(message.createdAt)}</span>
-                    </div>
-                    {message.messageType === 'IMAGE' ? (
-                      <a href={message.content} target="_blank" rel="noreferrer">
-                        이미지 보기
-                      </a>
-                    ) : (
-                      <p>{message.content}</p>
-                    )}
-                  </article>
-                ))}
+                {renderedMessages.map((message, index) => {
+                  if (isSystemMessage(message)) {
+                    return (
+                      <article key={getMessageKey(message, index)} className={getMessageClassName(message, currentUserId)}>
+                        <p>{message.content}</p>
+                      </article>
+                    );
+                  }
+
+                  return (
+                    <article key={getMessageKey(message, index)} className={getMessageClassName(message, currentUserId)}>
+                      <div className="message-meta">
+                        <strong>{message.senderNickname || `User ${message.senderId || '-'}`}</strong>
+                        <span>{formatDateTime(message.createdAt)}</span>
+                      </div>
+                      {message.messageType === 'IMAGE' ? <ChatImageMessage message={message} /> : <p>{message.content}</p>}
+                      <DeliveryStatus message={message} onRetry={handleRetryMessage} />
+                    </article>
+                  );
+                })}
               </div>
             ) : null}
             <Form className="chat-compose" onSubmit={handleSend}>
               <Form.Control
                 value={draft}
                 onChange={(event) => setDraft(event.target.value)}
-                placeholder={socket.connected ? '메시지 입력' : '연결되면 자동 전송'}
+                placeholder={socket.connected ? 'Type a message' : 'Will send after reconnect'}
                 maxLength={1000}
               />
-              <Button type="submit" disabled={!draft.trim()} aria-label="메시지 보내기">
+              <Button type="submit" disabled={!draft.trim()} aria-label="Send message">
                 <Send size={17} aria-hidden="true" />
               </Button>
-              <Button as="label" variant="outline-primary" aria-label="이미지 보내기" disabled={uploading}>
+              <Button as="label" variant="outline-primary" aria-label="Send image" disabled={uploading}>
                 <ImagePlus size={17} aria-hidden="true" />
                 <Form.Control type="file" accept="image/*" className="visually-hidden" onChange={handleImage} />
               </Button>

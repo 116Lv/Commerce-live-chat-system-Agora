@@ -9,9 +9,11 @@ import com.team7.agora.domain.nego.entity.NegoOffer;
 import com.team7.agora.domain.nego.enums.NegoOfferStatus;
 import com.team7.agora.domain.nego.repository.NegoOfferRepository;
 import com.team7.agora.domain.product.entity.Product;
+import com.team7.agora.domain.product.enums.ProductApprovalStatus;
 import com.team7.agora.domain.product.enums.ProductStatus;
 import com.team7.agora.domain.product.repository.ProductRepository;
 import com.team7.agora.domain.trade.entity.Trade;
+import com.team7.agora.domain.trade.repository.TradeRepository;
 import com.team7.agora.domain.trade.service.TradeService;
 import com.team7.agora.domain.user.entity.User;
 import com.team7.agora.global.auth.AuthUser;
@@ -31,10 +33,18 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(readOnly = true)
 public class NegoService {
 
+    public static final List<NegoOfferStatus> CURRENT_OFFER_STATUSES = List.of(
+        NegoOfferStatus.PENDING,
+        NegoOfferStatus.EXTENSION_REQUESTED,
+        NegoOfferStatus.EXTENDED,
+        NegoOfferStatus.ACCEPTED
+    );
+
     private final NegoOfferRepository negoOfferRepository;
     private final ChatRoomRepository chatRoomRepository;
     private final ProductRepository productRepository;
     private final TradeService tradeService;
+    private final TradeRepository tradeRepository;
     private final ChatSystemMessageService chatSystemMessageService;
 
     /**
@@ -49,12 +59,14 @@ public class NegoService {
         ChatRoomRepository chatRoomRepository,
         ProductRepository productRepository,
         TradeService tradeService,
+        TradeRepository tradeRepository,
         ChatSystemMessageService chatSystemMessageService
     ) {
         this.negoOfferRepository = negoOfferRepository;
         this.chatRoomRepository = chatRoomRepository;
         this.productRepository = productRepository;
         this.tradeService = tradeService;
+        this.tradeRepository = tradeRepository;
         this.chatSystemMessageService = chatSystemMessageService;
     }
 
@@ -79,6 +91,9 @@ public class NegoService {
         if (isAlreadyReservedOrSold(lockedProduct)) {
             throw new BusinessException(ErrorCode.CONFLICT, "이미 거래가 진행 중이거나 완료된 상품입니다.");
         }
+        if (lockedProduct.getApprovalStatus() != ProductApprovalStatus.APPROVED) {
+            throw new BusinessException(ErrorCode.FORBIDDEN, "Only approved products can receive offers.");
+        }
         validateOfferPrice(offerPrice, lockedProduct);
 
         if (negoOfferRepository.existsByChatRoomAndRequesterAndStatusIn(
@@ -93,6 +108,37 @@ public class NegoService {
         NegoOfferResponse response = NegoOfferResponse.from(negoOfferRepository.save(offer));
         chatSystemMessageService.send(chatRoom, chatRoom.getBuyer(), "제안이 생성되었습니다.");
         return response;
+    }
+
+    /**
+     * 채팅방에서 진행 중인 최신 가격 제안을 조회한다.
+     * @param requesterId 조회하는 사용자 ID
+     * @param chatRoomId 채팅방 ID
+     * @return 클라이언트에 반환할 API 응답
+     */
+    public NegoOfferResponse getCurrentOffer(Long requesterId, Long chatRoomId) {
+        ChatRoom chatRoom = findReadableRoom(chatRoomId);
+
+        if (!chatRoom.isParticipant(requesterId)) {
+            throw new BusinessException(ErrorCode.FORBIDDEN, "채팅방 참여자만 가격 제안을 조회할 수 있습니다.");
+        }
+
+        return negoOfferRepository.findFirstByChatRoomIdAndStatusInOrderByCreatedAtDesc(
+                chatRoomId,
+                CURRENT_OFFER_STATUSES
+            )
+            .map(this::toCurrentOfferResponse)
+            .orElse(null);
+    }
+
+    private NegoOfferResponse toCurrentOfferResponse(NegoOffer offer) {
+        if (offer.getStatus() != NegoOfferStatus.ACCEPTED) {
+            return NegoOfferResponse.from(offer);
+        }
+
+        return tradeRepository.findByProductAndBuyer(offer.getChatRoom().getProduct(), offer.getRequester())
+            .map(trade -> NegoOfferResponse.from(offer, trade))
+            .orElseGet(() -> NegoOfferResponse.from(offer));
     }
 
     /**
@@ -240,8 +286,13 @@ public class NegoService {
             .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "채팅방을 찾을 수 없습니다."));
     }
 
+    private ChatRoom findReadableRoom(Long chatRoomId) {
+        return chatRoomRepository.findByIdAndStatus(chatRoomId, ChatRoomStatus.ACTIVE)
+            .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "채팅방을 찾을 수 없습니다."));
+    }
+
     private Product findProductForUpdate(Long productId) {
-        return productRepository.findByIdForUpdateAndDeletedAtIsNull(productId)
+        return productRepository.findByIdForUpdateAndDeletedAtIsNullAndApprovalStatus(productId, ProductApprovalStatus.APPROVED)
             .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "상품을 찾을 수 없습니다."));
     }
 

@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
@@ -42,9 +43,11 @@ public class AdminReportController {
     @GetMapping("/users")
     @PreAuthorize("hasAnyAuthority('ROOT_ADMIN', 'USER_ADMIN')")
     public ApiResponse<List<AdminReportListResponse>> getUserReports(
-        @AuthenticationPrincipal AdminPrincipal admin
+        @AuthenticationPrincipal AdminPrincipal admin,
+        @RequestParam(required = false) String status,
+        @RequestParam(required = false) String search
     ) {
-        return ApiResponse.success("유저 신고 내역을 조회했습니다.", adminReportService.getUserReports(admin));
+        return ApiResponse.success("유저 신고 내역을 조회했습니다.", adminReportService.getUserReports(admin, status, search));
     }
 
     /**
@@ -73,9 +76,11 @@ public class AdminReportController {
     @GetMapping("/products")
     @PreAuthorize("hasAnyAuthority('ROOT_ADMIN', 'PRODUCT_ADMIN')")
     public ApiResponse<List<AdminReportListResponse>> getProductReports(
-        @AuthenticationPrincipal AdminPrincipal admin
+        @AuthenticationPrincipal AdminPrincipal admin,
+        @RequestParam(required = false) String status,
+        @RequestParam(required = false) String search
     ) {
-        return ApiResponse.success("상품 신고 내역을 조회했습니다.", adminReportService.getProductReports(admin));
+        return ApiResponse.success("상품 신고 내역을 조회했습니다.", adminReportService.getProductReports(admin, status, search));
     }
 
     /**

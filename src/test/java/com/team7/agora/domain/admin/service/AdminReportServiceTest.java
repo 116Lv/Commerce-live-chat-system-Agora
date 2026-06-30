@@ -77,6 +77,20 @@ class AdminReportServiceTest {
         assertThat(responses).hasSize(1);
         assertThat(responses.get(0).reportId()).isEqualTo(200L);
         assertThat(responses.get(0).status()).isEqualTo("PENDING");
+        assertThat(responses.get(0).reporterEmail()).isEqualTo("reporter@test.com");
+        assertThat(responses.get(0).reportedUserEmail()).isEqualTo("reported@test.com");
+    }
+
+    @Test
+    void getUserReports_filtersByStatusAndSearchText() {
+        userReport.resolve("already handled");
+        when(reportRepository.findAllByProductIsNull()).thenReturn(List.of(userReport));
+
+        assertThat(adminReportService.getUserReports(userAdmin, "PENDING", "reported")).isEmpty();
+        assertThat(adminReportService.getUserReports(userAdmin, "RESOLVED", "reported")).hasSize(1);
+        assertThat(adminReportService.getUserReports(userAdmin, null, "200")).hasSize(1);
+        assertThat(adminReportService.getUserReports(userAdmin, null, "resolved")).hasSize(1);
+        assertThat(adminReportService.getUserReports(userAdmin, null, "3")).hasSize(1);
     }
 
     @Test
@@ -140,6 +154,18 @@ class AdminReportServiceTest {
         assertThat(responses.get(0).reportId()).isEqualTo(100L);
         assertThat(responses.get(0).productId()).isEqualTo(10L);
         assertThat(responses.get(0).status()).isEqualTo("PENDING");
+        assertThat(responses.get(0).productTitle()).isEqualTo("가품 의심 상품");
+    }
+
+    @Test
+    void getProductReports_filtersSearchByReportProductReporterAndStatusFields() {
+        when(reportRepository.findAllByProductIsNotNull()).thenReturn(List.of(productReport));
+
+        assertThat(adminReportService.getProductReports(productAdmin, null, "100")).hasSize(1);
+        assertThat(adminReportService.getProductReports(productAdmin, null, "10")).hasSize(1);
+        assertThat(adminReportService.getProductReports(productAdmin, null, "1")).hasSize(1);
+        assertThat(adminReportService.getProductReports(productAdmin, null, "pending")).hasSize(1);
+        assertThat(adminReportService.getProductReports(productAdmin, null, "nothing")).isEmpty();
     }
 
     @Test

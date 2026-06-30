@@ -3,16 +3,21 @@ import { Alert, Button, ButtonGroup, Col, Row } from 'react-bootstrap';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { Flag, Heart, MessageCircle, ShoppingCart } from 'lucide-react';
 import MoneyText from '../components/MoneyText.jsx';
-import StatusBadge from '../components/StatusBadge.jsx';
 import LoadingState from '../components/LoadingState.jsx';
 import ErrorState from '../components/ErrorState.jsx';
 import EmptyState from '../components/EmptyState.jsx';
-import { getProduct, likeProduct } from '../api/productApi.js';
+import { getProduct, likeProduct, unlikeProduct } from '../api/productApi.js';
 import { openChatRoom } from '../api/chatApi.js';
 import { startTrade } from '../api/tradeApi.js';
 import { useAuth } from '../auth/AuthContext.jsx';
 import ReportModal from '../features/reports/ReportModal.jsx';
-import { PageHeader, statusText, useApiResource } from './pageUtils.jsx';
+import { PageHeader, useApiResource } from './pageUtils.jsx';
+import {
+  getProductCategoryLabel,
+  getProductImageUrl,
+  getProductRegionLabel,
+  getProductStatusLabel
+} from './productFormUtils.js';
 
 export default function ProductDetailPage() {
   const { productId } = useParams();
@@ -34,18 +39,19 @@ export default function ProductDetailPage() {
     return true;
   };
 
-  const handleLike = async () => {
+  const handleLikeToggle = async () => {
     if (!requireAuth()) {
       return;
     }
 
+    const liked = Boolean(product.liked);
     setSubmitting('like');
     setActionMessage('');
     setActionError('');
 
     try {
-      await likeProduct(productId);
-      setActionMessage('관심 상품에 추가했어요.');
+      await (liked ? unlikeProduct(productId) : likeProduct(productId));
+      setActionMessage(liked ? '관심 상품에서 해제했어요.' : '관심 상품에 추가했어요.');
       await reload();
     } catch (err) {
       setActionError(err.message);
@@ -112,6 +118,13 @@ export default function ProductDetailPage() {
     return <EmptyState title="상품이 없어요" />;
   }
 
+  const categoryLabel = getProductCategoryLabel(product);
+  const imageUrl = getProductImageUrl(product);
+  const liked = Boolean(product.liked);
+  const likeCount = product.likeCount ?? 0;
+  const regionLabel = getProductRegionLabel(product);
+  const statusLabel = getProductStatusLabel(product);
+
   return (
     <section>
       <PageHeader title={product.title || '상품'} eyebrow="상품 상세" />
@@ -120,33 +133,41 @@ export default function ProductDetailPage() {
       <Row className="g-4">
         <Col xs={12} lg={7}>
           <div className="detail-panel product-detail-media">
-            {product.imageUrl ? <img src={product.imageUrl} alt={`${product.title} 이미지`} /> : <span>이미지 없음</span>}
+            {imageUrl ? <img src={imageUrl} alt={`${product.title} 이미지`} /> : <span>이미지 없음</span>}
           </div>
         </Col>
         <Col xs={12} lg={5}>
           <div className="detail-panel product-detail-info">
             <div className="d-flex justify-content-between gap-2 align-items-start">
               <h2>{product.title}</h2>
-              <StatusBadge status={product.status} />
+              {product.status ? <span className="badge bg-secondary product-status-badge">{statusLabel}</span> : null}
             </div>
             <MoneyText amount={product.price} className="product-detail-price" />
             <dl className="compact-list">
               <div>
                 <dt>상태</dt>
-                <dd>{statusText(product.status)}</dd>
+                <dd>{statusLabel}</dd>
               </div>
               <div>
                 <dt>카테고리</dt>
-                <dd>{product.category || '-'}</dd>
+                <dd>{categoryLabel}</dd>
               </div>
               <div>
                 <dt>지역</dt>
-                <dd>{product.regionName || product.region || '-'}</dd>
+                <dd>{regionLabel}</dd>
+              </div>
+              <div>
+                <dt>판매자</dt>
+                <dd>{product.sellerNickname || product.sellerId || '-'}</dd>
+              </div>
+              <div>
+                <dt>관심</dt>
+                <dd>{likeCount}개</dd>
               </div>
             </dl>
             <ButtonGroup className="product-action-group" aria-label="상품 작업">
-              <Button onClick={handleLike} disabled={Boolean(submitting)} variant="outline-primary">
-                <Heart size={17} aria-hidden="true" /> 관심
+              <Button onClick={handleLikeToggle} disabled={Boolean(submitting)} variant={liked ? 'primary' : 'outline-primary'}>
+                <Heart size={17} aria-hidden="true" /> {liked ? '관심 해제' : '관심'} {likeCount}
               </Button>
               <Button onClick={handleOpenChat} disabled={Boolean(submitting)} variant="outline-primary">
                 <MessageCircle size={17} aria-hidden="true" /> 채팅

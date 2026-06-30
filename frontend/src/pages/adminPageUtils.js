@@ -44,11 +44,178 @@ export const removeFromPayload = (payload, id, idKey = 'id') => {
   return { ...payload, content: removeById(getList(payload), id, idKey) };
 };
 
-export const parseUserIds = (value) =>
-  String(value || '')
+export const ADMIN_COUPON_TYPE_LABELS = {
+  FIRST_COME: '선착순',
+  NEW_SIGNUP: '신규 가입',
+  ADMIN_INDIVIDUAL: '관리자 개별 발급'
+};
+
+export const ADMIN_COUPON_STATUS_LABELS = {
+  ACTIVE: '진행중',
+  AVAILABLE: '발급 가능',
+  ENDED: '종료',
+  EXPIRED: '만료',
+  ISSUED: '발급됨',
+  PAUSED: '중지',
+  PENDING: '대기',
+  READY: '준비',
+  SCHEDULED: '예정',
+  SOLD_OUT: '소진',
+  USED: '사용됨'
+};
+
+export const formatAdminCouponType = (type, fallback = '') => {
+  const key = String(type || '').toUpperCase();
+  return ADMIN_COUPON_TYPE_LABELS[key] || fallback || type || '-';
+};
+
+export const formatAdminCouponStatus = (status, fallback = '') => {
+  const key = String(status || '').toUpperCase();
+  return ADMIN_COUPON_STATUS_LABELS[key] || fallback || status || '-';
+};
+
+export const parseAdminCouponNumber = (value) => {
+  if (value === null || value === undefined || value === '') {
+    return 0;
+  }
+
+  const normalized = String(value).replace(/[^\d.-]/g, '');
+
+  if (!normalized || normalized === '-' || normalized === '.') {
+    return Number.NaN;
+  }
+
+  return Number(normalized);
+};
+
+export const formatAdminCouponMoneyInput = (value) => {
+  const digits = String(value ?? '').replace(/[^\d]/g, '');
+
+  if (!digits) {
+    return '';
+  }
+
+  return new Intl.NumberFormat('ko-KR').format(Number(digits));
+};
+
+export const buildAdminCouponCreatePayload = (form = {}) => ({
+  type: form.type,
+  name: String(form.name || '').trim(),
+  startAt: form.startAt,
+  endAt: form.endAt,
+  totalQuantity: parseAdminCouponNumber(form.totalQuantity),
+  discountAmount: parseAdminCouponNumber(form.discountAmount),
+  minOrderAmount: parseAdminCouponNumber(form.minOrderAmount),
+  validDays: parseAdminCouponNumber(form.validDays)
+});
+
+export const validateAdminCouponForm = (form = {}) => {
+  const payload = buildAdminCouponCreatePayload(form);
+  const errors = {};
+  const startDate = payload.startAt ? new Date(payload.startAt) : null;
+  const endDate = payload.endAt ? new Date(payload.endAt) : null;
+
+  if (!payload.name) {
+    errors.name = '쿠폰명을 입력해 주세요.';
+  }
+
+  if (!payload.startAt || Number.isNaN(startDate?.getTime())) {
+    errors.startAt = '시작 일시를 입력해 주세요.';
+  }
+
+  if (!payload.endAt || Number.isNaN(endDate?.getTime())) {
+    errors.endAt = '종료 일시를 입력해 주세요.';
+  } else if (startDate && !Number.isNaN(startDate.getTime()) && startDate >= endDate) {
+    errors.endAt = '종료 일시는 시작 일시보다 늦어야 합니다.';
+  }
+
+  if (!Number.isFinite(payload.totalQuantity) || payload.totalQuantity <= 0) {
+    errors.totalQuantity = '발급 수량은 1개 이상이어야 합니다.';
+  }
+
+  if (!Number.isFinite(payload.discountAmount) || payload.discountAmount <= 0) {
+    errors.discountAmount = '할인 금액은 1원 이상이어야 합니다.';
+  }
+
+  if (!Number.isFinite(payload.minOrderAmount) || payload.minOrderAmount < 0) {
+    errors.minOrderAmount = '최소 주문 금액은 0원 이상이어야 합니다.';
+  }
+
+  if (!Number.isFinite(payload.validDays) || payload.validDays <= 0) {
+    errors.validDays = '유효 기간은 1일 이상이어야 합니다.';
+  }
+
+  return errors;
+};
+
+export const parseUserIdTokens = (value) => {
+  const tokens = String(value || '')
     .split(/[,\s]+/)
-    .map((item) => Number(item.trim()))
-    .filter((item) => Number.isInteger(item) && item > 0);
+    .map((item) => item.trim())
+    .filter(Boolean);
+  const seen = new Set();
+  const validIds = [];
+  const invalidTokens = [];
+
+  tokens.forEach((token) => {
+    if (/^\d+$/.test(token)) {
+      const id = Number(token);
+
+      if (Number.isSafeInteger(id) && id > 0 && !seen.has(id)) {
+        seen.add(id);
+        validIds.push(id);
+      }
+      return;
+    }
+
+    invalidTokens.push(token);
+  });
+
+  return { validIds, invalidTokens };
+};
+
+export const parseUserIds = (value) => parseUserIdTokens(value).validIds;
+
+export const canAdminIssueCoupon = (detail) =>
+  Boolean(detail) && detail.canIssue !== false && !detail.ended && !detail.soldOut;
+
+export const getCouponTargetChipKey = (token, index) => `${token}-${index}`;
+
+export const formatIssueRate = (issueRate) => {
+  if (issueRate === null || issueRate === undefined || issueRate === '') {
+    return '-';
+  }
+
+  const value = Number(issueRate);
+
+  if (!Number.isFinite(value)) {
+    return '-';
+  }
+
+  return `${Math.round(value * 100)}%`;
+};
+
+export const getAdminCouponStatusVariant = (event = {}) => {
+  const status = String(event?.status || '').toUpperCase();
+
+  if (event?.soldOut || status === 'SOLD_OUT') {
+    return 'secondary';
+  }
+
+  if (event?.ended || status === 'ENDED' || status === 'EXPIRED') {
+    return 'dark';
+  }
+
+  if (event?.canIssue === false || status === 'PAUSED') {
+    return 'warning';
+  }
+
+  if (status === 'ACTIVE' || status === 'AVAILABLE' || status === 'ISSUED') {
+    return 'success';
+  }
+
+  return 'secondary';
+};
 
 export const getReportTabs = (admin = {}) => {
   const role = String(admin?.role || '').toUpperCase();
@@ -73,10 +240,77 @@ export const getReportTabs = (admin = {}) => {
 
 export const canUpdateAdminRoles = (admin = {}) => String(admin?.role || '').toUpperCase() === 'ROOT_ADMIN';
 
+export const ADMIN_ROLE_LABELS = {
+  ROOT_ADMIN: '최고 관리자',
+  USER_ADMIN: '회원 관리자',
+  PRODUCT_ADMIN: '상품 관리자',
+  SETTLEMENT_ADMIN: '정산 관리자'
+};
+
+export const formatAdminRole = (role) => ADMIN_ROLE_LABELS[String(role || '').toUpperCase()] || role || '-';
+
+export const REPORT_STATUS_FILTERS = [
+  { key: 'PENDING', label: '대기' },
+  { key: 'RESOLVED', label: '처리 완료' }
+];
+
+export const getReportStatusLabel = (status) => {
+  const key = String(status || '').toUpperCase();
+  return REPORT_STATUS_FILTERS.find((item) => item.key === key)?.label || statusTextFallback(key);
+};
+
+const statusTextFallback = (status) => status || '-';
+
+export const reportMatchesSearch = (report = {}, search = '') => {
+  const keyword = String(search || '').trim().toLowerCase();
+
+  if (!keyword) {
+    return true;
+  }
+
+  return [
+    report.reportId,
+    report.reporterId,
+    report.reporterNickname,
+    report.reporterEmail,
+    report.reportedUserId,
+    report.reportedUserNickname,
+    report.reportedUserEmail,
+    report.productId,
+    report.productTitle,
+    report.reason,
+    report.status
+  ]
+    .filter((value) => value !== undefined && value !== null)
+    .some((value) => String(value).toLowerCase().includes(keyword));
+};
+
 export const canSettlePayment = (payment = {}) =>
   payment?.settlementId !== undefined &&
   payment?.settlementId !== null &&
   String(payment?.settlementStatus || '').toUpperCase() === 'READY';
+
+export const paymentVerificationSummary = (payment = {}) => {
+  const status = String(payment?.status || '').toUpperCase();
+
+  if (status === 'PAID') {
+    return { label: '승인 완료', variant: 'success' };
+  }
+
+  if (status === 'READY' || status === 'CONFIRMING') {
+    return { label: '승인 대기', variant: 'warning' };
+  }
+
+  if (status === 'FAILED' || status === 'CANCELLED') {
+    return { label: '승인 실패', variant: 'danger' };
+  }
+
+  if (status === 'REFUNDED') {
+    return { label: '환불 완료', variant: 'secondary' };
+  }
+
+  return { label: status || '-', variant: 'secondary' };
+};
 
 export const dashboardStats = (dashboard = {}) => {
   const menus = Array.isArray(dashboard.accessibleMenus) ? dashboard.accessibleMenus : [];

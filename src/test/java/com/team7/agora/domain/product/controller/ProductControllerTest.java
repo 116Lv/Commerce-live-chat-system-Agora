@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 
 import com.team7.agora.domain.product.dto.request.ProductCreateRequest;
+import com.team7.agora.domain.product.dto.request.ProductStatusUpdateRequest;
 import com.team7.agora.domain.product.dto.response.ProductResponse;
 import com.team7.agora.domain.product.enums.ProductStatus;
 import com.team7.agora.domain.product.service.ProductService;
@@ -44,5 +45,20 @@ class ProductControllerTest {
         assertThat(response.getStatusCode().value()).isEqualTo(201);
         assertThat(response.getBody()).isNotNull();
         assertThat(response.getBody().data().title()).isEqualTo("자전거");
+    }
+    @Test
+    void updateStatus_returnsUpdatedProductEnvelope() {
+        ProductController controller = new ProductController(productService);
+        CustomUserDetails authUser = new CustomUserDetails(1L, "user@test.com", "password", UserRole.ROLE_USER, UserStatus.ACTIVE, "seller");
+        ProductStatusUpdateRequest request = new ProductStatusUpdateRequest(ProductStatus.SOLD);
+        when(productService.updateStatus(1L, 10L, ProductStatus.SOLD)).thenReturn(
+            new ProductResponse(10L, "Bike", "Good bike", BigDecimal.valueOf(73000), "SPORTS", ProductStatus.SOLD)
+        );
+
+        ResponseEntity<ApiResponse<ProductResponse>> response = controller.updateStatus(authUser, 10L, request);
+
+        assertThat(response.getStatusCode().value()).isEqualTo(200);
+        assertThat(response.getBody()).isNotNull();
+        assertThat(response.getBody().data().status()).isEqualTo(ProductStatus.SOLD);
     }
 }

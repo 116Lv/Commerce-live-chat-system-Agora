@@ -14,8 +14,13 @@ import com.team7.agora.domain.report.entity.Report;
 public record AdminReportListResponse(
     Long reportId,
     Long reporterId,
+    String reporterNickname,
+    String reporterEmail,
     Long reportedUserId,
+    String reportedUserNickname,
+    String reportedUserEmail,
     Long productId,
+    String productTitle,
     String reason,
     String status
 ) {
@@ -27,11 +32,17 @@ public record AdminReportListResponse(
      */
     public static AdminReportListResponse from(Report report) {
         Long productId = report.getProduct() == null ? null : report.getProduct().getId();
+        String productTitle = report.getProduct() == null ? null : report.getProduct().getTitle();
         return new AdminReportListResponse(
             report.getId(),
             report.getReporter().getId(),
+            report.getReporter().getNickname(),
+            report.getReporter().getEmail(),
             report.getReportedUser().getId(),
+            report.getReportedUser().getNickname(),
+            report.getReportedUser().getEmail(),
             productId,
+            productTitle,
             report.getReason(),
             report.getStatus().name()
         );

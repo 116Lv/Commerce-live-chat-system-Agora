@@ -4,10 +4,13 @@ import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.Projections;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.team7.agora.domain.product.entity.QProduct;
+import com.team7.agora.domain.product.entity.QProductImage;
+import com.team7.agora.domain.product.enums.ProductApprovalStatus;
 import com.team7.agora.domain.product.enums.ProductStatus;
 import com.team7.agora.domain.region.entity.QRegion;
 import com.team7.agora.domain.search.dto.ProductSearchCondition;
 import com.team7.agora.domain.search.dto.ProductSearchResponse;
+import com.team7.agora.domain.user.entity.QUser;
 import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -33,11 +36,14 @@ public class ProductSearchRepositoryImpl implements ProductSearchRepository {
     @Override
     public Page<ProductSearchResponse> search(ProductSearchCondition condition) {
         QProduct product = QProduct.product;
+        QProductImage productImage = QProductImage.productImage;
         QRegion region = QRegion.region;
+        QUser seller = QUser.user;
 
         BooleanBuilder where = new BooleanBuilder()
             .and(product.deletedAt.isNull())
-            .and(product.status.ne(ProductStatus.HIDDEN));
+            .and(product.status.ne(ProductStatus.HIDDEN))
+            .and(product.approvalStatus.eq(ProductApprovalStatus.APPROVED));
 
         if (!condition.normalizedKeyword().isBlank()) {
             String pattern = "%" + condition.normalizedKeyword() + "%";
@@ -53,10 +59,25 @@ public class ProductSearchRepositoryImpl implements ProductSearchRepository {
         List<ProductSearchResponse> content = queryFactory
             .select(Projections.constructor(
                 ProductSearchResponse.class,
-                product.id, product.title, product.price, region.name
+                product.id,
+                product.title,
+                product.price,
+                region.id,
+                region.name,
+                region.sido,
+                region.sigungu,
+                region.eupmyeondong,
+                product.category,
+                product.status,
+                product.likeCount,
+                seller.id,
+                seller.nickname,
+                productImage.imageUrl
             ))
             .from(product)
             .join(product.region, region)
+            .join(product.seller, seller)
+            .leftJoin(productImage).on(productImage.product.eq(product).and(productImage.sortOrder.eq(0)))
             .where(where)
             .orderBy(product.id.desc())
             .offset(condition.pageable().getOffset())

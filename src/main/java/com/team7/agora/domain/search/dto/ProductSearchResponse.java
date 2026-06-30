@@ -1,5 +1,6 @@
 package com.team7.agora.domain.search.dto;
 
+import com.team7.agora.domain.product.enums.ProductStatus;
 import java.math.BigDecimal;
 
 /**
@@ -13,6 +14,86 @@ public record ProductSearchResponse(
     Long id,
     String title,
     BigDecimal price,
-    String regionName
+    String regionName,
+    int likeCount,
+    boolean liked,
+    Long regionId,
+    String sido,
+    String sigungu,
+    String eupmyeondong,
+    String category,
+    ProductStatus status,
+    Long sellerId,
+    String sellerNickname,
+    String primaryImageUrl,
+    String thumbnailUrl,
+    String statusLabel,
+    String categoryLabel
 ) {
+
+    public ProductSearchResponse(Long id, String title, BigDecimal price, String regionName) {
+        this(
+            id,
+            title,
+            price,
+            regionName,
+            0,
+            false,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            statusLabel(null),
+            null
+        );
+    }
+
+    public ProductSearchResponse(
+        Long id,
+        String title,
+        BigDecimal price,
+        Long regionId,
+        String regionName,
+        String sido,
+        String sigungu,
+        String eupmyeondong,
+        String category,
+        ProductStatus status,
+        int likeCount,
+        Long sellerId,
+        String sellerNickname,
+        String primaryImageUrl
+    ) {
+        // Search responses are cached by query/page, so viewer-specific liked state stays false.
+        this(
+            id,
+            title,
+            price,
+            regionName,
+            likeCount,
+            false,
+            regionId,
+            sido,
+            sigungu,
+            eupmyeondong,
+            category,
+            status,
+            sellerId,
+            sellerNickname,
+            primaryImageUrl,
+            primaryImageUrl,
+            statusLabel(status),
+            category
+        );
+    }
+
+    private static String statusLabel(ProductStatus status) {
+        return status == null ? null : status.getDisplayLabel();
+    }
 }

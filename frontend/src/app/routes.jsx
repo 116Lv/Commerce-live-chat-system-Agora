@@ -25,7 +25,10 @@ import MyReviewsPage from '../pages/MyReviewsPage.jsx';
 import MyCouponsPage from '../pages/MyCouponsPage.jsx';
 import {
   AdminCouponsPage,
+  AdminAccountsPage,
+  AdminApprovalsPage,
   AdminDashboardPage,
+  AdminMyApprovalRequestsPage,
   AdminNotFoundPage,
   AdminPaymentsPage,
   AdminProductsPage,
@@ -51,6 +54,9 @@ export const router = createBrowserRouter([
           { path: 'reports', element: <AdminReportsPage /> },
           { path: 'payments', element: <AdminPaymentsPage /> },
           { path: 'coupons', element: <AdminCouponsPage /> },
+          { path: 'accounts', element: <AdminAccountsPage /> },
+          { path: 'approval-requests', element: <AdminApprovalsPage /> },
+          { path: 'my-approval-requests', element: <AdminMyApprovalRequestsPage /> },
           { path: '*', element: <AdminNotFoundPage /> }
         ]
       }

@@ -23,6 +23,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.transaction.annotation.Transactional;
 
 @ExtendWith(MockitoExtension.class)
 class CouponSlotTransactionExecutorTest {
@@ -35,6 +36,13 @@ class CouponSlotTransactionExecutorTest {
 
     @Mock
     private UserRepository userRepository;
+
+    @Test
+    void lockDelegatedWriteMethodsOwnTheTransactionBoundary() throws NoSuchMethodException {
+        assertWriteTransaction("assignSlotInTransaction", Long.class, Long.class);
+        assertWriteTransaction("assignPublicSlotInTransaction", Long.class, Long.class);
+        assertWriteTransaction("assignSlotsInTransaction", Long.class, java.util.List.class);
+    }
 
     @Test
     void assignSlotFillsAvailableCouponSlot() {
@@ -124,5 +132,14 @@ class CouponSlotTransactionExecutorTest {
         User user = User.signup("user" + id + "@test.com", "encoded", "user" + id, "01012345678");
         assignId(user, id);
         return user;
+    }
+
+    private void assertWriteTransaction(String methodName, Class<?>... parameterTypes) throws NoSuchMethodException {
+        Transactional transactional = CouponSlotTransactionExecutor.class
+            .getMethod(methodName, parameterTypes)
+            .getAnnotation(Transactional.class);
+
+        assertThat(transactional).isNotNull();
+        assertThat(transactional.readOnly()).isFalse();
     }
 }
