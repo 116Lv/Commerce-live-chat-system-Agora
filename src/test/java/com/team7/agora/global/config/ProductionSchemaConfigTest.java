@@ -49,8 +49,8 @@ class ProductionSchemaConfigTest {
     }
 
     @Test
-    void tradeCreatedAtColumnKeepsOriginalV4FlywayMigration() throws Exception {
-        ClassPathResource migration = new ClassPathResource("db/migration/V4__add_trade_created_at.sql");
+    void tradeCreatedAtColumnKeepsDevV5FlywayMigration() throws Exception {
+        ClassPathResource migration = new ClassPathResource("db/migration/V5__add_trade_created_at.sql");
 
         assertThat(migration.exists()).isTrue();
 
