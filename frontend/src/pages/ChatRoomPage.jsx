@@ -139,6 +139,14 @@ const formatProductPrice = (value) => {
   }).format(amount);
 };
 
+const getParticipantLine = (room) =>
+  [
+    room?.sellerNickname ? `판매자 ${room.sellerNickname}` : null,
+    room?.buyerNickname ? `구매자 ${room.buyerNickname}` : null
+  ]
+    .filter(Boolean)
+    .join(' · ');
+
 function ChatRoomProductCard({ room }) {
   if (!room) {
     return null;
@@ -158,7 +166,7 @@ function ChatRoomProductCard({ room }) {
       <div className="chat-room-product-card-main">
         <div>
           <h2>{room.productTitle || `Product #${room.productId}`}</h2>
-          <p>{[room.sellerNickname, room.buyerNickname].filter(Boolean).join(' · ') || 'Participants unavailable'}</p>
+          <p>{getParticipantLine(room) || 'Participants unavailable'}</p>
         </div>
         <div className="chat-room-product-card-meta">
           <strong>{formatProductPrice(room.productPrice)}</strong>

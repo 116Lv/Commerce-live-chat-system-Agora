@@ -84,6 +84,8 @@ test('ChatRoomPage can render a compact product header from room metadata', () =
   assert.match(source, /productPrice/);
   assert.match(source, /sellerNickname/);
   assert.match(source, /buyerNickname/);
+  assert.match(source, /판매자 \$\{room\.sellerNickname\}/);
+  assert.match(source, /구매자 \$\{room\.buyerNickname\}/);
 });
 
 test('ChatRoomPage scrolls to the latest rendered message', () => {
