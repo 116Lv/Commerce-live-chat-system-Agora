@@ -1,4 +1,5 @@
 const ACTIVE_RESPONSE_STATUSES = new Set(['PENDING', 'EXTENDED']);
+const TIME_VISIBLE_STATUSES = new Set(['PENDING', 'EXTENSION_REQUESTED', 'EXTENDED']);
 
 const ACTIONS = {
   accept: { key: 'accept', label: '제안 수락', variant: 'primary' },
@@ -87,6 +88,8 @@ export const buildPaymentHref = (offer, { role } = {}) => {
 };
 
 export const isOfferPayable = (offer, options) => Boolean(buildPaymentHref(offer, options));
+
+export const shouldShowOfferTime = (offer) => TIME_VISIBLE_STATUSES.has(normalizeOfferStatus(offer?.status));
 
 export const getRemainingTimeLabel = (value, now = new Date()) => {
   if (!value) {

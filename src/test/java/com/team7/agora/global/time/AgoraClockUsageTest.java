@@ -5,6 +5,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 
@@ -16,11 +18,25 @@ class AgoraClockUsageTest {
 
         List<String> directNowUsages = Files.walk(mainJava)
                 .filter(path -> path.toString().endsWith(".java"))
-                .filter(path -> !path.toString().endsWith("AgoraClock.java"))
+                .filter(path -> !isApprovedClockWrapper(path))
                 .flatMap(path -> directNowUsages(path).stream())
                 .toList();
 
         assertThat(directNowUsages).isEmpty();
+    }
+
+    @Test
+    void agoraClockUsesUtcSystemTime() {
+        LocalDateTime before = LocalDateTime.now(ZoneOffset.UTC).minusSeconds(1);
+        LocalDateTime now = AgoraClock.now();
+        LocalDateTime after = LocalDateTime.now(ZoneOffset.UTC).plusSeconds(1);
+
+        assertThat(now).isBetween(before, after);
+    }
+
+    private boolean isApprovedClockWrapper(Path path) {
+        String normalized = path.toString().replace('\\', '/');
+        return normalized.endsWith("AgoraClock.java") || normalized.endsWith("CouponEventTime.java");
     }
 
     private List<String> directNowUsages(Path path) {

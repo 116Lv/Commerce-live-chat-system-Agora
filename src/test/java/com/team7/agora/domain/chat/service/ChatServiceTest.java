@@ -208,6 +208,7 @@ class ChatServiceTest {
         assertThat(response.chatRoomId()).isEqualTo(100L);
         assertThat(response.senderId()).isEqualTo(2L);
         assertThat(response.content()).isEqualTo("거래 가능할까요?");
+        assertThat(response.createdAt().toString()).endsWith("Z");
 
         ArgumentCaptor<ChatMessage> messageCaptor = ArgumentCaptor.forClass(ChatMessage.class);
         verify(chatMessageRepository).save(messageCaptor.capture());
@@ -291,7 +292,23 @@ class ChatServiceTest {
         ChatRoom chatRoom = ChatRoom.open(product, buyer);
         assignId(chatRoom, 100L);
         when(userRepository.findById(2L)).thenReturn(Optional.of(buyer));
-        when(chatRoomRepository.findAllBySellerOrBuyer(buyer, buyer)).thenReturn(List.of(chatRoom));
+        when(chatRoomRepository.findAllByParticipantIdAndStatus(2L, ChatRoomStatus.ACTIVE)).thenReturn(List.of(chatRoom));
+
+        var responses = chatService.getMyRooms(2L);
+
+        assertThat(responses).hasSize(1);
+        assertThat(responses.get(0).chatRoomId()).isEqualTo(100L);
+    }
+
+    @Test
+    void getMyRoomsFiltersOutRoomsWhereUserIsNotParticipant() {
+        ChatRoom myRoom = ChatRoom.open(product, buyer);
+        assignId(myRoom, 100L);
+        ChatRoom otherRoom = ChatRoom.open(product, stranger);
+        assignId(otherRoom, 101L);
+        when(userRepository.findById(2L)).thenReturn(Optional.of(buyer));
+        when(chatRoomRepository.findAllByParticipantIdAndStatus(2L, ChatRoomStatus.ACTIVE))
+            .thenReturn(List.of(myRoom, otherRoom));
 
         var responses = chatService.getMyRooms(2L);
 
@@ -308,7 +325,7 @@ class ChatServiceTest {
         ProductImage image = ProductImage.create(product, "/uploads/products/bike.jpg", 0);
 
         when(userRepository.findById(2L)).thenReturn(Optional.of(buyer));
-        when(chatRoomRepository.findAllBySellerOrBuyer(buyer, buyer)).thenReturn(List.of(chatRoom));
+        when(chatRoomRepository.findAllByParticipantIdAndStatus(2L, ChatRoomStatus.ACTIVE)).thenReturn(List.of(chatRoom));
         when(productImageRepository.findAllByProductIdInOrderByProductIdAscSortOrderAsc(List.of(10L)))
             .thenReturn(List.of(image));
         when(chatMessageRepository.findLatestMessagesByChatRoomIds(List.of(100L))).thenReturn(List.of(message));
@@ -331,6 +348,7 @@ class ChatServiceTest {
         assertThat(response.lastMessageSenderId()).isEqualTo(1L);
         assertThat(response.lastMessageSenderNickname()).isEqualTo(seller.getNickname());
         assertThat(response.lastMessageCreatedAt()).isNotNull();
+        assertThat(response.lastMessageCreatedAt().toString()).endsWith("Z");
         assertThat(response.unreadCount()).isEqualTo(2L);
         verify(chatMessageRepository, never()).findFirstByChatRoomOrderByIdDesc(any(ChatRoom.class));
         verify(chatMessageRepository, never()).countUnreadMessagesForUser(any(ChatRoom.class), eq(2L), any());
@@ -350,7 +368,7 @@ class ChatServiceTest {
         assignId(secondMessage, 901L);
 
         when(userRepository.findById(2L)).thenReturn(Optional.of(buyer));
-        when(chatRoomRepository.findAllBySellerOrBuyer(buyer, buyer)).thenReturn(List.of(firstRoom, secondRoom));
+        when(chatRoomRepository.findAllByParticipantIdAndStatus(2L, ChatRoomStatus.ACTIVE)).thenReturn(List.of(firstRoom, secondRoom));
         when(chatMessageRepository.findLatestMessagesByChatRoomIds(List.of(100L, 101L)))
             .thenReturn(List.of(firstMessage, secondMessage));
         when(chatMessageRepository.countUnreadMessagesByChatRoomIds(List.of(100L, 101L), 2L))
@@ -376,7 +394,7 @@ class ChatServiceTest {
         ChatRoom chatRoom = ChatRoom.open(product, buyer);
         assignId(chatRoom, 100L);
         when(userRepository.findById(2L)).thenReturn(Optional.of(buyer));
-        when(chatRoomRepository.findAllBySellerOrBuyer(buyer, buyer)).thenReturn(List.of(chatRoom));
+        when(chatRoomRepository.findAllByParticipantIdAndStatus(2L, ChatRoomStatus.ACTIVE)).thenReturn(List.of(chatRoom));
 
         var responses = chatService.getMyRooms(2L);
 

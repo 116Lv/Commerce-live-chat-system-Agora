@@ -198,12 +198,16 @@ export function normalizeProductImageUrl(value) {
 }
 
 export function getProductImageUrl(product = {}) {
+  product = product ?? {};
+
   return normalizeProductImageUrl(
     product.primaryImageUrl || product.thumbnailUrl || product.thumbnailImageUrl || product.imageUrl || product.image || ''
   );
 }
 
 export function getProductImageUrls(product = {}) {
+  product = product ?? {};
+
   if (Array.isArray(product.imageUrls) && product.imageUrls.length > 0) {
     return product.imageUrls.map(normalizeProductImageUrl).filter(Boolean);
   }

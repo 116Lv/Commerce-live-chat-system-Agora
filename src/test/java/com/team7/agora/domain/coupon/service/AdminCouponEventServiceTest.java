@@ -273,6 +273,66 @@ class AdminCouponEventServiceTest {
     }
 
     @Test
+    void individualIssueRequestAcceptsNicknameTargets() {
+        Admin requester = admin(99L, AdminRole.SETTLEMENT_ADMIN);
+        CouponEvent event = event(CouponEventType.ADMIN_INDIVIDUAL);
+        User user = user(100L);
+        when(adminRepository.findById(99L)).thenReturn(Optional.of(requester));
+        when(couponEventRepository.findById(1L)).thenReturn(Optional.of(event));
+        when(userRepository.findAllByNicknameAndStatusAndDeletedAtIsNull("dong", UserStatus.ACTIVE))
+            .thenReturn(List.of(user));
+        when(userRepository.findByIdAndStatusAndDeletedAtIsNull(100L, UserStatus.ACTIVE)).thenReturn(Optional.of(user));
+        when(couponRepository.existsByCouponEventIdAndUserId(1L, 100L)).thenReturn(false);
+        when(approvalRequestRepository.save(any(AdminApprovalRequest.class))).thenAnswer(invocation -> {
+            AdminApprovalRequest request = invocation.getArgument(0);
+            assignId(request, 10L);
+            return request;
+        });
+        ArgumentCaptor<com.team7.agora.domain.coupon.entity.AdminCouponApprovalPayload> payloadCaptor =
+            ArgumentCaptor.forClass(com.team7.agora.domain.coupon.entity.AdminCouponApprovalPayload.class);
+        when(approvalPayloadRepository.save(payloadCaptor.capture())).thenAnswer(invocation -> invocation.getArgument(0));
+
+        var response = newService().requestIssueToUsers(
+            principal(AdminRole.SETTLEMENT_ADMIN),
+            1L,
+            List.of("dong")
+        );
+
+        assertThat(response.validTargetCount()).isEqualTo(1);
+        assertThat(payloadCaptor.getValue().targetUserIdList()).containsExactly(100L);
+        verify(couponSlotService, never()).assignSlots(any(), any());
+    }
+
+    @Test
+    void individualIssueRequestExcludesAmbiguousNicknameTargets() {
+        Admin requester = admin(99L, AdminRole.SETTLEMENT_ADMIN);
+        CouponEvent event = event(CouponEventType.ADMIN_INDIVIDUAL);
+        when(adminRepository.findById(99L)).thenReturn(Optional.of(requester));
+        when(couponEventRepository.findById(1L)).thenReturn(Optional.of(event));
+        when(userRepository.findAllByNicknameAndStatusAndDeletedAtIsNull("dong", UserStatus.ACTIVE))
+            .thenReturn(List.of(user(100L), user(101L)));
+        when(approvalRequestRepository.save(any(AdminApprovalRequest.class))).thenAnswer(invocation -> {
+            AdminApprovalRequest request = invocation.getArgument(0);
+            assignId(request, 10L);
+            return request;
+        });
+        ArgumentCaptor<com.team7.agora.domain.coupon.entity.AdminCouponApprovalPayload> payloadCaptor =
+            ArgumentCaptor.forClass(com.team7.agora.domain.coupon.entity.AdminCouponApprovalPayload.class);
+        when(approvalPayloadRepository.save(payloadCaptor.capture())).thenAnswer(invocation -> invocation.getArgument(0));
+
+        var response = newService().requestIssueToUsers(
+            principal(AdminRole.SETTLEMENT_ADMIN),
+            1L,
+            List.of("dong")
+        );
+
+        assertThat(response.validTargetCount()).isZero();
+        assertThat(response.excludedCount()).isEqualTo(1);
+        assertThat(payloadCaptor.getValue().targetUserIdList()).isEmpty();
+        verify(couponSlotService, never()).assignSlots(any(), any());
+    }
+
+    @Test
     void individualIssueSummaryExcludesDuplicatesInvalidUsersAndAlreadyIssuedUsers() {
         Admin requester = admin(99L, AdminRole.SETTLEMENT_ADMIN);
         CouponEvent event = event(CouponEventType.ADMIN_INDIVIDUAL);

@@ -98,6 +98,9 @@ class PaymentServiceTest {
         assertThat(response.payerId()).isEqualTo(2L);
         assertThat(response.amount()).isEqualByComparingTo(BigDecimal.valueOf(50000));
         assertThat(response.status()).isEqualTo("READY");
+        assertThat(response.buyerEmail()).isEqualTo("buyer@test.com");
+        assertThat(response.buyerName()).isEqualTo("구매자");
+        assertThat(response.buyerTel()).isEqualTo("01033334444");
     }
 
     @Test
