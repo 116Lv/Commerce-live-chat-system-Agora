@@ -174,7 +174,7 @@ class LockStrategyDemoTest {
         if (product.getStatus() != ProductStatus.SELLING
             || tradeRepository.existsByProductAndStatusIn(
                 product,
-                List.of(TradeStatus.PAYMENT_PENDING, TradeStatus.PAID, TradeStatus.COMPLETED)
+                TradeStatus.blockingStatuses()
             )) {
             return;
         }
