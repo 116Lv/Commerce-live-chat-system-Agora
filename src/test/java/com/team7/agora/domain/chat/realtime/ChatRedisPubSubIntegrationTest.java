@@ -6,7 +6,8 @@ import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 
 import com.team7.agora.domain.chat.dto.response.ChatMessageResponse;
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
 import org.mockito.ArgumentCaptor;
@@ -31,7 +32,7 @@ class ChatRedisPubSubIntegrationTest {
     void publish_isDeliveredToLocalStompSubscribersThroughRedisChannel() {
         Long roomId = 999_001L;
         ChatMessageResponse message = new ChatMessageResponse(
-            1L, roomId, 2L, "구매자", "안녕하세요", "TEXT", LocalDateTime.now()
+            1L, roomId, 2L, "구매자", "안녕하세요", "TEXT", OffsetDateTime.now(ZoneOffset.UTC)
         );
 
         chatRedisPublisher.publish(roomId, message);

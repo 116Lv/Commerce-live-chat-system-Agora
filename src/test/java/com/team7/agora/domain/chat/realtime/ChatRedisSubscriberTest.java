@@ -10,7 +10,8 @@ import static org.mockito.Mockito.when;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.team7.agora.domain.chat.dto.response.ChatMessageResponse;
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -33,7 +34,7 @@ class ChatRedisSubscriberTest {
     void onMessage_forwardsDeserializedMessageToRoomDestination() throws Exception {
         ChatRedisSubscriber subscriber = new ChatRedisSubscriber(messagingTemplate, objectMapper);
         ChatMessageResponse payload = new ChatMessageResponse(
-            1L, 100L, 2L, "구매자", "안녕하세요", "TEXT", LocalDateTime.now()
+            1L, 100L, 2L, "구매자", "안녕하세요", "TEXT", OffsetDateTime.now(ZoneOffset.UTC)
         );
         when(redisMessage.getBody()).thenReturn(objectMapper.writeValueAsBytes(payload));
 

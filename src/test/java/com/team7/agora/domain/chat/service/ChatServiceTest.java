@@ -208,6 +208,7 @@ class ChatServiceTest {
         assertThat(response.chatRoomId()).isEqualTo(100L);
         assertThat(response.senderId()).isEqualTo(2L);
         assertThat(response.content()).isEqualTo("거래 가능할까요?");
+        assertThat(response.createdAt().toString()).endsWith("Z");
 
         ArgumentCaptor<ChatMessage> messageCaptor = ArgumentCaptor.forClass(ChatMessage.class);
         verify(chatMessageRepository).save(messageCaptor.capture());
@@ -347,6 +348,7 @@ class ChatServiceTest {
         assertThat(response.lastMessageSenderId()).isEqualTo(1L);
         assertThat(response.lastMessageSenderNickname()).isEqualTo(seller.getNickname());
         assertThat(response.lastMessageCreatedAt()).isNotNull();
+        assertThat(response.lastMessageCreatedAt().toString()).endsWith("Z");
         assertThat(response.unreadCount()).isEqualTo(2L);
         verify(chatMessageRepository, never()).findFirstByChatRoomOrderByIdDesc(any(ChatRoom.class));
         verify(chatMessageRepository, never()).countUnreadMessagesForUser(any(ChatRoom.class), eq(2L), any());

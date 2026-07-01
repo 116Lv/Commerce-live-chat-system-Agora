@@ -5,7 +5,8 @@ import static org.mockito.Mockito.verify;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.team7.agora.domain.chat.dto.response.ChatMessageResponse;
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -24,7 +25,7 @@ class ChatRedisPublisherTest {
     void publish_sendsJsonMessageToRoomChannel() throws Exception {
         ChatRedisPublisher publisher = new ChatRedisPublisher(redisTemplate, objectMapper);
         ChatMessageResponse message = new ChatMessageResponse(
-            1L, 100L, 2L, "구매자", "안녕하세요", "TEXT", LocalDateTime.now()
+            1L, 100L, 2L, "구매자", "안녕하세요", "TEXT", OffsetDateTime.now(ZoneOffset.UTC)
         );
 
         publisher.publish(100L, message);

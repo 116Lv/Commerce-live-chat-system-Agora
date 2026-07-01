@@ -3,7 +3,8 @@ package com.team7.agora.domain.chat.dto.response;
 import com.team7.agora.domain.chat.entity.ChatRoom;
 import com.team7.agora.domain.chat.entity.ChatMessage;
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 
 /**
  * 채팅방 응답 본문을 표현하는 DTO이다.
@@ -30,7 +31,7 @@ public record ChatRoomResponse(
     String lastMessageType,
     Long lastMessageSenderId,
     String lastMessageSenderNickname,
-    LocalDateTime lastMessageCreatedAt,
+    OffsetDateTime lastMessageCreatedAt,
     long unreadCount
 ) {
 
@@ -66,7 +67,7 @@ public record ChatRoomResponse(
             lastMessage == null ? null : lastMessage.getMessageType().name(),
             lastMessage == null ? null : lastMessage.getSender().getId(),
             lastMessage == null ? null : lastMessage.getSender().getNickname(),
-            lastMessage == null ? null : lastMessage.getCreatedAt(),
+            lastMessage == null ? null : lastMessage.getCreatedAt().atOffset(ZoneOffset.UTC),
             unreadCount
         );
     }
