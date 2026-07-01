@@ -26,7 +26,7 @@ import com.team7.agora.domain.user.repository.UserRepository;
 import com.team7.agora.global.auth.AdminPrincipal;
 import com.team7.agora.global.exception.BusinessException;
 import com.team7.agora.global.exception.ErrorCode;
-import com.team7.agora.global.time.AgoraClock;
+import com.team7.agora.domain.coupon.time.CouponEventTime;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
@@ -172,7 +172,7 @@ public class AdminCouponEventService {
         if (event.getType() != CouponEventType.ADMIN_INDIVIDUAL) {
             throw new BusinessException(ErrorCode.INVALID_REQUEST, "Only ADMIN_INDIVIDUAL events support admin issue requests.");
         }
-        event.validateIssueable(AgoraClock.now());
+        event.validateIssueable(CouponEventTime.now());
 
         String pendingRequestKey = "COUPON_EVENT_ISSUE:" + event.getId() + ":" + requester.getId();
         validateNoPendingRequest(pendingRequestKey);

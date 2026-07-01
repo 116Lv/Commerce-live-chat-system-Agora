@@ -24,7 +24,7 @@ import com.team7.agora.global.auth.JwtProvider;
 import com.team7.agora.global.exception.BusinessException;
 import com.team7.agora.global.exception.ErrorCode;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -268,7 +268,7 @@ class AuthServiceTest {
     }
 
     @Test
-    void login_issuesRefreshTokenExpirationByServiceClock() {
+    void login_issuesRefreshTokenExpirationByUtcClock() {
         // given
         AuthService authService = createService();
         User user = userWithId(1L, "user@test.com", "password123!");
@@ -282,10 +282,10 @@ class AuthServiceTest {
         // then
         ArgumentCaptor<RefreshToken> captor = ArgumentCaptor.forClass(RefreshToken.class);
         verify(refreshTokenRepository).save(captor.capture());
-        LocalDateTime expectedEarliest = LocalDateTime.now(ZoneId.of("Asia/Seoul"))
+        LocalDateTime expectedEarliest = LocalDateTime.now(ZoneOffset.UTC)
                 .plusNanos(REFRESH_TOKEN_VALID_TIME * 1_000_000L)
                 .minusSeconds(5);
-        LocalDateTime expectedLatest = LocalDateTime.now(ZoneId.of("Asia/Seoul"))
+        LocalDateTime expectedLatest = LocalDateTime.now(ZoneOffset.UTC)
                 .plusNanos(REFRESH_TOKEN_VALID_TIME * 1_000_000L)
                 .plusSeconds(5);
         assertThat(captor.getValue().getExpiresAt()).isBetween(expectedEarliest, expectedLatest);
@@ -309,7 +309,7 @@ class AuthServiceTest {
         // given
         AuthService authService = createService();
         User user = userWithId(1L, "user@test.com", "password123!");
-        RefreshToken expired = RefreshToken.issue(user, AuthService.hashRefreshToken("expired-token"), LocalDateTime.now(ZoneId.of("Asia/Seoul")).minusSeconds(1));
+        RefreshToken expired = RefreshToken.issue(user, AuthService.hashRefreshToken("expired-token"), LocalDateTime.now(ZoneOffset.UTC).minusSeconds(1));
         when(refreshTokenRepository.findByTokenHashForUpdate(AuthService.hashRefreshToken("expired-token"))).thenReturn(Optional.of(expired));
 
         // when & then
