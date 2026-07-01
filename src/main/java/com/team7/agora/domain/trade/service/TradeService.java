@@ -31,7 +31,6 @@ import com.team7.agora.global.auth.AuthUser;
 import com.team7.agora.global.exception.BusinessException;
 import com.team7.agora.global.exception.ErrorCode;
 import java.math.BigDecimal;
-import java.util.List;
 import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -45,12 +44,6 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @Transactional(readOnly = true)
 public class TradeService {
-
-    private static final List<TradeStatus> BLOCKING_TRADE_STATUSES = List.of(
-        TradeStatus.PAYMENT_PENDING,
-        TradeStatus.PAID,
-        TradeStatus.COMPLETED
-    );
 
     private final TradeRepository tradeRepository;
     private final TradeQueryRepository tradeQueryRepository;
@@ -142,7 +135,7 @@ public class TradeService {
         User buyer = userRepository.findByIdAndStatusAndDeletedAtIsNull(buyerId, UserStatus.ACTIVE)
             .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "구매자를 찾을 수 없습니다."));
 
-        if (tradeRepository.existsByProductAndStatusIn(product, BLOCKING_TRADE_STATUSES)) {
+        if (tradeRepository.existsByProductAndStatusIn(product, TradeStatus.blockingStatuses())) {
             throw new BusinessException(ErrorCode.CONFLICT, "이미 진행 중이거나 완료된 거래입니다.");
         }
 
@@ -175,7 +168,7 @@ public class TradeService {
         if (lockedProduct.getStatus() != ProductStatus.SELLING) {
             throw new BusinessException(ErrorCode.CONFLICT, "거래 가능한 상태의 상품이 아닙니다.");
         }
-        if (tradeRepository.existsByProductAndStatusIn(lockedProduct, BLOCKING_TRADE_STATUSES)) {
+        if (tradeRepository.existsByProductAndStatusIn(lockedProduct, TradeStatus.blockingStatuses())) {
             throw new BusinessException(ErrorCode.CONFLICT, "이미 진행 중이거나 완료된 거래입니다.");
         }
 

@@ -41,12 +41,6 @@ public class NegoService {
         NegoOfferStatus.EXTENDED,
         NegoOfferStatus.ACCEPTED
     );
-    private static final List<TradeStatus> BLOCKING_TRADE_STATUSES = List.of(
-        TradeStatus.PAYMENT_PENDING,
-        TradeStatus.PAID,
-        TradeStatus.COMPLETED
-    );
-
     private final NegoOfferRepository negoOfferRepository;
     private final ChatRoomRepository chatRoomRepository;
     private final ProductRepository productRepository;
@@ -149,7 +143,7 @@ public class NegoService {
         return tradeRepository.findFirstByProductAndBuyerAndStatusInOrderByIdDesc(
                 offer.getChatRoom().getProduct(),
                 offer.getRequester(),
-                BLOCKING_TRADE_STATUSES
+                TradeStatus.blockingStatuses()
             )
             .map(trade -> NegoOfferResponse.from(offer, trade, paymentRepository.findByTrade(trade).orElse(null)))
             .orElseGet(() -> NegoOfferResponse.from(offer));
