@@ -11,6 +11,7 @@ import java.util.concurrent.Executors;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.boot.test.context.runner.ApplicationContextRunner;
 
 class PortOnePaymentClientTest {
 
@@ -53,5 +54,13 @@ class PortOnePaymentClientTest {
         assertThat(approved).isTrue();
         assertThat(tokenRequestBody).contains("a\\\"b");
         assertThat(confirmRequestBody).contains("\"paymentKey\":\"payment-key\"");
+    }
+
+    @Test
+    void dockerProfileCreatesPortOnePaymentClientBean() {
+        new ApplicationContextRunner()
+            .withPropertyValues("spring.profiles.active=docker", "portone.api-secret=test-secret")
+            .withUserConfiguration(PortOnePaymentClient.class)
+            .run(context -> assertThat(context).hasSingleBean(PortOnePaymentClient.class));
     }
 }

@@ -9,6 +9,7 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
@@ -25,6 +26,7 @@ public class PortOnePaymentClient implements PaymentClient {
     private final String apiBaseUrl;
     private final String apiSecret;
 
+    @Autowired
     public PortOnePaymentClient(
         @Value("${portone.api-base-url:https://api.portone.io}") String apiBaseUrl,
         @Value("${portone.api-secret}") String apiSecret
