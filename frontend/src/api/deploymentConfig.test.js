@@ -12,10 +12,17 @@ test('frontend nginx proxies backend APIs, websocket, and uploaded files interna
 
   assert.match(nginx, /client_max_body_size 100m;/);
   assert.match(nginx, /location \/api\//);
-  assert.match(nginx, /location \/ws\//);
+  assert.match(nginx, /location \/ws\s*\{/);
   assert.match(nginx, /location \/uploads\//);
   assert.match(nginx, /location = \/health/);
   assert.match(nginx, /proxy_pass http:\/\/backend:8080/);
+
+  const securityConfig = readFileSync(
+    resolve(root, 'src/main/java/com/team7/agora/global/config/SecurityConfig.java'),
+    'utf8'
+  );
+  assert.match(securityConfig, /"\/ws"/);
+  assert.match(securityConfig, /"\/ws\/\*\*"/);
 });
 
 test('production compose keeps backend off host ports and builds frontend for same-origin API calls', () => {
