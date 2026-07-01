@@ -43,9 +43,13 @@ class AuthControllerTest {
     private MockMvc mockMvc;
 
     private String signupJson(String email, String password, String nickname) {
+        return signupJson(email, password, nickname, "01012345678");
+    }
+
+    private String signupJson(String email, String password, String nickname, String phone) {
         return """
-                {"email":"%s","password":"%s","nickname":"%s"}
-                """.formatted(email, password, nickname);
+                {"email":"%s","password":"%s","nickname":"%s","phone":"%s"}
+                """.formatted(email, password, nickname, phone);
     }
 
     private String loginJson(String email, String password) {
@@ -97,6 +101,16 @@ class AuthControllerTest {
                         .content(signupJson("not-an-email", "password123!", "동네유저")))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.status").value("ERROR"));
+    }
+
+    @Test
+    void signup_returns400WhenPhoneMissing() throws Exception {
+        mockMvc.perform(post("/api/auth/signup")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(signupJson("user@test.com", "password123!", "동네유저", "")))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value("ERROR"))
+                .andExpect(jsonPath("$.message").value("휴대폰 번호는 필수입니다."));
     }
 
     @Test
