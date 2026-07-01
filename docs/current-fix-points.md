@@ -1,6 +1,6 @@
 # Current Fix Points
 
-Last reviewed: 2026-06-25
+Last reviewed: 2026-07-01
 
 This document summarizes the current code areas that should be fixed or tightened before the project is treated as production-ready. The list is based on the current `src/main/java` implementation and the current Gradle configuration.
 
@@ -8,7 +8,7 @@ This document summarizes the current code areas that should be fixed or tightene
 
 | Priority | Area | Why it matters |
 | --- | --- | --- |
-| P0 | Redisson distributed lock migration | Coupon issuance currently uses a custom Redis lock, not Redisson. Lock wait/lease behavior and transaction boundaries need to be made explicit. |
+| ~~P0~~ | ~~Redisson distributed lock migration~~ | ✅ **완료 (2026-07-01)** — Redisson 적용 및 트랜잭션 경계 분리 완료. |
 | P0 | Race conditions around trade, payment, likes, and coupons | Several flows use `exists -> save/update` checks that can pass concurrently unless backed by DB constraints, pessimistic locking, or distributed locks. |
 | P1 | Payment integration robustness | PortOne response parsing, idempotency, admin verification, and settlement creation need stronger failure handling. |
 | P1 | Encoding and response-message cleanup | Several Java files still contain mojibake text in comments or exception messages. Users may receive broken Korean messages. |
@@ -17,24 +17,11 @@ This document summarizes the current code areas that should be fixed or tightene
 
 ## P0: Locking and Concurrency
 
-### 1. Redisson is not currently applied
+### 1. ✅ Redisson migration — 완료 (2026-07-01)
 
-Current files:
-
-- `src/main/java/com/team7/agora/global/lock/LockService.java`
-- `src/main/java/com/team7/agora/global/lock/RedisLockRepository.java`
-- `src/main/java/com/team7/agora/domain/coupon/service/CouponIssueService.java`
-
-Current state:
-
-- `LockService` uses `RedisLockRepository` when Redis is available.
-- `RedisLockRepository` uses `StringRedisTemplate.opsForValue().setIfAbsent(key, owner, ttl)` and a Lua delete script.
-- There is no `org.redisson:redisson-spring-boot-starter` dependency.
-- There is no `RedissonClient`, `RLock`, `tryLock(waitTime, leaseTime, TimeUnit)`, watchdog, or Redisson config.
-
-Required action:
-
-- Migrate the lock implementation to Redisson. See `docs/redisson-distributed-lock-guide.md`.
+- `RedissonConfig.java` + `LockService.java`에 Redisson `RLock` 적용 완료.
+- 트랜잭션 경계 분리(`CouponSlotService` / `CouponSlotTransactionExecutor`)도 완료.
+- 설계 상세 → [`docs/redisson-distributed-lock-guide.md`](redisson-distributed-lock-guide.md)
 
 ### 2. Coupon issuance lock is inside a transactional method
 
