@@ -37,7 +37,6 @@ public class ProductSearchCacheLoader {
         cacheNames = CacheConfig.PRODUCT_SEARCH_CACHE,
         key = "'search:' + #condition.normalizedKeyword() + ':' + #condition.regionId() + ':' + #condition.normalizedCategory()"
             + " + ':' + #condition.pageable().pageNumber + ':' + #condition.pageable().pageSize"
-            + " + ':' + #condition.normalizedSort() + ':' + #condition.normalizedDirection()"
     )
     public PageResponse<ProductSearchResponse> load(ProductSearchCondition condition) {
         searchPerformanceRecorder.recordDbHit("v2");

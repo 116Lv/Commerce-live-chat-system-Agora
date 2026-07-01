@@ -1,7 +1,6 @@
 package com.team7.agora.domain.product.repository;
 
 import com.querydsl.core.BooleanBuilder;
-import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.Projections;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.team7.agora.domain.product.entity.QProduct;
@@ -80,7 +79,7 @@ public class ProductSearchRepositoryImpl implements ProductSearchRepository {
             .join(product.seller, seller)
             .leftJoin(productImage).on(productImage.product.eq(product).and(productImage.sortOrder.eq(0)))
             .where(where)
-            .orderBy(buildOrder(product, condition.normalizedSort(), condition.normalizedDirection()))
+            .orderBy(product.id.desc())
             .offset(condition.pageable().getOffset())
             .limit(condition.pageable().getPageSize())
             .fetch();
@@ -93,13 +92,5 @@ public class ProductSearchRepositoryImpl implements ProductSearchRepository {
             .fetchOne();
 
         return new PageImpl<>(content, condition.pageable(), total == null ? 0 : total);
-    }
-
-    private OrderSpecifier<?> buildOrder(QProduct product, String sort, String direction) {
-        boolean asc = "asc".equals(direction);
-        if ("likes".equals(sort)) {
-            return asc ? product.likeCount.asc() : product.likeCount.desc();
-        }
-        return asc ? product.id.asc() : product.id.desc();
     }
 }

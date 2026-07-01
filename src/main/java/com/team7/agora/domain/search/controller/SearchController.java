@@ -53,14 +53,12 @@ public class SearchController {
         @RequestParam(required = false) Long regionId,
         @RequestParam(required = false) String category,
         @RequestParam(defaultValue = "0") int page,
-        @RequestParam(defaultValue = "20") int size,
-        @RequestParam(defaultValue = "recent") String sort,
-        @RequestParam(defaultValue = "desc") String direction
+        @RequestParam(defaultValue = "20") int size
     ) {
         popularKeywordService.recordSearchKeyword(viewerId(userDetails), keyword);
         return ResponseEntity.ok(ApiResponse.success("상품 검색 결과입니다.",
             PageResponse.from(productSearchService.searchV1(
-                new ProductSearchCondition(keyword, regionId, category, PageRequest.of(page, size), sort, direction)
+                new ProductSearchCondition(keyword, regionId, category, PageRequest.of(page, size))
             ))
         ));
     }
@@ -81,14 +79,12 @@ public class SearchController {
         @RequestParam(required = false) Long regionId,
         @RequestParam(required = false) String category,
         @RequestParam(defaultValue = "0") int page,
-        @RequestParam(defaultValue = "20") int size,
-        @RequestParam(defaultValue = "recent") String sort,
-        @RequestParam(defaultValue = "desc") String direction
+        @RequestParam(defaultValue = "20") int size
     ) {
         popularKeywordService.recordSearchKeyword(viewerId(userDetails), keyword);
         return ResponseEntity.ok(ApiResponse.success("캐시 적용 상품 검색 결과입니다.",
             productSearchService.searchV2(
-                new ProductSearchCondition(keyword, regionId, category, PageRequest.of(page, size), sort, direction)
+                new ProductSearchCondition(keyword, regionId, category, PageRequest.of(page, size))
             )
         ));
     }
