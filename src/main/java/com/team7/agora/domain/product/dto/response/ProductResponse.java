@@ -4,6 +4,7 @@ import com.team7.agora.domain.product.entity.Product;
 import com.team7.agora.domain.product.enums.ProductApprovalStatus;
 import com.team7.agora.domain.product.enums.ProductStatus;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -36,7 +37,8 @@ public record ProductResponse(
     String statusLabel,
     String categoryLabel,
     ProductApprovalStatus approvalStatus,
-    List<String> imageUrls
+    List<String> imageUrls,
+    LocalDateTime createdAt
 ) {
 
     public ProductResponse {
@@ -72,7 +74,8 @@ public record ProductResponse(
             statusLabel(status),
             category,
             null,
-            List.of()
+            List.of(),
+            null
         );
     }
 
@@ -115,7 +118,8 @@ public record ProductResponse(
             statusLabel(product.getStatus()),
             product.getCategory(),
             product.getApprovalStatus(),
-            imageUrls
+            imageUrls,
+            product.getCreatedAt()
         );
     }
 

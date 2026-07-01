@@ -11,7 +11,7 @@ import { getSmileScore } from '../api/mypageApi.js';
 import { openChatRoom } from '../api/chatApi.js';
 import { useAuth } from '../auth/AuthContext.jsx';
 import ReportModal from '../features/reports/ReportModal.jsx';
-import { PageHeader, useApiResource } from './pageUtils.jsx';
+import { PageHeader, formatDateTime, useApiResource } from './pageUtils.jsx';
 import {
   getProductCategoryLabel,
   getProductImageUrls,
@@ -149,6 +149,7 @@ export default function ProductDetailPage() {
   const likeCount = product.likeCount ?? 0;
   const regionLabel = getProductRegionLabel(product);
   const statusLabel = getProductStatusLabel(product);
+  const createdAtLabel = product.createdAt ? formatDateTime(product.createdAt) : '-';
 
   return (
     <section>
@@ -223,6 +224,10 @@ export default function ProductDetailPage() {
               <div>
                 <dt>관심</dt>
                 <dd>{likeCount}개</dd>
+              </div>
+              <div>
+                <dt>작성일</dt>
+                <dd>{createdAtLabel}</dd>
               </div>
             </dl>
             <ButtonGroup className="product-action-group" aria-label="상품 작업">
