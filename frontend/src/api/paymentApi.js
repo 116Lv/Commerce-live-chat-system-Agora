@@ -55,6 +55,20 @@ const buildPortOneCustomer = (payment) => {
   return Object.keys(customer).length > 0 ? customer : undefined;
 };
 
+const validateBuyerContact = (payment) => {
+  if (!getBuyerEmail(payment)) {
+    throw new Error('구매자 이메일을 확인할 수 없습니다.');
+  }
+
+  if (!getBuyerName(payment)) {
+    throw new Error('구매자 이름을 확인할 수 없습니다.');
+  }
+
+  if (!getBuyerTel(payment)) {
+    throw new Error('구매자 휴대폰 번호를 확인할 수 없습니다.');
+  }
+};
+
 const buildResult = (payment, approval, local = false) => {
   const paymentKey = getPaymentKeyFromApproval(approval);
 
@@ -140,6 +154,8 @@ export const requestPaymentApproval = async (payment, options = {}) => {
   if (getLocalMode(payment)) {
     return buildResult(payment, { paymentKey: `local-${payment.orderId}` }, true);
   }
+
+  validateBuyerContact(payment);
 
   if (win?.PortOne?.requestPayment) {
     return requestPortOnePayment(payment, win, redirectUrl);

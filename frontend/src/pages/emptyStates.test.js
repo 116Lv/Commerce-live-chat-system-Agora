@@ -103,3 +103,25 @@ test('auth and admin chrome use Korean labels', () => {
   assert.doesNotMatch(adminLogin, /Admin Login/);
   assert.doesNotMatch(adminLayout, /label: 'Dashboard'|label: 'Products'|label: 'Users'|label: 'Reports'|label: 'Payments'|label: 'Coupons'/);
 });
+
+test('signup collects phone and sends new users to region setup', () => {
+  const userSignup = readSource('../features/auth/UserSignupPage.jsx');
+
+  assert.match(userSignup, /phone: ''/);
+  assert.match(userSignup, /name="phone"/);
+  assert.match(userSignup, /autoComplete="tel"/);
+  assert.match(userSignup, /휴대폰 번호/);
+  assert.match(userSignup, /navigate\('\/regions\/setup'/);
+});
+
+test('region setup page lets users choose preferred and primary regions', () => {
+  const source = readPage('UserPlaceholderPages.jsx');
+
+  assert.match(source, /updatePreferredRegions/);
+  assert.match(source, /selectedRegionIds/);
+  assert.match(source, /primaryRegionId/);
+  assert.match(source, /관심 지역은 3개 이상 5개 이하로 선택해 주세요\./);
+  assert.match(source, /type="checkbox"/);
+  assert.match(source, /type="radio"/);
+  assert.match(source, /관심 지역 저장/);
+});
