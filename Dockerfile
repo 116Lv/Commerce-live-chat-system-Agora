@@ -12,6 +12,7 @@ FROM eclipse-temurin:21-jre-alpine
 
 WORKDIR /app
 
+RUN apk add --no-cache curl
 RUN addgroup -S agora && adduser -S agora -G agora
 RUN mkdir -p /app/uploads && chown -R agora:agora /app
 
