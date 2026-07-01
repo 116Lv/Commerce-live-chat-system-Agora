@@ -79,6 +79,10 @@ describe('product form utilities', () => {
     );
   });
 
+  test('returns no product images while detail data is still null', () => {
+    assert.deepEqual(getProductImageUrls(null), []);
+  });
+
   test('normalizes ProductSearchResponse title and label aliases', () => {
     const product = {
       productTitle: 'Search title',
