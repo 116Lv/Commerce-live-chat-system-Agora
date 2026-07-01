@@ -20,6 +20,7 @@ import com.team7.agora.domain.coupon.enums.CouponEventType;
 import com.team7.agora.domain.coupon.repository.AdminCouponApprovalPayloadRepository;
 import com.team7.agora.domain.coupon.repository.CouponEventRepository;
 import com.team7.agora.domain.coupon.repository.CouponRepository;
+import com.team7.agora.domain.user.entity.User;
 import com.team7.agora.domain.user.enums.UserStatus;
 import com.team7.agora.domain.user.repository.UserRepository;
 import com.team7.agora.global.auth.AdminPrincipal;
@@ -163,9 +164,9 @@ public class AdminCouponEventService {
     }
 
     @Transactional
-    public AdminCouponIssueApprovalResponse requestIssueToUsers(AdminPrincipal admin, Long eventId, List<Long> userIds) {
+    public AdminCouponIssueApprovalResponse requestIssueToUsers(AdminPrincipal admin, Long eventId, List<?> issueTargets) {
         validateAdminAuthority(admin);
-        validateIssueTargetsForApproval(userIds);
+        validateIssueTargetsForApproval(issueTargets);
         Admin requester = getCurrentAdmin(admin);
         CouponEvent event = findEvent(eventId);
         if (event.getType() != CouponEventType.ADMIN_INDIVIDUAL) {
@@ -176,7 +177,7 @@ public class AdminCouponEventService {
         String pendingRequestKey = "COUPON_EVENT_ISSUE:" + event.getId() + ":" + requester.getId();
         validateNoPendingRequest(pendingRequestKey);
 
-        IssueSummary summary = summarizeIssueTargets(event, userIds);
+        IssueSummary summary = summarizeIssueTargets(event, issueTargets);
         AdminApprovalRequest request = saveCouponApprovalRequest(AdminApprovalRequest.createCouponOperation(
             AdminApprovalOperation.COUPON_EVENT_ISSUE,
             requester,
@@ -260,11 +261,11 @@ public class AdminCouponEventService {
         }
     }
 
-    private void validateIssueTargetsForApproval(List<Long> userIds) {
-        if (userIds == null || userIds.isEmpty()) {
+    private void validateIssueTargetsForApproval(List<?> issueTargets) {
+        if (issueTargets == null || issueTargets.isEmpty()) {
             throw new BusinessException(ErrorCode.INVALID_REQUEST, "At least one issue target user is required.");
         }
-        if (userIds.size() > MAX_ADMIN_ISSUE_USER_COUNT) {
+        if (issueTargets.size() > MAX_ADMIN_ISSUE_USER_COUNT) {
             throw new BusinessException(ErrorCode.INVALID_REQUEST, "Admin individual issue supports up to 100 users.");
         }
     }
@@ -305,12 +306,13 @@ public class AdminCouponEventService {
         couponRepository.saveAll(slots);
     }
 
-    private IssueSummary summarizeIssueTargets(CouponEvent event, List<Long> userIds) {
+    private IssueSummary summarizeIssueTargets(CouponEvent event, List<?> issueTargets) {
         Set<Long> seen = new LinkedHashSet<>();
         List<Long> eligibleTargetIds = new ArrayList<>();
         int duplicates = 0;
         int excluded = 0;
-        for (Long userId : userIds) {
+        for (Object issueTarget : issueTargets) {
+            Long userId = resolveIssueTargetUserId(issueTarget);
             if (userId == null) {
                 excluded++;
                 continue;
@@ -334,7 +336,7 @@ public class AdminCouponEventService {
             .limit(Math.max(remaining, 0))
             .toList();
         return new IssueSummary(
-            userIds.size(),
+            issueTargets.size(),
             eligibleTargetIds.size(),
             executionTargetIds,
             duplicates,
@@ -343,6 +345,26 @@ public class AdminCouponEventService {
             event.getIssuedQuantity() + executionTargetIds.size(),
             eligibleTargetIds.size() > remaining
         );
+    }
+
+    private Long resolveIssueTargetUserId(Object issueTarget) {
+        String token = String.valueOf(issueTarget == null ? "" : issueTarget).trim();
+        if (token.isEmpty()) {
+            return null;
+        }
+        if (token.matches("\\d+")) {
+            try {
+                return Long.valueOf(token);
+            } catch (NumberFormatException ignored) {
+                return null;
+            }
+        }
+
+        List<User> matches = userRepository.findAllByNicknameAndStatusAndDeletedAtIsNull(token, UserStatus.ACTIVE);
+        if (matches.size() != 1) {
+            return null;
+        }
+        return matches.get(0).getId();
     }
 
     private record IssueSummary(

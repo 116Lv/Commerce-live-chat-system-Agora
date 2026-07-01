@@ -12,18 +12,18 @@ const parsePayloadNumber = (value) => {
   return normalized ? Number(normalized) : value;
 };
 
-const normalizeUserIds = (userIds = []) => {
+const normalizeIssueTargets = (targets = []) => {
   const seen = new Set();
 
-  return userIds
-    .map((userId) => Number(userId))
-    .filter((userId) => Number.isSafeInteger(userId) && userId > 0)
-    .filter((userId) => {
-      if (seen.has(userId)) {
+  return targets
+    .map((target) => String(target ?? '').trim())
+    .filter(Boolean)
+    .filter((target) => {
+      if (seen.has(target)) {
         return false;
       }
 
-      seen.add(userId);
+      seen.add(target);
       return true;
     });
 };
@@ -44,7 +44,7 @@ export const normalizeCouponEventPayload = (event = {}) => {
   return payload;
 };
 
-export const normalizeCouponIssuePayload = (userIds = []) => ({ userIds: normalizeUserIds(userIds) });
+export const normalizeCouponIssuePayload = (targets = []) => ({ targets: normalizeIssueTargets(targets) });
 
 export const getAdminMe = (config = {}) => apiClient.get('/api/admin/me', config);
 
@@ -124,8 +124,8 @@ export const getAdminCouponEvent = (eventId, config = {}) => apiClient.get(`/api
 export const requestCouponEventStopApproval = (eventId, reason, config = {}) =>
   apiClient.post(`/api/admin/coupon-events/${eventId}/stop-requests`, { reason }, config);
 
-export const requestCouponEventIndividualIssue = (eventId, userIds, config = {}) =>
-  apiClient.post(`/api/admin/coupon-events/${eventId}/issue-requests`, normalizeCouponIssuePayload(userIds), config);
+export const requestCouponEventIndividualIssue = (eventId, targets, config = {}) =>
+  apiClient.post(`/api/admin/coupon-events/${eventId}/issue-requests`, normalizeCouponIssuePayload(targets), config);
 
 export const getAdminCouponEventCoupons = (eventId, config = {}) =>
   apiClient.get(`/api/admin/coupon-events/${eventId}/coupons`, config);
