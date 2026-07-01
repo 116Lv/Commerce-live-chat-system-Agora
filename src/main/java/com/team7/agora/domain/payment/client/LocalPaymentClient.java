@@ -20,7 +20,7 @@ public class LocalPaymentClient implements PaymentClient {
     @Override
     public boolean confirm(String paymentKey, String orderId, BigDecimal amount) {
         return orderId != null && !orderId.isBlank()
-            && paymentKey != null && paymentKey.equals("local-" + orderId)
+            && paymentKey != null && !paymentKey.isBlank()
             && amount != null && amount.signum() > 0;
     }
 }
