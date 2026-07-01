@@ -125,9 +125,9 @@ VALUES
 
 INSERT INTO nego_offers (id, chat_room_id, requester_id, offer_price, expires_at, status, extension_requested, created_at, responded_at)
 VALUES
-    (1, 1, 2, 580000, '2099-12-31 23:59:59', 'ACCEPTED', FALSE, '2026-06-23 09:14:00', '2026-06-23 09:15:00'),
-    (2, 2, 3, 800000, '2099-12-31 23:59:59', 'PENDING', FALSE, '2026-06-23 09:22:00', NULL),
-    (3, 3, 1, 20000, '2099-12-31 23:59:59', 'REJECTED', FALSE, '2026-06-23 10:05:00', '2026-06-23 10:10:00');
+    (1, 1, 2, 580000, '2026-07-01 09:15:00', 'ACCEPTED', FALSE, '2026-06-30 09:14:00', '2026-06-30 09:15:00'),
+    (2, 2, 3, 800000, '2026-07-02 09:22:00', 'PENDING', FALSE, '2026-07-01 09:22:00', NULL),
+    (3, 3, 1, 20000, '2026-07-01 10:05:00', 'REJECTED', FALSE, '2026-06-30 10:05:00', '2026-06-30 10:10:00');
 
 INSERT INTO trades (id, product_id, seller_id, buyer_id, status, price, created_at, completed_at, payment_due_at)
 VALUES

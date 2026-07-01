@@ -174,10 +174,12 @@ export default function NegoPanel({ chatRoomId, onOfferChange, productPrice }) {
           <div className="d-flex justify-content-between align-items-start gap-2">
             <div>
               <strong>제안 #{offer.offerId}</strong>
-              <p className="mb-0 text-muted small">
-                만료 {formatDateTime(offer.expiresAt)}
-                {remainingTimeLabel ? ` · ${remainingTimeLabel}` : ''}
-              </p>
+              {offer.status === 'PENDING' && (
+                <p className="mb-0 text-muted small">
+                  만료 {formatDateTime(offer.expiresAt)}
+                  {remainingTimeLabel ? ` · ${remainingTimeLabel}` : ''}
+                </p>
+              )}
             </div>
             <StatusBadge status={offer.status} />
           </div>
