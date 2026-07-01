@@ -81,7 +81,7 @@ public class AdminCouponEventController {
     ) {
         return ApiResponse.success(
             "쿠폰 개별발급 승인요청이 등록되었습니다.",
-            adminCouponEventService.requestIssueToUsers(admin, eventId, request.userIds())
+            adminCouponEventService.requestIssueToUsers(admin, eventId, request.issueTargets())
         );
     }
 
