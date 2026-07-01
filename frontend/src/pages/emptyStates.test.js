@@ -17,7 +17,20 @@ test('my page renders an empty state when the profile payload is missing', () =>
   const source = readPage('MyPage.jsx');
 
   assert.match(source, /import EmptyState from '\.\.\/components\/EmptyState\.jsx';/);
-  assert.match(source, /!profileState\.loading && !profileState\.error && !profileState\.data/);
+  assert.match(source, /!profileState\.loading && !profileState\.error && !profile/);
+});
+
+test('my page replaces menu tiles with a profile edit layout', () => {
+  const source = readPage('MyPage.jsx');
+  const styles = readSource('../styles/theme.css');
+
+  assert.doesNotMatch(source, /MetricTile/);
+  assert.doesNotMatch(source, /to="\/me\/likes"|to="\/me\/products"|to="\/me\/trades"|to="\/me\/reviews"|to="\/me\/coupons"/);
+  assert.match(source, /className="mypage-edit-grid"/);
+  assert.match(source, /changePassword/);
+  assert.match(source, /updatePreferredRegions/);
+  assert.match(styles, /\.mypage-edit-grid/);
+  assert.match(styles, /\.mypage-smile-ring/);
 });
 
 test('product detail protects like action and does not expose edit without owner data', () => {
@@ -58,6 +71,7 @@ test('user layout hides protected navigation while logged out and shows signup',
   assert.match(source, /isUserAuthenticated/);
   assert.match(source, /회원가입/);
   assert.match(source, /로그아웃/);
+  assert.match(source, /to: '\/me\/reviews', label: '후기'/);
   assert.match(source, /isUserAuthenticated \? \(/);
   assert.match(source, /<NavDropdown[\s\S]*?account-dropdown[\s\S]*?\)\s*:\s*\(\s*<>[\s\S]*?<UserNavLink to="\/login">/);
   assert.doesNotMatch(source, /<UserNavLink to="\/me">/);

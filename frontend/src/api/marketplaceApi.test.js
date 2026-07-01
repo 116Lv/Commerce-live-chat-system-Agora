@@ -17,7 +17,19 @@ import {
 } from './productApi.js';
 import { getCouponEvents, getMyCoupons, issueCoupon } from './couponApi.js';
 import { getRegions, updatePreferredRegions } from './regionApi.js';
-import { getMe, getMyReviews, getMyTrades, updateProfile } from './mypageApi.js';
+import { changePassword, getMe, getMyReviews, getMyTrades, updateProfile } from './mypageApi.js';
+
+const createStorage = () => {
+  const store = new Map();
+  return {
+    getItem: (key) => store.get(key) ?? null,
+    setItem: (key, value) => store.set(key, String(value)),
+    removeItem: (key) => store.delete(key),
+    clear: () => store.clear()
+  };
+};
+
+globalThis.localStorage = createStorage();
 
 const captureRequest = () => {
   const requests = [];
@@ -142,7 +154,8 @@ test('mypage APIs map profile, trades, and reviews endpoints', async () => {
   const { requests, config } = captureRequest();
 
   await getMe(config);
-  await updateProfile({ nickname: 'Agora' }, config);
+  await updateProfile({ nickname: 'Agora', phone: '010-1111-2222' }, config);
+  await changePassword({ currentPassword: 'oldPassword1!', newPassword: 'newPassword1!' }, config);
   await getMyTrades({ role: 'buyer', page: 1, size: 10 }, config);
   await getMyReviews({ type: 'received', page: 0, size: 5 }, config);
 
@@ -150,7 +163,13 @@ test('mypage APIs map profile, trades, and reviews endpoints', async () => {
     requests.map(summarizeRequest),
     [
       { method: 'get', url: '/api/users/me', params: undefined, data: undefined },
-      { method: 'patch', url: '/api/users/me/profile', params: undefined, data: { nickname: 'Agora' } },
+      { method: 'patch', url: '/api/users/me/profile', params: undefined, data: { nickname: 'Agora', phone: '010-1111-2222' } },
+      {
+        method: 'patch',
+        url: '/api/users/me/password',
+        params: undefined,
+        data: { currentPassword: 'oldPassword1!', newPassword: 'newPassword1!' }
+      },
       { method: 'get', url: '/api/users/me/trades', params: { role: 'buyer', page: 1, size: 10 }, data: undefined },
       { method: 'get', url: '/api/users/me/reviews', params: { type: 'received', page: 0, size: 5 }, data: undefined }
     ]
