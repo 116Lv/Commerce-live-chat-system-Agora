@@ -152,7 +152,7 @@ test('auth API login and signup requests are sent without stored tokens', async 
   };
 
   await loginUser({ email: 'user@example.com', password: 'password' }, { adapter });
-  await signupUser({ email: 'user@example.com', password: 'password', nickname: 'User' }, { adapter });
+  await signupUser({ email: 'user@example.com', password: 'password', nickname: 'User', phone: '01012345678' }, { adapter });
   await loginAdmin({ email: 'admin@example.com', password: 'password' }, { adapter });
 
   assert.deepEqual(
@@ -163,6 +163,12 @@ test('auth API login and signup requests are sent without stored tokens', async 
       ['/api/admin/auth/login', undefined]
     ]
   );
+  assert.deepEqual(JSON.parse(seenRequests[1].data), {
+    email: 'user@example.com',
+    password: 'password',
+    nickname: 'User',
+    phone: '01012345678'
+  });
 });
 
 test('auth API logout still sends the relevant stored token', async () => {

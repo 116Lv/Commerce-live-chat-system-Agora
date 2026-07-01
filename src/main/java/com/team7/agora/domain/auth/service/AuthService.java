@@ -76,10 +76,11 @@ public class AuthService {
             throw new BusinessException(ErrorCode.DUPLICATE_EMAIL);
         }
 
-        User user = User.create(
+        User user = User.signup(
                 email,
                 passwordEncoder.encode(request.password()),
-                request.nickname()
+                request.nickname(),
+                request.phone().trim()
         );
         User savedUser = saveUserOrThrowDuplicateEmail(user);
         return new SignupResponse(savedUser.getEmail(), savedUser.getNickname());

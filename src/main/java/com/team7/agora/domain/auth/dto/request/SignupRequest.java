@@ -9,6 +9,7 @@ import jakarta.validation.constraints.NotBlank;
  * @param email 이메일
  * @param password 비밀번호
  * @param nickname 닉네임
+ * @param phone 휴대폰 번호
  */
 public record SignupRequest(
         @Email(message = "이메일 형식이 올바르지 않습니다.")
@@ -19,6 +20,9 @@ public record SignupRequest(
         String password,
 
         @NotBlank(message = "닉네임은 필수입니다.")
-        String nickname
+        String nickname,
+
+        @NotBlank(message = "휴대폰 번호는 필수입니다.")
+        String phone
 ) {
 }

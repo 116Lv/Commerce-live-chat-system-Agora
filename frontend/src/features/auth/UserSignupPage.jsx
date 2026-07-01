@@ -7,7 +7,7 @@ import { useAuth } from '../../auth/AuthContext.jsx';
 export default function UserSignupPage() {
   const { signupUser } = useAuth();
   const navigate = useNavigate();
-  const [formData, setFormData] = useState({ email: '', password: '', nickname: '' });
+  const [formData, setFormData] = useState({ email: '', password: '', nickname: '', phone: '' });
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
@@ -25,7 +25,7 @@ export default function UserSignupPage() {
 
     try {
       await signupUser(formData);
-      navigate('/', { replace: true });
+      navigate('/regions/setup', { replace: true });
     } catch (err) {
       setError(err.message);
     } finally {
@@ -63,6 +63,18 @@ export default function UserSignupPage() {
                 autoComplete="nickname"
                 value={formData.nickname}
                 onChange={handleChange}
+                required
+              />
+            </Form.Group>
+            <Form.Group controlId="signup-phone">
+              <Form.Label>휴대폰 번호</Form.Label>
+              <Form.Control
+                name="phone"
+                type="tel"
+                autoComplete="tel"
+                value={formData.phone}
+                onChange={handleChange}
+                placeholder="01012345678"
                 required
               />
             </Form.Group>
