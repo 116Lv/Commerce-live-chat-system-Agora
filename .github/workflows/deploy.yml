@@ -94,6 +94,19 @@ jobs:
 
           docker compose -f "$COMPOSE_FILE" --env-file .env up -d --build
           docker compose -f "$COMPOSE_FILE" --env-file .env ps
-          curl --fail --silent --show-error --max-time 20 http://localhost/ >/dev/null
-          curl --fail --silent --show-error --max-time 20 http://localhost/api/products >/dev/null
+          for attempt in {1..30}; do
+            if curl --fail --silent --show-error --max-time 5 http://localhost/ >/dev/null \
+              && curl --fail --silent --show-error --max-time 5 http://localhost/health >/dev/null; then
+              exit 0
+            fi
+
+            if [ "$attempt" -eq 30 ]; then
+              docker compose -f "$COMPOSE_FILE" --env-file .env ps
+              docker compose -f "$COMPOSE_FILE" --env-file .env logs --tail=200 backend frontend
+              exit 1
+            fi
+
+            echo "Waiting for frontend and backend API to become ready ($attempt/30)..."
+            sleep 2
+          done
           REMOTE
