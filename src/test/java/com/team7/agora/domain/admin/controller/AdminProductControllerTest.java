@@ -52,7 +52,15 @@ class AdminProductControllerTest {
     @Test
     void getProducts_usesAuthenticatedAdminAndReturnsProducts() throws Exception {
         authenticate(AdminRole.PRODUCT_ADMIN);
-        when(adminProductService.getProducts(any(AdminPrincipal.class), eq(true), eq("PENDING"), any()))
+        when(adminProductService.getProducts(
+                any(AdminPrincipal.class),
+                eq(true),
+                eq("Bike"),
+                eq("seller"),
+                eq("SELLING"),
+                eq("PENDING"),
+                any()
+        ))
                 .thenReturn(new PageImpl<>(
                         List.of(new AdminProductResponse(
                                 1L,
@@ -70,6 +78,9 @@ class AdminProductControllerTest {
 
         mockMvc.perform(get("/api/admin/products")
                         .param("reportedOnly", "true")
+                        .param("keyword", "Bike")
+                        .param("sellerKeyword", "seller")
+                        .param("status", "SELLING")
                         .param("approvalStatus", "PENDING")
                         .param("page", "0")
                         .param("size", "20"))
@@ -83,6 +94,32 @@ class AdminProductControllerTest {
                 .andExpect(jsonPath("$.data.size").value(20))
                 .andExpect(jsonPath("$.data.totalElements").value(42))
                 .andExpect(jsonPath("$.data.totalPages").value(3));
+    }
+
+    @Test
+    void getProducts_passesDomainSearchConditionsToService() throws Exception {
+        authenticate(AdminRole.PRODUCT_ADMIN);
+        when(adminProductService.getProducts(
+                any(AdminPrincipal.class),
+                eq(false),
+                eq("chair"),
+                eq("seller01"),
+                eq("RESERVED"),
+                eq("APPROVED"),
+                any()
+        )).thenReturn(new PageImpl<>(List.of(), PageRequest.of(1, 10), 0));
+
+        mockMvc.perform(get("/api/admin/products")
+                        .param("keyword", "chair")
+                        .param("sellerKeyword", "seller01")
+                        .param("status", "RESERVED")
+                        .param("approvalStatus", "APPROVED")
+                        .param("page", "1")
+                        .param("size", "10"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("SUCCESS"))
+                .andExpect(jsonPath("$.data.page").value(1))
+                .andExpect(jsonPath("$.data.size").value(10));
     }
 
     @Test

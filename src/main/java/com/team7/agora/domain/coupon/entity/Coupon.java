@@ -4,6 +4,7 @@ import com.team7.agora.domain.coupon.enums.CouponStatus;
 import com.team7.agora.domain.user.entity.User;
 import com.team7.agora.global.exception.BusinessException;
 import com.team7.agora.global.exception.ErrorCode;
+import com.team7.agora.global.time.AgoraClock;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -76,8 +77,15 @@ public class Coupon {
     }
 
     public void use() {
+        use(AgoraClock.now());
+    }
+
+    public void use(LocalDateTime now) {
         if (status != CouponStatus.ISSUED) {
             throw new BusinessException(ErrorCode.CONFLICT, "발급된 쿠폰만 사용할 수 있습니다.");
+        }
+        if (!isUsableAt(now)) {
+            throw new BusinessException(ErrorCode.CONFLICT, "만료된 쿠폰은 사용할 수 없습니다.");
         }
         this.status = CouponStatus.USED;
     }
@@ -86,5 +94,11 @@ public class Coupon {
         if (status == CouponStatus.ISSUED) {
             this.status = CouponStatus.EXPIRED;
         }
+    }
+
+    public boolean isUsableAt(LocalDateTime now) {
+        return status == CouponStatus.ISSUED
+            && expiresAt != null
+            && !now.isAfter(expiresAt);
     }
 }

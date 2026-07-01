@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/admin/products")
-@PreAuthorize("hasAnyAuthority('ROOT_ADMIN', 'PRODUCT_ADMIN')")
+@PreAuthorize("hasAuthority('PRODUCT_MANAGE')")
 public class AdminProductController {
 
     private final AdminProductService adminProductService;
@@ -31,6 +31,9 @@ public class AdminProductController {
     public ApiResponse<PageResponse<AdminProductResponse>> getProducts(
             @AuthenticationPrincipal AdminPrincipal admin,
             @RequestParam(defaultValue = "false") boolean reportedOnly,
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) String sellerKeyword,
+            @RequestParam(required = false) String status,
             @RequestParam(required = false) String approvalStatus,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size
@@ -38,6 +41,9 @@ public class AdminProductController {
         Page<AdminProductResponse> responses = adminProductService.getProducts(
                 admin,
                 reportedOnly,
+                keyword,
+                sellerKeyword,
+                status,
                 approvalStatus,
                 PageRequest.of(page, size)
         );

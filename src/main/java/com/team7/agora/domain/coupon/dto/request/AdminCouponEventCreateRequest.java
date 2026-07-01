@@ -29,6 +29,9 @@ public record AdminCouponEventCreateRequest(
     int minOrderAmount,
 
     @Min(value = 1, message = "유효 기간은 1일 이상이어야 합니다.")
-    int validDays
+    int validDays,
+
+    @NotBlank(message = "Coupon event approval reason is required.")
+    String reason
 ) {
 }

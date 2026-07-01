@@ -1,6 +1,7 @@
 package com.team7.agora.domain.admin.service;
 
 import com.team7.agora.domain.admin.dto.response.AdminSettlementResponse;
+import com.team7.agora.domain.admin.enums.AdminPermission;
 import com.team7.agora.domain.settlement.entity.Settlement;
 import com.team7.agora.domain.settlement.repository.SettlementRepository;
 import com.team7.agora.global.auth.AdminPrincipal;
@@ -42,7 +43,7 @@ public class AdminSettlementService {
     }
 
     private void validateSettlementAdmin(AdminPrincipal admin) {
-        if (admin == null || !AdminRoleSupport.isSettlementAdminRole(admin.getRole())) {
+        if (!AdminRoleSupport.hasPermission(admin, AdminPermission.PAYMENT_MANAGE)) {
             throw new BusinessException(ErrorCode.FORBIDDEN, "정산 실행은 정산 관리자만 수행할 수 있습니다.");
         }
     }

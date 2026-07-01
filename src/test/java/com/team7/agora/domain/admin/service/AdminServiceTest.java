@@ -8,6 +8,7 @@ import static org.mockito.Mockito.when;
 import com.team7.agora.domain.admin.dto.response.AdminDashboardResponse;
 import com.team7.agora.domain.admin.dto.response.AdminMeResponse;
 import com.team7.agora.domain.admin.entity.Admin;
+import com.team7.agora.domain.admin.enums.AdminPermission;
 import com.team7.agora.domain.admin.enums.AdminRole;
 import com.team7.agora.domain.admin.enums.AdminStatus;
 import com.team7.agora.domain.admin.repository.AdminRepository;
@@ -15,6 +16,7 @@ import com.team7.agora.global.auth.AdminPrincipal;
 import com.team7.agora.global.exception.BusinessException;
 import com.team7.agora.global.exception.ErrorCode;
 import java.util.Optional;
+import java.util.Set;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -62,7 +64,26 @@ class AdminServiceTest {
 
         // then
         assertThat(response.role()).isEqualTo("USER_ADMIN");
-        assertThat(response.accessibleMenus()).containsExactly("USERS", "USER_REPORTS");
+        assertThat(response.accessibleMenus()).containsExactly("USERS", "USER_REPORTS", "PRODUCT_REPORTS");
+    }
+
+    @Test
+    void getDashboard_returnsMenusFromGrantedPermissions() {
+        AdminService service = createService();
+        AdminPrincipal admin = new AdminPrincipal(
+                1L,
+                "admin@test.com",
+                "encoded",
+                AdminRole.SETTLEMENT_ADMIN,
+                AdminStatus.ACTIVE,
+                "관리자",
+                Set.of(AdminPermission.PAYMENT_MANAGE, AdminPermission.COUPON_MANAGE, AdminPermission.REPORT_MANAGE)
+        );
+
+        AdminDashboardResponse response = service.getDashboard(admin);
+
+        assertThat(response.accessibleMenus())
+                .contains("PAYMENTS", "REFUNDS", "SETTLEMENTS", "COUPONS", "USER_REPORTS", "PRODUCT_REPORTS");
     }
 
     @Test

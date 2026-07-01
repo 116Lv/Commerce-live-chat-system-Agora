@@ -1,6 +1,7 @@
 package com.team7.agora.domain.coupon.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.team7.agora.domain.coupon.repository.CouponEventRepository;
@@ -23,14 +24,29 @@ class CouponCleanupServiceTest {
     @Test
     void cleanupExpiredEndsEventsDeletesAvailableSlotsAndExpiresIssuedCoupons() {
         LocalDateTime now = LocalDateTime.now();
+        LocalDateTime todayStart = now.toLocalDate().atStartOfDay();
         when(couponEventRepository.endActiveEventsBefore(now)).thenReturn(2);
         when(couponRepository.deleteAvailableSlotsForEndedEventsBefore(now)).thenReturn(7);
-        when(couponRepository.expireIssuedCouponsBefore(now)).thenReturn(3);
+        when(couponRepository.expireIssuedCouponsBefore(todayStart)).thenReturn(3);
 
         var result = new CouponCleanupService(couponEventRepository, couponRepository).cleanupExpired(now);
 
         assertThat(result.endedEventCount()).isEqualTo(2);
         assertThat(result.deletedAvailableSlotCount()).isEqualTo(7);
         assertThat(result.expiredIssuedCouponCount()).isEqualTo(3);
+        verify(couponRepository).expireIssuedCouponsBefore(todayStart);
+    }
+
+    @Test
+    void expireIssuedCouponsUsesTodayStartAsExclusiveCutoff() {
+        LocalDateTime justAfterMidnight = LocalDateTime.of(2026, 7, 1, 0, 0, 1);
+        LocalDateTime todayStart = LocalDateTime.of(2026, 7, 1, 0, 0);
+        when(couponRepository.expireIssuedCouponsBefore(todayStart)).thenReturn(5);
+
+        int expiredCount = new CouponCleanupService(couponEventRepository, couponRepository)
+            .expireIssuedCoupons(justAfterMidnight);
+
+        assertThat(expiredCount).isEqualTo(5);
+        verify(couponRepository).expireIssuedCouponsBefore(todayStart);
     }
 }
