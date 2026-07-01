@@ -2,13 +2,10 @@ package com.team7.agora.domain.admin.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.lenient;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.team7.agora.domain.payment.client.PaymentClient;
 import com.team7.agora.domain.payment.service.PaymentService;
 import com.team7.agora.domain.payment.entity.Payment;
 import com.team7.agora.domain.payment.enums.PaymentStatus;
@@ -39,9 +36,6 @@ class AdminPaymentServiceTest {
     private PaymentRepository paymentRepository;
 
     @Mock
-    private PaymentClient paymentClient;
-
-    @Mock
     private PaymentService paymentService;
 
     @Mock
@@ -52,7 +46,7 @@ class AdminPaymentServiceTest {
 
     @BeforeEach
     void setUp() {
-        adminPaymentService = new AdminPaymentService(paymentRepository, paymentClient, paymentService, settlementRepository);
+        adminPaymentService = new AdminPaymentService(paymentRepository, paymentService, settlementRepository);
         settlementAdmin = new AdminPrincipal(
             99L,
             "settlement@admin.com",
@@ -93,14 +87,14 @@ class AdminPaymentServiceTest {
     }
 
     @Test
-    void verifyPaymentRejectsPaymentWithoutPaymentKey() {
+    void verifyPaymentFallsBackToOrderIdWhenPaymentKeyIsMissing() {
         Payment ready = payment(3L, PaymentStatus.READY);
         when(ready.getPaymentKey()).thenReturn(null);
         when(paymentRepository.findById(3L)).thenReturn(Optional.of(ready));
 
-        assertThatThrownBy(() -> adminPaymentService.verifyPayment(settlementAdmin, 3L))
-            .isInstanceOf(BusinessException.class);
-        verify(paymentClient, never()).confirm(any(), any(), any());
+        adminPaymentService.verifyPayment(settlementAdmin, 3L);
+
+        verify(paymentService).confirmByPaymentId(3L, "order-3");
     }
 
     @Test
@@ -111,7 +105,6 @@ class AdminPaymentServiceTest {
         adminPaymentService.verifyPayment(settlementAdmin, 4L);
 
         verify(paymentService).confirmByPaymentId(4L, "payment-key-4");
-        verify(paymentClient, never()).confirm(any(), any(), any());
     }
 
     @Test
