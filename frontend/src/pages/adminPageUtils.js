@@ -155,23 +155,33 @@ export const parseUserIdTokens = (value) => {
     .filter(Boolean);
   const seen = new Set();
   const validIds = [];
+  const validTargets = [];
   const invalidTokens = [];
 
   tokens.forEach((token) => {
     if (/^\d+$/.test(token)) {
       const id = Number(token);
 
-      if (Number.isSafeInteger(id) && id > 0 && !seen.has(id)) {
-        seen.add(id);
+      if (Number.isSafeInteger(id) && id > 0 && !seen.has(token)) {
+        seen.add(token);
         validIds.push(id);
+        validTargets.push(token);
       }
       return;
     }
 
-    invalidTokens.push(token);
+    if (/^-?\d+(?:\.\d+)?$/.test(token)) {
+      invalidTokens.push(token);
+      return;
+    }
+
+    if (!seen.has(token)) {
+      seen.add(token);
+      validTargets.push(token);
+    }
   });
 
-  return { validIds, invalidTokens };
+  return { validIds, validTargets, invalidTokens };
 };
 
 export const parseUserIds = (value) => parseUserIdTokens(value).validIds;

@@ -109,21 +109,23 @@ describe('admin coupon helpers', () => {
     ]);
   });
 
-  test('parses issue target ids and exposes invalid tokens', () => {
+  test('parses issue target ids or nicknames and exposes invalid tokens', () => {
     assert.deepEqual(parseUserIdTokens('1, 2\nabc 3 2 -5 4.5'), {
       validIds: [1, 2, 3],
-      invalidTokens: ['abc', '-5', '4.5']
+      validTargets: ['1', '2', 'abc', '3'],
+      invalidTokens: ['-5', '4.5']
     });
   });
 
   test('keeps duplicate invalid issue tokens visible with stable unique chip keys', () => {
-    const parsed = parseUserIdTokens('abc abc 7 nope');
+    const parsed = parseUserIdTokens('abc abc 7 -5');
 
     assert.deepEqual(parsed, {
       validIds: [7],
-      invalidTokens: ['abc', 'abc', 'nope']
+      validTargets: ['abc', '7'],
+      invalidTokens: ['-5']
     });
-    assert.deepEqual(parsed.invalidTokens.map(getCouponTargetChipKey), ['abc-0', 'abc-1', 'nope-2']);
+    assert.deepEqual(parsed.invalidTokens.map(getCouponTargetChipKey), ['-5-0']);
   });
 
   test('requires confirmed detail before admin coupon issue can run', () => {
