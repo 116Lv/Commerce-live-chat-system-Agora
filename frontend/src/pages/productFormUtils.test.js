@@ -7,6 +7,7 @@ import {
   getChildRegionOptions,
   getProductCategoryLabel,
   getProductImageUrl,
+  getProductImageUrls,
   getProductRegionLabel,
   getProductStatusLabel,
   getProductTitle,
@@ -56,6 +57,14 @@ describe('product form utilities', () => {
 
   test('normalizes uploaded image paths so nested routes can render them', () => {
     assert.equal(getProductImageUrl({ primaryImageUrl: 'uploads/products/main.svg' }), '/uploads/products/main.svg');
+  });
+
+  test('normalizes detail image arrays and falls back to the primary image', () => {
+    assert.deepEqual(getProductImageUrls({ imageUrls: ['uploads/products/main.svg', '/uploads/products/detail.svg'] }), [
+      '/uploads/products/main.svg',
+      '/uploads/products/detail.svg'
+    ]);
+    assert.deepEqual(getProductImageUrls({ primaryImageUrl: 'uploads/products/main.svg' }), ['/uploads/products/main.svg']);
   });
 
   test('normalizes ProductSearchResponse title and label aliases', () => {

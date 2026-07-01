@@ -199,6 +199,15 @@ export function getProductImageUrl(product = {}) {
   );
 }
 
+export function getProductImageUrls(product = {}) {
+  if (Array.isArray(product.imageUrls) && product.imageUrls.length > 0) {
+    return product.imageUrls.map(normalizeProductImageUrl).filter(Boolean);
+  }
+
+  const imageUrl = getProductImageUrl(product);
+  return imageUrl ? [imageUrl] : [];
+}
+
 export function getProductTitle(product = {}) {
   return product.title || product.productTitle || product.name || '';
 }

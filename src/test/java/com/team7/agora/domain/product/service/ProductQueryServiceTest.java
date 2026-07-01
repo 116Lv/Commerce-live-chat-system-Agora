@@ -133,23 +133,26 @@ class ProductQueryServiceTest {
     }
 
     @Test
-    void getProductsUsesViewerPreferredRegionsWhenLoggedInAndNoRegionGiven() {
+    void getProductsFallsBackToAllWhenLoggedInAndNoRegionGiven() {
         ProductService service = newService();
         User viewer = User.signup("viewer@test.com", "password", "조회자", "01022223333");
         assignId(viewer, 2L);
         Region region = Region.create("서울 강남구 역삼동", "1168010100", "서울", "강남구", "역삼동");
         assignId(region, 5L);
         UserRegion userRegion = UserRegion.of(viewer, region, true);
-        when(userRepository.findById(2L)).thenReturn(Optional.of(viewer));
-        when(userRegionRepository.findAllByUser(viewer)).thenReturn(List.of(userRegion));
-        when(productRepository.findAllByRegionIdInAndDeletedAtIsNullAndStatusNotAndApprovalStatus(
+        org.mockito.Mockito.lenient().when(userRepository.findById(2L)).thenReturn(Optional.of(viewer));
+        org.mockito.Mockito.lenient().when(userRegionRepository.findAllByUser(viewer)).thenReturn(List.of(userRegion));
+        org.mockito.Mockito.lenient().when(productRepository.findAllByRegionIdInAndDeletedAtIsNullAndStatusNotAndApprovalStatus(
             List.of(5L), ProductStatus.HIDDEN, ProductApprovalStatus.APPROVED, PageRequest.of(0, 20)
+        )).thenReturn(new PageImpl<>(List.of()));
+        when(productRepository.findAllByDeletedAtIsNullAndStatusNotAndApprovalStatus(
+            ProductStatus.HIDDEN, ProductApprovalStatus.APPROVED, PageRequest.of(0, 20)
         )).thenReturn(new PageImpl<>(List.of()));
 
         service.getProducts(2L, null, PageRequest.of(0, 20));
 
-        org.mockito.Mockito.verify(productRepository).findAllByRegionIdInAndDeletedAtIsNullAndStatusNotAndApprovalStatus(
-            List.of(5L), ProductStatus.HIDDEN, ProductApprovalStatus.APPROVED, PageRequest.of(0, 20)
+        org.mockito.Mockito.verify(productRepository).findAllByDeletedAtIsNullAndStatusNotAndApprovalStatus(
+            ProductStatus.HIDDEN, ProductApprovalStatus.APPROVED, PageRequest.of(0, 20)
         );
     }
 

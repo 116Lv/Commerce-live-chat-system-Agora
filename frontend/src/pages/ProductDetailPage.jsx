@@ -1,9 +1,7 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Alert, Button, ButtonGroup, Col, Row } from 'react-bootstrap';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, Flag, Heart, MessageCircle } from 'lucide-react';
-import { Swiper, SwiperSlide } from 'swiper/react';
-import 'swiper/css';
 import MoneyText from '../components/MoneyText.jsx';
 import LoadingState from '../components/LoadingState.jsx';
 import ErrorState from '../components/ErrorState.jsx';
@@ -16,10 +14,9 @@ import ReportModal from '../features/reports/ReportModal.jsx';
 import { PageHeader, useApiResource } from './pageUtils.jsx';
 import {
   getProductCategoryLabel,
-  getProductImageUrl,
+  getProductImageUrls,
   getProductRegionLabel,
-  getProductStatusLabel,
-  normalizeProductImageUrl
+  getProductStatusLabel
 } from './productFormUtils.js';
 
 export default function ProductDetailPage() {
@@ -33,8 +30,10 @@ export default function ProductDetailPage() {
   const [showReport, setShowReport] = useState(false);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [sellerSmileScore, setSellerSmileScore] = useState(null);
-  const imageSwiperRef = useRef(null);
   const { data: product, error, loading, reload } = useApiResource(() => getProduct(productId), [productId]);
+  const productImageUrls = getProductImageUrls(product);
+  const hasMultipleImages = productImageUrls.length > 1;
+  const currentImageUrl = productImageUrls[activeImageIndex] || productImageUrls[0] || '';
 
   useEffect(() => {
     let disposed = false;
@@ -63,6 +62,10 @@ export default function ProductDetailPage() {
       disposed = true;
     };
   }, [product?.sellerId]);
+
+  useEffect(() => {
+    setActiveImageIndex(0);
+  }, [productId, productImageUrls.length]);
 
   const requireAuth = () => {
     if (!isUserAuthenticated) {
@@ -122,11 +125,11 @@ export default function ProductDetailPage() {
   };
 
   const handlePreviousImage = () => {
-    imageSwiperRef.current?.slidePrev();
+    setActiveImageIndex((current) => (current <= 0 ? productImageUrls.length - 1 : current - 1));
   };
 
   const handleNextImage = () => {
-    imageSwiperRef.current?.slideNext();
+    setActiveImageIndex((current) => (current + 1) % productImageUrls.length);
   };
 
   if (loading) {
@@ -142,13 +145,6 @@ export default function ProductDetailPage() {
   }
 
   const categoryLabel = getProductCategoryLabel(product);
-  const imageUrl = getProductImageUrl(product);
-  const productImageUrls = Array.isArray(product.imageUrls) && product.imageUrls.length > 0
-    ? product.imageUrls.map(normalizeProductImageUrl).filter(Boolean)
-    : imageUrl
-      ? [imageUrl]
-      : [];
-  const hasMultipleImages = productImageUrls.length > 1;
   const liked = Boolean(product.liked);
   const likeCount = product.likeCount ?? 0;
   const regionLabel = getProductRegionLabel(product);
@@ -184,18 +180,7 @@ export default function ProductDetailPage() {
                     </button>
                   </>
                 ) : null}
-                <Swiper
-                  onSwiper={(swiper) => {
-                    imageSwiperRef.current = swiper;
-                  }}
-                  onSlideChange={(swiper) => setActiveImageIndex(swiper.activeIndex)}
-                >
-                  {productImageUrls.map((url, index) => (
-                    <SwiperSlide key={`${url}-${index}`}>
-                      <img src={url} alt={`${product.title} 이미지 ${index + 1}`} />
-                    </SwiperSlide>
-                  ))}
-                </Swiper>
+                <img src={currentImageUrl} alt={`${product.title} 이미지 ${activeImageIndex + 1}`} />
                 {hasMultipleImages ? (
                   <span className="product-detail-image-counter">
                     {activeImageIndex + 1} / {productImageUrls.length}

@@ -239,16 +239,7 @@ public class ProductService {
         if (regionId != null) {
             return List.of(regionId);
         }
-        if (viewerId == null) {
-            return null;
-        }
-        List<UserRegion> preferredRegions = userRegionRepository.findAllByUser(getUser(viewerId));
-        if (preferredRegions.isEmpty()) {
-            return null;
-        }
-        return preferredRegions.stream()
-            .map(userRegion -> userRegion.getRegion().getId())
-            .toList();
+        return null;
     }
 
     private Product getActiveProduct(Long productId) {

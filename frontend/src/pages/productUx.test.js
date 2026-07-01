@@ -293,18 +293,17 @@ describe('product detail, favorites, and seller UX source', () => {
     assert.match(source, /스마일/);
   });
 
-  test('ProductDetailPage renders uploaded images as an overlaid counter carousel', () => {
+  test('ProductDetailPage renders uploaded images with a direct image carousel', () => {
     const source = readSource('./ProductDetailPage.jsx');
 
-    assert.match(source, /Swiper/);
-    assert.match(source, /SwiperSlide/);
-    assert.match(source, /product\.imageUrls/);
+    assert.match(source, /getProductImageUrls/);
+    assert.match(source, /currentImageUrl/);
+    assert.match(source, /<img src=\{currentImageUrl\}/);
     assert.match(source, /product-detail-carousel-button/);
     assert.match(source, /product-detail-image-counter/);
     assert.match(source, /activeImageIndex/);
-    assert.match(source, /imageSwiperRef/);
-    assert.match(source, /slidePrev\(\)/);
-    assert.match(source, /slideNext\(\)/);
+    assert.doesNotMatch(source, /swiper\/react/);
+    assert.doesNotMatch(source, /<Swiper/);
   });
 
   test('LikedProductsPage removes unliked cards immediately and shows product CTA empty state', () => {

@@ -17,6 +17,7 @@ import com.team7.agora.domain.product.repository.ProductImageRepository;
 import com.team7.agora.domain.product.repository.ProductLikeRepository;
 import com.team7.agora.domain.product.repository.ProductRepository;
 import com.team7.agora.domain.region.entity.Region;
+import com.team7.agora.domain.region.entity.UserRegion;
 import com.team7.agora.domain.region.repository.RegionRepository;
 import com.team7.agora.domain.region.repository.UserRegionRepository;
 import com.team7.agora.domain.search.service.ProductSearchService;
@@ -26,9 +27,12 @@ import com.team7.agora.domain.user.repository.UserRepository;
 import com.team7.agora.global.exception.BusinessException;
 import com.team7.agora.global.exception.ErrorCode;
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -133,6 +137,25 @@ class ProductServiceTest {
             .isInstanceOf(BusinessException.class)
             .extracting("errorCode")
             .isEqualTo(ErrorCode.NOT_FOUND);
+    }
+
+    @Test
+    void getProductsWithoutExplicitRegionDoesNotRestrictByViewerPreferredRegions() {
+        ProductService productService = newService();
+        PageRequest pageable = PageRequest.of(0, 20);
+        when(productRepository.findAllByDeletedAtIsNullAndStatusNotAndApprovalStatus(
+            ProductStatus.HIDDEN,
+            ProductApprovalStatus.APPROVED,
+            pageable
+        )).thenReturn(new PageImpl<>(List.of(), pageable, 0));
+
+        productService.getProducts(1L, null, pageable);
+
+        verify(productRepository).findAllByDeletedAtIsNullAndStatusNotAndApprovalStatus(
+            ProductStatus.HIDDEN,
+            ProductApprovalStatus.APPROVED,
+            pageable
+        );
     }
 
     @Test

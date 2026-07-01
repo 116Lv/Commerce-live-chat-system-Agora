@@ -64,6 +64,17 @@ test('admin products expose domain-specific search conditions and operations tab
   assert.match(pages, /sellerKeyword: productFilters\.sellerKeyword\.trim\(\)/);
 });
 
+test('admin product approval closes the detail modal after a successful approve action', () => {
+  const pages = readSource('./AdminPlaceholderPages.jsx');
+  const handleApproveStart = pages.indexOf('const handleApprove = (product) => {');
+  const handleApproveEnd = pages.indexOf('return (', handleApproveStart);
+  const handleApprove = pages.slice(handleApproveStart, handleApproveEnd);
+
+  assert.match(handleApprove, /approveAdminProduct\(productId\)/);
+  assert.match(handleApprove, /updateProductRow/);
+  assert.match(handleApprove, /setSelectedProduct\(null\)/);
+});
+
 test('remaining admin pages expose page-specific Korean filter UX', () => {
   const pages = readSource('./AdminPlaceholderPages.jsx');
 

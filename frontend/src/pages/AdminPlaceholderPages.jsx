@@ -318,7 +318,10 @@ export function AdminProductsPage() {
 
   const handleApprove = (product) => {
     const productId = getId(product, ['id', 'productId']);
-    run(() => approveAdminProduct(productId), '상품을 승인했습니다.', updateProductRow);
+    run(() => approveAdminProduct(productId), '상품을 승인했습니다.', (updated) => {
+      updateProductRow(updated);
+      setSelectedProduct(null);
+    });
   };
 
   return (
