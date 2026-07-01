@@ -61,6 +61,7 @@ public class SecurityConfig {
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(
+                    "/health",
                     "/api/auth/signup",
                     "/api/auth/login",
                     "/api/auth/reissue",
@@ -75,7 +76,8 @@ public class SecurityConfig {
                     "/api/payments/webhook",
                     "/api/payments/webhooks/**",
                     "/uploads/**",
-                    "/ws"
+                    "/ws",
+                    "/ws/**"
                 ).permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/products", "/api/products/*").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/coupon-events").permitAll()
