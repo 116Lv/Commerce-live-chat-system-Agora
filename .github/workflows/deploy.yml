@@ -95,4 +95,5 @@ jobs:
           docker compose -f "$COMPOSE_FILE" --env-file .env up -d --build
           docker compose -f "$COMPOSE_FILE" --env-file .env ps
           curl --fail --silent --show-error --max-time 20 http://localhost/ >/dev/null
+          curl --fail --silent --show-error --max-time 20 http://localhost/api/products >/dev/null
           REMOTE
