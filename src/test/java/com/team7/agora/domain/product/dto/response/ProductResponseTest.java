@@ -37,6 +37,7 @@ class ProductResponseTest {
         assertThat(response.thumbnailUrl()).isEqualTo("https://cdn.test/products/10-main.jpg");
         assertThat(response.statusLabel()).isEqualTo("판매중");
         assertThat(response.categoryLabel()).isEqualTo("SPORTS");
+        assertThat(response.createdAt()).isEqualTo(product.getCreatedAt());
     }
 
     @Test
@@ -78,5 +79,6 @@ class ProductResponseTest {
         assertThat(response.liked()).isFalse();
         assertThat(response.regionId()).isNull();
         assertThat(response.primaryImageUrl()).isNull();
+        assertThat(response.createdAt()).isNull();
     }
 }

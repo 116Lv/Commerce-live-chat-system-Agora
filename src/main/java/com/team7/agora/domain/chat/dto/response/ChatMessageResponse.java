@@ -1,7 +1,8 @@
 package com.team7.agora.domain.chat.dto.response;
 
 import com.team7.agora.domain.chat.entity.ChatMessage;
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 
 /**
  * Chat Message 응답 본문을 표현하는 DTO이다.
@@ -20,7 +21,7 @@ public record ChatMessageResponse(
     String senderNickname,
     String content,
     String messageType,
-    LocalDateTime createdAt
+    OffsetDateTime createdAt
 ) {
 
     /**
@@ -36,7 +37,7 @@ public record ChatMessageResponse(
             message.getSender().getNickname(),
             message.getContent(),
             message.getMessageType().name(),
-            message.getCreatedAt()
+            message.getCreatedAt().atOffset(ZoneOffset.UTC)
         );
     }
 }
