@@ -176,8 +176,11 @@ public class ChatService {
      * @return 클라이언트에 반환할 API 응답
      */
     public List<ChatRoomResponse> getMyRooms(Long userId) {
-        User user = findUser(userId);
-        List<ChatRoom> chatRooms = chatRoomRepository.findAllBySellerOrBuyer(user, user);
+        findUser(userId);
+        List<ChatRoom> chatRooms = chatRoomRepository.findAllByParticipantIdAndStatus(userId, ChatRoomStatus.ACTIVE)
+            .stream()
+            .filter(chatRoom -> chatRoom.isParticipant(userId))
+            .toList();
         Map<Long, String> primaryImageUrls = findPrimaryImageUrls(chatRooms);
         Map<Long, ChatMessage> lastMessages = findLastMessages(chatRooms);
         Map<Long, Long> unreadCounts = countUnreadMessages(chatRooms, userId);

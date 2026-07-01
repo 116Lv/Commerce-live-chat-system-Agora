@@ -291,7 +291,23 @@ class ChatServiceTest {
         ChatRoom chatRoom = ChatRoom.open(product, buyer);
         assignId(chatRoom, 100L);
         when(userRepository.findById(2L)).thenReturn(Optional.of(buyer));
-        when(chatRoomRepository.findAllBySellerOrBuyer(buyer, buyer)).thenReturn(List.of(chatRoom));
+        when(chatRoomRepository.findAllByParticipantIdAndStatus(2L, ChatRoomStatus.ACTIVE)).thenReturn(List.of(chatRoom));
+
+        var responses = chatService.getMyRooms(2L);
+
+        assertThat(responses).hasSize(1);
+        assertThat(responses.get(0).chatRoomId()).isEqualTo(100L);
+    }
+
+    @Test
+    void getMyRoomsFiltersOutRoomsWhereUserIsNotParticipant() {
+        ChatRoom myRoom = ChatRoom.open(product, buyer);
+        assignId(myRoom, 100L);
+        ChatRoom otherRoom = ChatRoom.open(product, stranger);
+        assignId(otherRoom, 101L);
+        when(userRepository.findById(2L)).thenReturn(Optional.of(buyer));
+        when(chatRoomRepository.findAllByParticipantIdAndStatus(2L, ChatRoomStatus.ACTIVE))
+            .thenReturn(List.of(myRoom, otherRoom));
 
         var responses = chatService.getMyRooms(2L);
 
@@ -308,7 +324,7 @@ class ChatServiceTest {
         ProductImage image = ProductImage.create(product, "/uploads/products/bike.jpg", 0);
 
         when(userRepository.findById(2L)).thenReturn(Optional.of(buyer));
-        when(chatRoomRepository.findAllBySellerOrBuyer(buyer, buyer)).thenReturn(List.of(chatRoom));
+        when(chatRoomRepository.findAllByParticipantIdAndStatus(2L, ChatRoomStatus.ACTIVE)).thenReturn(List.of(chatRoom));
         when(productImageRepository.findAllByProductIdInOrderByProductIdAscSortOrderAsc(List.of(10L)))
             .thenReturn(List.of(image));
         when(chatMessageRepository.findLatestMessagesByChatRoomIds(List.of(100L))).thenReturn(List.of(message));
@@ -350,7 +366,7 @@ class ChatServiceTest {
         assignId(secondMessage, 901L);
 
         when(userRepository.findById(2L)).thenReturn(Optional.of(buyer));
-        when(chatRoomRepository.findAllBySellerOrBuyer(buyer, buyer)).thenReturn(List.of(firstRoom, secondRoom));
+        when(chatRoomRepository.findAllByParticipantIdAndStatus(2L, ChatRoomStatus.ACTIVE)).thenReturn(List.of(firstRoom, secondRoom));
         when(chatMessageRepository.findLatestMessagesByChatRoomIds(List.of(100L, 101L)))
             .thenReturn(List.of(firstMessage, secondMessage));
         when(chatMessageRepository.countUnreadMessagesByChatRoomIds(List.of(100L, 101L), 2L))
@@ -376,7 +392,7 @@ class ChatServiceTest {
         ChatRoom chatRoom = ChatRoom.open(product, buyer);
         assignId(chatRoom, 100L);
         when(userRepository.findById(2L)).thenReturn(Optional.of(buyer));
-        when(chatRoomRepository.findAllBySellerOrBuyer(buyer, buyer)).thenReturn(List.of(chatRoom));
+        when(chatRoomRepository.findAllByParticipantIdAndStatus(2L, ChatRoomStatus.ACTIVE)).thenReturn(List.of(chatRoom));
 
         var responses = chatService.getMyRooms(2L);
 
