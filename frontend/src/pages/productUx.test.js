@@ -273,6 +273,16 @@ describe('product detail, favorites, and seller UX source', () => {
     assert.match(source, /sellerNickname/);
   });
 
+  test('ProductDetailPage guides buyers to chat instead of starting a trade directly', () => {
+    const source = readSource('./ProductDetailPage.jsx');
+
+    assert.match(source, /handleOpenChat/);
+    assert.match(source, /openChatRoom/);
+    assert.doesNotMatch(source, /startTrade/);
+    assert.doesNotMatch(source, /handleStartTrade/);
+    assert.doesNotMatch(source, /ShoppingCart/);
+  });
+
   test('ProductDetailPage displays seller smile score', () => {
     const source = readSource('./ProductDetailPage.jsx');
     const apiSource = readSource('../api/mypageApi.js');

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Alert, Button, ButtonGroup, Col, Row } from 'react-bootstrap';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
-import { ChevronLeft, ChevronRight, Flag, Heart, MessageCircle, ShoppingCart } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Flag, Heart, MessageCircle } from 'lucide-react';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import 'swiper/css';
 import MoneyText from '../components/MoneyText.jsx';
@@ -11,7 +11,6 @@ import EmptyState from '../components/EmptyState.jsx';
 import { getProduct, likeProduct, unlikeProduct } from '../api/productApi.js';
 import { getSmileScore } from '../api/mypageApi.js';
 import { openChatRoom } from '../api/chatApi.js';
-import { startTrade } from '../api/tradeApi.js';
 import { useAuth } from '../auth/AuthContext.jsx';
 import ReportModal from '../features/reports/ReportModal.jsx';
 import { PageHeader, useApiResource } from './pageUtils.jsx';
@@ -106,25 +105,6 @@ export default function ProductDetailPage() {
     try {
       const room = await openChatRoom(productId);
       navigate(`/chat/${room.chatRoomId}`);
-    } catch (err) {
-      setActionError(err.message);
-    } finally {
-      setSubmitting('');
-    }
-  };
-
-  const handleStartTrade = async () => {
-    if (!requireAuth()) {
-      return;
-    }
-
-    setSubmitting('trade');
-    setActionMessage('');
-    setActionError('');
-
-    try {
-      const trade = await startTrade(productId);
-      navigate(`/trades/${trade.tradeId}`);
     } catch (err) {
       setActionError(err.message);
     } finally {
@@ -265,9 +245,6 @@ export default function ProductDetailPage() {
               </Button>
               <Button onClick={handleOpenChat} disabled={Boolean(submitting)} variant="outline-primary">
                 <MessageCircle size={17} aria-hidden="true" /> 채팅
-              </Button>
-              <Button onClick={handleStartTrade} disabled={Boolean(submitting)} variant="primary">
-                <ShoppingCart size={17} aria-hidden="true" /> 거래
               </Button>
               <Button onClick={handleReport} disabled={Boolean(submitting)} variant="outline-danger">
                 <Flag size={17} aria-hidden="true" /> 신고
