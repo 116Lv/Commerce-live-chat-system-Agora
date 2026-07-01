@@ -193,7 +193,7 @@ class AdminCouponEventControllerTest {
     @Test
     void issueReturnsApprovalSummaryResponse() throws Exception {
         authenticate(AdminRole.SETTLEMENT_ADMIN);
-        when(adminCouponEventService.requestIssueToUsers(any(AdminPrincipal.class), eq(1L), eq(List.of(10L, 11L))))
+        when(adminCouponEventService.requestIssueToUsers(any(AdminPrincipal.class), eq(1L), eq(List.of("10", "11"))))
             .thenReturn(new AdminCouponIssueApprovalResponse(10L, "PENDING", 1L, 2, 2, 0, 0, 2, 2, false));
 
         mockMvc.perform(post("/api/admin/coupon-events/{eventId}/issue-requests", 1L)
@@ -216,7 +216,7 @@ class AdminCouponEventControllerTest {
             .andExpect(jsonPath("$.data.expectedIssuedQuantity").value(2))
             .andExpect(jsonPath("$.data.exceedsRemainingQuantity").value(false));
 
-        verify(adminCouponEventService).requestIssueToUsers(any(AdminPrincipal.class), eq(1L), eq(List.of(10L, 11L)));
+        verify(adminCouponEventService).requestIssueToUsers(any(AdminPrincipal.class), eq(1L), eq(List.of("10", "11")));
     }
 
     @Test

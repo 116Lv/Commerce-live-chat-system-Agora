@@ -1159,6 +1159,154 @@ p {
   gap: 0.5rem;
 }
 
+.mypage-profile-edit {
+  padding: 0.25rem 0 2rem;
+}
+
+.mypage-edit-grid {
+  display: grid;
+  grid-template-columns: minmax(18rem, 0.9fr) minmax(24rem, 1.35fr);
+  align-items: start;
+  gap: 2.4rem;
+}
+
+.mypage-side-stack {
+  display: grid;
+  gap: 1.1rem;
+}
+
+.mypage-panel {
+  border: 1px solid #a9afad;
+  border-radius: 8px;
+  background: var(--agora-surface);
+}
+
+.mypage-profile-summary {
+  display: grid;
+  min-height: 12rem;
+  place-items: center;
+  padding: 1.4rem;
+  text-align: center;
+}
+
+.mypage-profile-summary h2 {
+  margin: 0.7rem 0 0.1rem;
+  font-size: 1.1rem;
+  font-weight: 900;
+}
+
+.mypage-profile-summary p,
+.mypage-muted {
+  margin: 0;
+  color: var(--agora-muted);
+  font-weight: 700;
+}
+
+.mypage-smile-ring {
+  display: grid;
+  width: 5.2rem;
+  aspect-ratio: 1;
+  place-items: center;
+  border-radius: 999px;
+  background:
+    radial-gradient(circle, #ffffff 0 58%, transparent 60%),
+    conic-gradient(#00c73c var(--score), #e9efed 0);
+}
+
+.mypage-smile-ring strong {
+  align-self: end;
+  color: #111827;
+  font-size: 1.45rem;
+  line-height: 1;
+}
+
+.mypage-smile-ring span {
+  align-self: start;
+  color: var(--agora-brand-dark);
+  font-size: 0.62rem;
+  font-weight: 800;
+}
+
+.mypage-coupon-panel {
+  min-height: 7.1rem;
+  padding: 1.1rem;
+}
+
+.mypage-coupon-panel h2 {
+  margin-bottom: 0.8rem;
+  font-size: 1rem;
+  font-weight: 900;
+}
+
+.mypage-coupon-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  min-height: 3rem;
+  padding: 0.8rem;
+  border: 1px solid #a9afad;
+  border-radius: 8px;
+  color: var(--agora-muted);
+  font-weight: 800;
+}
+
+.mypage-coupon-row strong {
+  flex: 0 0 auto;
+  color: #ff5f1f;
+}
+
+.mypage-edit-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 0.35rem 1.2rem;
+  padding: 1.35rem;
+}
+
+.mypage-edit-form .alert,
+.mypage-edit-form .mb-3,
+.mypage-edit-form .form-text {
+  grid-column: 1 / -1;
+}
+
+.mypage-field {
+  grid-column: 1;
+  min-width: 0;
+}
+
+.mypage-edit-form .form-label {
+  margin-bottom: 0.35rem;
+  color: #111827;
+  font-weight: 800;
+}
+
+.mypage-edit-form .form-control,
+.mypage-edit-form .form-select {
+  min-height: 3.2rem;
+  border: 2px solid #111827;
+  border-radius: 12px;
+  font-weight: 700;
+}
+
+.mypage-edit-form .form-select[multiple] {
+  min-height: 7.5rem;
+}
+
+.mypage-edit-form .form-control::placeholder {
+  color: #9ca3af;
+}
+
+.mypage-submit-button {
+  grid-column: 2;
+  align-self: end;
+  justify-self: end;
+  min-width: 5rem;
+  min-height: 3rem;
+  border-radius: 999px;
+  font-weight: 900;
+}
+
 .coupon-filter-tabs {
   flex-wrap: wrap;
   gap: 0.35rem;
@@ -1565,9 +1713,25 @@ p {
   }
 
   .profile-form-row,
+  .mypage-edit-grid,
   .list-card-row {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .mypage-edit-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .mypage-edit-form {
+    grid-template-columns: 1fr;
+  }
+
+  .mypage-submit-button {
+    grid-column: 1;
+    justify-self: stretch;
+    width: 100%;
   }
 
   .chat-room-row,

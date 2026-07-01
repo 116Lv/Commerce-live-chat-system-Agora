@@ -37,7 +37,7 @@ class SearchControllerTest {
         )));
 
         ResponseEntity<ApiResponse<PageResponse<ProductSearchResponse>>> response =
-            controller.searchV1(null, "자전거", null, null, 0, 20);
+            controller.searchV1(null, "자전거", null, null, 0, 20, "recent", "desc");
 
         verify(popularKeywordService).recordSearchKeyword(null, "자전거");
         assertThat(response.getStatusCode().value()).isEqualTo(200);
@@ -53,7 +53,7 @@ class SearchControllerTest {
         )));
 
         ResponseEntity<ApiResponse<PageResponse<ProductSearchResponse>>> response =
-            controller.searchV1(null, null, null, null, 0, 20);
+            controller.searchV1(null, null, null, null, 0, 20, "recent", "desc");
 
         assertThat(response.getStatusCode().value()).isEqualTo(200);
         assertThat(response.getBody().data().content()).hasSize(2);
@@ -67,7 +67,7 @@ class SearchControllerTest {
         ))));
 
         ResponseEntity<ApiResponse<PageResponse<ProductSearchResponse>>> response =
-            controller.searchV2(null, "자전거", null, null, 0, 20);
+            controller.searchV2(null, "자전거", null, null, 0, 20, "recent", "desc");
 
         verify(popularKeywordService).recordSearchKeyword(null, "자전거");
         assertThat(response.getStatusCode().value()).isEqualTo(200);

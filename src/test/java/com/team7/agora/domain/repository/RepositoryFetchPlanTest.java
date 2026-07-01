@@ -2,6 +2,7 @@ package com.team7.agora.domain.repository;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.team7.agora.domain.chat.enums.ChatRoomStatus;
 import com.team7.agora.domain.chat.repository.ChatRoomRepository;
 import com.team7.agora.domain.product.enums.ProductStatus;
 import com.team7.agora.domain.product.repository.ProductRepository;
@@ -48,9 +49,9 @@ class RepositoryFetchPlanTest {
     void chatRoomListQueryFetchesParticipantsAndProduct() throws NoSuchMethodException {
         assertEntityGraph(
             ChatRoomRepository.class.getMethod(
-                "findAllBySellerOrBuyer",
-                com.team7.agora.domain.user.entity.User.class,
-                com.team7.agora.domain.user.entity.User.class
+                "findAllByParticipantIdAndStatus",
+                Long.class,
+                ChatRoomStatus.class
             ),
             "seller",
             "buyer",

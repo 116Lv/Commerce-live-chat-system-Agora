@@ -17,7 +17,20 @@ test('my page renders an empty state when the profile payload is missing', () =>
   const source = readPage('MyPage.jsx');
 
   assert.match(source, /import EmptyState from '\.\.\/components\/EmptyState\.jsx';/);
-  assert.match(source, /!profileState\.loading && !profileState\.error && !profileState\.data/);
+  assert.match(source, /!profileState\.loading && !profileState\.error && !profile/);
+});
+
+test('my page replaces menu tiles with a profile edit layout', () => {
+  const source = readPage('MyPage.jsx');
+  const styles = readSource('../styles/theme.css');
+
+  assert.doesNotMatch(source, /MetricTile/);
+  assert.doesNotMatch(source, /to="\/me\/likes"|to="\/me\/products"|to="\/me\/trades"|to="\/me\/reviews"|to="\/me\/coupons"/);
+  assert.match(source, /className="mypage-edit-grid"/);
+  assert.match(source, /changePassword/);
+  assert.match(source, /updatePreferredRegions/);
+  assert.match(styles, /\.mypage-edit-grid/);
+  assert.match(styles, /\.mypage-smile-ring/);
 });
 
 test('product detail protects like action and does not expose edit without owner data', () => {
@@ -58,6 +71,7 @@ test('user layout hides protected navigation while logged out and shows signup',
   assert.match(source, /isUserAuthenticated/);
   assert.match(source, /회원가입/);
   assert.match(source, /로그아웃/);
+  assert.match(source, /to: '\/me\/reviews', label: '후기'/);
   assert.match(source, /isUserAuthenticated \? \(/);
   assert.match(source, /<NavDropdown[\s\S]*?account-dropdown[\s\S]*?\)\s*:\s*\(\s*<>[\s\S]*?<UserNavLink to="\/login">/);
   assert.doesNotMatch(source, /<UserNavLink to="\/me">/);
@@ -88,4 +102,26 @@ test('auth and admin chrome use Korean labels', () => {
   assert.doesNotMatch(userSignup, /Already have an account/);
   assert.doesNotMatch(adminLogin, /Admin Login/);
   assert.doesNotMatch(adminLayout, /label: 'Dashboard'|label: 'Products'|label: 'Users'|label: 'Reports'|label: 'Payments'|label: 'Coupons'/);
+});
+
+test('signup collects phone and sends new users to region setup', () => {
+  const userSignup = readSource('../features/auth/UserSignupPage.jsx');
+
+  assert.match(userSignup, /phone: ''/);
+  assert.match(userSignup, /name="phone"/);
+  assert.match(userSignup, /autoComplete="tel"/);
+  assert.match(userSignup, /휴대폰 번호/);
+  assert.match(userSignup, /navigate\('\/regions\/setup'/);
+});
+
+test('region setup page lets users choose preferred and primary regions', () => {
+  const source = readPage('UserPlaceholderPages.jsx');
+
+  assert.match(source, /updatePreferredRegions/);
+  assert.match(source, /selectedRegionIds/);
+  assert.match(source, /primaryRegionId/);
+  assert.match(source, /관심 지역은 3개 이상 5개 이하로 선택해 주세요\./);
+  assert.match(source, /type="checkbox"/);
+  assert.match(source, /type="radio"/);
+  assert.match(source, /관심 지역 저장/);
 });

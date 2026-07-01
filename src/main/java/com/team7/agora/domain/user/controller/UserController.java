@@ -53,7 +53,7 @@ public class UserController {
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @Valid @RequestBody ProfileUpdateRequest request
     ) {
-        UserMeResponse response = userService.updateProfile(userDetails.getUserId(), request.nickname());
+        UserMeResponse response = userService.updateProfile(userDetails.getUserId(), request.nickname(), request.phone());
         return ApiResponse.success("프로필이 수정되었습니다.", response);
     }
 

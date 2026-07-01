@@ -14,6 +14,7 @@ import com.team7.agora.domain.user.enums.UserStatus;
 import com.team7.agora.domain.user.service.UserService;
 import com.team7.agora.global.auth.CustomUserDetails;
 import com.team7.agora.global.exception.GlobalExceptionHandler;
+import java.util.List;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -60,7 +61,7 @@ class UserControllerTest {
         // given
         authenticate();
         when(userService.getMe(1L))
-                .thenReturn(new UserMeResponse(1L, "user@test.com", "동네유저", "ROLE_USER", "ACTIVE"));
+                .thenReturn(new UserMeResponse(1L, "user@test.com", "동네유저", "010-1111-2222", 60, "ROLE_USER", "ACTIVE", List.of()));
 
         // when & then
         mockMvc.perform(get("/api/users/me"))
@@ -68,25 +69,28 @@ class UserControllerTest {
                 .andExpect(jsonPath("$.status").value("SUCCESS"))
                 .andExpect(jsonPath("$.data.id").value(1L))
                 .andExpect(jsonPath("$.data.email").value("user@test.com"))
-                .andExpect(jsonPath("$.data.nickname").value("동네유저"));
+                .andExpect(jsonPath("$.data.nickname").value("동네유저"))
+                .andExpect(jsonPath("$.data.phone").value("010-1111-2222"))
+                .andExpect(jsonPath("$.data.smileScore").value(60));
     }
 
     @Test
     void updateProfile_usesAuthenticatedUserId() throws Exception {
         // given
         authenticate();
-        when(userService.updateProfile(1L, "새닉네임"))
-                .thenReturn(new UserMeResponse(1L, "user@test.com", "새닉네임", "ROLE_USER", "ACTIVE"));
+        when(userService.updateProfile(1L, "새닉네임", "010-1111-2222"))
+                .thenReturn(new UserMeResponse(1L, "user@test.com", "새닉네임", "010-1111-2222", 60, "ROLE_USER", "ACTIVE", List.of()));
 
         // when & then
         mockMvc.perform(patch("/api/users/me/profile")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"nickname":"새닉네임"}
+                                {"nickname":"새닉네임","phone":"010-1111-2222"}
                                 """))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("SUCCESS"))
-                .andExpect(jsonPath("$.data.nickname").value("새닉네임"));
+                .andExpect(jsonPath("$.data.nickname").value("새닉네임"))
+                .andExpect(jsonPath("$.data.phone").value("010-1111-2222"));
     }
 
     @Test
