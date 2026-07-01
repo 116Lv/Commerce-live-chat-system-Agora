@@ -606,6 +606,7 @@ export function AdminUsersPage() {
           <thead>
             <tr>
               <th>회원</th>
+              <th>ID</th>
               <th>이메일</th>
               <th>권한</th>
               <th>상태</th>
@@ -616,6 +617,7 @@ export function AdminUsersPage() {
             {filteredUsers.map((user) => (
               <tr key={getId(user, ['id', 'userId'])}>
                 <td>{user.nickname || '-'}</td>
+                <td>{getId(user, ['id', 'userId']) || '-'}</td>
                 <td>{user.email || '-'}</td>
                 <td>{user.role || '-'}</td>
                 <td>
@@ -1457,16 +1459,16 @@ export function AdminCouponsPage() {
 
   const handleIssue = (event) => {
     event.preventDefault();
-    const { validIds, invalidTokens } = parseUserIdTokens(userIds);
+    const { validTargets, invalidTokens } = parseUserIdTokens(userIds);
 
-    if (!selectedEventId || validIds.length === 0 || invalidTokens.length > 0 || !selectedCanIndividuallyIssue) {
-      setIssueInputError('발급 대상 회원 ID를 확인해 주세요.');
+    if (!selectedEventId || validTargets.length === 0 || invalidTokens.length > 0 || !selectedCanIndividuallyIssue) {
+      setIssueInputError('발급 대상 회원 ID 또는 닉네임을 확인해 주세요.');
       return;
     }
 
     setIssueInputError('');
     run(
-      () => requestCouponEventIndividualIssue(selectedEventId, validIds),
+      () => requestCouponEventIndividualIssue(selectedEventId, validTargets),
       (summary) => couponApprovalMessage('쿠폰 개별발급', summary),
       (summary) => {
         setUserIds('');
@@ -1641,12 +1643,12 @@ export function AdminCouponsPage() {
               {selectedCanIndividuallyIssue ? (
                 <Form className="admin-coupon-issue-form mb-3" onSubmit={handleIssue} noValidate>
                   <Form.Group className="flex-grow-1" controlId="coupon-user-ids">
-                    <Form.Label>개별발급 요청 회원 ID</Form.Label>
+                    <Form.Label>개별발급 요청 회원 ID 또는 닉네임</Form.Label>
                     <Form.Control
                       as="textarea"
                       rows={2}
                       value={userIds}
-                      placeholder="1, 2, 3 또는 줄바꿈으로 입력"
+                      placeholder="1, 2, 닉네임 또는 줄바꿈으로 입력"
                       onChange={(event) => {
                         setUserIds(event.target.value);
                         setIssueInputError('');
@@ -1654,7 +1656,7 @@ export function AdminCouponsPage() {
                       isInvalid={Boolean(issueInputError || issueTargets.invalidTokens.length)}
                     />
                     <Form.Control.Feedback type="invalid">
-                      {issueInputError || '숫자 회원 ID만 입력해 주세요.'}
+                      {issueInputError || '회원 ID 또는 닉네임을 입력해 주세요.'}
                     </Form.Control.Feedback>
                     <Form.Text className="text-muted">입력한 대상은 쿠폰 개별발급 승인요청으로 접수됩니다.</Form.Text>
                   </Form.Group>
@@ -1662,7 +1664,7 @@ export function AdminCouponsPage() {
                     icon={Send}
                     type="submit"
                     variant="primary"
-                    disabled={!selectedEventId || issueTargets.validIds.length === 0 || issueTargets.invalidTokens.length > 0 || !selectedCanIndividuallyIssue}
+                    disabled={!selectedEventId || issueTargets.validTargets.length === 0 || issueTargets.invalidTokens.length > 0 || !selectedCanIndividuallyIssue}
                   >
                     승인요청
                   </ActionButton>
@@ -1670,9 +1672,9 @@ export function AdminCouponsPage() {
               ) : null}
               {selectedCanIndividuallyIssue && userIds ? (
                 <div className="coupon-target-chip-list mb-3">
-                  {issueTargets.validIds.map((id) => (
-                    <Badge bg="light" text="dark" className="coupon-target-chip" key={id}>
-                      #{id}
+                  {issueTargets.validTargets.map((target) => (
+                    <Badge bg="light" text="dark" className="coupon-target-chip" key={target}>
+                      {target}
                     </Badge>
                   ))}
                   {issueTargets.invalidTokens.map((token, index) => (

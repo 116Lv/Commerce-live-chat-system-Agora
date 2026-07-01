@@ -6,12 +6,12 @@ import com.team7.agora.domain.coupon.entity.CouponEvent;
 import com.team7.agora.domain.coupon.enums.CouponEventType;
 import com.team7.agora.domain.coupon.repository.CouponEventRepository;
 import com.team7.agora.domain.coupon.repository.CouponRepository;
+import com.team7.agora.domain.coupon.time.CouponEventTime;
 import com.team7.agora.domain.user.entity.User;
 import com.team7.agora.domain.user.enums.UserStatus;
 import com.team7.agora.domain.user.repository.UserRepository;
 import com.team7.agora.global.exception.BusinessException;
 import com.team7.agora.global.exception.ErrorCode;
-import com.team7.agora.global.time.AgoraClock;
 import java.time.LocalDateTime;
 import java.util.List;
 import org.springframework.stereotype.Component;
@@ -73,14 +73,14 @@ public class CouponSlotTransactionExecutor {
     }
 
     private void assignSlot(CouponEvent event, User user) {
-        LocalDateTime now = AgoraClock.now();
+        LocalDateTime now = CouponEventTime.now();
         event.validateIssueable(now);
         ensureNotIssuedToUser(event.getId(), user.getId());
 
         Coupon coupon = couponRepository.findFirstAvailableSlotForUpdate(event.getId())
             .orElseThrow(() -> new BusinessException(ErrorCode.CONFLICT, "쿠폰이 모두 소진되었습니다."));
         coupon.assign(user, now, event.getValidDays());
-        event.issue();
+        event.issue(now);
     }
 
     private void ensureNotIssuedToUser(Long eventId, Long userId) {
