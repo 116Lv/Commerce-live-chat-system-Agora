@@ -23,10 +23,36 @@ const getPortOneStoreId = (payment) => payment.storeId || import.meta.env?.VITE_
 
 const getPortOneChannelKey = (payment) => payment.channelKey || import.meta.env?.VITE_PORTONE_CHANNEL_KEY;
 
+const getBuyerEmail = (payment) => payment.buyerEmail || payment.customer?.email;
+
+const getBuyerName = (payment) => payment.buyerName || payment.customer?.fullName || payment.customer?.name;
+
+const getBuyerTel = (payment) => payment.buyerTel || payment.customer?.phoneNumber || payment.customer?.phone;
+
 const getLocalMode = (payment) => {
   const mode = String(payment?.paymentMode || payment?.pgMode || payment?.mode || '').toUpperCase();
 
   return mode === 'LOCAL' || mode === 'TEST' || payment?.localPayment === true;
+};
+
+const buildPortOneCustomer = (payment) => {
+  if (payment.customer) {
+    return payment.customer;
+  }
+
+  const customer = {
+    email: getBuyerEmail(payment),
+    fullName: getBuyerName(payment),
+    phoneNumber: getBuyerTel(payment)
+  };
+
+  Object.keys(customer).forEach((key) => {
+    if (!customer[key]) {
+      delete customer[key];
+    }
+  });
+
+  return Object.keys(customer).length > 0 ? customer : undefined;
 };
 
 const buildResult = (payment, approval, local = false) => {
@@ -59,7 +85,7 @@ const requestPortOnePayment = async (payment, win, redirectUrl) => {
     totalAmount: Number(payment.amount || 0),
     currency: payment.currency || 'CURRENCY_KRW',
     payMethod: payment.payMethod || 'CARD',
-    customer: payment.customer,
+    customer: buildPortOneCustomer(payment),
     redirectUrl
   });
 
@@ -83,9 +109,9 @@ const requestImpPayment = (payment, win, redirectUrl) =>
         merchant_uid: payment.orderId || String(payment.paymentId),
         name: getPaymentName(payment),
         amount: Number(payment.amount || 0),
-        buyer_email: payment.buyerEmail,
-        buyer_name: payment.buyerName,
-        buyer_tel: payment.buyerTel,
+        buyer_email: getBuyerEmail(payment),
+        buyer_name: getBuyerName(payment),
+        buyer_tel: getBuyerTel(payment),
         m_redirect_url: redirectUrl
       },
       (approval) => {

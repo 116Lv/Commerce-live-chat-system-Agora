@@ -34,3 +34,69 @@ test('requestPaymentApproval allows local fallback only for explicit local or te
     local: true
   });
 });
+
+test('requestPaymentApproval sends buyer contact fields to IMP payment window', async () => {
+  let payload;
+  const result = await requestPaymentApproval(
+    {
+      ...basePayment,
+      buyerEmail: 'buyer@test.com',
+      buyerName: '구매자',
+      buyerTel: '01033334444'
+    },
+    {
+      window: {
+        IMP: {
+          request_pay: (request, callback) => {
+            payload = request;
+            callback({ success: true, imp_uid: 'imp-22' });
+          }
+        }
+      }
+    }
+  );
+
+  assert.equal(payload.buyer_email, 'buyer@test.com');
+  assert.equal(payload.buyer_name, '구매자');
+  assert.equal(payload.buyer_tel, '01033334444');
+  assert.deepEqual(result, {
+    paymentId: 22,
+    paymentKey: 'imp-22',
+    local: false
+  });
+});
+
+test('requestPaymentApproval builds PortOne customer from buyer contact fields', async () => {
+  let payload;
+  const result = await requestPaymentApproval(
+    {
+      ...basePayment,
+      buyerEmail: 'buyer@test.com',
+      buyerName: '구매자',
+      buyerTel: '01033334444',
+      storeId: 'store-1',
+      channelKey: 'channel-1'
+    },
+    {
+      window: {
+        PortOne: {
+          requestPayment: async (request) => {
+            payload = request;
+            return { paymentKey: 'payment-key-22' };
+          }
+        }
+      }
+    }
+  );
+
+  assert.deepEqual(payload.customer, {
+    email: 'buyer@test.com',
+    fullName: '구매자',
+    phoneNumber: '01033334444'
+  });
+  assert.deepEqual(result, {
+    paymentId: 22,
+    paymentKey: 'payment-key-22',
+    local: false
+  });
+});

@@ -1,6 +1,7 @@
 package com.team7.agora.domain.payment.dto.response;
 
 import com.team7.agora.domain.payment.entity.Payment;
+import com.team7.agora.domain.user.entity.User;
 import java.math.BigDecimal;
 
 /**
@@ -13,6 +14,9 @@ import java.math.BigDecimal;
  * @param paymentKey 결제 승인 키
  * @param status 조회 또는 변경할 상태
  * @param settlementId 정산 ID
+ * @param buyerEmail 구매자 이메일
+ * @param buyerName 구매자 이름
+ * @param buyerTel 구매자 연락처
  */
 public record PaymentResponse(
     Long paymentId,
@@ -22,8 +26,23 @@ public record PaymentResponse(
     String orderId,
     String paymentKey,
     String status,
-    Long settlementId
+    Long settlementId,
+    String buyerEmail,
+    String buyerName,
+    String buyerTel
 ) {
+    public PaymentResponse(
+        Long paymentId,
+        Long tradeId,
+        Long payerId,
+        BigDecimal amount,
+        String orderId,
+        String paymentKey,
+        String status,
+        Long settlementId
+    ) {
+        this(paymentId, tradeId, payerId, amount, orderId, paymentKey, status, settlementId, null, null, null);
+    }
 
     /**
      * 도메인 객체로부터 응답 객체를 생성한다.
@@ -41,6 +60,7 @@ public record PaymentResponse(
      * @return 클라이언트에 반환할 API 응답
      */
     public static PaymentResponse from(Payment payment, Long settlementId) {
+        User payer = payment.getPayer();
         return new PaymentResponse(
             payment.getId(),
             payment.getTrade().getId(),
@@ -49,7 +69,10 @@ public record PaymentResponse(
             payment.getOrderId(),
             payment.getPaymentKey(),
             payment.getStatus().name(),
-            settlementId
+            settlementId,
+            payer.getEmail(),
+            payer.getNickname(),
+            payer.getPhone()
         );
     }
 }
