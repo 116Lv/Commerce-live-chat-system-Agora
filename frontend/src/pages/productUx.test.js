@@ -249,6 +249,16 @@ describe('home product search UX source', () => {
     assert.match(source, /<Form\.Select[\s\S]{0,300}value=\{draft\.category\}/);
     assert.doesNotMatch(source, /<Form\.Control[\s\S]{0,220}value=\{draft\.category\}/);
   });
+
+  test('HomePage wires card like actions to product APIs and local state', () => {
+    const source = readSource('./UserPlaceholderPages.jsx');
+
+    assert.match(source, /likeProduct/);
+    assert.match(source, /unlikeProduct/);
+    assert.match(source, /setProductOverrides/);
+    assert.match(source, /handleProductLikeToggle/);
+    assert.match(source, /onLikeToggle=\{handleProductLikeToggle\}/);
+  });
 });
 
 describe('product detail, favorites, and seller UX source', () => {
