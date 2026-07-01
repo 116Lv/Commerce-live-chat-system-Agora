@@ -10,6 +10,7 @@ const root = resolve(__dirname, '../../..');
 test('frontend nginx proxies backend APIs, websocket, and uploaded files internally', () => {
   const nginx = readFileSync(resolve(root, 'frontend/nginx.conf'), 'utf8');
 
+  assert.match(nginx, /client_max_body_size 100m;/);
   assert.match(nginx, /location \/api\//);
   assert.match(nginx, /location \/ws\//);
   assert.match(nginx, /location \/uploads\//);

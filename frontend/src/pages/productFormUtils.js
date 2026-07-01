@@ -180,6 +180,10 @@ export function getProductRegionLabel(product = {}) {
 }
 
 export function normalizeProductImageUrl(value) {
+  if (value && typeof value === 'object') {
+    return normalizeProductImageUrl(value.imageUrl || value.url || value.path || value.thumbnailUrl || value.primaryImageUrl || '');
+  }
+
   const url = String(value ?? '').trim();
 
   if (!url) {
@@ -197,6 +201,15 @@ export function getProductImageUrl(product = {}) {
   return normalizeProductImageUrl(
     product.primaryImageUrl || product.thumbnailUrl || product.thumbnailImageUrl || product.imageUrl || product.image || ''
   );
+}
+
+export function getProductImageUrls(product = {}) {
+  if (Array.isArray(product.imageUrls) && product.imageUrls.length > 0) {
+    return product.imageUrls.map(normalizeProductImageUrl).filter(Boolean);
+  }
+
+  const imageUrl = getProductImageUrl(product);
+  return imageUrl ? [imageUrl] : [];
 }
 
 export function getProductTitle(product = {}) {
