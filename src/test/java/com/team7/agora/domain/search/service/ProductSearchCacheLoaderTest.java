@@ -56,7 +56,7 @@ class ProductSearchCacheLoaderTest {
 
     @Test
     void load_reusesCachedResultForSameCondition() {
-        ProductSearchCondition condition = new ProductSearchCondition(" 자전거 ", 1L, "SPORTS", PageRequest.of(0, 20));
+        ProductSearchCondition condition = new ProductSearchCondition(" 자전거 ", 1L, "SPORTS", PageRequest.of(0, 20), null, null);
         when(productRepository.search(condition)).thenReturn(new PageImpl<>(List.of(
             new ProductSearchResponse(1L, "자전거", BigDecimal.valueOf(73000), "서울 강남구 역삼동")
         )));
@@ -71,7 +71,7 @@ class ProductSearchCacheLoaderTest {
 
     @Test
     void evictAll_removesCachedResult() {
-        ProductSearchCondition condition = new ProductSearchCondition("자전거", 1L, "SPORTS", PageRequest.of(0, 20));
+        ProductSearchCondition condition = new ProductSearchCondition("자전거", 1L, "SPORTS", PageRequest.of(0, 20), null, null);
         when(productRepository.search(condition)).thenReturn(new PageImpl<>(List.of(
             new ProductSearchResponse(1L, "자전거", BigDecimal.valueOf(73000), "서울 강남구 역삼동")
         )));

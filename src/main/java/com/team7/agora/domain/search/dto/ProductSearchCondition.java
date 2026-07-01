@@ -8,12 +8,16 @@ import org.springframework.data.domain.Pageable;
  * @param regionId 지역 ID
  * @param category 업로드 카테고리
  * @param pageable 페이지 요청 정보
+ * @param sort 정렬 기준 (recent, likes)
+ * @param direction 정렬 방향 (desc, asc)
  */
 public record ProductSearchCondition(
     String keyword,
     Long regionId,
     String category,
-    Pageable pageable
+    Pageable pageable,
+    String sort,
+    String direction
 ) {
 
     /**
@@ -32,5 +36,13 @@ public record ProductSearchCondition(
             return "";
         }
         return category.trim();
+    }
+
+    public String normalizedSort() {
+        return (sort == null || sort.isBlank()) ? "recent" : sort.trim();
+    }
+
+    public String normalizedDirection() {
+        return "asc".equalsIgnoreCase(direction) ? "asc" : "desc";
     }
 }
