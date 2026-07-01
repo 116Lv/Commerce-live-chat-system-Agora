@@ -180,6 +180,10 @@ export function getProductRegionLabel(product = {}) {
 }
 
 export function normalizeProductImageUrl(value) {
+  if (value && typeof value === 'object') {
+    return normalizeProductImageUrl(value.imageUrl || value.url || value.path || value.thumbnailUrl || value.primaryImageUrl || '');
+  }
+
   const url = String(value ?? '').trim();
 
   if (!url) {

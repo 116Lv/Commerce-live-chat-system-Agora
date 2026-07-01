@@ -67,6 +67,18 @@ describe('product form utilities', () => {
     assert.deepEqual(getProductImageUrls({ primaryImageUrl: 'uploads/products/main.svg' }), ['/uploads/products/main.svg']);
   });
 
+  test('normalizes object-shaped detail image arrays from upload responses', () => {
+    assert.deepEqual(
+      getProductImageUrls({
+        imageUrls: [
+          { imageUrl: 'uploads/products/main.jpg', sortOrder: 0 },
+          { url: '/uploads/products/detail.jpg', sortOrder: 1 }
+        ]
+      }),
+      ['/uploads/products/main.jpg', '/uploads/products/detail.jpg']
+    );
+  });
+
   test('normalizes ProductSearchResponse title and label aliases', () => {
     const product = {
       productTitle: 'Search title',
