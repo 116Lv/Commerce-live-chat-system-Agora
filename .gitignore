@@ -38,3 +38,7 @@ out/
 .vscode/
 
 .worktrees/
+
+# 로컬 환경 전용 프론트엔드 환경변수 (커밋 금지)
+frontend/.env.local
+frontend/.env.*.local

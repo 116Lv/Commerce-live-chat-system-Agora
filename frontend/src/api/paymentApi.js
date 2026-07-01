@@ -30,6 +30,7 @@ const getBuyerName = (payment) => payment.buyerName || payment.customer?.fullNam
 const getBuyerTel = (payment) => payment.buyerTel || payment.customer?.phoneNumber || payment.customer?.phone;
 
 const getLocalMode = (payment) => {
+  if (import.meta.env?.VITE_LOCAL_PAYMENT === 'true') return true;
   const mode = String(payment?.paymentMode || payment?.pgMode || payment?.mode || '').toUpperCase();
 
   return mode === 'LOCAL' || mode === 'TEST' || payment?.localPayment === true;
