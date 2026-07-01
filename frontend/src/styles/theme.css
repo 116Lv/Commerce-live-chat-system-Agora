@@ -746,7 +746,7 @@ p {
 }
 
 .product-detail-media {
-  min-height: 22rem;
+  min-height: 18rem;
   display: grid;
   place-items: center;
   background: #edf2f0;
@@ -760,7 +760,9 @@ p {
   position: relative;
   width: 100%;
   height: 100%;
-  min-height: 22rem;
+  min-height: 18rem;
+  max-height: min(30rem, 62vh);
+  aspect-ratio: 4 / 3;
 }
 
 .product-detail-carousel .swiper,
@@ -768,7 +770,8 @@ p {
 .product-detail-carousel .swiper-slide {
   width: 100%;
   height: 100%;
-  min-height: 22rem;
+  min-height: 18rem;
+  max-height: min(30rem, 62vh);
 }
 
 .product-detail-carousel .swiper-slide {
@@ -782,7 +785,7 @@ p {
   width: 100%;
   height: 100%;
   max-height: 32rem;
-  object-fit: cover;
+  object-fit: contain;
 }
 
 .product-detail-carousel-button {

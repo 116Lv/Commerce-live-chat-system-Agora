@@ -228,7 +228,7 @@ class ProductQueryServiceTest {
         assertThat(response.likeCount()).isEqualTo(1);
         assertThat(response.liked()).isTrue();
         assertThat(response.regionId()).isEqualTo(5L);
-        assertThat(response.regionName()).isEqualTo("Seoul Gangnam");
+        assertThat(response.regionFullName()).isEqualTo("Seoul Gangnam");
         assertThat(response.sido()).isEqualTo("Seoul");
         assertThat(response.sigungu()).isEqualTo("Gangnam");
         assertThat(response.eupmyeondong()).isEqualTo("Samseong");
@@ -274,7 +274,7 @@ class ProductQueryServiceTest {
         ProductResponse response = responses.get(0);
         assertThat(response.liked()).isTrue();
         assertThat(response.likeCount()).isEqualTo(1);
-        assertThat(response.regionName()).isEqualTo("Seoul Gangnam");
+        assertThat(response.regionFullName()).isEqualTo("Seoul Gangnam");
         assertThat(response.sellerNickname()).isEqualTo("seller");
         assertThat(response.primaryImageUrl()).isEqualTo("https://cdn.test/products/10-main.jpg");
     }

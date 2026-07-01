@@ -124,10 +124,6 @@ export function normalizeRegionLabel(region) {
     return labelParts.join(' ');
   }
 
-  if (region.regionName) {
-    return String(region.regionName).trim();
-  }
-
   const value = getRegionValue(region);
   return value === undefined || value === null ? '' : String(value);
 }
@@ -171,10 +167,10 @@ export function getProductRegionLabel(product = {}) {
   }
 
   const labelParts = product.parentRegionName
-    ? uniqueParts([product.parentRegionName, product.regionName])
+    ? uniqueParts([product.parentRegionName, product.eupmyeondong])
     : product.sido
-      ? uniqueParts([product.sido, product.sigungu, product.regionName])
-      : uniqueParts([product.regionName, typeof product.region === 'string' ? product.region : '']);
+      ? uniqueParts([product.sido, product.sigungu, product.eupmyeondong])
+      : uniqueParts([typeof product.region === 'string' ? product.region : '']);
 
   if (labelParts.length > 0) {
     return labelParts.join(' ');
@@ -183,8 +179,24 @@ export function getProductRegionLabel(product = {}) {
   return normalizeRegionLabel(product.region) || '-';
 }
 
+export function normalizeProductImageUrl(value) {
+  const url = String(value ?? '').trim();
+
+  if (!url) {
+    return '';
+  }
+
+  if (/^(?:https?:|blob:|data:|\/)/i.test(url)) {
+    return url;
+  }
+
+  return url.startsWith('uploads/') ? `/${url}` : url;
+}
+
 export function getProductImageUrl(product = {}) {
-  return product.primaryImageUrl || product.thumbnailUrl || product.thumbnailImageUrl || product.imageUrl || product.image || '';
+  return normalizeProductImageUrl(
+    product.primaryImageUrl || product.thumbnailUrl || product.thumbnailImageUrl || product.imageUrl || product.image || ''
+  );
 }
 
 export function getProductTitle(product = {}) {

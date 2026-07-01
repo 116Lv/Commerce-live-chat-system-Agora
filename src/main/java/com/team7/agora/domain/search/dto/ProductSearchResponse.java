@@ -8,13 +8,13 @@ import java.math.BigDecimal;
  * @param id 식별자
  * @param title 상품 제목 또는 화면에 표시할 제목
  * @param price 가격
- * @param regionName 거래 지역 이름
+ * @param regionFullName 거래 지역 전체 이름
  */
 public record ProductSearchResponse(
     Long id,
     String title,
     BigDecimal price,
-    String regionName,
+    String regionFullName,
     int likeCount,
     boolean liked,
     Long regionId,
@@ -31,12 +31,12 @@ public record ProductSearchResponse(
     String categoryLabel
 ) {
 
-    public ProductSearchResponse(Long id, String title, BigDecimal price, String regionName) {
+    public ProductSearchResponse(Long id, String title, BigDecimal price, String regionFullName) {
         this(
             id,
             title,
             price,
-            regionName,
+            regionFullName,
             0,
             false,
             null,
@@ -59,7 +59,7 @@ public record ProductSearchResponse(
         String title,
         BigDecimal price,
         Long regionId,
-        String regionName,
+        String regionFullName,
         String sido,
         String sigungu,
         String eupmyeondong,
@@ -75,7 +75,7 @@ public record ProductSearchResponse(
             id,
             title,
             price,
-            regionName,
+            regionFullName,
             likeCount,
             false,
             regionId,

@@ -139,7 +139,7 @@ export default function EditProductPage() {
     price: parsePriceInput(form.price),
     category: form.category,
     categoryLabel: form.category,
-    regionName: persistedRegionLabel,
+    regionFullName: persistedRegionLabel,
     primaryImageUrl: visibleImageUrl
   };
 

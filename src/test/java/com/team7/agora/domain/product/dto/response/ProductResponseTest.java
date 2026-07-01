@@ -30,7 +30,7 @@ class ProductResponseTest {
         assertThat(response.likeCount()).isEqualTo(1);
         assertThat(response.liked()).isFalse();
         assertThat(response.regionId()).isEqualTo(5L);
-        assertThat(response.regionName()).isEqualTo("Seoul Gangnam");
+        assertThat(response.regionFullName()).isEqualTo("Seoul Gangnam");
         assertThat(response.sellerId()).isEqualTo(1L);
         assertThat(response.sellerNickname()).isEqualTo("seller");
         assertThat(response.primaryImageUrl()).isEqualTo("https://cdn.test/products/10-main.jpg");
