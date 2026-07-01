@@ -7,7 +7,7 @@ import ErrorState from '../components/ErrorState.jsx';
 import LoadingState from '../components/LoadingState.jsx';
 import ProductCard from '../components/ProductCard.jsx';
 import { getProducts, likeProduct, searchProducts, unlikeProduct } from '../api/productApi.js';
-import { getRegions } from '../api/regionApi.js';
+import { getRegions, updatePreferredRegions } from '../api/regionApi.js';
 import { useAuth } from '../auth/AuthContext.jsx';
 import { PageHeader, getPageContent, useApiResource } from './pageUtils.jsx';
 import { PRODUCT_CATEGORIES, getChildRegionOptions, getRegionSelectOptions } from './productFormUtils.js';
@@ -218,7 +218,123 @@ export function HomePage() {
 }
 
 export function RegionSetupPage() {
-  return <PlaceholderPage title="관심 지역 설정" eyebrow="계정" emptyTitle="선택된 관심 지역이 없어요" />;
+  const navigate = useNavigate();
+  const regionsState = useApiResource(() => getRegions(), []);
+  const regions = getPageContent(regionsState.data);
+  const regionOptions = getRegionSelectOptions(regions);
+  const [selectedRegionIds, setSelectedRegionIds] = useState([]);
+  const [primaryRegionId, setPrimaryRegionId] = useState('');
+  const [actionMessage, setActionMessage] = useState('');
+  const [actionError, setActionError] = useState('');
+  const [saving, setSaving] = useState(false);
+
+  const toggleRegion = (regionId) => {
+    setActionError('');
+    setSelectedRegionIds((current) => {
+      if (current.includes(regionId)) {
+        const next = current.filter((id) => id !== regionId);
+        if (primaryRegionId === regionId) {
+          setPrimaryRegionId(next[0] || '');
+        }
+        return next;
+      }
+
+      if (current.length >= 5) {
+        setActionError('관심 지역은 최대 5개까지 선택할 수 있습니다.');
+        return current;
+      }
+
+      const next = [...current, regionId];
+      if (!primaryRegionId) {
+        setPrimaryRegionId(regionId);
+      }
+      return next;
+    });
+  };
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    setActionMessage('');
+    setActionError('');
+
+    if (selectedRegionIds.length < 3 || selectedRegionIds.length > 5) {
+      setActionError('관심 지역은 3개 이상 5개 이하로 선택해 주세요.');
+      return;
+    }
+
+    if (!primaryRegionId || !selectedRegionIds.includes(primaryRegionId)) {
+      setActionError('대표 관심 지역을 선택해 주세요.');
+      return;
+    }
+
+    setSaving(true);
+    try {
+      await updatePreferredRegions({
+        regionIds: selectedRegionIds.map(Number),
+        primaryRegionId: Number(primaryRegionId)
+      });
+      setActionMessage('관심 지역이 저장되었습니다.');
+      navigate('/', { replace: true });
+    } catch (err) {
+      setActionError(err.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <section>
+      <PageHeader title="관심 지역 설정" eyebrow="계정" />
+      {actionMessage ? <Alert variant="success">{actionMessage}</Alert> : null}
+      {actionError ? <Alert variant="danger">{actionError}</Alert> : null}
+      {regionsState.loading ? <LoadingState label="지역 불러오는 중" /> : null}
+      {regionsState.error ? (
+        <ErrorState title="지역을 불러오지 못했어요" message={regionsState.error.message} onRetry={regionsState.reload} />
+      ) : null}
+      {!regionsState.loading && !regionsState.error && regionOptions.length === 0 ? (
+        <EmptyState title="선택할 수 있는 지역이 없어요" />
+      ) : null}
+      {!regionsState.loading && !regionsState.error && regionOptions.length > 0 ? (
+        <Form className="detail-panel stack-list" onSubmit={handleSubmit}>
+          <p className="text-muted mb-0">관심 지역은 3개 이상 5개 이하로 선택해 주세요.</p>
+          <div className="stack-list">
+            {regionOptions.map((region) => {
+              const checked = selectedRegionIds.includes(region.value);
+              return (
+                <div className="d-flex align-items-center justify-content-between gap-3" key={region.value}>
+                  <Form.Check
+                    type="checkbox"
+                    id={`preferred-region-${region.value}`}
+                    label={region.label}
+                    checked={checked}
+                    onChange={() => toggleRegion(region.value)}
+                  />
+                  <Form.Check
+                    type="radio"
+                    id={`primary-region-${region.value}`}
+                    name="primaryRegionId"
+                    label="대표"
+                    value={region.value}
+                    checked={primaryRegionId === region.value}
+                    disabled={!checked}
+                    onChange={(event) => setPrimaryRegionId(event.target.value)}
+                  />
+                </div>
+              );
+            })}
+          </div>
+          <div className="d-flex justify-content-end gap-2">
+            <Button type="button" variant="outline-secondary" onClick={() => navigate('/')}>
+              나중에 설정
+            </Button>
+            <Button type="submit" disabled={saving}>
+              {saving ? '저장 중...' : '관심 지역 저장'}
+            </Button>
+          </div>
+        </Form>
+      ) : null}
+    </section>
+  );
 }
 
 export function NotFoundPage() {

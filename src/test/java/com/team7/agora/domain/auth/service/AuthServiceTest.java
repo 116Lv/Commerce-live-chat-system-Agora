@@ -71,7 +71,7 @@ class AuthServiceTest {
     void signup_savesEncodedPasswordWithDefaultRoleAndStatus() {
         // given
         AuthService authService = createService();
-        SignupRequest request = new SignupRequest("user@test.com", "password123!", "동네유저");
+        SignupRequest request = new SignupRequest("user@test.com", "password123!", "동네유저", "01012345678");
         when(userRepository.existsByEmailIgnoreCase("user@test.com")).thenReturn(false);
         when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
@@ -84,6 +84,7 @@ class AuthServiceTest {
         User savedUser = captor.getValue();
         assertThat(savedUser.getEmail()).isEqualTo("user@test.com");
         assertThat(savedUser.getNickname()).isEqualTo("동네유저");
+        assertThat(savedUser.getPhone()).isEqualTo("01012345678");
         assertThat(savedUser.getPassword()).isNotEqualTo("password123!");
         assertThat(passwordEncoder.matches("password123!", savedUser.getPassword())).isTrue();
         assertThat(savedUser.getRole()).isEqualTo(UserRole.ROLE_USER);
@@ -96,7 +97,7 @@ class AuthServiceTest {
     void signup_throwsDuplicateEmailWhenEmailAlreadyExists() {
         // given
         AuthService authService = createService();
-        SignupRequest request = new SignupRequest("user@test.com", "password123!", "동네유저");
+        SignupRequest request = new SignupRequest("user@test.com", "password123!", "동네유저", "01012345678");
         when(userRepository.existsByEmailIgnoreCase("user@test.com")).thenReturn(true);
 
         // when & then
@@ -111,7 +112,7 @@ class AuthServiceTest {
     void signup_throwsDuplicateEmailIgnoringCase() {
         // given
         AuthService authService = createService();
-        SignupRequest request = new SignupRequest("USER@test.com", "password123!", "동네유저");
+        SignupRequest request = new SignupRequest("USER@test.com", "password123!", "동네유저", "01012345678");
         when(userRepository.existsByEmailIgnoreCase("user@test.com")).thenReturn(true);
 
         // when & then
@@ -126,7 +127,7 @@ class AuthServiceTest {
     void signup_mapsUniqueConstraintViolationToDuplicateEmail() {
         // given
         AuthService authService = createService();
-        SignupRequest request = new SignupRequest("user@test.com", "password123!", "동네유저");
+        SignupRequest request = new SignupRequest("user@test.com", "password123!", "동네유저", "01012345678");
         when(userRepository.existsByEmailIgnoreCase("user@test.com")).thenReturn(false);
         when(userRepository.save(any(User.class))).thenThrow(new DataIntegrityViolationException("users.email"));
 
@@ -141,7 +142,7 @@ class AuthServiceTest {
     void signup_savesNormalizedLowercaseEmail() {
         // given
         AuthService authService = createService();
-        SignupRequest request = new SignupRequest("  USER@test.com  ", "password123!", "동네유저");
+        SignupRequest request = new SignupRequest("  USER@test.com  ", "password123!", "동네유저", "01012345678");
         when(userRepository.existsByEmailIgnoreCase("user@test.com")).thenReturn(false);
         when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
