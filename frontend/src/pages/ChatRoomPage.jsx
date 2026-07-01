@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Alert, Badge, Button, Col, Form, Row } from 'react-bootstrap';
 import { Link, useParams } from 'react-router-dom';
 import { ImagePlus, RotateCcw, Send } from 'lucide-react';
@@ -213,6 +213,7 @@ export default function ChatRoomPage() {
   const [actionMessage, setActionMessage] = useState('');
   const [actionError, setActionError] = useState('');
   const [uploading, setUploading] = useState(false);
+  const messageListEndRef = useRef(null);
   const { data, error, loading, reload } = useApiResource(() => getMessages(chatRoomId, { size: 100 }), [chatRoomId]);
   const { data: roomList = [] } = useApiResource(() => getMyRooms(), [chatRoomId]);
   const currentUserId = useMemo(() => getCurrentUserIdFromToken(), []);
@@ -257,6 +258,19 @@ export default function ChatRoomPage() {
 
   const socket = useChatSocket(chatRoomId, appendMessage);
   const renderedMessages = useMemo(() => dedupeMessages(messages), [messages]);
+  const lastRenderedMessageKey = renderedMessages.length > 0 ? getMessageKey(renderedMessages[renderedMessages.length - 1]) : '';
+
+  useEffect(() => {
+    if (!lastRenderedMessageKey) {
+      return;
+    }
+
+    const animationFrameId = window.requestAnimationFrame(() => {
+      messageListEndRef.current?.scrollIntoView({ block: 'end', behavior: 'smooth' });
+    });
+
+    return () => window.cancelAnimationFrame(animationFrameId);
+  }, [lastRenderedMessageKey]);
 
   const handleSend = (event) => {
     event.preventDefault();
@@ -375,6 +389,7 @@ export default function ChatRoomPage() {
                     </article>
                   );
                 })}
+                <div ref={messageListEndRef} aria-hidden="true" />
               </div>
             ) : null}
             <Form className="chat-compose" onSubmit={handleSend}>
