@@ -27,5 +27,15 @@ public interface ChatRoomRepository extends JpaRepository<ChatRoom, Long> {
     Optional<ChatRoom> findByIdAndStatusForUpdate(@Param("id") Long id, @Param("status") ChatRoomStatus status);
 
     @EntityGraph(attributePaths = {"seller", "buyer", "product"})
-    List<ChatRoom> findAllBySellerOrBuyer(User seller, User buyer);
+    @Query("""
+        select cr
+        from ChatRoom cr
+        where cr.status = :status
+          and (cr.seller.id = :userId or cr.buyer.id = :userId)
+        order by cr.createdAt desc
+        """)
+    List<ChatRoom> findAllByParticipantIdAndStatus(
+        @Param("userId") Long userId,
+        @Param("status") ChatRoomStatus status
+    );
 }
