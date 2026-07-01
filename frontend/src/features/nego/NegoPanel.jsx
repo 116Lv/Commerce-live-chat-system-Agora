@@ -23,7 +23,8 @@ import {
   inferOfferRole,
   isOfferPaymentPending,
   isOfferPayable,
-  parseOfferPriceInput
+  parseOfferPriceInput,
+  shouldShowOfferTime
 } from './negoPanelUtils.js';
 
 const actionHandlers = {
@@ -65,6 +66,7 @@ export default function NegoPanel({ chatRoomId, onOfferChange, productPrice }) {
   const offerActions = getOfferActions(offer, { role: offerRole });
   const paymentHref = buildPaymentHref(offer, { role: offerRole });
   const payable = isOfferPayable(offer, { role: offerRole });
+  const showOfferTime = shouldShowOfferTime(offer);
   const sellerPaymentPending =
     offerRole === 'seller' && String(offer?.status || '').toUpperCase() === 'ACCEPTED' && isOfferPaymentPending(offer);
   const remainingTimeLabel = getRemainingTimeLabel(offer?.expiresAt);
@@ -174,7 +176,7 @@ export default function NegoPanel({ chatRoomId, onOfferChange, productPrice }) {
           <div className="d-flex justify-content-between align-items-start gap-2">
             <div>
               <strong>제안 #{offer.offerId}</strong>
-              {offer.status === 'PENDING' && (
+              {showOfferTime && (
                 <p className="mb-0 text-muted small">
                   만료 {formatDateTime(offer.expiresAt)}
                   {remainingTimeLabel ? ` · ${remainingTimeLabel}` : ''}
