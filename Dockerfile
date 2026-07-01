@@ -13,6 +13,7 @@ FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
 
 RUN addgroup -S agora && adduser -S agora -G agora
+RUN mkdir -p /app/uploads && chown -R agora:agora /app
 
 COPY --from=build /workspace/build/libs/*.jar app.jar
 

@@ -25,3 +25,26 @@ test('production compose keeps backend off host ports and builds frontend for sa
   assert.match(compose, /VITE_API_BASE_URL: \$\{PUBLIC_API_BASE_URL:-\/\}/);
   assert.match(dockerfile, /ARG VITE_API_BASE_URL=\//);
 });
+
+test('docker deployment uses the real payment client and persists uploaded files', () => {
+  const compose = readFileSync(resolve(root, 'docker-compose.prod.yml'), 'utf8');
+  const backendDockerfile = readFileSync(resolve(root, 'Dockerfile'), 'utf8');
+  const localPaymentClient = readFileSync(
+    resolve(root, 'src/main/java/com/team7/agora/domain/payment/client/LocalPaymentClient.java'),
+    'utf8'
+  );
+  const portOnePaymentClient = readFileSync(
+    resolve(root, 'src/main/java/com/team7/agora/domain/payment/client/PortOnePaymentClient.java'),
+    'utf8'
+  );
+
+  assert.match(localPaymentClient, /@Profile\("local"\)/);
+  assert.doesNotMatch(localPaymentClient, /docker/);
+  assert.match(portOnePaymentClient, /@Profile\(\{"prod", "docker"\}\)/);
+
+  assert.match(backendDockerfile, /mkdir -p \/app\/uploads/);
+  assert.match(backendDockerfile, /chown -R agora:agora \/app/);
+  assert.match(compose, /FILE_UPLOAD_DIR: \/app\/uploads/);
+  assert.match(compose, /- agora-uploads:\/app\/uploads/);
+  assert.match(compose, /volumes:\s*\n\s+agora-uploads:/);
+});

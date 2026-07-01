@@ -218,9 +218,21 @@ export const flushPendingChatMessages = (chatRoomId, publish, storage) => {
   return { sentCount, failedCount, pendingCount: remaining.length, failedMessages, sentClientMessageIds };
 };
 
-const getSocketUrl = () => {
-  const apiBase = import.meta.env?.VITE_API_BASE_URL || 'http://127.0.0.1:8080';
-  return new URL(CHAT_DESTINATIONS.endpoint, apiBase).toString().replace(/^http/, 'ws');
+const getBrowserOrigin = () => (typeof window === 'undefined' ? 'http://127.0.0.1:8080' : window.location.origin);
+
+const resolveApiBase = (apiBase, origin = getBrowserOrigin()) => {
+  const value = String(apiBase || '').trim();
+
+  if (!value || value.startsWith('/')) {
+    return new URL(value || '/', origin).toString();
+  }
+
+  return value;
+};
+
+export const getSocketUrl = (apiBase = import.meta.env?.VITE_API_BASE_URL, origin) => {
+  const base = resolveApiBase(apiBase || 'http://127.0.0.1:8080', origin);
+  return new URL(CHAT_DESTINATIONS.endpoint, base).toString().replace(/^http/, 'ws');
 };
 
 const getConnectHeaders = () => {

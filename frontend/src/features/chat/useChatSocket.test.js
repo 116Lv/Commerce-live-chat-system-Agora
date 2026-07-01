@@ -6,6 +6,7 @@ import {
   CHAT_DELIVERY_STATUS,
   createPendingChatMessage,
   flushPendingChatMessages,
+  getSocketUrl,
   publishChatMessage,
   queuePendingChatMessage,
   readPendingChatMessages,
@@ -154,4 +155,10 @@ test('chat socket connect headers reuse the shared bearer formatter', () => {
 
   assert.match(source, /formatAuthorizationHeader/);
   assert.doesNotMatch(source, /startsWith\('bearer/);
+});
+
+test('chat socket URL uses browser origin when API base is same-origin relative', () => {
+  assert.equal(getSocketUrl('/', 'http://example.test'), 'ws://example.test/ws');
+  assert.equal(getSocketUrl('/api', 'https://example.test'), 'wss://example.test/ws');
+  assert.equal(getSocketUrl('https://api.example.test', 'https://app.example.test'), 'wss://api.example.test/ws');
 });

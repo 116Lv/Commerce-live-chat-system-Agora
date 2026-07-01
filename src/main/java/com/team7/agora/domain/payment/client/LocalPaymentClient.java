@@ -8,7 +8,7 @@ import org.springframework.stereotype.Component;
  * 로컬 결제 제공자 연동 구현체이다.
  */
 @Component
-@Profile({"local", "docker"})
+@Profile("local")
 public class LocalPaymentClient implements PaymentClient {
     /**
      * 외부 결제 승인 결과를 검증하고 결제를 완료 상태로 변경한다.

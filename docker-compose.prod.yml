@@ -18,8 +18,11 @@ services:
       PORTONE_API_SECRET: ${PORTONE_API_SECRET:?PORTONE_API_SECRET is required}
       PORTONE_WEBHOOK_SECRET: ${PORTONE_WEBHOOK_SECRET:?PORTONE_WEBHOOK_SECRET is required}
       PORTONE_API_BASE_URL: ${PORTONE_API_BASE_URL:-https://api.portone.io}
+      FILE_UPLOAD_DIR: /app/uploads
     expose:
       - "8080"
+    volumes:
+      - agora-uploads:/app/uploads
     depends_on:
       migrate:
         condition: service_completed_successfully
@@ -105,5 +108,6 @@ services:
     restart: unless-stopped
 
 volumes:
+  agora-uploads:
   agora-redis-data:
   agora-mysql-data:
