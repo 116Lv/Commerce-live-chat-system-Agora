@@ -4,7 +4,7 @@ import com.team7.agora.domain.coupon.entity.CouponEvent;
 import com.team7.agora.domain.coupon.enums.CouponEventStatus;
 import com.team7.agora.domain.coupon.enums.CouponEventType;
 import com.team7.agora.domain.coupon.enums.CouponStatus;
-import com.team7.agora.global.time.AgoraClock;
+import com.team7.agora.domain.coupon.time.CouponEventTime;
 import java.time.LocalDateTime;
 
 final class CouponResponseDisplay {
@@ -24,7 +24,7 @@ final class CouponResponseDisplay {
     }
 
     static boolean canIssue(CouponEvent event) {
-        LocalDateTime now = AgoraClock.now();
+        LocalDateTime now = CouponEventTime.now();
         return event.getStatus() == CouponEventStatus.ACTIVE
             && !now.isBefore(event.getStartAt())
             && !now.isAfter(event.getEndAt())
@@ -32,7 +32,7 @@ final class CouponResponseDisplay {
     }
 
     static boolean ended(CouponEvent event) {
-        return event.getStatus() == CouponEventStatus.ENDED || AgoraClock.now().isAfter(event.getEndAt());
+        return event.getStatus() == CouponEventStatus.ENDED || CouponEventTime.now().isAfter(event.getEndAt());
     }
 
     static boolean soldOut(CouponEvent event) {
@@ -40,7 +40,7 @@ final class CouponResponseDisplay {
     }
 
     static String eventStatusLabel(CouponEvent event) {
-        LocalDateTime now = AgoraClock.now();
+        LocalDateTime now = CouponEventTime.now();
         if (ended(event)) {
             return "Ended";
         }
@@ -79,6 +79,6 @@ final class CouponResponseDisplay {
 
     static boolean isExpired(CouponStatus status, LocalDateTime expiresAt) {
         return status == CouponStatus.EXPIRED
-            || (expiresAt != null && AgoraClock.now().isAfter(expiresAt));
+            || (expiresAt != null && CouponEventTime.now().isAfter(expiresAt));
     }
 }

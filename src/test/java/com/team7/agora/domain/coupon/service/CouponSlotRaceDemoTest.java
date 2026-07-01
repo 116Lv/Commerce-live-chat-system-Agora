@@ -8,6 +8,7 @@ import com.team7.agora.domain.coupon.entity.CouponEvent;
 import com.team7.agora.domain.coupon.enums.CouponEventType;
 import com.team7.agora.domain.coupon.repository.CouponEventRepository;
 import com.team7.agora.domain.coupon.repository.CouponRepository;
+import com.team7.agora.domain.coupon.time.CouponEventTime;
 import com.team7.agora.domain.user.entity.User;
 import com.team7.agora.domain.user.repository.UserRepository;
 import com.team7.agora.global.exception.BusinessException;
@@ -118,8 +119,8 @@ class CouponSlotRaceDemoTest {
             CouponEventType.FIRST_COME,
             "race-demo-" + System.nanoTime(),
             SLOT_COUNT,
-            AgoraClock.now().minusMinutes(1),
-            AgoraClock.now().plusMinutes(10),
+            CouponEventTime.now().minusMinutes(1),
+            CouponEventTime.now().plusMinutes(10),
             5000, 10000, 300
         ));
     }

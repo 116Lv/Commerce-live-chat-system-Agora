@@ -135,7 +135,7 @@ test('admin API maps dashboard, product, user, report, payment, settlement, and 
     { method: 'post', url: '/api/admin/coupon-events/requests', params: undefined, data: couponEvent },
     { method: 'get', url: '/api/admin/coupon-events/19', params: undefined, data: undefined },
     { method: 'post', url: '/api/admin/coupon-events/19/stop-requests', params: undefined, data: { reason: 'Campaign ended' } },
-    { method: 'post', url: '/api/admin/coupon-events/19/issue-requests', params: undefined, data: { userIds: [1, 2] } },
+    { method: 'post', url: '/api/admin/coupon-events/19/issue-requests', params: undefined, data: { targets: ['1', '2'] } },
     { method: 'get', url: '/api/admin/coupon-events/19/coupons', params: undefined, data: undefined }
   ]);
 });
@@ -315,14 +315,14 @@ test('coupon API normalizes formatted admin UI numbers while preserving raw enum
         reason: 'Campaign launch approval'
       }
     },
-    { method: 'post', url: '/api/admin/coupon-events/31/issue-requests', params: undefined, data: { userIds: [1, 2, 3] } }
+    { method: 'post', url: '/api/admin/coupon-events/31/issue-requests', params: undefined, data: { targets: ['1', '2', 'abc', '3'] } }
   ]);
 
   assert.deepEqual(normalizeCouponEventPayload({ type: 'FIRST_COME', totalQuantity: '2,500' }), {
     type: 'FIRST_COME',
     totalQuantity: 2500
   });
-  assert.deepEqual(normalizeCouponIssuePayload(['5', 'x', 6]), { userIds: [5, 6] });
+  assert.deepEqual(normalizeCouponIssuePayload(['5', 'x', 6]), { targets: ['5', 'x', '6'] });
 });
 
 test('account role update surfaces backend authorization errors', async () => {
