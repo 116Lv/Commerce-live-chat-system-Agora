@@ -107,7 +107,7 @@ public class PaymentService {
             trade,
             trade.getBuyer(),
             trade.getPrice(),
-            "order-" + UUID.randomUUID()
+            "order-" + UUID.randomUUID().toString().replace("-", "")
         );
         try {
             return PaymentResponse.from(paymentRepository.save(payment));
