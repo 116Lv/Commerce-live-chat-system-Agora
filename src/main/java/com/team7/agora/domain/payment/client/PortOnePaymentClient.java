@@ -44,16 +44,14 @@ public class PortOnePaymentClient implements PaymentClient {
     @Override
     public boolean confirm(String paymentKey, String orderId, BigDecimal amount) {
         String accessToken = issueAccessToken();
-        String requestBody = writeJson(new ConfirmRequest(paymentKey, orderId, amount));
 
         HttpRequest request = HttpRequest.newBuilder()
-            .uri(URI.create(apiBaseUrl + "/payments/" + orderId + "/confirm"))
-            .header("Content-Type", "application/json")
+            .uri(URI.create(apiBaseUrl + "/payments/" + orderId))
             .header("Authorization", "Bearer " + accessToken)
-            .POST(HttpRequest.BodyPublishers.ofString(requestBody))
+            .GET()
             .build();
 
-        return sendForSuccess(request);
+        return sendForPaidPayment(request, orderId, amount);
     }
 
     private String issueAccessToken() {
@@ -78,13 +76,60 @@ public class PortOnePaymentClient implements PaymentClient {
         }
     }
 
-    private boolean sendForSuccess(HttpRequest request) {
+    private boolean sendForPaidPayment(HttpRequest request, String orderId, BigDecimal amount) {
         try {
             HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-            return response.statusCode() >= 200 && response.statusCode() < 300;
+            if (response.statusCode() < 200 || response.statusCode() >= 300) {
+                return false;
+            }
+            return isPaidPayment(response.body(), orderId, amount);
         } catch (Exception e) {
-            throw new PaymentException(ErrorCode.INTERNAL_SERVER_ERROR, "PortOne payment confirmation failed.");
+            throw new PaymentException(ErrorCode.INTERNAL_SERVER_ERROR, "PortOne payment verification failed.");
         }
+    }
+
+    private boolean isPaidPayment(String body, String orderId, BigDecimal amount) {
+        try {
+            JsonNode root = objectMapper.readTree(body);
+            String providerPaymentId = text(root, "id", "paymentId");
+            String status = text(root, "status");
+            BigDecimal paidAmount = amount(root);
+
+            return (providerPaymentId == null || providerPaymentId.equals(orderId))
+                && "PAID".equalsIgnoreCase(status)
+                && paidAmount != null
+                && paidAmount.compareTo(amount) == 0;
+        } catch (Exception e) {
+            throw new PaymentException(ErrorCode.INTERNAL_SERVER_ERROR, "PortOne payment response parsing failed.");
+        }
+    }
+
+    private String text(JsonNode node, String... names) {
+        for (String name : names) {
+            JsonNode value = node.get(name);
+            if (value != null && !value.asText().isBlank()) {
+                return value.asText();
+            }
+        }
+        return null;
+    }
+
+    private BigDecimal amount(JsonNode root) {
+        JsonNode amountNode = root.get("amount");
+        if (amountNode != null) {
+            if (amountNode.isObject()) {
+                JsonNode total = amountNode.get("total");
+                if (total != null && total.isNumber()) {
+                    return total.decimalValue();
+                }
+            }
+            if (amountNode.isNumber()) {
+                return amountNode.decimalValue();
+            }
+        }
+
+        JsonNode totalAmount = root.get("totalAmount");
+        return totalAmount != null && totalAmount.isNumber() ? totalAmount.decimalValue() : null;
     }
 
     private String extractAccessToken(String body) {
@@ -113,6 +158,4 @@ public class PortOnePaymentClient implements PaymentClient {
     private record TokenRequest(String apiSecret) {
     }
 
-    private record ConfirmRequest(String paymentKey, String orderId, BigDecimal amount) {
-    }
 }

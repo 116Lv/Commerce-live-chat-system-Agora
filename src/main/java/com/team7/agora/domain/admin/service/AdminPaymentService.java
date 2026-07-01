@@ -2,12 +2,10 @@ package com.team7.agora.domain.admin.service;
 
 import com.team7.agora.domain.admin.dto.response.AdminPaymentResponse;
 import com.team7.agora.domain.admin.enums.AdminPermission;
-import com.team7.agora.domain.payment.client.PaymentClient;
 import com.team7.agora.domain.payment.entity.Payment;
 import com.team7.agora.domain.payment.enums.PaymentStatus;
 import com.team7.agora.domain.payment.repository.PaymentRepository;
 import com.team7.agora.domain.payment.service.PaymentService;
-import com.team7.agora.domain.settlement.entity.Settlement;
 import com.team7.agora.domain.settlement.repository.SettlementRepository;
 import com.team7.agora.global.auth.AdminPrincipal;
 import com.team7.agora.global.exception.BusinessException;
@@ -26,23 +24,21 @@ import org.springframework.transaction.annotation.Transactional;
 public class AdminPaymentService {
 
     private final PaymentRepository paymentRepository;
-    private final PaymentClient paymentClient;
     private final PaymentService paymentService;
     private final SettlementRepository settlementRepository;
 
     /**
      * 필요한 의존성을 주입받아 컴포넌트를 생성한다.
      * @param paymentRepository 데이터를 조회하고 저장하는 리포지토리
-     * @param paymentClient 외부 시스템 또는 저장소와 통신하는 클라이언트
+     * @param paymentService 결제 검증 및 확정 흐름을 처리하는 서비스
+     * @param settlementRepository 정산 데이터를 조회하는 리포지토리
      */
     public AdminPaymentService(
         PaymentRepository paymentRepository,
-        PaymentClient paymentClient,
         PaymentService paymentService,
         SettlementRepository settlementRepository
     ) {
         this.paymentRepository = paymentRepository;
-        this.paymentClient = paymentClient;
         this.paymentService = paymentService;
         this.settlementRepository = settlementRepository;
     }
@@ -93,11 +89,8 @@ public class AdminPaymentService {
         validateSettlementAdmin(admin);
         Payment payment = findPayment(paymentId);
 
-        if (payment.getPaymentKey() == null) {
-            throw new BusinessException(ErrorCode.INVALID_REQUEST, "결제 키가 없는 결제는 재검증할 수 없습니다.");
-        }
-
-        paymentService.confirmByPaymentId(paymentId, payment.getPaymentKey());
+        String paymentKey = payment.getPaymentKey() == null ? payment.getOrderId() : payment.getPaymentKey();
+        paymentService.confirmByPaymentId(paymentId, paymentKey);
         return toResponse(findPayment(paymentId));
     }
 

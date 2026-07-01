@@ -120,7 +120,7 @@ public class Payment {
     }
 
     public void markConfirming() {
-        if (status != PaymentStatus.READY) {
+        if (status != PaymentStatus.READY && status != PaymentStatus.FAILED) {
             throw new PaymentException(ErrorCode.CONFLICT, "결제 대기 상태에서만 승인할 수 있습니다.");
         }
         this.status = PaymentStatus.CONFIRMING;

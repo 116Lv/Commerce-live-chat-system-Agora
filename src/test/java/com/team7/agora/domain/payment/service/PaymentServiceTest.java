@@ -196,6 +196,42 @@ class PaymentServiceTest {
     }
 
     @Test
+    void confirmByPaymentIdRecoversFailedPaymentWhenProviderLookupIsPaid() {
+        Payment payment = Payment.ready(trade, buyer, BigDecimal.valueOf(50000), "order-1");
+        assignId(payment, 1000L);
+        payment.markFailed();
+        when(paymentRepository.findByIdForUpdate(1000L)).thenReturn(Optional.of(payment), Optional.of(payment));
+        when(paymentClient.confirm("order-1", "order-1", BigDecimal.valueOf(50000))).thenReturn(true);
+        when(settlementRepository.save(any(Settlement.class))).thenAnswer(invocation -> {
+            Settlement settlement = invocation.getArgument(0);
+            assignId(settlement, 2000L);
+            return settlement;
+        });
+
+        PaymentResponse response = paymentService.confirmByPaymentId(1000L, "order-1");
+
+        assertThat(response.status()).isEqualTo("PAID");
+        assertThat(response.paymentKey()).isEqualTo("order-1");
+        assertThat(response.settlementId()).isEqualTo(2000L);
+    }
+
+    @Test
+    void confirmByPaymentIdKeepsFailedStatusWhenProviderLookupThrowsDuringRecovery() {
+        Payment payment = Payment.ready(trade, buyer, BigDecimal.valueOf(50000), "order-1");
+        assignId(payment, 1000L);
+        payment.markFailed();
+        when(paymentRepository.findByIdForUpdate(1000L)).thenReturn(Optional.of(payment), Optional.of(payment));
+        when(paymentClient.confirm("order-1", "order-1", BigDecimal.valueOf(50000)))
+            .thenThrow(new PaymentException(ErrorCode.INTERNAL_SERVER_ERROR, "PG verify failed"));
+
+        assertThatThrownBy(() -> paymentService.confirmByPaymentId(1000L, "order-1"))
+            .isInstanceOf(PaymentException.class);
+
+        assertThat(payment.getStatus()).isEqualTo(PaymentStatus.FAILED);
+        verify(settlementRepository, never()).save(any(Settlement.class));
+    }
+
+    @Test
     void cancelledTradeBlocksConfirmBeforePaymentClientConfirm() {
         Payment payment = Payment.ready(trade, buyer, BigDecimal.valueOf(50000), "order-1");
         assignId(payment, 1000L);

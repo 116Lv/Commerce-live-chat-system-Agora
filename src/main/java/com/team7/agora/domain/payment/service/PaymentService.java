@@ -148,10 +148,10 @@ public class PaymentService {
         try {
             approved = paymentClient.confirm(paymentKey, attempt.orderId(), attempt.amount());
         } catch (PaymentException e) {
-            restoreConfirmationToReady(attempt.paymentId());
+            restoreConfirmationStatus(attempt);
             throw e;
         } catch (RuntimeException e) {
-            restoreConfirmationToReady(attempt.paymentId());
+            restoreConfirmationStatus(attempt);
             throw e;
         }
         if (!approved) {
@@ -189,7 +189,13 @@ public class PaymentService {
 
     private ConfirmationAttempt reserveConfirmation(Payment payment) {
         if (payment.getStatus() == PaymentStatus.PAID) {
-            return new ConfirmationAttempt(payment.getId(), payment.getOrderId(), payment.getAmount(), PaymentResponse.from(payment));
+            return new ConfirmationAttempt(
+                payment.getId(),
+                payment.getOrderId(),
+                payment.getAmount(),
+                payment.getStatus(),
+                PaymentResponse.from(payment)
+            );
         }
         if (payment.getStatus() == PaymentStatus.CONFIRMING) {
             throw new PaymentException(ErrorCode.CONFLICT, "approval in progress");
@@ -197,8 +203,9 @@ public class PaymentService {
         if (payment.getTrade().getStatus() != TradeStatus.PAYMENT_PENDING) {
             throw new PaymentException(ErrorCode.INVALID_REQUEST, "寃곗젣 ?湲?以묒씤 嫄곕옒留?寃곗젣?????덉뒿?덈떎.");
         }
+        PaymentStatus previousStatus = payment.getStatus();
         payment.markConfirming();
-        return new ConfirmationAttempt(payment.getId(), payment.getOrderId(), payment.getAmount(), null);
+        return new ConfirmationAttempt(payment.getId(), payment.getOrderId(), payment.getAmount(), previousStatus, null);
     }
 
     private void markConfirmationFailed(Long paymentId) {
@@ -209,11 +216,15 @@ public class PaymentService {
         });
     }
 
-    private void restoreConfirmationToReady(Long paymentId) {
+    private void restoreConfirmationStatus(ConfirmationAttempt attempt) {
         transactionOperations.execute(status -> {
-            Payment payment = findPaymentForUpdate(paymentId);
+            Payment payment = findPaymentForUpdate(attempt.paymentId());
             if (payment.getStatus() == PaymentStatus.CONFIRMING) {
-                payment.restoreReadyFromConfirming();
+                if (attempt.previousStatus() == PaymentStatus.FAILED) {
+                    payment.markFailed();
+                } else {
+                    payment.restoreReadyFromConfirming();
+                }
             }
             return null;
         });
@@ -223,6 +234,7 @@ public class PaymentService {
         Long paymentId,
         String orderId,
         BigDecimal amount,
+        PaymentStatus previousStatus,
         PaymentResponse alreadyConfirmed
     ) {
     }

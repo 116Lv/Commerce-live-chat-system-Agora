@@ -18,7 +18,7 @@ class PortOnePaymentClientTest {
     private HttpServer server;
     private String baseUrl;
     private volatile String tokenRequestBody;
-    private volatile String confirmRequestBody;
+    private volatile String paymentLookupAuthorization;
 
     @BeforeEach
     void setUp() throws IOException {
@@ -31,9 +31,13 @@ class PortOnePaymentClientTest {
             exchange.getResponseBody().write(response);
             exchange.close();
         });
-        server.createContext("/payments/order-1/confirm", exchange -> {
-            confirmRequestBody = new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
-            exchange.sendResponseHeaders(200, 0);
+        server.createContext("/payments/order-1", exchange -> {
+            paymentLookupAuthorization = exchange.getRequestHeaders().getFirst("Authorization");
+            byte[] response = """
+                {"id":"order-1","status":"PAID","amount":{"total":50000}}
+                """.getBytes(StandardCharsets.UTF_8);
+            exchange.sendResponseHeaders(200, response.length);
+            exchange.getResponseBody().write(response);
             exchange.close();
         });
         server.start();
@@ -46,14 +50,14 @@ class PortOnePaymentClientTest {
     }
 
     @Test
-    void confirmSerializesPortOneRequestsAsJson() {
+    void confirmVerifiesPaidPortOnePaymentByLookup() {
         PortOnePaymentClient client = new PortOnePaymentClient(baseUrl, "a\"b");
 
         boolean approved = client.confirm("payment-key", "order-1", BigDecimal.valueOf(50000));
 
         assertThat(approved).isTrue();
         assertThat(tokenRequestBody).contains("a\\\"b");
-        assertThat(confirmRequestBody).contains("\"paymentKey\":\"payment-key\"");
+        assertThat(paymentLookupAuthorization).isEqualTo("Bearer access-token");
     }
 
     @Test
