@@ -47,8 +47,8 @@ test('trade detail only exposes user-authorized trade actions', () => {
   assert.match(source, /canCheckout/);
   assert.match(source, /canCompleteTrade/);
   assert.match(source, /isCurrentUserBuyer/);
-  assert.match(source, /const canReviewTrade = isCurrentUserParticipant && tradeStatus === 'COMPLETED';/);
-  assert.doesNotMatch(source, /const canReviewTrade = isCurrentUserParticipant;\s/);
+  assert.match(source, /const canReviewTrade = isCurrentUserBuyer && tradeStatus === 'COMPLETED';/);
+  assert.doesNotMatch(source, /const canReviewTrade = isCurrentUserParticipant && tradeStatus === 'COMPLETED';/);
 });
 
 test('user layout hides protected navigation while logged out and shows signup', () => {

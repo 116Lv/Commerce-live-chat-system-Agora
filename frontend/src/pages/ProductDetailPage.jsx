@@ -1,20 +1,20 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Alert, Button, ButtonGroup, Col, Row } from 'react-bootstrap';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
-import { Flag, Heart, MessageCircle, ShoppingCart } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Flag, Heart, MessageCircle } from 'lucide-react';
 import MoneyText from '../components/MoneyText.jsx';
 import LoadingState from '../components/LoadingState.jsx';
 import ErrorState from '../components/ErrorState.jsx';
 import EmptyState from '../components/EmptyState.jsx';
 import { getProduct, likeProduct, unlikeProduct } from '../api/productApi.js';
+import { getSmileScore } from '../api/mypageApi.js';
 import { openChatRoom } from '../api/chatApi.js';
-import { startTrade } from '../api/tradeApi.js';
 import { useAuth } from '../auth/AuthContext.jsx';
 import ReportModal from '../features/reports/ReportModal.jsx';
 import { PageHeader, useApiResource } from './pageUtils.jsx';
 import {
   getProductCategoryLabel,
-  getProductImageUrl,
+  getProductImageUrls,
   getProductRegionLabel,
   getProductStatusLabel
 } from './productFormUtils.js';
@@ -28,7 +28,44 @@ export default function ProductDetailPage() {
   const [actionError, setActionError] = useState('');
   const [submitting, setSubmitting] = useState('');
   const [showReport, setShowReport] = useState(false);
+  const [activeImageIndex, setActiveImageIndex] = useState(0);
+  const [sellerSmileScore, setSellerSmileScore] = useState(null);
   const { data: product, error, loading, reload } = useApiResource(() => getProduct(productId), [productId]);
+  const productImageUrls = getProductImageUrls(product);
+  const hasMultipleImages = productImageUrls.length > 1;
+  const currentImageUrl = productImageUrls[activeImageIndex] || productImageUrls[0] || '';
+
+  useEffect(() => {
+    let disposed = false;
+
+    const loadSellerSmileScore = async () => {
+      if (!product?.sellerId) {
+        setSellerSmileScore(null);
+        return;
+      }
+
+      try {
+        const response = await getSmileScore(product.sellerId);
+        if (!disposed) {
+          setSellerSmileScore(response.smileScore);
+        }
+      } catch {
+        if (!disposed) {
+          setSellerSmileScore(null);
+        }
+      }
+    };
+
+    loadSellerSmileScore();
+
+    return () => {
+      disposed = true;
+    };
+  }, [product?.sellerId]);
+
+  useEffect(() => {
+    setActiveImageIndex(0);
+  }, [productId, productImageUrls.length]);
 
   const requireAuth = () => {
     if (!isUserAuthenticated) {
@@ -79,31 +116,20 @@ export default function ProductDetailPage() {
     }
   };
 
-  const handleStartTrade = async () => {
-    if (!requireAuth()) {
-      return;
-    }
-
-    setSubmitting('trade');
-    setActionMessage('');
-    setActionError('');
-
-    try {
-      const trade = await startTrade(productId);
-      navigate(`/trades/${trade.tradeId}`);
-    } catch (err) {
-      setActionError(err.message);
-    } finally {
-      setSubmitting('');
-    }
-  };
-
   const handleReport = () => {
     if (!requireAuth()) {
       return;
     }
 
     setShowReport(true);
+  };
+
+  const handlePreviousImage = () => {
+    setActiveImageIndex((current) => (current <= 0 ? productImageUrls.length - 1 : current - 1));
+  };
+
+  const handleNextImage = () => {
+    setActiveImageIndex((current) => (current + 1) % productImageUrls.length);
   };
 
   if (loading) {
@@ -119,7 +145,6 @@ export default function ProductDetailPage() {
   }
 
   const categoryLabel = getProductCategoryLabel(product);
-  const imageUrl = getProductImageUrl(product);
   const liked = Boolean(product.liked);
   const likeCount = product.likeCount ?? 0;
   const regionLabel = getProductRegionLabel(product);
@@ -133,7 +158,38 @@ export default function ProductDetailPage() {
       <Row className="g-4">
         <Col xs={12} lg={7}>
           <div className="detail-panel product-detail-media">
-            {imageUrl ? <img src={imageUrl} alt={`${product.title} 이미지`} /> : <span>이미지 없음</span>}
+            {productImageUrls.length > 0 ? (
+              <div className="product-detail-carousel">
+                {hasMultipleImages ? (
+                  <>
+                    <button
+                      type="button"
+                      className="product-detail-carousel-button product-detail-carousel-prev"
+                      onClick={handlePreviousImage}
+                      aria-label="이전 이미지"
+                    >
+                      <ChevronLeft size={22} aria-hidden="true" />
+                    </button>
+                    <button
+                      type="button"
+                      className="product-detail-carousel-button product-detail-carousel-next"
+                      onClick={handleNextImage}
+                      aria-label="다음 이미지"
+                    >
+                      <ChevronRight size={22} aria-hidden="true" />
+                    </button>
+                  </>
+                ) : null}
+                <img src={currentImageUrl} alt={`${product.title} 이미지 ${activeImageIndex + 1}`} />
+                {hasMultipleImages ? (
+                  <span className="product-detail-image-counter">
+                    {activeImageIndex + 1} / {productImageUrls.length}
+                  </span>
+                ) : null}
+              </div>
+            ) : (
+              <span>이미지 없음</span>
+            )}
           </div>
         </Col>
         <Col xs={12} lg={5}>
@@ -161,6 +217,10 @@ export default function ProductDetailPage() {
                 <dd>{product.sellerNickname || product.sellerId || '-'}</dd>
               </div>
               <div>
+                <dt>스마일</dt>
+                <dd>{sellerSmileScore == null ? '-' : String(sellerSmileScore) + '점'}</dd>
+              </div>
+              <div>
                 <dt>관심</dt>
                 <dd>{likeCount}개</dd>
               </div>
@@ -171,9 +231,6 @@ export default function ProductDetailPage() {
               </Button>
               <Button onClick={handleOpenChat} disabled={Boolean(submitting)} variant="outline-primary">
                 <MessageCircle size={17} aria-hidden="true" /> 채팅
-              </Button>
-              <Button onClick={handleStartTrade} disabled={Boolean(submitting)} variant="primary">
-                <ShoppingCart size={17} aria-hidden="true" /> 거래
               </Button>
               <Button onClick={handleReport} disabled={Boolean(submitting)} variant="outline-danger">
                 <Flag size={17} aria-hidden="true" /> 신고

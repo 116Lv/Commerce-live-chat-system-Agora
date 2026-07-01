@@ -1,0 +1,15 @@
+.git
+.github
+.gradle
+.idea
+.worktrees
+build
+frontend
+k6
+uploads
+*.iml
+*.log
+README.md
+HELP.md
+docs
+node_modules

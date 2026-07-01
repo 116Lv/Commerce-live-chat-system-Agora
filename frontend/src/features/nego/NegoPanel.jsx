@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import {
   acceptOffer,
   approveOfferExtension,
+  cancelOffer,
   createOffer,
   getCurrentOffer,
   rejectOffer,
@@ -20,6 +21,8 @@ import {
   getOfferPriceValidation,
   getRemainingTimeLabel,
   inferOfferRole,
+  isOfferPaymentPending,
+  isOfferPayable,
   parseOfferPriceInput
 } from './negoPanelUtils.js';
 
@@ -28,7 +31,8 @@ const actionHandlers = {
   reject: rejectOffer,
   extension: requestOfferExtension,
   extensionApprove: approveOfferExtension,
-  extensionReject: rejectOfferExtension
+  extensionReject: rejectOfferExtension,
+  cancelPaymentPending: cancelOffer
 };
 
 const decodeBase64Url = (value) => {
@@ -59,7 +63,10 @@ export default function NegoPanel({ chatRoomId, onOfferChange, productPrice }) {
   const currentUserId = useMemo(() => getCurrentUserIdFromToken(), []);
   const offerRole = inferOfferRole(offer, currentUserId);
   const offerActions = getOfferActions(offer, { role: offerRole });
-  const paymentHref = buildPaymentHref(offer);
+  const paymentHref = buildPaymentHref(offer, { role: offerRole });
+  const payable = isOfferPayable(offer, { role: offerRole });
+  const sellerPaymentPending =
+    offerRole === 'seller' && String(offer?.status || '').toUpperCase() === 'ACCEPTED' && isOfferPaymentPending(offer);
   const remainingTimeLabel = getRemainingTimeLabel(offer?.expiresAt);
 
   useEffect(() => {
@@ -177,7 +184,7 @@ export default function NegoPanel({ chatRoomId, onOfferChange, productPrice }) {
             <StatusBadge status={offer.status} />
           </div>
           <MoneyText amount={offer.offerPrice} className="list-price mt-2" />
-          {paymentHref ? (
+          {payable && paymentHref ? (
             <div className="nego-payment-cta mt-3">
               <p className="mb-2 text-muted small">
                 제안이 수락됐어요. 결제 화면에서 주문 정보를 확인하고 결제를 이어가세요.
@@ -186,6 +193,11 @@ export default function NegoPanel({ chatRoomId, onOfferChange, productPrice }) {
                 결제하기
               </Button>
             </div>
+          ) : null}
+          {sellerPaymentPending ? (
+            <p className="payment-pending-notice mt-3 mb-0 text-muted small">
+              결제 대기 중입니다. 구매자의 결제가 완료되면 거래가 이어집니다.
+            </p>
           ) : null}
           {offerActions.length > 0 ? (
             <ButtonGroup className="nego-actions mt-3" aria-label="가격 제안 처리">

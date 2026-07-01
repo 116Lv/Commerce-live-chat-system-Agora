@@ -133,23 +133,26 @@ class ProductQueryServiceTest {
     }
 
     @Test
-    void getProductsUsesViewerPreferredRegionsWhenLoggedInAndNoRegionGiven() {
+    void getProductsFallsBackToAllWhenLoggedInAndNoRegionGiven() {
         ProductService service = newService();
         User viewer = User.signup("viewer@test.com", "password", "조회자", "01022223333");
         assignId(viewer, 2L);
         Region region = Region.create("서울 강남구 역삼동", "1168010100", "서울", "강남구", "역삼동");
         assignId(region, 5L);
         UserRegion userRegion = UserRegion.of(viewer, region, true);
-        when(userRepository.findById(2L)).thenReturn(Optional.of(viewer));
-        when(userRegionRepository.findAllByUser(viewer)).thenReturn(List.of(userRegion));
-        when(productRepository.findAllByRegionIdInAndDeletedAtIsNullAndStatusNotAndApprovalStatus(
+        org.mockito.Mockito.lenient().when(userRepository.findById(2L)).thenReturn(Optional.of(viewer));
+        org.mockito.Mockito.lenient().when(userRegionRepository.findAllByUser(viewer)).thenReturn(List.of(userRegion));
+        org.mockito.Mockito.lenient().when(productRepository.findAllByRegionIdInAndDeletedAtIsNullAndStatusNotAndApprovalStatus(
             List.of(5L), ProductStatus.HIDDEN, ProductApprovalStatus.APPROVED, PageRequest.of(0, 20)
+        )).thenReturn(new PageImpl<>(List.of()));
+        when(productRepository.findAllByDeletedAtIsNullAndStatusNotAndApprovalStatus(
+            ProductStatus.HIDDEN, ProductApprovalStatus.APPROVED, PageRequest.of(0, 20)
         )).thenReturn(new PageImpl<>(List.of()));
 
         service.getProducts(2L, null, PageRequest.of(0, 20));
 
-        org.mockito.Mockito.verify(productRepository).findAllByRegionIdInAndDeletedAtIsNullAndStatusNotAndApprovalStatus(
-            List.of(5L), ProductStatus.HIDDEN, ProductApprovalStatus.APPROVED, PageRequest.of(0, 20)
+        org.mockito.Mockito.verify(productRepository).findAllByDeletedAtIsNullAndStatusNotAndApprovalStatus(
+            ProductStatus.HIDDEN, ProductApprovalStatus.APPROVED, PageRequest.of(0, 20)
         );
     }
 
@@ -215,10 +218,12 @@ class ProductQueryServiceTest {
         product.increaseLikeCount();
         ProductImage image = ProductImage.create(product, "https://cdn.test/products/10-main.jpg", 0);
         assignId(image, 100L);
+        ProductImage detailImage = ProductImage.create(product, "https://cdn.test/products/10-detail.jpg", 1);
+        assignId(detailImage, 101L);
         when(productRepository.findWithSellerAndRegionByIdAndDeletedAtIsNull(10L)).thenReturn(Optional.of(product));
         when(productLikeRepository.existsByProductIdAndUserId(10L, 2L)).thenReturn(true);
         when(productImageRepository.findAllByProductIdInOrderByProductIdAscSortOrderAsc(List.of(10L)))
-            .thenReturn(List.of(image));
+            .thenReturn(List.of(image, detailImage));
 
         ProductResponse response = service.getProduct(2L, 10L);
 
@@ -226,7 +231,7 @@ class ProductQueryServiceTest {
         assertThat(response.likeCount()).isEqualTo(1);
         assertThat(response.liked()).isTrue();
         assertThat(response.regionId()).isEqualTo(5L);
-        assertThat(response.regionName()).isEqualTo("Seoul Gangnam");
+        assertThat(response.regionFullName()).isEqualTo("Seoul Gangnam");
         assertThat(response.sido()).isEqualTo("Seoul");
         assertThat(response.sigungu()).isEqualTo("Gangnam");
         assertThat(response.eupmyeondong()).isEqualTo("Samseong");
@@ -234,6 +239,10 @@ class ProductQueryServiceTest {
         assertThat(response.sellerNickname()).isEqualTo("seller");
         assertThat(response.primaryImageUrl()).isEqualTo("https://cdn.test/products/10-main.jpg");
         assertThat(response.thumbnailUrl()).isEqualTo("https://cdn.test/products/10-main.jpg");
+        assertThat(response.imageUrls()).containsExactly(
+            "https://cdn.test/products/10-main.jpg",
+            "https://cdn.test/products/10-detail.jpg"
+        );
     }
 
     @Test
@@ -268,7 +277,7 @@ class ProductQueryServiceTest {
         ProductResponse response = responses.get(0);
         assertThat(response.liked()).isTrue();
         assertThat(response.likeCount()).isEqualTo(1);
-        assertThat(response.regionName()).isEqualTo("Seoul Gangnam");
+        assertThat(response.regionFullName()).isEqualTo("Seoul Gangnam");
         assertThat(response.sellerNickname()).isEqualTo("seller");
         assertThat(response.primaryImageUrl()).isEqualTo("https://cdn.test/products/10-main.jpg");
     }

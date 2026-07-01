@@ -27,7 +27,7 @@ public class AdminAccountController {
     }
 
     @GetMapping
-    @PreAuthorize("hasAuthority('ROOT_ADMIN')")
+    @PreAuthorize("hasAuthority('ADMIN_ACCOUNT_MANAGE')")
     public ApiResponse<List<AdminUserResponse>> getAccounts(
             @AuthenticationPrincipal AdminPrincipal admin
     ) {
@@ -35,7 +35,7 @@ public class AdminAccountController {
     }
 
     @PatchMapping("/{adminId}/role")
-    @PreAuthorize("hasAuthority('ROOT_ADMIN')")
+    @PreAuthorize("hasAuthority('ADMIN_ACCOUNT_MANAGE')")
     public ApiResponse<AdminUserResponse> changeRole(
             @AuthenticationPrincipal AdminPrincipal admin,
             @PathVariable Long adminId,

@@ -10,6 +10,7 @@ import LoadingState from '../components/LoadingState.jsx';
 import NegoPanel from '../features/nego/NegoPanel.jsx';
 import useChatSocket, { CHAT_DELIVERY_STATUS } from '../features/chat/useChatSocket.js';
 import { PageHeader, formatDateTime, statusText, useApiResource } from './pageUtils.jsx';
+import { normalizeProductImageUrl } from './productFormUtils.js';
 
 const getMessageKey = (message, index = 0) =>
   message.clientMessageId ?? message.messageId ?? `local-${index}-${message.createdAt ?? ''}-${message.content ?? ''}`;
@@ -143,11 +144,13 @@ function ChatRoomProductCard({ room }) {
     return null;
   }
 
+  const thumbnailUrl = normalizeProductImageUrl(room.productThumbnailUrl);
+
   return (
     <div className="chat-room-product-card">
       <div className="chat-room-product-thumb" aria-hidden="true">
-        {room.productThumbnailUrl ? (
-          <img src={room.productThumbnailUrl} alt="" loading="lazy" />
+        {thumbnailUrl ? (
+          <img src={thumbnailUrl} alt="" loading="lazy" />
         ) : (
           <span>{String(room.productTitle || '상품').slice(0, 1)}</span>
         )}

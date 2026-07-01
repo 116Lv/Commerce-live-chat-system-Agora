@@ -61,6 +61,7 @@ public class SecurityConfig {
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(
+                    "/health",
                     "/api/auth/signup",
                     "/api/auth/login",
                     "/api/auth/reissue",
@@ -75,7 +76,8 @@ public class SecurityConfig {
                     "/api/payments/webhook",
                     "/api/payments/webhooks/**",
                     "/uploads/**",
-                    "/ws"
+                    "/ws",
+                    "/ws/**"
                 ).permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/products", "/api/products/*").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/coupon-events").permitAll()
@@ -83,7 +85,14 @@ public class SecurityConfig {
                     "ROOT_ADMIN",
                     "USER_ADMIN",
                     "PRODUCT_ADMIN",
-                    "SETTLEMENT_ADMIN"
+                    "SETTLEMENT_ADMIN",
+                    "USER_MANAGE",
+                    "REPORT_MANAGE",
+                    "PRODUCT_MANAGE",
+                    "PAYMENT_MANAGE",
+                    "COUPON_MANAGE",
+                    "ADMIN_ACCOUNT_MANAGE",
+                    "APPROVAL_MANAGE"
                 )
                 .anyRequest().authenticated()
             )

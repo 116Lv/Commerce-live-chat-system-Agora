@@ -19,15 +19,19 @@ public class CouponCleanupService {
 
     @Transactional
     public int expireIssuedCoupons(LocalDateTime now) {
-        return couponRepository.expireIssuedCouponsBefore(now);
+        return couponRepository.expireIssuedCouponsBefore(todayStart(now));
     }
 
     @Transactional
     public CleanupResult cleanupExpired(LocalDateTime now) {
         int endedEventCount = couponEventRepository.endActiveEventsBefore(now);
         int deletedAvailableSlotCount = couponRepository.deleteAvailableSlotsForEndedEventsBefore(now);
-        int expiredIssuedCouponCount = couponRepository.expireIssuedCouponsBefore(now);
+        int expiredIssuedCouponCount = couponRepository.expireIssuedCouponsBefore(todayStart(now));
         return new CleanupResult(endedEventCount, deletedAvailableSlotCount, expiredIssuedCouponCount);
+    }
+
+    private LocalDateTime todayStart(LocalDateTime now) {
+        return now.toLocalDate().atStartOfDay();
     }
 
     public record CleanupResult(

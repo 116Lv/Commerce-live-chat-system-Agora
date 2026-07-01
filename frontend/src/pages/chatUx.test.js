@@ -38,6 +38,23 @@ test('ChatRoomPage validates image URLs before rendering inline previews', () =>
   assert.match(source, /Image link unavailable/);
 });
 
+test('backend exposes uploaded chat images through a web resource handler', () => {
+  const source = readSource('../../../src/main/java/com/team7/agora/global/config/UploadResourceConfig.java');
+
+  assert.match(source, /WebMvcConfigurer/);
+  assert.match(source, /addResourceHandlers/);
+  assert.match(source, /\/uploads\/\*\*/);
+  assert.match(source, /file:/);
+});
+
+test('chat image upload uses the shared image compression boundary', () => {
+  const source = readSource('../api/chatApi.js');
+
+  assert.match(source, /compressImageForUpload/);
+  assert.match(source, /await compressImageForUpload\(image\)/);
+  assert.match(source, /formData\.append\('image', compressedImage/);
+});
+
 test('ChatRoomsPage renders metadata-rich room rows without manual product ID opening', () => {
   const source = readSource('./ChatRoomsPage.jsx');
 

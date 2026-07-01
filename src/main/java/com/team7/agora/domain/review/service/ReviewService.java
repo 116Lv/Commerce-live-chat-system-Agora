@@ -63,11 +63,14 @@ public class ReviewService {
         if (!trade.isParticipant(reviewerId)) {
             throw new BusinessException(ErrorCode.FORBIDDEN, "거래 참여자만 후기를 작성할 수 있습니다.");
         }
+        if (trade.getSeller().getId().equals(reviewerId)) {
+            throw new BusinessException(ErrorCode.FORBIDDEN, "구매자만 거래 후기를 작성할 수 있습니다.");
+        }
         if (reviewRepository.existsByTradeAndReviewerId(trade, reviewerId)) {
             throw new BusinessException(ErrorCode.CONFLICT, "이미 후기를 작성한 거래입니다.");
         }
 
-        User reviewer = reviewerId.equals(trade.getSeller().getId()) ? trade.getSeller() : trade.getBuyer();
+        User reviewer = trade.getBuyer();
         User targetUser = trade.getCounterpart(reviewerId);
         Review review = Review.create(trade, reviewer, targetUser, rating, content);
         targetUser.updateSmileScore(toSmileDelta(rating));

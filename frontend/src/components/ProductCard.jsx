@@ -18,7 +18,8 @@ export default function ProductCard({
   footerActionLabel = '보기',
   footerActionOnClick,
   footerActionTo,
-  footerActionVariant = 'outline-primary'
+  footerActionVariant = 'outline-primary',
+  onLikeToggle
 }) {
   const item = product || {};
   const productId = item.productId ?? item.id ?? '#';
@@ -41,26 +42,28 @@ export default function ProductCard({
     footerActionOnClick?.(event);
   };
 
+  const handleLikeToggle = (event) => {
+    stopCardNavigation(event);
+    onLikeToggle?.(item);
+  };
+
   return (
     <Card className="product-card h-100">
       {disableNavigation ? null : (
-        <Link
-          className="product-card-link"
-          to={detailTo}
-          data-product-card-link={detailTo}
-          aria-label={`${title || '상품'} 상세 보기`}
-        />
+        <Link className="product-card-link" to={detailTo} data-product-card-link={detailTo} aria-label={`${title || '상품'} 상세 보기`} />
       )}
       <div className="product-card-media">
         {imageUrl ? <img src={imageUrl} alt={imageAlt} /> : <span>이미지 없음</span>}
-        <span
+        <button
+          type="button"
           className={`product-card-heart ${item.liked ? 'is-liked' : ''}`}
           aria-label={`관심 ${likeCount}개`}
-          onClick={stopCardNavigation}
+          onClick={handleLikeToggle}
+          disabled={!onLikeToggle}
         >
           <Heart size={15} aria-hidden="true" />
           {likeCount}
-        </span>
+        </button>
       </div>
       <Card.Body>
         <div className="d-flex justify-content-between gap-2 align-items-start mb-2">

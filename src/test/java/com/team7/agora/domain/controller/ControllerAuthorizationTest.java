@@ -24,23 +24,23 @@ class ControllerAuthorizationTest {
     void adminUserControllerRequiresUserAdminAuthorization() {
         assertThat(AdminUserController.class.getAnnotation(PreAuthorize.class))
                 .extracting(PreAuthorize::value)
-                .isEqualTo("hasAnyAuthority('ROOT_ADMIN', 'USER_ADMIN')");
+                .isEqualTo("hasAuthority('USER_MANAGE')");
     }
 
     @Test
     void adminReportControllerRequiresReportAdminAuthorization() throws NoSuchMethodException {
         assertThat(preAuthorizeValue("getUserReports", com.team7.agora.global.auth.AdminPrincipal.class,
                 String.class, String.class))
-                .isEqualTo("hasAnyAuthority('ROOT_ADMIN', 'USER_ADMIN')");
+                .isEqualTo("hasAuthority('REPORT_MANAGE')");
         assertThat(preAuthorizeValue("resolveUserReport", com.team7.agora.global.auth.AdminPrincipal.class,
                 Long.class, com.team7.agora.domain.admin.dto.request.AdminReportResolveRequest.class))
-                .isEqualTo("hasAnyAuthority('ROOT_ADMIN', 'USER_ADMIN')");
+                .isEqualTo("hasAuthority('REPORT_MANAGE')");
         assertThat(preAuthorizeValue("getProductReports", com.team7.agora.global.auth.AdminPrincipal.class,
                 String.class, String.class))
-                .isEqualTo("hasAnyAuthority('ROOT_ADMIN', 'PRODUCT_ADMIN')");
+                .isEqualTo("hasAuthority('REPORT_MANAGE')");
         assertThat(preAuthorizeValue("resolveProductReport", com.team7.agora.global.auth.AdminPrincipal.class,
                 Long.class, com.team7.agora.domain.admin.dto.request.AdminReportResolveRequest.class))
-                .isEqualTo("hasAnyAuthority('ROOT_ADMIN', 'PRODUCT_ADMIN')");
+                .isEqualTo("hasAuthority('REPORT_MANAGE')");
     }
 
     private String preAuthorizeValue(String methodName, Class<?>... parameterTypes) throws NoSuchMethodException {

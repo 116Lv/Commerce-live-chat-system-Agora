@@ -23,6 +23,7 @@ import com.team7.agora.domain.product.enums.ProductApprovalStatus;
 import com.team7.agora.domain.region.entity.Region;
 import com.team7.agora.domain.product.repository.ProductRepository;
 import com.team7.agora.domain.trade.entity.Trade;
+import com.team7.agora.domain.trade.enums.TradeStatus;
 import com.team7.agora.domain.trade.repository.TradeRepository;
 import com.team7.agora.domain.trade.service.TradeService;
 import com.team7.agora.domain.user.entity.User;
@@ -62,6 +63,9 @@ class NegoServiceTest {
     private TradeRepository tradeRepository;
 
     @Mock
+    private com.team7.agora.domain.payment.repository.PaymentRepository paymentRepository;
+
+    @Mock
     private ChatSystemMessageService chatSystemMessageService;
 
     private NegoService negoService;
@@ -78,6 +82,7 @@ class NegoServiceTest {
             productRepository,
             tradeService,
             tradeRepository,
+            paymentRepository,
             chatSystemMessageService
         );
         seller = User.signup("seller@test.com", "password", "판매자", "01011112222");
@@ -255,7 +260,11 @@ class NegoServiceTest {
             .thenReturn(Optional.of(chatRoom));
         when(negoOfferRepository.findFirstByChatRoomIdAndStatusInOrderByCreatedAtDesc(100L, NegoService.CURRENT_OFFER_STATUSES))
             .thenReturn(Optional.of(offer));
-        when(tradeRepository.findByProductAndBuyer(chatRoom.getProduct(), buyer))
+        when(tradeRepository.findFirstByProductAndBuyerAndStatusInOrderByIdDesc(
+            chatRoom.getProduct(),
+            buyer,
+            TradeStatus.blockingStatuses()
+        ))
             .thenReturn(Optional.of(trade));
 
         NegoOfferResponse response = negoService.getCurrentOffer(2L, 100L);
@@ -263,6 +272,65 @@ class NegoServiceTest {
         assertThat(response.offerId()).isEqualTo(1000L);
         assertThat(response.status()).isEqualTo("ACCEPTED");
         assertThat(response.tradeId()).isEqualTo(2000L);
+        assertThat(response.tradeStatus()).isEqualTo("PAYMENT_PENDING");
+    }
+
+    @Test
+    void getCurrentOfferUsesLatestBlockingTradeWhenResolvingAcceptedOfferTrade() {
+        NegoOffer offer = NegoOffer.create(chatRoom, buyer, BigDecimal.valueOf(45000));
+        assignId(offer, 1000L);
+        offer.accept();
+        Trade trade = Trade.start(chatRoom.getProduct(), seller, buyer, BigDecimal.valueOf(45000));
+        assignId(trade, 2001L);
+        when(chatRoomRepository.findByIdAndStatus(100L, ChatRoomStatus.ACTIVE))
+            .thenReturn(Optional.of(chatRoom));
+        when(negoOfferRepository.findFirstByChatRoomIdAndStatusInOrderByCreatedAtDesc(100L, NegoService.CURRENT_OFFER_STATUSES))
+            .thenReturn(Optional.of(offer));
+        when(tradeRepository.findFirstByProductAndBuyerAndStatusInOrderByIdDesc(
+            chatRoom.getProduct(),
+            buyer,
+            TradeStatus.blockingStatuses()
+        )).thenReturn(Optional.of(trade));
+
+        NegoOfferResponse response = negoService.getCurrentOffer(2L, 100L);
+
+        assertThat(response.tradeId()).isEqualTo(2001L);
+        assertThat(response.tradeStatus()).isEqualTo("PAYMENT_PENDING");
+        verify(tradeRepository).findFirstByProductAndBuyerAndStatusInOrderByIdDesc(
+            chatRoom.getProduct(),
+            buyer,
+            TradeStatus.blockingStatuses()
+        );
+    }
+
+    @Test
+    void cancelAcceptedOfferCancelsPaymentPendingTradeAndReopensProduct() {
+        NegoOffer offer = NegoOffer.create(chatRoom, buyer, BigDecimal.valueOf(45000));
+        assignId(offer, 1000L);
+        offer.accept();
+        chatRoom.getProduct().markReserved();
+        Trade trade = Trade.start(chatRoom.getProduct(), seller, buyer, BigDecimal.valueOf(45000));
+        assignId(trade, 2000L);
+
+        when(negoOfferRepository.findByIdForUpdate(1000L)).thenReturn(Optional.of(offer));
+        when(tradeRepository.findFirstByProductAndBuyerAndStatusOrderByIdDesc(
+            chatRoom.getProduct(),
+            buyer,
+            TradeStatus.PAYMENT_PENDING
+        )).thenReturn(Optional.of(trade));
+
+        NegoOfferResponse response = negoService.cancelOffer(2L, 1000L);
+
+        assertThat(response.status()).isEqualTo("CANCELLED");
+        assertThat(response.tradeId()).isEqualTo(2000L);
+        assertThat(response.tradeStatus()).isEqualTo("CANCELLED");
+        assertThat(trade.getStatus()).isEqualTo(com.team7.agora.domain.trade.enums.TradeStatus.CANCELLED);
+        assertThat(chatRoom.getProduct().getStatus()).isEqualTo(com.team7.agora.domain.product.enums.ProductStatus.SELLING);
+        verify(tradeRepository).findFirstByProductAndBuyerAndStatusOrderByIdDesc(
+            chatRoom.getProduct(),
+            buyer,
+            TradeStatus.PAYMENT_PENDING
+        );
     }
 
     @Test

@@ -84,7 +84,7 @@ class ProductSearchRepositoryImplTest {
 
         assertThat(results).hasSize(1);
         assertThat(results.getContent().get(0).title()).isEqualTo("서울 상품");
-        assertThat(results.getContent().get(0).regionName()).isEqualTo(seoul.getName());
+        assertThat(results.getContent().get(0).regionFullName()).isEqualTo(seoul.getName());
     }
 
     @Test
@@ -120,7 +120,7 @@ class ProductSearchRepositoryImplTest {
         assertThat(response.likeCount()).isEqualTo(1);
         assertThat(response.liked()).isFalse();
         assertThat(response.regionId()).isEqualTo(seoul.getId());
-        assertThat(response.regionName()).isEqualTo(seoul.getName());
+        assertThat(response.regionFullName()).isEqualTo(seoul.getName());
         assertThat(response.sellerId()).isEqualTo(seller.getId());
         assertThat(response.sellerNickname()).isEqualTo(seller.getNickname());
         assertThat(response.primaryImageUrl()).isEqualTo("https://cdn.test/products/search-main.jpg");

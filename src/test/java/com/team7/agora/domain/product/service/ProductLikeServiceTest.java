@@ -147,7 +147,7 @@ class ProductLikeServiceTest {
         assertThat(responses.get(0).productId()).isEqualTo(10L);
         assertThat(responses.get(0).liked()).isTrue();
         assertThat(responses.get(0).sellerId()).isEqualTo(1L);
-        assertThat(responses.get(0).regionName()).isEqualTo(product.getRegion().getName());
+        assertThat(responses.get(0).regionFullName()).isEqualTo(product.getRegion().getName());
         assertThat(responses.get(0).primaryImageUrl()).isEqualTo("https://cdn.test/products/10-main.jpg");
     }
 

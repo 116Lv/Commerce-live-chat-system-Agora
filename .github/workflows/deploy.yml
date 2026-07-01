@@ -1,0 +1,112 @@
+name: Deploy
+
+on:
+  push:
+    branches: [dev]
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: Git ref to deploy
+        required: false
+        default: dev
+
+concurrency:
+  group: deploy-ec2
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy to EC2
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+
+    env:
+      DEPLOY_REF: ${{ github.event.inputs.ref || github.ref_name }}
+      EC2_HOST: ${{ secrets.EC2_HOST }}
+      EC2_USER: ${{ secrets.EC2_USER }}
+      EC2_APP_DIR: ${{ secrets.EC2_APP_DIR }}
+      EC2_COMPOSE_FILE: ${{ secrets.EC2_COMPOSE_FILE }}
+      EC2_SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
+
+    steps:
+      - name: Validate required secrets
+        run: |
+          test -n "$EC2_HOST" || (echo "::error::Missing EC2_HOST secret" && exit 1)
+          test -n "$EC2_SSH_KEY" || (echo "::error::Missing EC2_SSH_KEY secret" && exit 1)
+
+      - name: Prepare SSH key
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "$EC2_SSH_KEY" > ~/.ssh/ec2_key
+          chmod 600 ~/.ssh/ec2_key
+
+      - name: Trust EC2 host key
+        run: |
+          ssh-keyscan -H "$EC2_HOST" >> ~/.ssh/known_hosts
+
+      - name: Deploy application
+        run: |
+          EC2_USER="${EC2_USER:-ubuntu}"
+          EC2_APP_DIR="${EC2_APP_DIR:-/home/ubuntu/agora-app}"
+          EC2_COMPOSE_FILE="${EC2_COMPOSE_FILE:-docker-compose.rds.yml}"
+
+          ssh -i ~/.ssh/ec2_key "$EC2_USER@$EC2_HOST" \
+            "APP_DIR='$EC2_APP_DIR' DEPLOY_REF='$DEPLOY_REF' REPOSITORY='${{ github.repository }}' COMPOSE_FILE='$EC2_COMPOSE_FILE' bash -s" <<'REMOTE'
+          set -euo pipefail
+
+          if ! command -v git >/dev/null 2>&1; then
+            echo "git is required on the EC2 instance."
+            exit 1
+          fi
+
+          if ! docker compose version >/dev/null 2>&1; then
+            echo "docker compose is required on the EC2 instance."
+            exit 1
+          fi
+
+          mkdir -p "$APP_DIR"
+          cd "$APP_DIR"
+
+          if [ ! -d .git ]; then
+            git init
+            git remote add origin "https://github.com/${REPOSITORY}.git"
+          fi
+
+          git remote set-url origin "https://github.com/${REPOSITORY}.git"
+          git fetch origin "$DEPLOY_REF"
+          git reset --hard "origin/$DEPLOY_REF"
+
+          if [ ! -f ".env" ]; then
+            echo "Missing $APP_DIR/.env. Keep runtime secrets on the EC2 instance before deploying."
+            exit 1
+          fi
+
+          if [ ! -f "$COMPOSE_FILE" ]; then
+            if [ -f docker-compose.prod.yml ]; then
+              COMPOSE_FILE=docker-compose.prod.yml
+            else
+              echo "Missing compose file: $COMPOSE_FILE"
+              exit 1
+            fi
+          fi
+
+          docker compose -f "$COMPOSE_FILE" --env-file .env up -d --build
+          docker compose -f "$COMPOSE_FILE" --env-file .env ps
+          for attempt in {1..30}; do
+            if curl --fail --silent --show-error --max-time 5 http://localhost/ >/dev/null \
+              && curl --fail --silent --show-error --max-time 5 http://localhost/health >/dev/null; then
+              exit 0
+            fi
+
+            if [ "$attempt" -eq 30 ]; then
+              docker compose -f "$COMPOSE_FILE" --env-file .env ps
+              docker compose -f "$COMPOSE_FILE" --env-file .env logs --tail=200 backend frontend
+              exit 1
+            fi
+
+            echo "Waiting for frontend and backend API to become ready ($attempt/30)..."
+            sleep 2
+          done
+          REMOTE

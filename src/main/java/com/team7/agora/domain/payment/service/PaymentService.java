@@ -194,6 +194,9 @@ public class PaymentService {
         if (payment.getStatus() == PaymentStatus.CONFIRMING) {
             throw new PaymentException(ErrorCode.CONFLICT, "approval in progress");
         }
+        if (payment.getTrade().getStatus() != TradeStatus.PAYMENT_PENDING) {
+            throw new PaymentException(ErrorCode.INVALID_REQUEST, "寃곗젣 ?湲?以묒씤 嫄곕옒留?寃곗젣?????덉뒿?덈떎.");
+        }
         payment.markConfirming();
         return new ConfirmationAttempt(payment.getId(), payment.getOrderId(), payment.getAmount(), null);
     }
@@ -235,12 +238,7 @@ public class PaymentService {
     public PaymentResponse refund(Long payerId, Long paymentId, String reason) {
         Payment payment = findPayment(paymentId);
         payment.validatePayer(payerId);
-        payment.refund(reason);
-        
-        settlementRepository.findByPaymentTradeId(payment.getTrade().getId())
-            .ifPresent(Settlement::cancel);
-
-        return PaymentResponse.from(payment);
+        throw new PaymentException(ErrorCode.INVALID_REQUEST, "환불은 관리자 승인 및 결제사 검증 이후 처리됩니다.");
     }
 
     /**

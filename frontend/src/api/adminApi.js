@@ -76,6 +76,9 @@ export const updateAdminAccountRole = (userId, role, config = {}) =>
 export const getAdminApprovalRequests = (params = {}, config = {}) =>
   apiClient.get('/api/admin/approval-requests', { ...config, params: compactParams(params) });
 
+export const getAdminApprovalRequest = (requestId, config = {}) =>
+  apiClient.get(`/api/admin/approval-requests/${requestId}`, config);
+
 export const getMyAdminApprovalRequests = (config = {}) => apiClient.get('/api/admin/my-approval-requests', config);
 
 export const requestAdminRoleChangeApproval = (request, config = {}) =>
@@ -110,15 +113,19 @@ export const getAdminRefunds = (config = {}) => apiClient.get('/api/admin/refund
 export const settleAdminSettlement = (settlementId, config = {}) =>
   apiClient.post(`/api/admin/settlements/${settlementId}/settle`, null, config);
 
-export const getAdminCouponEvents = (config = {}) => apiClient.get('/api/admin/coupon-events', config);
+export const getAdminCouponEvents = (params = {}, config = {}) =>
+  apiClient.get('/api/admin/coupon-events', { ...config, params: compactParams(params) });
 
-export const createCouponEvent = (event, config = {}) =>
-  apiClient.post('/api/admin/coupon-events', normalizeCouponEventPayload(event), config);
+export const requestCouponEventCreateApproval = (event, config = {}) =>
+  apiClient.post('/api/admin/coupon-events/requests', normalizeCouponEventPayload(event), config);
 
 export const getAdminCouponEvent = (eventId, config = {}) => apiClient.get(`/api/admin/coupon-events/${eventId}`, config);
 
-export const issueCouponEventToUsers = (eventId, userIds, config = {}) =>
-  apiClient.post(`/api/admin/coupon-events/${eventId}/issue`, normalizeCouponIssuePayload(userIds), config);
+export const requestCouponEventStopApproval = (eventId, reason, config = {}) =>
+  apiClient.post(`/api/admin/coupon-events/${eventId}/stop-requests`, { reason }, config);
+
+export const requestCouponEventIndividualIssue = (eventId, userIds, config = {}) =>
+  apiClient.post(`/api/admin/coupon-events/${eventId}/issue-requests`, normalizeCouponIssuePayload(userIds), config);
 
 export const getAdminCouponEventCoupons = (eventId, config = {}) =>
   apiClient.get(`/api/admin/coupon-events/${eventId}/coupons`, config);

@@ -13,7 +13,7 @@ spring:
   servlet:
     multipart:
       max-file-size: 10MB
-      max-request-size: 30MB
+      max-request-size: 100MB
   datasource:
     url: jdbc:h2:mem:agora_db;MODE=MySQL;DB_CLOSE_DELAY=-1
     driver-class-name: org.h2.Driver
@@ -31,8 +31,7 @@ spring:
   jpa:
     hibernate:
       ddl-auto: create-drop
-    defer-datasource-initialization: true # Hibernate가 테이블을 다 만든 후에 data.sql을 실행하도록 지연시킴
-
+    defer-datasource-initialization: true
     show-sql: true
     properties:
       hibernate:
@@ -70,23 +69,20 @@ spring:
   servlet:
     multipart:
       max-file-size: ${MAX_FILE_SIZE:10MB}
-      max-request-size: ${MAX_REQUEST_SIZE:30MB}
+      max-request-size: ${MAX_REQUEST_SIZE:100MB}
   cloud:
     aws:
       region:
         static: ap-northeast-2
-
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    # url, username, password는 aws-parameterstore를 통해 로드되도록 설정
   data:
     redis:
       host: ${REDIS_HOST}
       port: ${REDIS_PORT:6379}
       password: ${REDIS_PASSWORD:}
-
   jpa:
-    database-platform: org.hibernate.dialect.MySQL8Dialect
+    database-platform: org.hibernate.dialect.MySQLDialect
     hibernate:
       ddl-auto: validate
     show-sql: false
@@ -94,13 +90,9 @@ spring:
     enabled: true
     locations: classpath:db/migration
     baseline-on-migrate: true
-
-  # [초기화 스크립트 실행 방지]
   sql:
     init:
       mode: never
-
-  # [H2 콘솔 끄기]
   h2:
     console:
       enabled: false
@@ -114,6 +106,66 @@ portone:
   api-base-url: ${PORTONE_API_BASE_URL:https://api.portone.io}
   api-secret: ${PORTONE_API_SECRET}
   webhook-secret: ${PORTONE_WEBHOOK_SECRET}
+
+file:
+  upload-dir: ${FILE_UPLOAD_DIR:/app/uploads}
+
+agora:
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS}
+  scheduler:
+    nego-expiration:
+      fixed-delay: ${NEGO_EXPIRATION_FIXED_DELAY:300000}
+      initial-delay: ${NEGO_EXPIRATION_INITIAL_DELAY:300000}
+
+---
+
+spring:
+  config:
+    activate:
+      on-profile: docker
+  servlet:
+    multipart:
+      max-file-size: ${MAX_FILE_SIZE:10MB}
+      max-request-size: ${MAX_REQUEST_SIZE:100MB}
+  datasource:
+    url: ${SPRING_DATASOURCE_URL}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
+  data:
+    redis:
+      host: ${REDIS_HOST}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+  jpa:
+    database-platform: org.hibernate.dialect.MySQLDialect
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+  flyway:
+    enabled: false
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+  sql:
+    init:
+      mode: never
+  h2:
+    console:
+      enabled: false
+
+jwt:
+  secret-key: ${JWT_SECRET_KEY}
+  access-token-valid-time: 3600000
+  refresh-token-valid-time: 1209600000
+
+portone:
+  api-base-url: ${PORTONE_API_BASE_URL:https://api.portone.io}
+  api-secret: ${PORTONE_API_SECRET}
+  webhook-secret: ${PORTONE_WEBHOOK_SECRET}
+
+file:
+  upload-dir: ${FILE_UPLOAD_DIR:/app/uploads}
 
 agora:
   cors:
