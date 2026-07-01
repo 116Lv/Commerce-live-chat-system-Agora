@@ -1,4 +1,5 @@
 import apiClient from './client.js';
+import { compressImageForUpload } from './imageCompression.js';
 
 const compactParams = (params = {}) =>
   Object.fromEntries(Object.entries(params).filter(([, value]) => value !== undefined && value !== null && value !== ''));
@@ -21,9 +22,18 @@ export const updateProductStatus = (productId, status, config = {}) =>
 
 export const deleteProduct = (productId, config = {}) => apiClient.delete(`/api/products/${productId}`, config);
 
-export const uploadProductImage = (productId, image, config = {}) => {
+export const uploadProductImage = async (productId, image, config = {}) => {
+  return uploadProductImages(productId, [image], config);
+};
+
+export const uploadProductImages = async (productId, images = [], config = {}) => {
+  const compressedImages = await Promise.all(images.map((image) => compressImageForUpload(image)));
   const formData = new FormData();
-  formData.append('image', image);
+
+  compressedImages.forEach((image, index) => {
+    const sourceImage = images[index];
+    formData.append('images', image, image.name || sourceImage?.name || `product-image-${index + 1}.jpg`);
+  });
 
   return apiClient.post(`/api/products/${productId}/images`, formData, config);
 };

@@ -21,8 +21,7 @@ import {
   completeTrade,
   expireReservation,
   getTradeDetail,
-  requestRatingMessage,
-  startTrade
+  requestRatingMessage
 } from './tradeApi.js';
 import { confirmPayment, getRefundStatus, preparePayment, refundPayment } from './paymentApi.js';
 import { createReview, getTradeReviews } from './reviewApi.js';
@@ -101,7 +100,6 @@ test('negotiation API maps offer creation and actions', async () => {
 test('trade, payment, review, and report APIs map action endpoints', async () => {
   const { requests, config } = captureRequest();
 
-  await startTrade(7, config);
   await getTradeDetail(11, config);
   await completeTrade(11, config);
   await expireReservation(11, config);
@@ -116,7 +114,6 @@ test('trade, payment, review, and report APIs map action endpoints', async () =>
   await createUserReport({ reportedUserId: 9, reason: '비매너' }, config);
 
   assert.deepEqual(requests.map(summarizeRequest), [
-    { method: 'post', url: '/api/trades/products/7', params: undefined, data: null },
     { method: 'get', url: '/api/trades/11', params: undefined, data: undefined },
     { method: 'post', url: '/api/trades/11/complete', params: undefined, data: null },
     { method: 'post', url: '/api/trades/11/expire-reservation', params: undefined, data: null },

@@ -1,7 +1,10 @@
 package com.team7.agora.domain.admin.service;
 
 import com.team7.agora.domain.admin.dto.response.AdminUserResponse;
+import com.team7.agora.domain.admin.entity.Admin;
+import com.team7.agora.domain.admin.entity.AdminApprovalRequest;
 import com.team7.agora.domain.admin.enums.AdminRole;
+import com.team7.agora.domain.admin.repository.AdminApprovalRequestRepository;
 import com.team7.agora.domain.admin.repository.AdminRepository;
 import com.team7.agora.global.auth.AdminPrincipal;
 import com.team7.agora.global.exception.BusinessException;
@@ -15,9 +18,14 @@ import org.springframework.transaction.annotation.Transactional;
 public class AdminAccountService {
 
     private final AdminRepository adminRepository;
+    private final AdminApprovalRequestRepository approvalRequestRepository;
 
-    public AdminAccountService(AdminRepository adminRepository) {
+    public AdminAccountService(
+            AdminRepository adminRepository,
+            AdminApprovalRequestRepository approvalRequestRepository
+    ) {
         this.adminRepository = adminRepository;
+        this.approvalRequestRepository = approvalRequestRepository;
     }
 
     public List<AdminUserResponse> getAccounts(AdminPrincipal admin) {
@@ -30,7 +38,40 @@ public class AdminAccountService {
     @Transactional
     public AdminUserResponse changeRole(AdminPrincipal admin, Long adminId, AdminRole role) {
         validateRootAdmin(admin);
-        throw new BusinessException(ErrorCode.CONFLICT, "Admin role changes require an approval request.");
+        Admin target = adminRepository.findById(adminId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "Target admin account not found."));
+
+        validateRoleChange(admin, target, role);
+
+        Admin requester = adminRepository.findById(admin.getAdminId())
+                .orElseThrow(() -> new BusinessException(ErrorCode.UNAUTHORIZED, "Admin account not found."));
+        AdminApprovalRequest history = AdminApprovalRequest.createRoleChange(
+                requester,
+                target,
+                role,
+                "ROOT_ADMIN immediate role change"
+        );
+        history.applyRoleChange();
+        history.approve(requester, "ROOT_ADMIN immediate role change");
+        approvalRequestRepository.save(history);
+
+        return AdminUserResponse.from(target);
+    }
+
+    private void validateRoleChange(AdminPrincipal admin, Admin target, AdminRole role) {
+        if (target.getRole() == role) {
+            throw new BusinessException(ErrorCode.CONFLICT, "Target admin already has the requested role.");
+        }
+        if (target.getRole() == AdminRole.ROOT_ADMIN && role != AdminRole.ROOT_ADMIN) {
+            if (target.getId().equals(admin.getAdminId())) {
+                throw new BusinessException(ErrorCode.CONFLICT, "ROOT_ADMIN cannot demote their own account.");
+            }
+
+            adminRepository.findAllByRoleForUpdate(AdminRole.ROOT_ADMIN);
+            if (adminRepository.countByRole(AdminRole.ROOT_ADMIN) <= 1) {
+                throw new BusinessException(ErrorCode.CONFLICT, "At least one ROOT_ADMIN account must remain.");
+            }
+        }
     }
 
     private void validateRootAdmin(AdminPrincipal admin) {

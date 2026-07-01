@@ -4,6 +4,7 @@ import com.team7.agora.domain.admin.dto.response.AdminSettlementResponse;
 import com.team7.agora.domain.admin.service.AdminSettlementService;
 import com.team7.agora.global.auth.AdminPrincipal;
 import com.team7.agora.global.response.ApiResponse;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
  */
 @RestController
 @RequestMapping("/api/admin/settlements")
+@PreAuthorize("hasAuthority('PAYMENT_MANAGE')")
 public class AdminSettlementController {
 
     private final AdminSettlementService adminSettlementService;

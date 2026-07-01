@@ -46,11 +46,11 @@ public class AdminApprovalRequest extends BaseTimeEntity {
     private Admin requester;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "target_admin_id", nullable = false)
+    @JoinColumn(name = "target_admin_id")
     private Admin targetAdmin;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "requested_role", nullable = false, length = 30)
+    @Column(name = "requested_role", length = 30)
     private AdminRole requestedRole;
 
     @Column(nullable = false, length = 500)
@@ -79,6 +79,15 @@ public class AdminApprovalRequest extends BaseTimeEntity {
         this.pendingRequestKey = buildPendingRequestKey(requester, targetAdmin, requestedRole);
     }
 
+    private AdminApprovalRequest(AdminApprovalOperation operation, Admin requester, String reason, String pendingRequestKey) {
+        markCreatedNow();
+        this.operation = operation;
+        this.status = AdminApprovalStatus.PENDING;
+        this.requester = requester;
+        this.reason = normalizeText(reason);
+        this.pendingRequestKey = pendingRequestKey;
+    }
+
     public static AdminApprovalRequest createRoleChange(
             Admin requester,
             Admin targetAdmin,
@@ -91,14 +100,36 @@ public class AdminApprovalRequest extends BaseTimeEntity {
         return new AdminApprovalRequest(requester, targetAdmin, requestedRole, reason);
     }
 
+    public static AdminApprovalRequest createCouponOperation(
+            AdminApprovalOperation operation,
+            Admin requester,
+            String reason,
+            String pendingRequestKey
+    ) {
+        if (operation == null || requester == null || operation == AdminApprovalOperation.ADMIN_ROLE_CHANGE) {
+            throw new BusinessException(ErrorCode.INVALID_REQUEST);
+        }
+        return new AdminApprovalRequest(operation, requester, reason, pendingRequestKey);
+    }
+
     public void approve(Admin approver, String memo) {
         validatePending();
-        this.targetAdmin.changeRole(requestedRole);
         this.status = AdminApprovalStatus.APPROVED;
         this.approver = approver;
         this.decisionMemo = normalizeOptionalText(memo);
         this.decidedAt = AgoraClock.now();
         this.pendingRequestKey = null;
+    }
+
+    public void assertPending() {
+        validatePending();
+    }
+
+    public void applyRoleChange() {
+        if (operation != AdminApprovalOperation.ADMIN_ROLE_CHANGE || targetAdmin == null || requestedRole == null) {
+            throw new BusinessException(ErrorCode.INVALID_REQUEST);
+        }
+        this.targetAdmin.changeRole(requestedRole);
     }
 
     public void reject(Admin approver, String memo) {

@@ -31,7 +31,9 @@ public interface AdminApprovalRequestRepository extends JpaRepository<AdminAppro
             AdminApprovalStatus status
     );
 
+    boolean existsByPendingRequestKey(String pendingRequestKey);
+
     @Lock(LockModeType.PESSIMISTIC_WRITE)
-    @Query("select r from AdminApprovalRequest r join fetch r.requester join fetch r.targetAdmin left join fetch r.approver where r.id = :id")
+    @Query("select r from AdminApprovalRequest r join fetch r.requester left join fetch r.targetAdmin left join fetch r.approver where r.id = :id")
     Optional<AdminApprovalRequest> findByIdForUpdate(@Param("id") Long id);
 }

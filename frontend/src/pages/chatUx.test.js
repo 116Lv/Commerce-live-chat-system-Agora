@@ -38,6 +38,15 @@ test('ChatRoomPage validates image URLs before rendering inline previews', () =>
   assert.match(source, /Image link unavailable/);
 });
 
+test('backend exposes uploaded chat images through a web resource handler', () => {
+  const source = readSource('../../../src/main/java/com/team7/agora/global/config/UploadResourceConfig.java');
+
+  assert.match(source, /WebMvcConfigurer/);
+  assert.match(source, /addResourceHandlers/);
+  assert.match(source, /\/uploads\/\*\*/);
+  assert.match(source, /file:/);
+});
+
 test('ChatRoomsPage renders metadata-rich room rows without manual product ID opening', () => {
   const source = readSource('./ChatRoomsPage.jsx');
 

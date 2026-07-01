@@ -215,10 +215,12 @@ class ProductQueryServiceTest {
         product.increaseLikeCount();
         ProductImage image = ProductImage.create(product, "https://cdn.test/products/10-main.jpg", 0);
         assignId(image, 100L);
+        ProductImage detailImage = ProductImage.create(product, "https://cdn.test/products/10-detail.jpg", 1);
+        assignId(detailImage, 101L);
         when(productRepository.findWithSellerAndRegionByIdAndDeletedAtIsNull(10L)).thenReturn(Optional.of(product));
         when(productLikeRepository.existsByProductIdAndUserId(10L, 2L)).thenReturn(true);
         when(productImageRepository.findAllByProductIdInOrderByProductIdAscSortOrderAsc(List.of(10L)))
-            .thenReturn(List.of(image));
+            .thenReturn(List.of(image, detailImage));
 
         ProductResponse response = service.getProduct(2L, 10L);
 
@@ -234,6 +236,10 @@ class ProductQueryServiceTest {
         assertThat(response.sellerNickname()).isEqualTo("seller");
         assertThat(response.primaryImageUrl()).isEqualTo("https://cdn.test/products/10-main.jpg");
         assertThat(response.thumbnailUrl()).isEqualTo("https://cdn.test/products/10-main.jpg");
+        assertThat(response.imageUrls()).containsExactly(
+            "https://cdn.test/products/10-main.jpg",
+            "https://cdn.test/products/10-detail.jpg"
+        );
     }
 
     @Test

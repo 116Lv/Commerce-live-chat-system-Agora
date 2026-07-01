@@ -83,7 +83,14 @@ public class SecurityConfig {
                     "ROOT_ADMIN",
                     "USER_ADMIN",
                     "PRODUCT_ADMIN",
-                    "SETTLEMENT_ADMIN"
+                    "SETTLEMENT_ADMIN",
+                    "USER_MANAGE",
+                    "REPORT_MANAGE",
+                    "PRODUCT_MANAGE",
+                    "PAYMENT_MANAGE",
+                    "COUPON_MANAGE",
+                    "ADMIN_ACCOUNT_MANAGE",
+                    "APPROVAL_MANAGE"
                 )
                 .anyRequest().authenticated()
             )

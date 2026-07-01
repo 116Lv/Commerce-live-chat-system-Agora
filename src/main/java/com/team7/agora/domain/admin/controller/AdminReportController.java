@@ -41,7 +41,7 @@ public class AdminReportController {
      * @return 클라이언트에 반환할 API 응답
      */
     @GetMapping("/users")
-    @PreAuthorize("hasAnyAuthority('ROOT_ADMIN', 'USER_ADMIN')")
+    @PreAuthorize("hasAuthority('REPORT_MANAGE')")
     public ApiResponse<List<AdminReportListResponse>> getUserReports(
         @AuthenticationPrincipal AdminPrincipal admin,
         @RequestParam(required = false) String status,
@@ -58,7 +58,7 @@ public class AdminReportController {
      * @return 클라이언트에 반환할 API 응답
      */
     @PostMapping("/users/{reportId}/resolve")
-    @PreAuthorize("hasAnyAuthority('ROOT_ADMIN', 'USER_ADMIN')")
+    @PreAuthorize("hasAuthority('REPORT_MANAGE')")
     public ApiResponse<AdminReportResponse> resolveUserReport(
         @AuthenticationPrincipal AdminPrincipal admin,
         @PathVariable Long reportId,
@@ -74,7 +74,7 @@ public class AdminReportController {
      * @return 클라이언트에 반환할 API 응답
      */
     @GetMapping("/products")
-    @PreAuthorize("hasAnyAuthority('ROOT_ADMIN', 'PRODUCT_ADMIN')")
+    @PreAuthorize("hasAuthority('REPORT_MANAGE')")
     public ApiResponse<List<AdminReportListResponse>> getProductReports(
         @AuthenticationPrincipal AdminPrincipal admin,
         @RequestParam(required = false) String status,
@@ -91,7 +91,7 @@ public class AdminReportController {
      * @return 클라이언트에 반환할 API 응답
      */
     @PostMapping("/products/{reportId}/resolve")
-    @PreAuthorize("hasAnyAuthority('ROOT_ADMIN', 'PRODUCT_ADMIN')")
+    @PreAuthorize("hasAuthority('REPORT_MANAGE')")
     public ApiResponse<AdminReportResponse> resolveProductReport(
         @AuthenticationPrincipal AdminPrincipal admin,
         @PathVariable Long reportId,

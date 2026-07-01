@@ -5,6 +5,8 @@ const compactParams = (params = {}) =>
 
 export const getMe = (config = {}) => apiClient.get('/api/users/me', config);
 
+export const getSmileScore = (userId, config = {}) => apiClient.get(`/api/users/${userId}/smile-score`, config);
+
 export const updateProfile = ({ nickname }, config = {}) => apiClient.patch('/api/users/me/profile', { nickname }, config);
 
 export const getMyTrades = (params = {}, config = {}) =>

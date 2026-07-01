@@ -1,10 +1,10 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import {
-  createCouponEvent,
   approveAdminApprovalRequest,
   approveAdminProduct,
   getAdminApprovalRequests,
+  getAdminApprovalRequest,
   getAdminAccounts,
   getAdminCouponEvent,
   getAdminCouponEventCoupons,
@@ -19,9 +19,11 @@ import {
   getAdminUserReports,
   getAdminUsers,
   hideAdminProduct,
-  issueCouponEventToUsers,
   normalizeCouponEventPayload,
   normalizeCouponIssuePayload,
+  requestCouponEventCreateApproval,
+  requestCouponEventIndividualIssue,
+  requestCouponEventStopApproval,
   rejectAdminApprovalRequest,
   requestAdminRoleChangeApproval,
   resolveAdminProductReport,
@@ -62,7 +64,8 @@ test('admin API maps dashboard, product, user, report, payment, settlement, and 
     totalQuantity: 100,
     discountAmount: 3000,
     minOrderAmount: 10000,
-    validDays: 30
+    validDays: 30,
+    reason: 'Campaign launch approval'
   };
 
   await getAdminMe(config);
@@ -75,6 +78,7 @@ test('admin API maps dashboard, product, user, report, payment, settlement, and 
   await updateAdminUserStatus(9, 'SUSPENDED', config);
   await updateAdminAccountRole(9, 'PRODUCT_ADMIN', config);
   await getAdminApprovalRequests({ status: 'PENDING' }, config);
+  await getAdminApprovalRequest(20, config);
   await getMyAdminApprovalRequests(config);
   await requestAdminRoleChangeApproval({ targetAdminId: 9, requestedRole: 'SETTLEMENT_ADMIN', reason: 'Need backup' }, config);
   await approveAdminApprovalRequest(21, 'Approved', config);
@@ -88,10 +92,12 @@ test('admin API maps dashboard, product, user, report, payment, settlement, and 
   await verifyAdminPayment(15, config);
   await getAdminRefunds(config);
   await settleAdminSettlement(17, config);
-  await getAdminCouponEvents(config);
-  await createCouponEvent(couponEvent, config);
+  await getAdminCouponEvents({}, config);
+  await getAdminCouponEvents({ status: 'PENDING_APPROVAL' }, config);
+  await requestCouponEventCreateApproval(couponEvent, config);
   await getAdminCouponEvent(19, config);
-  await issueCouponEventToUsers(19, [1, 2], config);
+  await requestCouponEventStopApproval(19, 'Campaign ended', config);
+  await requestCouponEventIndividualIssue(19, [1, 2], config);
   await getAdminCouponEventCoupons(19, config);
 
   assert.deepEqual(requests.map(summarizeRequest), [
@@ -105,6 +111,7 @@ test('admin API maps dashboard, product, user, report, payment, settlement, and 
     { method: 'patch', url: '/api/admin/users/9/status', params: undefined, data: { status: 'SUSPENDED' } },
     { method: 'patch', url: '/api/admin/accounts/9/role', params: undefined, data: { role: 'PRODUCT_ADMIN' } },
     { method: 'get', url: '/api/admin/approval-requests', params: { status: 'PENDING' }, data: undefined },
+    { method: 'get', url: '/api/admin/approval-requests/20', params: undefined, data: undefined },
     { method: 'get', url: '/api/admin/my-approval-requests', params: undefined, data: undefined },
     {
       method: 'post',
@@ -123,12 +130,71 @@ test('admin API maps dashboard, product, user, report, payment, settlement, and 
     { method: 'post', url: '/api/admin/payments/15/verify', params: undefined, data: null },
     { method: 'get', url: '/api/admin/refunds', params: undefined, data: undefined },
     { method: 'post', url: '/api/admin/settlements/17/settle', params: undefined, data: null },
-    { method: 'get', url: '/api/admin/coupon-events', params: undefined, data: undefined },
-    { method: 'post', url: '/api/admin/coupon-events', params: undefined, data: couponEvent },
+    { method: 'get', url: '/api/admin/coupon-events', params: {}, data: undefined },
+    { method: 'get', url: '/api/admin/coupon-events', params: { status: 'PENDING_APPROVAL' }, data: undefined },
+    { method: 'post', url: '/api/admin/coupon-events/requests', params: undefined, data: couponEvent },
     { method: 'get', url: '/api/admin/coupon-events/19', params: undefined, data: undefined },
-    { method: 'post', url: '/api/admin/coupon-events/19/issue', params: undefined, data: { userIds: [1, 2] } },
+    { method: 'post', url: '/api/admin/coupon-events/19/stop-requests', params: undefined, data: { reason: 'Campaign ended' } },
+    { method: 'post', url: '/api/admin/coupon-events/19/issue-requests', params: undefined, data: { userIds: [1, 2] } },
     { method: 'get', url: '/api/admin/coupon-events/19/coupons', params: undefined, data: undefined }
   ]);
+});
+
+test('coupon approval wrappers preserve backend approval and summary response shape', async () => {
+  const approvalResponse = {
+    status: 'SUCCESS',
+    message: 'ok',
+    data: {
+      id: 10,
+      operation: 'COUPON_EVENT_CREATE',
+      status: 'PENDING',
+      couponPayload: {
+        couponEventId: 31,
+        eventType: 'ADMIN_INDIVIDUAL',
+        eventName: 'VIP coupon',
+        inputCount: 0,
+        validTargetCount: 0,
+        duplicateCount: 0,
+        excludedCount: 0,
+        plannedIssueCount: 0,
+        expectedIssuedQuantity: 0,
+        exceedsRemainingQuantity: false
+      }
+    }
+  };
+  const summaryResponse = {
+    status: 'SUCCESS',
+    message: 'ok',
+    data: {
+      approvalRequestId: 11,
+      status: 'PENDING',
+      eventId: 31,
+      inputCount: 3,
+      validTargetCount: 2,
+      duplicateCount: 1,
+      excludedCount: 0,
+      plannedIssueCount: 2,
+      expectedIssuedQuantity: 2,
+      exceedsRemainingQuantity: false
+    }
+  };
+  const responses = [approvalResponse, approvalResponse, summaryResponse];
+  const adapter = (config) =>
+    Promise.resolve({
+      config,
+      data: responses.shift(),
+      headers: {},
+      status: 200,
+      statusText: 'OK'
+    });
+
+  const createResult = await requestCouponEventCreateApproval({ type: 'FIRST_COME', name: 'Coupon' }, { adapter });
+  const stopResult = await requestCouponEventStopApproval(31, 'Campaign ended', { adapter });
+  const issueResult = await requestCouponEventIndividualIssue(31, [7, 8, 7], { adapter });
+
+  assert.equal(createResult.operation, 'COUPON_EVENT_CREATE');
+  assert.equal(stopResult.couponPayload.couponEventId, 31);
+  assert.deepEqual(issueResult, summaryResponse.data);
 });
 
 test('admin page row replacement updates the item returned by an action', () => {
@@ -163,11 +229,37 @@ test('admin list APIs include backend default paging and filter params', async (
   const { requests, config } = captureRequest();
 
   await getAdminProducts({}, config);
+  await getAdminProducts(
+    {
+      keyword: '의자',
+      sellerKeyword: 'seller01',
+      status: 'AVAILABLE',
+      approvalStatus: 'PENDING',
+      reportedOnly: true,
+      page: 2,
+      size: 30
+    },
+    config
+  );
   await getAdminUsers({}, config);
   await getAdminPayments({}, config);
 
   assert.deepEqual(requests.map(summarizeRequest), [
     { method: 'get', url: '/api/admin/products', params: { reportedOnly: false, page: 0, size: 20 }, data: undefined },
+    {
+      method: 'get',
+      url: '/api/admin/products',
+      params: {
+        reportedOnly: true,
+        page: 2,
+        size: 30,
+        keyword: '의자',
+        sellerKeyword: 'seller01',
+        status: 'AVAILABLE',
+        approvalStatus: 'PENDING'
+      },
+      data: undefined
+    },
     { method: 'get', url: '/api/admin/users', params: { page: 0, size: 20 }, data: undefined },
     { method: 'get', url: '/api/admin/payments', params: { status: '', page: 0, size: 20 }, data: undefined }
   ]);
@@ -190,7 +282,7 @@ test('admin account and report APIs expose dedicated admin account list and opti
 test('coupon API normalizes formatted admin UI numbers while preserving raw enum values', async () => {
   const { requests, config } = captureRequest();
 
-  await createCouponEvent(
+  await requestCouponEventCreateApproval(
     {
       type: 'ADMIN_INDIVIDUAL',
       name: ' 여름 쿠폰 ',
@@ -199,16 +291,17 @@ test('coupon API normalizes formatted admin UI numbers while preserving raw enum
       totalQuantity: '1,000',
       discountAmount: '5,000',
       minOrderAmount: '10,000',
-      validDays: '30'
+      validDays: '30',
+      reason: 'Campaign launch approval'
     },
     config
   );
-  await issueCouponEventToUsers(31, ['1', 2, 'abc', 3], config);
+  await requestCouponEventIndividualIssue(31, ['1', 2, 'abc', 3], config);
 
   assert.deepEqual(requests.map(summarizeRequest), [
     {
       method: 'post',
-      url: '/api/admin/coupon-events',
+      url: '/api/admin/coupon-events/requests',
       params: undefined,
       data: {
         type: 'ADMIN_INDIVIDUAL',
@@ -218,10 +311,11 @@ test('coupon API normalizes formatted admin UI numbers while preserving raw enum
         totalQuantity: 1000,
         discountAmount: 5000,
         minOrderAmount: 10000,
-        validDays: 30
+        validDays: 30,
+        reason: 'Campaign launch approval'
       }
     },
-    { method: 'post', url: '/api/admin/coupon-events/31/issue', params: undefined, data: { userIds: [1, 2, 3] } }
+    { method: 'post', url: '/api/admin/coupon-events/31/issue-requests', params: undefined, data: { userIds: [1, 2, 3] } }
   ]);
 
   assert.deepEqual(normalizeCouponEventPayload({ type: 'FIRST_COME', totalQuantity: '2,500' }), {

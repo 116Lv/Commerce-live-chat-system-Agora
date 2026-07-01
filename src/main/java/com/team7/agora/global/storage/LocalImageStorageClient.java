@@ -3,8 +3,10 @@ package com.team7.agora.global.storage;
 import com.team7.agora.global.exception.BusinessException;
 import com.team7.agora.global.exception.ErrorCode;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.Locale;
 import java.util.Set;
 import java.util.UUID;
@@ -13,9 +15,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
-/**
- * 로컬 이미지 파일 저장 구현체이다.
- */
 @Component
 public class LocalImageStorageClient implements ImageStorageClient {
 
@@ -30,20 +29,10 @@ public class LocalImageStorageClient implements ImageStorageClient {
 
     private final Path baseUploadDir;
 
-    /**
-     * 필요한 의존성을 주입받아 컴포넌트를 생성한다.
-     * @param baseUploadDir 기본 업로드 디렉터리
-     */
     public LocalImageStorageClient(@Value("${file.upload-dir:uploads}") String baseUploadDir) {
-        this.baseUploadDir = Path.of(baseUploadDir);
+        this.baseUploadDir = Path.of(baseUploadDir).toAbsolutePath().normalize();
     }
 
-    /**
-     * 업로드된 이미지 파일을 검증한 뒤 로컬 저장소에 저장하고 접근 URL을 반환한다.
-     * @param category 업로드 카테고리
-     * @param file 업로드 파일
-     * @return 클라이언트에 반환할 API 응답
-     */
     @Override
     public String store(String category, MultipartFile file) {
         if (file == null || file.isEmpty()) {
@@ -53,12 +42,15 @@ public class LocalImageStorageClient implements ImageStorageClient {
         validateContentType(file);
 
         String extension = validateAndNormalizeExtension(file);
-        String filename = UUID.randomUUID() + (extension != null ? "." + extension : "");
-        Path categoryDir = baseUploadDir.resolve(category);
+        String filename = UUID.randomUUID() + "." + extension;
+        Path categoryDir = baseUploadDir.resolve(category).normalize();
+        Path target = categoryDir.resolve(filename).normalize();
 
         try {
             Files.createDirectories(categoryDir);
-            file.transferTo(categoryDir.resolve(filename));
+            try (InputStream inputStream = file.getInputStream()) {
+                Files.copy(inputStream, target, StandardCopyOption.REPLACE_EXISTING);
+            }
         } catch (IOException e) {
             throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR, "이미지 저장에 실패했습니다.");
         }

@@ -5,7 +5,8 @@ const ACTIONS = {
   reject: { key: 'reject', label: '제안 거절', variant: 'outline-primary' },
   extension: { key: 'extension', label: '응답 기한 연장 요청', variant: 'outline-primary' },
   extensionApprove: { key: 'extensionApprove', label: '연장 승인', variant: 'primary' },
-  extensionReject: { key: 'extensionReject', label: '연장 거절', variant: 'outline-primary' }
+  extensionReject: { key: 'extensionReject', label: '연장 거절', variant: 'outline-primary' },
+  cancelPaymentPending: { key: 'cancelPaymentPending', label: '제안 취소', variant: 'outline-danger' }
 };
 
 export const normalizeOfferStatus = (status) => String(status || '').toUpperCase();
@@ -16,6 +17,17 @@ export const inferOfferRole = (offer, currentUserId) => {
   }
 
   return String(offer.requesterId) === String(currentUserId) ? 'buyer' : 'seller';
+};
+
+export const isOfferPaymentPending = (offer) => {
+  const tradeStatus = normalizeOfferStatus(offer?.tradeStatus);
+  const paymentStatus = normalizeOfferStatus(offer?.paymentStatus);
+
+  if (tradeStatus) {
+    return tradeStatus === 'PAYMENT_PENDING' && (!paymentStatus || ['READY', 'CONFIRMING', 'FAILED'].includes(paymentStatus));
+  }
+
+  return !paymentStatus || ['READY', 'CONFIRMING', 'FAILED'].includes(paymentStatus);
 };
 
 export const getOfferActions = (offer, { role } = {}) => {
@@ -35,6 +47,10 @@ export const getOfferActions = (offer, { role } = {}) => {
 
   if (status === 'EXTENSION_REQUESTED') {
     return role === 'seller' || role == null ? [ACTIONS.extensionApprove, ACTIONS.extensionReject] : [];
+  }
+
+  if (status === 'ACCEPTED' && isOfferPaymentPending(offer)) {
+    return [ACTIONS.cancelPaymentPending];
   }
 
   return [];
@@ -60,11 +76,17 @@ export const getOfferPriceValidation = (value, { productPrice } = {}) => {
   return '';
 };
 
-export const buildPaymentHref = (offer) => {
+export const buildPaymentHref = (offer, { role } = {}) => {
+  if (role !== 'buyer') {
+    return '';
+  }
+
   const status = normalizeOfferStatus(offer?.status);
 
-  return status === 'ACCEPTED' && offer?.tradeId ? `/checkout/${offer.tradeId}` : '';
+  return status === 'ACCEPTED' && isOfferPaymentPending(offer) && offer?.tradeId ? `/checkout/${offer.tradeId}` : '';
 };
+
+export const isOfferPayable = (offer, options) => Boolean(buildPaymentHref(offer, options));
 
 export const getRemainingTimeLabel = (value, now = new Date()) => {
   if (!value) {
@@ -80,7 +102,7 @@ export const getRemainingTimeLabel = (value, now = new Date()) => {
   const diffMs = expiresAt.getTime() - now.getTime();
 
   if (diffMs <= 0) {
-    return '기한이 지났어요.';
+    return '기한이 지났어요';
   }
 
   const totalMinutes = Math.ceil(diffMs / 60000);

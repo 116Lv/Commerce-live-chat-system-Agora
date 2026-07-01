@@ -193,6 +193,40 @@ class PaymentServiceTest {
     }
 
     @Test
+    void cancelledTradeBlocksConfirmBeforePaymentClientConfirm() {
+        Payment payment = Payment.ready(trade, buyer, BigDecimal.valueOf(50000), "order-1");
+        assignId(payment, 1000L);
+        trade.cancel();
+        when(paymentRepository.findByIdForUpdate(1000L)).thenReturn(Optional.of(payment));
+
+        assertThatThrownBy(() -> paymentService.confirm(2L, 1000L, "payment-key"))
+            .isInstanceOfSatisfying(PaymentException.class, exception ->
+                assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.INVALID_REQUEST)
+            );
+
+        assertThat(payment.getStatus()).isEqualTo(PaymentStatus.READY);
+        verify(paymentClient, never()).confirm(any(), any(), any());
+        verify(settlementRepository, never()).save(any(Settlement.class));
+    }
+
+    @Test
+    void expiredTradeBlocksConfirmBeforePaymentClientConfirm() {
+        Payment payment = Payment.ready(trade, buyer, BigDecimal.valueOf(50000), "order-1");
+        assignId(payment, 1000L);
+        trade.expire();
+        when(paymentRepository.findByIdForUpdate(1000L)).thenReturn(Optional.of(payment));
+
+        assertThatThrownBy(() -> paymentService.confirm(2L, 1000L, "payment-key"))
+            .isInstanceOfSatisfying(PaymentException.class, exception ->
+                assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.INVALID_REQUEST)
+            );
+
+        assertThat(payment.getStatus()).isEqualTo(PaymentStatus.READY);
+        verify(paymentClient, never()).confirm(any(), any(), any());
+        verify(settlementRepository, never()).save(any(Settlement.class));
+    }
+
+    @Test
     void confirmRestoresReadyWhenPaymentClientThrows() {
         Payment payment = Payment.ready(trade, buyer, BigDecimal.valueOf(50000), "order-1");
         assignId(payment, 1000L);
@@ -223,15 +257,30 @@ class PaymentServiceTest {
     }
 
     @Test
-    void refundMarksPaidPaymentRefunded() {
+    void refundMarksPaidPaymentRefundedLegacyDisabled() {
         Payment payment = Payment.ready(trade, buyer, BigDecimal.valueOf(50000), "order-1");
         assignId(payment, 1000L);
         payment.markPaid("payment-key");
         when(paymentRepository.findById(1000L)).thenReturn(Optional.of(payment));
 
-        PaymentResponse response = paymentService.refund(2L, 1000L, "구매자 요청");
+        assertThatThrownBy(() -> paymentService.refund(2L, 1000L, "구매자 요청"))
+            .isInstanceOf(PaymentException.class);
 
-        assertThat(response.status()).isEqualTo("REFUNDED");
+        assertThat(payment.getStatus()).isEqualTo(PaymentStatus.PAID);
+    }
+
+    @Test
+    void refundRequestDoesNotImmediatelyRefundPaidPayment() {
+        Payment payment = Payment.ready(trade, buyer, BigDecimal.valueOf(50000), "order-1");
+        assignId(payment, 1000L);
+        payment.markPaid("payment-key");
+        when(paymentRepository.findById(1000L)).thenReturn(Optional.of(payment));
+
+        assertThatThrownBy(() -> paymentService.refund(2L, 1000L, "buyer request"))
+            .isInstanceOfSatisfying(PaymentException.class, exception ->
+                assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.INVALID_REQUEST)
+            );
+        assertThat(payment.getStatus()).isEqualTo(PaymentStatus.PAID);
     }
 
     @Test

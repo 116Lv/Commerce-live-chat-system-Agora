@@ -57,6 +57,14 @@ public class NegoController {
      * @param offerId 네고 제안 ID
      * @return 클라이언트에 반환할 API 응답
      */
+    @RequestMapping(path = "/{offerId}/cancel", method = {RequestMethod.PATCH, RequestMethod.POST})
+    public ApiResponse<NegoOfferResponse> cancelOffer(
+        @AuthenticationPrincipal CustomUserDetails userDetails,
+        @PathVariable Long offerId
+    ) {
+        return handleOfferAction(userDetails, offerId, negoService::cancelOffer, "가격 제안을 취소했습니다.");
+    }
+
     @RequestMapping(path = "/{offerId}/extension-request", method = {RequestMethod.PATCH, RequestMethod.POST})
     public ApiResponse<NegoOfferResponse> requestExtension(
         @AuthenticationPrincipal CustomUserDetails userDetails,
