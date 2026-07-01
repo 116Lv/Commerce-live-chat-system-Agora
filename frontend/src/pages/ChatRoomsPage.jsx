@@ -6,6 +6,7 @@ import LoadingState from '../components/LoadingState.jsx';
 import StatusBadge from '../components/StatusBadge.jsx';
 import { getMyRooms } from '../api/chatApi.js';
 import { PageHeader, formatDateTime, statusText, useApiResource } from './pageUtils.jsx';
+import { normalizeProductImageUrl } from './productFormUtils.js';
 
 const formatPrice = (value) => {
   const amount = Number(value);
@@ -59,8 +60,8 @@ export default function ChatRoomsPage() {
               <Card.Body>
                 <div className="chat-room-row">
                   <div className="chat-room-product-thumb" aria-hidden="true">
-                    {room.productThumbnailUrl ? (
-                      <img src={room.productThumbnailUrl} alt="" loading="lazy" />
+                    {normalizeProductImageUrl(room.productThumbnailUrl) ? (
+                      <img src={normalizeProductImageUrl(room.productThumbnailUrl)} alt="" loading="lazy" />
                     ) : (
                       <span>{String(room.productTitle || '상품').slice(0, 1)}</span>
                     )}

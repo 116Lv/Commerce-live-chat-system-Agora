@@ -25,7 +25,7 @@ public record ProductResponse(
     int likeCount,
     boolean liked,
     Long regionId,
-    String regionName,
+    String regionFullName,
     String sido,
     String sigungu,
     String eupmyeondong,

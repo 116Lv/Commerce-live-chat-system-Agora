@@ -42,7 +42,7 @@ export default function SellProductPage() {
     price: parsePriceInput(form.price),
     category: form.category,
     categoryLabel: form.category,
-    regionName: selectedRegionLabel,
+    regionFullName: selectedRegionLabel,
     primaryImageUrl: selectedImagePreviews[0]?.url,
     status: 'SELLING',
     statusLabel: '판매중',

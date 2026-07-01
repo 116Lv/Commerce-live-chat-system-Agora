@@ -39,8 +39,7 @@ describe('product form utilities', () => {
       categoryLabel: 'Friendly category',
       status: 'SELLING',
       statusLabel: 'Friendly status',
-      parentRegionName: 'Parent region',
-      regionName: 'Child region',
+      regionFullName: 'Parent region Child region',
       thumbnailImageUrl: '/thumb.jpg',
       primaryImageUrl: '/primary.jpg'
     };
@@ -53,6 +52,10 @@ describe('product form utilities', () => {
 
   test('falls back to backend thumbnailUrl before legacy image fields', () => {
     assert.equal(getProductImageUrl({ thumbnailUrl: '/backend-thumb.jpg', imageUrl: '/legacy.jpg' }), '/backend-thumb.jpg');
+  });
+
+  test('normalizes uploaded image paths so nested routes can render them', () => {
+    assert.equal(getProductImageUrl({ primaryImageUrl: 'uploads/products/main.svg' }), '/uploads/products/main.svg');
   });
 
   test('normalizes ProductSearchResponse title and label aliases', () => {
@@ -77,7 +80,7 @@ describe('product form utilities', () => {
       status: 'AVAILABLE',
       sido: 'Seoul',
       sigungu: 'Gangnam',
-      regionName: 'Yeoksam',
+      eupmyeondong: 'Yeoksam',
       imageUrl: '/legacy.jpg'
     };
 
@@ -182,7 +185,6 @@ describe('product form utilities', () => {
     assert.equal(normalizeRegionLabel({ sido: '서울특별시', sigungu: '강남구', eupmyeondong: '역삼동' }), '서울특별시 강남구 역삼동');
     assert.equal(normalizeRegionLabel({ city: '서울특별시', district: '강남구', neighborhood: '역삼동' }), '서울특별시 강남구 역삼동');
     assert.equal(normalizeRegionLabel({ province: '경기도', city: '성남시', district: '분당구' }), '경기도 성남시 분당구');
-    assert.equal(normalizeRegionLabel({ regionName: '부산 해운대구' }), '부산 해운대구');
     assert.equal(normalizeRegionLabel({ regionId: 7 }), '7');
     assert.equal(normalizeRegionLabel(null), '');
   });

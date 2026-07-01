@@ -18,7 +18,8 @@ import {
   getProductCategoryLabel,
   getProductImageUrl,
   getProductRegionLabel,
-  getProductStatusLabel
+  getProductStatusLabel,
+  normalizeProductImageUrl
 } from './productFormUtils.js';
 
 export default function ProductDetailPage() {
@@ -143,7 +144,7 @@ export default function ProductDetailPage() {
   const categoryLabel = getProductCategoryLabel(product);
   const imageUrl = getProductImageUrl(product);
   const productImageUrls = Array.isArray(product.imageUrls) && product.imageUrls.length > 0
-    ? product.imageUrls
+    ? product.imageUrls.map(normalizeProductImageUrl).filter(Boolean)
     : imageUrl
       ? [imageUrl]
       : [];

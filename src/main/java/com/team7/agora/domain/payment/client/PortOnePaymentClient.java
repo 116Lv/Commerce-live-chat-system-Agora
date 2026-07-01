@@ -17,7 +17,7 @@ import org.springframework.stereotype.Component;
  * PortOne payment provider client.
  */
 @Component
-@Profile("prod")
+@Profile({"prod", "docker"})
 public class PortOnePaymentClient implements PaymentClient {
 
     private final HttpClient httpClient;
