@@ -281,6 +281,9 @@ describe('product detail, favorites, and seller UX source', () => {
     assert.match(source, /getProductRegionLabel/);
     assert.match(source, /getProductStatusLabel/);
     assert.match(source, /sellerNickname/);
+    assert.match(source, /formatDateTime/);
+    assert.match(source, /product\.createdAt/);
+    assert.match(source, /작성일/);
   });
 
   test('ProductDetailPage guides buyers to chat instead of starting a trade directly', () => {

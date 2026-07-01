@@ -1,5 +1,6 @@
 package com.team7.agora.domain.product.entity;
 
+import com.team7.agora.domain.common.entity.BaseTimeEntity;
 import com.team7.agora.domain.product.enums.ProductApprovalStatus;
 import com.team7.agora.domain.product.enums.ProductStatus;
 import com.team7.agora.domain.region.entity.Region;
@@ -38,7 +39,7 @@ import lombok.NoArgsConstructor;
  * 상품 도메인 정보를 영속화하는 JPA 엔티티이다.
  */
 )
-public class Product {
+public class Product extends BaseTimeEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -91,6 +92,7 @@ public class Product {
         this.approvalStatus = ProductApprovalStatus.PENDING;
         this.viewCount = 0;
         this.likeCount = 0;
+        markCreatedNow();
     }
 
     /**
