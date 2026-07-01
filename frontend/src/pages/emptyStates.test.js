@@ -26,6 +26,7 @@ test('my page replaces menu tiles with a profile edit layout', () => {
 
   assert.doesNotMatch(source, /MetricTile/);
   assert.doesNotMatch(source, /to="\/me\/likes"|to="\/me\/products"|to="\/me\/trades"|to="\/me\/reviews"|to="\/me\/coupons"/);
+  assert.match(source, /<PageHeader title="내 정보 변경" eyebrow="마이페이지" \/>/);
   assert.match(source, /className="mypage-edit-grid"/);
   assert.match(source, /changePassword/);
   assert.match(source, /updatePreferredRegions/);

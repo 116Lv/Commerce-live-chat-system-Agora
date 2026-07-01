@@ -1176,7 +1176,7 @@ p {
 }
 
 .mypage-panel {
-  border: 1px solid #a9afad;
+  border: 1px solid var(--agora-border);
   border-radius: 8px;
   background: var(--agora-surface);
 }
@@ -1245,7 +1245,7 @@ p {
   gap: 1rem;
   min-height: 3rem;
   padding: 0.8rem;
-  border: 1px solid #a9afad;
+  border: 1px solid var(--agora-border);
   border-radius: 8px;
   color: var(--agora-muted);
   font-weight: 800;
@@ -1260,8 +1260,8 @@ p {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: end;
-  gap: 0.35rem 1.2rem;
-  padding: 1.35rem;
+  gap: 0.7rem 1.25rem;
+  padding: 1.45rem;
 }
 
 .mypage-edit-form .alert,
@@ -1276,7 +1276,7 @@ p {
 }
 
 .mypage-edit-form .form-label {
-  margin-bottom: 0.35rem;
+  margin-bottom: 0.4rem;
   color: #111827;
   font-weight: 800;
 }
@@ -1284,9 +1284,18 @@ p {
 .mypage-edit-form .form-control,
 .mypage-edit-form .form-select {
   min-height: 3.2rem;
-  border: 2px solid #111827;
-  border-radius: 12px;
+  border: 1px solid var(--agora-border);
+  border-radius: 8px;
+  background-color: #fbfdfc;
   font-weight: 700;
+  box-shadow: none;
+}
+
+.mypage-edit-form .form-control:focus,
+.mypage-edit-form .form-select:focus {
+  border-color: var(--agora-brand);
+  background-color: #ffffff;
+  box-shadow: 0 0 0 0.18rem rgb(22 129 95 / 12%);
 }
 
 .mypage-edit-form .form-select[multiple] {

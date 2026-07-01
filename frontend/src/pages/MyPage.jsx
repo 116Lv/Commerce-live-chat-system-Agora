@@ -7,7 +7,7 @@ import { getMyCoupons } from '../api/couponApi.js';
 import { changePassword, getMe, updateProfile } from '../api/mypageApi.js';
 import { getRegions, updatePreferredRegions } from '../api/regionApi.js';
 import { formatCouponMoney, sortMyCoupons, toCouponFilter } from './couponUtils.js';
-import { getPageContent, useApiResource } from './pageUtils.jsx';
+import { PageHeader, getPageContent, useApiResource } from './pageUtils.jsx';
 
 const PASSWORD_MIN_LENGTH = 8;
 const MIN_REGION_COUNT = 3;
@@ -139,6 +139,7 @@ export default function MyPage() {
 
   return (
     <section className="mypage-profile-edit">
+      <PageHeader title="내 정보 변경" eyebrow="마이페이지" />
       {profileState.loading ? <LoadingState label="내 정보 불러오는 중" /> : null}
       {profileState.error ? (
         <ErrorState title="내 정보를 불러오지 못했어요" message={profileState.error.message} onRetry={profileState.reload} />
