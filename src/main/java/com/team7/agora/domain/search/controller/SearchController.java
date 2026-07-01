@@ -44,6 +44,8 @@ public class SearchController {
      * @param category 이미지를 저장할 분류
      * @param page 조회할 페이지 번호
      * @param size 한 번에 조회할 항목 개수
+     * @param sort 정렬 기준 (recent, likes)
+     * @param direction 정렬 방향 (desc, asc)
      * @return 클라이언트에 반환할 API 응답
      */
     @GetMapping("/v1/products/search")
@@ -53,12 +55,14 @@ public class SearchController {
         @RequestParam(required = false) Long regionId,
         @RequestParam(required = false) String category,
         @RequestParam(defaultValue = "0") int page,
-        @RequestParam(defaultValue = "20") int size
+        @RequestParam(defaultValue = "20") int size,
+        @RequestParam(defaultValue = "recent") String sort,
+        @RequestParam(defaultValue = "desc") String direction
     ) {
         popularKeywordService.recordSearchKeyword(viewerId(userDetails), keyword);
         return ResponseEntity.ok(ApiResponse.success("상품 검색 결과입니다.",
             PageResponse.from(productSearchService.searchV1(
-                new ProductSearchCondition(keyword, regionId, category, PageRequest.of(page, size))
+                new ProductSearchCondition(keyword, regionId, category, PageRequest.of(page, size), sort, direction)
             ))
         ));
     }
@@ -70,6 +74,8 @@ public class SearchController {
      * @param category 이미지를 저장할 분류
      * @param page 조회할 페이지 번호
      * @param size 한 번에 조회할 항목 개수
+     * @param sort 정렬 기준 (recent, likes)
+     * @param direction 정렬 방향 (desc, asc)
      * @return 클라이언트에 반환할 API 응답
      */
     @GetMapping("/v2/products/search")
@@ -79,12 +85,14 @@ public class SearchController {
         @RequestParam(required = false) Long regionId,
         @RequestParam(required = false) String category,
         @RequestParam(defaultValue = "0") int page,
-        @RequestParam(defaultValue = "20") int size
+        @RequestParam(defaultValue = "20") int size,
+        @RequestParam(defaultValue = "recent") String sort,
+        @RequestParam(defaultValue = "desc") String direction
     ) {
         popularKeywordService.recordSearchKeyword(viewerId(userDetails), keyword);
         return ResponseEntity.ok(ApiResponse.success("캐시 적용 상품 검색 결과입니다.",
             productSearchService.searchV2(
-                new ProductSearchCondition(keyword, regionId, category, PageRequest.of(page, size))
+                new ProductSearchCondition(keyword, regionId, category, PageRequest.of(page, size), sort, direction)
             )
         ));
     }

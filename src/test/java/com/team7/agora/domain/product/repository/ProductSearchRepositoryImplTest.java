@@ -173,6 +173,47 @@ class ProductSearchRepositoryImplTest {
         assertThat(firstPage.getContent().get(1).id()).isEqualTo(second.getId());
     }
 
+    @Test
+    void search_sortsByLikesDescendingWhenLikesSortRequested() {
+        String category = "QDSL_IT_SORT_LIKES";
+        Product lowLikes = saveApproved(Product.create(
+            seller, seoul, "적은 찜 상품", "설명", BigDecimal.valueOf(1000), category
+        ));
+        Product highLikes = saveApproved(Product.create(
+            seller, seoul, "많은 찜 상품", "설명", BigDecimal.valueOf(1000), category
+        ));
+        highLikes.increaseLikeCount();
+        highLikes.increaseLikeCount();
+        productRepository.save(highLikes);
+        lowLikes.increaseLikeCount();
+        productRepository.save(lowLikes);
+
+        Page<ProductSearchResponse> results = productRepository.search(
+            new ProductSearchCondition(null, null, category, PageRequest.of(0, 20), "likes", "desc")
+        );
+
+        assertThat(results).extracting(ProductSearchResponse::id)
+            .containsExactly(highLikes.getId(), lowLikes.getId());
+    }
+
+    @Test
+    void search_sortsAscendingWhenAscDirectionRequested() {
+        String category = "QDSL_IT_SORT_ASC";
+        Product first = saveApproved(Product.create(
+            seller, seoul, "상품A", "설명", BigDecimal.valueOf(1000), category
+        ));
+        Product second = saveApproved(Product.create(
+            seller, seoul, "상품B", "설명", BigDecimal.valueOf(1000), category
+        ));
+
+        Page<ProductSearchResponse> results = productRepository.search(
+            new ProductSearchCondition(null, null, category, PageRequest.of(0, 20), "recent", "asc")
+        );
+
+        assertThat(results).extracting(ProductSearchResponse::id)
+            .containsExactly(first.getId(), second.getId());
+    }
+
     private Product saveApproved(Product product) {
         product.approve();
         return productRepository.save(product);
