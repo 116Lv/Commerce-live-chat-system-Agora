@@ -2,7 +2,6 @@ package com.team7.agora.domain.coupon.scheduler;
 
 import com.team7.agora.domain.coupon.service.CouponCleanupService;
 import com.team7.agora.global.time.AgoraClock;
-import java.time.LocalDateTime;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -16,8 +15,8 @@ public class CouponCleanupScheduler {
     }
 
     @Scheduled(
-        fixedDelayString = "${agora.scheduler.coupon-cleanup.fixed-delay:300000}",
-        initialDelayString = "${agora.scheduler.coupon-cleanup.initial-delay:300000}"
+        cron = "${agora.scheduler.coupon-cleanup.cron:0 0 0 * * *}",
+        zone = "${agora.scheduler.coupon-cleanup.zone:UTC}"
     )
     public void cleanupExpiredCouponsAndEvents() {
         couponCleanupService.cleanupExpired(AgoraClock.now());

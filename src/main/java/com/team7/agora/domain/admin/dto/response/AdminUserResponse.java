@@ -2,14 +2,20 @@ package com.team7.agora.domain.admin.dto.response;
 
 import com.team7.agora.domain.admin.entity.Admin;
 import com.team7.agora.domain.user.entity.User;
+import java.util.List;
 
 public record AdminUserResponse(
         Long id,
         String email,
         String nickname,
         String role,
-        String status
+        String status,
+        List<String> permissions
 ) {
+
+    public AdminUserResponse(Long id, String email, String nickname, String role, String status) {
+        this(id, email, nickname, role, status, List.of());
+    }
 
     public static AdminUserResponse from(User user) {
         return new AdminUserResponse(
@@ -17,7 +23,8 @@ public record AdminUserResponse(
                 user.getEmail(),
                 user.getNickname(),
                 user.getRole().name(),
-                user.getStatus().name()
+                user.getStatus().name(),
+                List.of()
         );
     }
 
@@ -27,7 +34,10 @@ public record AdminUserResponse(
                 admin.getEmail(),
                 admin.getNickname(),
                 admin.getRole().name(),
-                admin.getStatus().name()
+                admin.getStatus().name(),
+                admin.getEffectivePermissions().stream()
+                        .map(Enum::name)
+                        .toList()
         );
     }
 }

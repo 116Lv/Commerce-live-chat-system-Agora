@@ -2,6 +2,7 @@ package com.team7.agora.domain.report.repository;
 
 import com.team7.agora.domain.product.entity.Product;
 import com.team7.agora.domain.product.enums.ProductApprovalStatus;
+import com.team7.agora.domain.product.enums.ProductStatus;
 import com.team7.agora.domain.report.entity.Report;
 import com.team7.agora.domain.report.enums.ReportStatus;
 import com.team7.agora.domain.user.entity.User;
@@ -60,6 +61,38 @@ public interface ReportRepository extends JpaRepository<Report, Long> {
                     """
     )
     Page<Product> findDistinctReportedProductsByApprovalStatus(
+            @Param("approvalStatus") ProductApprovalStatus approvalStatus,
+            Pageable pageable
+    );
+
+    @Query(
+            value = """
+                    select distinct p
+                    from Report r
+                    join r.product p
+                    join p.seller seller
+                    where r.product is not null
+                    and (:keyword is null or lower(p.title) like lower(concat('%', :keyword, '%')))
+                    and (:sellerKeyword is null or lower(seller.nickname) like lower(concat('%', :sellerKeyword, '%')))
+                    and (:status is null or p.status = :status)
+                    and (:approvalStatus is null or p.approvalStatus = :approvalStatus)
+                    """,
+            countQuery = """
+                    select count(distinct p)
+                    from Report r
+                    join r.product p
+                    join p.seller seller
+                    where r.product is not null
+                    and (:keyword is null or lower(p.title) like lower(concat('%', :keyword, '%')))
+                    and (:sellerKeyword is null or lower(seller.nickname) like lower(concat('%', :sellerKeyword, '%')))
+                    and (:status is null or p.status = :status)
+                    and (:approvalStatus is null or p.approvalStatus = :approvalStatus)
+                    """
+    )
+    Page<Product> findDistinctReportedProductsByFilters(
+            @Param("keyword") String keyword,
+            @Param("sellerKeyword") String sellerKeyword,
+            @Param("status") ProductStatus status,
             @Param("approvalStatus") ProductApprovalStatus approvalStatus,
             Pageable pageable
     );

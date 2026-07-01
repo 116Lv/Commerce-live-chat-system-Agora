@@ -1,8 +1,10 @@
 package com.team7.agora.domain.admin.service;
 
 import com.team7.agora.domain.admin.dto.response.AdminProductResponse;
+import com.team7.agora.domain.admin.enums.AdminPermission;
 import com.team7.agora.domain.product.entity.Product;
 import com.team7.agora.domain.product.enums.ProductApprovalStatus;
+import com.team7.agora.domain.product.enums.ProductStatus;
 import com.team7.agora.domain.product.repository.ProductRepository;
 import com.team7.agora.domain.report.repository.ReportRepository;
 import com.team7.agora.domain.search.service.ProductSearchService;
@@ -42,16 +44,54 @@ public class AdminProductService {
             String approvalStatus,
             Pageable pageable
     ) {
+        return getProducts(admin, reportedOnly, null, null, null, approvalStatus, pageable);
+    }
+
+    public Page<AdminProductResponse> getProducts(
+            AdminPrincipal admin,
+            boolean reportedOnly,
+            String keyword,
+            String sellerKeyword,
+            String status,
+            String approvalStatus,
+            Pageable pageable
+    ) {
         validateProductAdmin(admin);
+        String normalizedKeyword = normalizeFilter(keyword);
+        String normalizedSellerKeyword = normalizeFilter(sellerKeyword);
+        ProductStatus parsedStatus = parseStatus(status);
         ProductApprovalStatus parsedApprovalStatus = parseApprovalStatus(approvalStatus);
         Page<Product> products;
+        boolean hasDomainFilters = normalizedKeyword != null || normalizedSellerKeyword != null || parsedStatus != null;
 
-        if (reportedOnly) {
+        if (reportedOnly && hasDomainFilters) {
+            products = reportRepository.findDistinctReportedProductsByFilters(
+                    normalizedKeyword,
+                    normalizedSellerKeyword,
+                    parsedStatus,
+                    parsedApprovalStatus,
+                    pageable
+            );
+        } else if (reportedOnly) {
             products = parsedApprovalStatus == null
                     ? reportRepository.findDistinctReportedProducts(pageable)
                     : reportRepository.findDistinctReportedProductsByApprovalStatus(parsedApprovalStatus, pageable);
         } else if (parsedApprovalStatus != null) {
-            products = productRepository.findAllByApprovalStatus(parsedApprovalStatus, pageable);
+            products = productRepository.findAdminProducts(
+                    normalizedKeyword,
+                    normalizedSellerKeyword,
+                    parsedStatus,
+                    parsedApprovalStatus,
+                    pageable
+            );
+        } else if (hasDomainFilters) {
+            products = productRepository.findAdminProducts(
+                    normalizedKeyword,
+                    normalizedSellerKeyword,
+                    parsedStatus,
+                    null,
+                    pageable
+            );
         } else {
             products = productRepository.findAll(pageable);
         }
@@ -79,6 +119,26 @@ public class AdminProductService {
         return AdminProductResponse.from(product);
     }
 
+    private String normalizeFilter(String value) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+
+        return value.trim();
+    }
+
+    private ProductStatus parseStatus(String status) {
+        if (status == null || status.isBlank()) {
+            return null;
+        }
+
+        try {
+            return ProductStatus.valueOf(status.toUpperCase());
+        } catch (IllegalArgumentException ex) {
+            throw new BusinessException(ErrorCode.INVALID_REQUEST, "Invalid product status.");
+        }
+    }
+
     private ProductApprovalStatus parseApprovalStatus(String approvalStatus) {
         if (approvalStatus == null || approvalStatus.isBlank()) {
             return null;
@@ -92,7 +152,7 @@ public class AdminProductService {
     }
 
     private void validateProductAdmin(AdminPrincipal admin) {
-        if (admin == null || !AdminRoleSupport.isProductAdminRole(admin.getRole())) {
+        if (!AdminRoleSupport.hasPermission(admin, AdminPermission.PRODUCT_MANAGE)) {
             throw new BusinessException(ErrorCode.FORBIDDEN, "Only product admins can manage products.");
         }
     }

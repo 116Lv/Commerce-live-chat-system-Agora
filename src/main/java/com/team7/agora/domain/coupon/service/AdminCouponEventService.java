@@ -1,25 +1,39 @@
 package com.team7.agora.domain.coupon.service;
 
+import com.team7.agora.domain.admin.dto.response.AdminApprovalRequestResponse;
+import com.team7.agora.domain.admin.entity.Admin;
+import com.team7.agora.domain.admin.entity.AdminApprovalRequest;
+import com.team7.agora.domain.admin.enums.AdminApprovalOperation;
+import com.team7.agora.domain.admin.enums.AdminPermission;
+import com.team7.agora.domain.admin.enums.AdminRole;
+import com.team7.agora.domain.admin.repository.AdminApprovalRequestRepository;
+import com.team7.agora.domain.admin.repository.AdminRepository;
+import com.team7.agora.domain.admin.service.AdminRoleSupport;
 import com.team7.agora.domain.coupon.dto.response.AdminCouponEventResponse;
+import com.team7.agora.domain.coupon.dto.response.AdminCouponIssueApprovalResponse;
 import com.team7.agora.domain.coupon.dto.response.CouponEventCouponResponse;
-import com.team7.agora.domain.coupon.dto.response.CouponEventIssueResponse;
+import com.team7.agora.domain.coupon.entity.AdminCouponApprovalPayload;
 import com.team7.agora.domain.coupon.entity.Coupon;
 import com.team7.agora.domain.coupon.entity.CouponEvent;
+import com.team7.agora.domain.coupon.enums.CouponEventStatus;
 import com.team7.agora.domain.coupon.enums.CouponEventType;
+import com.team7.agora.domain.coupon.repository.AdminCouponApprovalPayloadRepository;
 import com.team7.agora.domain.coupon.repository.CouponEventRepository;
 import com.team7.agora.domain.coupon.repository.CouponRepository;
-import com.team7.agora.domain.admin.service.AdminRoleSupport;
+import com.team7.agora.domain.user.enums.UserStatus;
+import com.team7.agora.domain.user.repository.UserRepository;
 import com.team7.agora.global.auth.AdminPrincipal;
 import com.team7.agora.global.exception.BusinessException;
 import com.team7.agora.global.exception.ErrorCode;
 import com.team7.agora.global.time.AgoraClock;
 import java.time.LocalDateTime;
-import java.util.HashSet;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.IntStream;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
@@ -27,23 +41,41 @@ import org.springframework.transaction.annotation.Transactional;
 public class AdminCouponEventService {
 
     private static final int MAX_ADMIN_ISSUE_USER_COUNT = 100;
+    private static final List<CouponEventStatus> DEFAULT_ADMIN_LIST_STATUSES = List.of(
+        CouponEventStatus.ACTIVE,
+        CouponEventStatus.STOP_REQUESTED,
+        CouponEventStatus.STOPPED,
+        CouponEventStatus.ENDED
+    );
 
     private final CouponEventRepository couponEventRepository;
     private final CouponRepository couponRepository;
     private final CouponSlotService couponSlotService;
+    private final AdminRepository adminRepository;
+    private final AdminApprovalRequestRepository approvalRequestRepository;
+    private final AdminCouponApprovalPayloadRepository approvalPayloadRepository;
+    private final UserRepository userRepository;
 
     public AdminCouponEventService(
         CouponEventRepository couponEventRepository,
         CouponRepository couponRepository,
-        CouponSlotService couponSlotService
+        CouponSlotService couponSlotService,
+        AdminRepository adminRepository,
+        AdminApprovalRequestRepository approvalRequestRepository,
+        AdminCouponApprovalPayloadRepository approvalPayloadRepository,
+        UserRepository userRepository
     ) {
         this.couponEventRepository = couponEventRepository;
         this.couponRepository = couponRepository;
         this.couponSlotService = couponSlotService;
+        this.adminRepository = adminRepository;
+        this.approvalRequestRepository = approvalRequestRepository;
+        this.approvalPayloadRepository = approvalPayloadRepository;
+        this.userRepository = userRepository;
     }
 
     @Transactional
-    public AdminCouponEventResponse createEvent(
+    public AdminApprovalRequestResponse createEvent(
         AdminPrincipal admin,
         CouponEventType type,
         String name,
@@ -52,26 +84,41 @@ public class AdminCouponEventService {
         int totalQuantity,
         int discountAmount,
         int minOrderAmount,
-        int validDays
+        int validDays,
+        String reason
     ) {
         validateAdminAuthority(admin);
         validateCreateFields(type, name, totalQuantity, discountAmount, minOrderAmount, validDays);
         validateEventWindow(startAt, endAt);
+        validateCreateReason(reason);
 
+        Admin requester = getCurrentAdmin(admin);
         CouponEvent event = couponEventRepository.save(
-            CouponEvent.create(type, name, totalQuantity, startAt, endAt, discountAmount, minOrderAmount, validDays)
+            CouponEvent.createPending(type, name, totalQuantity, startAt, endAt, discountAmount, minOrderAmount, validDays)
         );
-        List<Coupon> slots = IntStream.range(0, totalQuantity)
-            .mapToObj(ignored -> Coupon.createAvailableSlot(event))
-            .toList();
-        couponRepository.saveAll(slots);
+        AdminApprovalRequest request = saveCouponApprovalRequest(AdminApprovalRequest.createCouponOperation(
+            AdminApprovalOperation.COUPON_EVENT_CREATE,
+            requester,
+            reason,
+            "COUPON_EVENT_CREATE:" + event.getId()
+        ));
+        AdminCouponApprovalPayload payload = approvalPayloadRepository.save(AdminCouponApprovalPayload.forCreate(request, event));
 
-        return AdminCouponEventResponse.from(event);
+        if (admin.getRole() == AdminRole.ROOT_ADMIN) {
+            request.approve(requester, "Auto-approved by ROOT_ADMIN");
+            activateEventAndCreateSlots(event);
+        }
+
+        return AdminApprovalRequestResponse.from(request, payload);
     }
 
-    public List<AdminCouponEventResponse> getList(AdminPrincipal admin) {
+    public List<AdminCouponEventResponse> getList(AdminPrincipal admin, CouponEventStatus status) {
         validateAdminAuthority(admin);
-        return couponEventRepository.findAll().stream()
+        List<CouponEvent> events = status == null
+            ? couponEventRepository.findAllByStatusIn(DEFAULT_ADMIN_LIST_STATUSES)
+            : couponEventRepository.findAllByStatus(status);
+
+        return events.stream()
             .map(AdminCouponEventResponse::from)
             .toList();
     }
@@ -81,16 +128,80 @@ public class AdminCouponEventService {
         return AdminCouponEventResponse.from(findEvent(eventId));
     }
 
-    @Transactional(propagation = Propagation.NOT_SUPPORTED)
-    public CouponEventIssueResponse issueToUsers(AdminPrincipal admin, Long eventId, List<Long> userIds) {
+    @Transactional
+    public AdminApprovalRequestResponse requestStop(AdminPrincipal admin, Long eventId, String reason) {
         validateAdminAuthority(admin);
-        validateIssueTargets(userIds);
+        Admin requester = getCurrentAdmin(admin);
+        CouponEvent event = findEvent(eventId);
+        if (reason == null || reason.isBlank()) {
+            throw new BusinessException(ErrorCode.INVALID_REQUEST, "Stop reason is required.");
+        }
+        if (event.getStatus() != CouponEventStatus.ACTIVE) {
+            throw new BusinessException(ErrorCode.CONFLICT, "Only ACTIVE coupon events can request stop.");
+        }
+
+        String pendingRequestKey = "COUPON_EVENT_STOP:" + event.getId();
+        validateNoPendingRequest(pendingRequestKey);
+
+        AdminApprovalRequest request = saveCouponApprovalRequest(AdminApprovalRequest.createCouponOperation(
+            AdminApprovalOperation.COUPON_EVENT_STOP,
+            requester,
+            reason,
+            pendingRequestKey
+        ));
+        AdminCouponApprovalPayload payload = approvalPayloadRepository.save(
+            AdminCouponApprovalPayload.forStop(request, event.getId())
+        );
+
+        if (admin.getRole() == AdminRole.ROOT_ADMIN) {
+            event.requestStop();
+            event.stop();
+            request.approve(requester, "Auto-approved by ROOT_ADMIN");
+        }
+
+        return AdminApprovalRequestResponse.from(request, payload);
+    }
+
+    @Transactional
+    public AdminCouponIssueApprovalResponse requestIssueToUsers(AdminPrincipal admin, Long eventId, List<Long> userIds) {
+        validateAdminAuthority(admin);
+        validateIssueTargetsForApproval(userIds);
+        Admin requester = getCurrentAdmin(admin);
         CouponEvent event = findEvent(eventId);
         if (event.getType() != CouponEventType.ADMIN_INDIVIDUAL) {
-            throw new BusinessException(ErrorCode.INVALID_REQUEST, "관리자 개별 발급 이벤트만 지정 발급할 수 있습니다.");
+            throw new BusinessException(ErrorCode.INVALID_REQUEST, "Only ADMIN_INDIVIDUAL events support admin issue requests.");
         }
         event.validateIssueable(AgoraClock.now());
-        return couponSlotService.assignSlots(eventId, userIds);
+
+        String pendingRequestKey = "COUPON_EVENT_ISSUE:" + event.getId() + ":" + requester.getId();
+        validateNoPendingRequest(pendingRequestKey);
+
+        IssueSummary summary = summarizeIssueTargets(event, userIds);
+        AdminApprovalRequest request = saveCouponApprovalRequest(AdminApprovalRequest.createCouponOperation(
+            AdminApprovalOperation.COUPON_EVENT_ISSUE,
+            requester,
+            "Coupon event issue: " + event.getName(),
+            pendingRequestKey
+        ));
+        AdminCouponApprovalPayload payload = approvalPayloadRepository.save(AdminCouponApprovalPayload.forIssue(
+            request,
+            event.getId(),
+            summary.validTargetIds(),
+            summary.inputCount(),
+            summary.validTargetCount(),
+            summary.duplicateCount(),
+            summary.excludedCount(),
+            summary.plannedIssueCount(),
+            summary.expectedIssuedQuantity(),
+            summary.exceedsRemainingQuantity()
+        ));
+
+        if (admin.getRole() == AdminRole.ROOT_ADMIN) {
+            request.approve(requester, "Auto-approved by ROOT_ADMIN");
+            couponSlotService.assignSlots(event.getId(), payload.targetUserIdList());
+        }
+
+        return AdminCouponIssueApprovalResponse.from(payload);
     }
 
     public List<CouponEventCouponResponse> getCoupons(AdminPrincipal admin, Long eventId) {
@@ -103,7 +214,7 @@ public class AdminCouponEventService {
 
     private CouponEvent findEvent(Long eventId) {
         return couponEventRepository.findById(eventId)
-            .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "쿠폰 이벤트를 찾을 수 없습니다."));
+            .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "Coupon event not found."));
     }
 
     private void validateCreateFields(
@@ -139,32 +250,110 @@ public class AdminCouponEventService {
             throw new BusinessException(ErrorCode.INVALID_REQUEST, "Coupon event start and end time are required.");
         }
         if (!startAt.isBefore(endAt)) {
-            throw new BusinessException(ErrorCode.INVALID_REQUEST, "이벤트 시작 시각은 종료 시각보다 빨라야 합니다.");
+            throw new BusinessException(ErrorCode.INVALID_REQUEST, "Coupon event start time must be before end time.");
         }
     }
 
-    private void validateIssueTargets(List<Long> userIds) {
+    private void validateCreateReason(String reason) {
+        if (reason == null || reason.isBlank()) {
+            throw new BusinessException(ErrorCode.INVALID_REQUEST, "Coupon event approval reason is required.");
+        }
+    }
+
+    private void validateIssueTargetsForApproval(List<Long> userIds) {
         if (userIds == null || userIds.isEmpty()) {
             throw new BusinessException(ErrorCode.INVALID_REQUEST, "At least one issue target user is required.");
         }
         if (userIds.size() > MAX_ADMIN_ISSUE_USER_COUNT) {
-            throw new BusinessException(ErrorCode.INVALID_REQUEST, "관리자 개별 발급은 한 번에 100명까지만 가능합니다.");
+            throw new BusinessException(ErrorCode.INVALID_REQUEST, "Admin individual issue supports up to 100 users.");
         }
-        Set<Long> uniqueUserIds = new HashSet<>();
-        for (Long userId : userIds) {
-            if (userId == null) {
-                throw new BusinessException(ErrorCode.INVALID_REQUEST, "Issue target user id is required.");
-            }
-            if (!uniqueUserIds.add(userId)) {
-                throw new BusinessException(ErrorCode.INVALID_REQUEST, "Issue target user ids must be unique.");
-            }
+    }
+
+    private void validateNoPendingRequest(String pendingRequestKey) {
+        if (approvalRequestRepository.existsByPendingRequestKey(pendingRequestKey)) {
+            throw new BusinessException(ErrorCode.CONFLICT, "A pending approval request already exists.");
+        }
+    }
+
+    private AdminApprovalRequest saveCouponApprovalRequest(AdminApprovalRequest request) {
+        try {
+            return approvalRequestRepository.save(request);
+        } catch (DataIntegrityViolationException ex) {
+            throw new BusinessException(ErrorCode.CONFLICT, "A pending approval request already exists.");
         }
     }
 
     private void validateAdminAuthority(AdminPrincipal admin) {
-        // Controller 권한 검증을 우회한 내부 호출에서도 관리자 정책을 지키기 위한 방어 코드다.
-        if (admin == null || !AdminRoleSupport.isUserAdminRole(admin.getRole())) {
-            throw new BusinessException(ErrorCode.FORBIDDEN, "쿠폰 이벤트 관리는 관리자만 수행할 수 있습니다.");
+        if (!AdminRoleSupport.hasPermission(admin, AdminPermission.COUPON_MANAGE)) {
+            throw new BusinessException(ErrorCode.FORBIDDEN, "Only coupon managers can manage coupon events.");
         }
+    }
+
+    private Admin getCurrentAdmin(AdminPrincipal admin) {
+        if (admin == null) {
+            throw new BusinessException(ErrorCode.UNAUTHORIZED);
+        }
+        return adminRepository.findById(admin.getAdminId())
+            .orElseThrow(() -> new BusinessException(ErrorCode.UNAUTHORIZED, "Admin account not found."));
+    }
+
+    private void activateEventAndCreateSlots(CouponEvent event) {
+        event.approve();
+        List<Coupon> slots = IntStream.range(0, event.getTotalQuantity())
+            .mapToObj(ignored -> Coupon.createAvailableSlot(event))
+            .toList();
+        couponRepository.saveAll(slots);
+    }
+
+    private IssueSummary summarizeIssueTargets(CouponEvent event, List<Long> userIds) {
+        Set<Long> seen = new LinkedHashSet<>();
+        List<Long> eligibleTargetIds = new ArrayList<>();
+        int duplicates = 0;
+        int excluded = 0;
+        for (Long userId : userIds) {
+            if (userId == null) {
+                excluded++;
+                continue;
+            }
+            if (!seen.add(userId)) {
+                duplicates++;
+                continue;
+            }
+            if (userRepository.findByIdAndStatusAndDeletedAtIsNull(userId, UserStatus.ACTIVE).isEmpty()) {
+                excluded++;
+                continue;
+            }
+            if (couponRepository.existsByCouponEventIdAndUserId(event.getId(), userId)) {
+                excluded++;
+                continue;
+            }
+            eligibleTargetIds.add(userId);
+        }
+        int remaining = event.getTotalQuantity() - event.getIssuedQuantity();
+        List<Long> executionTargetIds = eligibleTargetIds.stream()
+            .limit(Math.max(remaining, 0))
+            .toList();
+        return new IssueSummary(
+            userIds.size(),
+            eligibleTargetIds.size(),
+            executionTargetIds,
+            duplicates,
+            excluded,
+            executionTargetIds.size(),
+            event.getIssuedQuantity() + executionTargetIds.size(),
+            eligibleTargetIds.size() > remaining
+        );
+    }
+
+    private record IssueSummary(
+        int inputCount,
+        int validTargetCount,
+        List<Long> validTargetIds,
+        int duplicateCount,
+        int excludedCount,
+        int plannedIssueCount,
+        int expectedIssuedQuantity,
+        boolean exceedsRemainingQuantity
+    ) {
     }
 }

@@ -1,7 +1,9 @@
 package com.team7.agora.domain.coupon.repository;
 
 import com.team7.agora.domain.coupon.entity.CouponEvent;
+import com.team7.agora.domain.coupon.enums.CouponEventStatus;
 import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -9,6 +11,10 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 interface JpaCouponEventDataRepository extends JpaRepository<CouponEvent, Long> {
+
+    List<CouponEvent> findAllByStatus(CouponEventStatus status);
+
+    List<CouponEvent> findAllByStatusIn(Collection<CouponEventStatus> statuses);
 
     @Query("""
         select ce

@@ -2,6 +2,7 @@ package com.team7.agora.domain.admin.service;
 
 import com.team7.agora.domain.admin.dto.response.AdminReportListResponse;
 import com.team7.agora.domain.admin.dto.response.AdminReportResponse;
+import com.team7.agora.domain.admin.enums.AdminPermission;
 import com.team7.agora.domain.report.entity.Report;
 import com.team7.agora.domain.report.repository.ReportRepository;
 import com.team7.agora.global.auth.AdminPrincipal;
@@ -143,13 +144,13 @@ public class AdminReportService {
     }
 
     private void validateUserAdmin(AdminPrincipal admin) {
-        if (admin == null || !AdminRoleSupport.isUserAdminRole(admin.getRole())) {
+        if (!AdminRoleSupport.hasPermission(admin, AdminPermission.REPORT_MANAGE)) {
             throw new BusinessException(ErrorCode.FORBIDDEN, "유저 신고 처리는 관리자만 수행할 수 있습니다.");
         }
     }
 
     private void validateProductAdmin(AdminPrincipal admin) {
-        if (admin == null || !AdminRoleSupport.isProductAdminRole(admin.getRole())) {
+        if (!AdminRoleSupport.hasPermission(admin, AdminPermission.REPORT_MANAGE)) {
             throw new BusinessException(ErrorCode.FORBIDDEN, "상품 신고 처리는 관리자만 수행할 수 있습니다.");
         }
     }

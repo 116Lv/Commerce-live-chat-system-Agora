@@ -64,7 +64,13 @@ class AdminProductServiceTest {
         AdminProductService service = createService();
         Product product = product(1L);
         product.hide();
-        when(productRepository.findAllByApprovalStatus(ProductApprovalStatus.REJECTED, PageRequest.of(0, 20)))
+        when(productRepository.findAdminProducts(
+                null,
+                null,
+                null,
+                ProductApprovalStatus.REJECTED,
+                PageRequest.of(0, 20)
+        ))
                 .thenReturn(new PageImpl<>(List.of(product), PageRequest.of(0, 20), 1));
 
         Page<AdminProductResponse> responses = service.getProducts(
@@ -84,7 +90,13 @@ class AdminProductServiceTest {
     void getProducts_filtersPendingApprovalStatus() {
         AdminProductService service = createService();
         Product product = product(1L);
-        when(productRepository.findAllByApprovalStatus(ProductApprovalStatus.PENDING, PageRequest.of(0, 20)))
+        when(productRepository.findAdminProducts(
+                null,
+                null,
+                null,
+                ProductApprovalStatus.PENDING,
+                PageRequest.of(0, 20)
+        ))
                 .thenReturn(new PageImpl<>(List.of(product), PageRequest.of(0, 20), 1));
 
         Page<AdminProductResponse> responses = service.getProducts(
@@ -102,7 +114,13 @@ class AdminProductServiceTest {
         AdminProductService service = createService();
         Product product = product(1L);
         product.approve();
-        when(productRepository.findAllByApprovalStatus(ProductApprovalStatus.APPROVED, PageRequest.of(0, 20)))
+        when(productRepository.findAdminProducts(
+                null,
+                null,
+                null,
+                ProductApprovalStatus.APPROVED,
+                PageRequest.of(0, 20)
+        ))
                 .thenReturn(new PageImpl<>(List.of(product), PageRequest.of(0, 20), 1));
 
         Page<AdminProductResponse> responses = service.getProducts(
@@ -153,6 +171,72 @@ class AdminProductServiceTest {
         assertThat(responses.getContent().get(0).approvalStatus()).isEqualTo("PENDING");
         verify(reportRepository).findDistinctReportedProductsByApprovalStatus(ProductApprovalStatus.PENDING, pageable);
         verify(reportRepository, never()).findDistinctReportedProducts(pageable);
+    }
+
+    @Test
+    void getProducts_delegatesDomainSearchConditionsToProductRepository() {
+        AdminProductService service = createService();
+        Product product = product(1L);
+        PageRequest pageable = PageRequest.of(0, 20);
+        when(productRepository.findAdminProducts(
+                "Bike",
+                "seller",
+                ProductStatus.SELLING,
+                ProductApprovalStatus.APPROVED,
+                pageable
+        )).thenReturn(new PageImpl<>(List.of(product), pageable, 1));
+
+        Page<AdminProductResponse> responses = service.getProducts(
+                principal(AdminRole.PRODUCT_ADMIN),
+                false,
+                " Bike ",
+                " seller ",
+                "SELLING",
+                "APPROVED",
+                pageable
+        );
+
+        assertThat(responses.getContent()).hasSize(1);
+        verify(productRepository).findAdminProducts(
+                "Bike",
+                "seller",
+                ProductStatus.SELLING,
+                ProductApprovalStatus.APPROVED,
+                pageable
+        );
+    }
+
+    @Test
+    void getProducts_delegatesReportedDomainSearchConditionsToReportRepository() {
+        AdminProductService service = createService();
+        Product product = product(1L);
+        PageRequest pageable = PageRequest.of(0, 20);
+        when(reportRepository.findDistinctReportedProductsByFilters(
+                "Bike",
+                "seller",
+                ProductStatus.SELLING,
+                ProductApprovalStatus.PENDING,
+                pageable
+        )).thenReturn(new PageImpl<>(List.of(product), pageable, 1));
+
+        Page<AdminProductResponse> responses = service.getProducts(
+                principal(AdminRole.PRODUCT_ADMIN),
+                true,
+                "Bike",
+                "seller",
+                "SELLING",
+                "PENDING",
+                pageable
+        );
+
+        assertThat(responses.getContent()).hasSize(1);
+        verify(reportRepository).findDistinctReportedProductsByFilters(
+                "Bike",
+                "seller",
+                ProductStatus.SELLING,
+                ProductApprovalStatus.PENDING,
+                pageable
+        );
     }
 
     @Test
