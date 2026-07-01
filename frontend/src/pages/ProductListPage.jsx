@@ -1,18 +1,24 @@
 ﻿import { useMemo, useState } from 'react';
 import { Button, Col, Form, Row } from 'react-bootstrap';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Search } from 'lucide-react';
+import { ArrowDownWideNarrow, ArrowUpWideNarrow, Search } from 'lucide-react';
 import ProductCard from '../components/ProductCard.jsx';
 import LoadingState from '../components/LoadingState.jsx';
 import ErrorState from '../components/ErrorState.jsx';
 import EmptyState from '../components/EmptyState.jsx';
+import PopularKeywords from '../components/PopularKeywords.jsx';
 import { getProducts, likeProduct, searchProducts, unlikeProduct } from '../api/productApi.js';
 import { getRegions } from '../api/regionApi.js';
 import { useAuth } from '../auth/AuthContext.jsx';
 import { PageHeader, getPageContent, useApiResource } from './pageUtils.jsx';
 import { PRODUCT_CATEGORIES, getChildRegionOptions, getRegionSelectOptions } from './productFormUtils.js';
 
-const DEFAULT_QUERY = { keyword: '', category: '', regionId: '', page: 0, size: 20 };
+const SORT_OPTIONS = [
+  { value: 'recent', label: '최신순' },
+  { value: 'likes', label: '찜순' }
+];
+
+const DEFAULT_QUERY = { keyword: '', category: '', regionId: '', page: 0, size: 20, sort: 'recent', direction: 'desc' };
 
 export default function ProductListPage() {
   const navigate = useNavigate();
@@ -28,15 +34,14 @@ export default function ProductListPage() {
       category: query.category.trim(),
       regionId: query.regionId || undefined,
       page: query.page,
-      size: query.size
+      size: query.size,
+      sort: query.sort,
+      direction: query.direction
     }),
     [query]
   );
 
-  const productsState = useApiResource(
-    () => (params.keyword || params.category ? searchProducts(params) : getProducts(params)),
-    [params]
-  );
+  const productsState = useApiResource(() => searchProducts(params), [params]);
   const regionsState = useApiResource(() => getRegions(), []);
   const products = getPageContent(productsState.data).map((product) => {
     const productId = product.productId ?? product.id;
@@ -50,6 +55,23 @@ export default function ProductListPage() {
   const handleSubmit = (event) => {
     event.preventDefault();
     setQuery({ ...draft, page: 0 });
+  };
+
+  const handleSortChange = (event) => {
+    const sort = event.target.value;
+    setDraft((current) => ({ ...current, sort }));
+    setQuery((current) => ({ ...current, sort, page: 0 }));
+  };
+
+  const handleDirectionToggle = () => {
+    const direction = query.direction === 'asc' ? 'desc' : 'asc';
+    setDraft((current) => ({ ...current, direction }));
+    setQuery((current) => ({ ...current, direction, page: 0 }));
+  };
+
+  const handleKeywordSelect = (keyword) => {
+    setDraft((current) => ({ ...current, keyword }));
+    setQuery((current) => ({ ...current, keyword, page: 0 }));
   };
 
   const handleParentRegionChange = (event) => {
@@ -99,6 +121,8 @@ export default function ProductListPage() {
           </Button>
         }
       />
+
+      <PopularKeywords onKeywordSelect={handleKeywordSelect} />
 
       <Form className="toolbar-panel mb-4" onSubmit={handleSubmit}>
         <Row className="g-2 align-items-end">
@@ -159,6 +183,31 @@ export default function ProductListPage() {
           <Col xs={12} md={4} lg={1}>
             <Button type="submit" className="w-100" aria-label="상품 검색">
               <Search size={17} aria-hidden="true" />
+            </Button>
+          </Col>
+          <Col xs={12} md={4} lg={2}>
+            <Form.Label>정렬</Form.Label>
+            <Form.Select value={draft.sort} onChange={handleSortChange}>
+              {SORT_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </Form.Select>
+          </Col>
+          <Col xs={12} md={4} lg={1}>
+            <Button
+              variant="outline-secondary"
+              className="w-100"
+              onClick={handleDirectionToggle}
+              aria-label={query.direction === 'asc' ? '오름차순 정렬중, 내림차순으로 보기' : '내림차순 정렬중, 오름차순으로 보기'}
+              title={query.direction === 'asc' ? '오름차순' : '내림차순'}
+            >
+              {query.direction === 'asc' ? (
+                <ArrowUpWideNarrow size={17} aria-hidden="true" />
+              ) : (
+                <ArrowDownWideNarrow size={17} aria-hidden="true" />
+              )}
             </Button>
           </Col>
         </Row>
