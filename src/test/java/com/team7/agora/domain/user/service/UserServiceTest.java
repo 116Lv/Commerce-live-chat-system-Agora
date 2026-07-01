@@ -6,6 +6,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.when;
 
+import com.team7.agora.domain.region.repository.UserRegionRepository;
 import com.team7.agora.domain.user.dto.response.SmileScoreResponse;
 import com.team7.agora.domain.user.dto.response.UserMeResponse;
 import com.team7.agora.domain.user.entity.User;
@@ -13,6 +14,7 @@ import com.team7.agora.domain.user.enums.UserStatus;
 import com.team7.agora.domain.user.repository.UserRepository;
 import com.team7.agora.global.exception.BusinessException;
 import com.team7.agora.global.exception.ErrorCode;
+import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -28,10 +30,13 @@ class UserServiceTest {
     @Mock
     private UserRepository userRepository;
 
+    @Mock
+    private UserRegionRepository userRegionRepository;
+
     private final PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
     private UserService createService() {
-        return new UserService(userRepository, passwordEncoder);
+        return new UserService(userRepository, userRegionRepository, passwordEncoder);
     }
 
     private User userWithId(long id) {
@@ -44,7 +49,9 @@ class UserServiceTest {
     void getMe_returnsAuthenticatedUserInfo() {
         // given
         UserService userService = createService();
-        when(userRepository.findByIdAndDeletedAtIsNull(1L)).thenReturn(Optional.of(userWithId(1L)));
+        User user = userWithId(1L);
+        when(userRepository.findByIdAndDeletedAtIsNull(1L)).thenReturn(Optional.of(user));
+        when(userRegionRepository.findAllByUser(user)).thenReturn(List.of());
 
         // when
         UserMeResponse response = userService.getMe(1L);
@@ -53,8 +60,11 @@ class UserServiceTest {
         assertThat(response.id()).isEqualTo(1L);
         assertThat(response.email()).isEqualTo("user@test.com");
         assertThat(response.nickname()).isEqualTo("동네유저");
+        assertThat(response.phone()).isNull();
+        assertThat(response.smileScore()).isEqualTo(60);
         assertThat(response.role()).isEqualTo("ROLE_USER");
         assertThat(response.status()).isEqualTo("ACTIVE");
+        assertThat(response.preferredRegions()).isEmpty();
     }
 
     @Test
@@ -100,18 +110,21 @@ class UserServiceTest {
     }
 
     @Test
-    void updateProfile_changesNickname() {
+    void updateProfile_changesNicknameAndPhone() {
         // given
         UserService userService = createService();
         User user = userWithId(1L);
         when(userRepository.findByIdAndStatusAndDeletedAtIsNull(1L, UserStatus.ACTIVE)).thenReturn(Optional.of(user));
+        when(userRegionRepository.findAllByUser(user)).thenReturn(List.of());
 
         // when
-        UserMeResponse response = userService.updateProfile(1L, "새닉네임");
+        UserMeResponse response = userService.updateProfile(1L, "새닉네임", " 010-1111-2222 ");
 
         // then
         assertThat(response.nickname()).isEqualTo("새닉네임");
+        assertThat(response.phone()).isEqualTo("010-1111-2222");
         assertThat(user.getNickname()).isEqualTo("새닉네임");
+        assertThat(user.getPhone()).isEqualTo("010-1111-2222");
     }
 
     @Test
@@ -121,7 +134,7 @@ class UserServiceTest {
         when(userRepository.findByIdAndStatusAndDeletedAtIsNull(1L, UserStatus.ACTIVE)).thenReturn(Optional.empty());
 
         // when & then
-        assertThatThrownBy(() -> userService.updateProfile(1L, "새닉네임"))
+        assertThatThrownBy(() -> userService.updateProfile(1L, "새닉네임", "010-1111-2222"))
                 .isInstanceOf(BusinessException.class)
                 .extracting("errorCode")
                 .isEqualTo(ErrorCode.NOT_FOUND);

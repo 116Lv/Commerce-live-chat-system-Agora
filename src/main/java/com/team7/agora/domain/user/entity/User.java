@@ -149,8 +149,9 @@ public class User {
      * 데이터를 수정한다.
      * @param nickname 닉네임
      */
-    public void updateProfile(String nickname) {
+    public void updateProfile(String nickname, String phone) {
         this.nickname = nickname;
+        this.phone = phone;
     }
 
     private void anonymizeDeletedUser() {

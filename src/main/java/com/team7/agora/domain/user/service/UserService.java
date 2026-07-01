@@ -1,5 +1,6 @@
 package com.team7.agora.domain.user.service;
 
+import com.team7.agora.domain.region.repository.UserRegionRepository;
 import com.team7.agora.domain.user.dto.response.SmileScoreResponse;
 import com.team7.agora.domain.user.dto.response.UserMeResponse;
 import com.team7.agora.domain.user.entity.User;
@@ -19,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class UserService {
 
     private final UserRepository userRepository;
+    private final UserRegionRepository userRegionRepository;
     private final PasswordEncoder passwordEncoder;
 
     /**
@@ -26,8 +28,9 @@ public class UserService {
      * @param userRepository 데이터를 조회하고 저장하는 리포지토리
      * @param passwordEncoder 비밀번호 해시와 검증에 사용하는 인코더
      */
-    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+    public UserService(UserRepository userRepository, UserRegionRepository userRegionRepository, PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
+        this.userRegionRepository = userRegionRepository;
         this.passwordEncoder = passwordEncoder;
     }
 
@@ -37,7 +40,8 @@ public class UserService {
      * @return 클라이언트에 반환할 API 응답
      */
     public UserMeResponse getMe(Long userId) {
-        return UserMeResponse.from(getUser(userId));
+        User user = getUser(userId);
+        return UserMeResponse.from(user, userRegionRepository.findAllByUser(user));
     }
 
     /**
@@ -56,10 +60,10 @@ public class UserService {
      * @return 클라이언트에 반환할 API 응답
      */
     @Transactional
-    public UserMeResponse updateProfile(Long userId, String nickname) {
+    public UserMeResponse updateProfile(Long userId, String nickname, String phone) {
         User user = getActiveUser(userId);
-        user.updateProfile(nickname);
-        return UserMeResponse.from(user);
+        user.updateProfile(nickname, normalizePhone(phone));
+        return UserMeResponse.from(user, userRegionRepository.findAllByUser(user));
     }
 
     /**
@@ -85,5 +89,9 @@ public class UserService {
     private User getActiveUser(Long userId) {
         return userRepository.findByIdAndStatusAndDeletedAtIsNull(userId, UserStatus.ACTIVE)
             .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "회원을 찾을 수 없습니다."));
+    }
+
+    private String normalizePhone(String phone) {
+        return phone == null || phone.isBlank() ? null : phone.trim();
     }
 }

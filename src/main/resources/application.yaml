@@ -4,6 +4,15 @@ spring:
   profiles:
     active: local
 
+storage:
+  type: ${STORAGE_TYPE:local}
+
+aws:
+  s3:
+    bucket: ${AWS_S3_BUCKET:}
+    region: ${AWS_S3_REGION:ap-northeast-2}
+    public-base-url: ${AWS_S3_PUBLIC_BASE_URL:}
+
 ---
 
 spring:

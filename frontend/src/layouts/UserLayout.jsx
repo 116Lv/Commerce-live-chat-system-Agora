@@ -1,6 +1,6 @@
 import { Container, Nav, Navbar, NavDropdown } from 'react-bootstrap';
 import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom';
-import { Heart, ListChecks, LogOut, MessageCircle, PackagePlus, Search, Ticket, UserRound } from 'lucide-react';
+import { Heart, ListChecks, LogOut, MessageCircle, PackagePlus, Search, Star, Ticket, UserRound } from 'lucide-react';
 import { useAuth } from '../auth/AuthContext.jsx';
 
 const ACCOUNT_LINKS = [
@@ -8,7 +8,8 @@ const ACCOUNT_LINKS = [
   { to: '/me/products', label: '내 상품', icon: PackagePlus },
   { to: '/me/likes', label: '관심 상품', icon: Heart },
   { to: '/chat', label: '채팅', icon: MessageCircle },
-  { to: '/me/trades', label: '거래 내역', icon: ListChecks }
+  { to: '/me/trades', label: '거래 내역', icon: ListChecks },
+  { to: '/me/reviews', label: '후기', icon: Star }
 ];
 
 function decodeTokenPayload(token) {
