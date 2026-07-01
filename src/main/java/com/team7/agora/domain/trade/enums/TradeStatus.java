@@ -13,7 +13,9 @@ public enum TradeStatus {
     EXPIRED,
     CANCELLED;
 
+    private static final Set<TradeStatus> BLOCKING_STATUSES = Set.of(PAYMENT_PENDING, PAID, COMPLETED);
+
     public static Set<TradeStatus> blockingStatuses() {
-        return Set.of(PAYMENT_PENDING, PAID, COMPLETED);
+        return BLOCKING_STATUSES;
     }
 }
