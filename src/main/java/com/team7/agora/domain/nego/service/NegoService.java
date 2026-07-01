@@ -14,6 +14,7 @@ import com.team7.agora.domain.product.enums.ProductApprovalStatus;
 import com.team7.agora.domain.product.enums.ProductStatus;
 import com.team7.agora.domain.product.repository.ProductRepository;
 import com.team7.agora.domain.trade.entity.Trade;
+import com.team7.agora.domain.trade.enums.TradeStatus;
 import com.team7.agora.domain.trade.repository.TradeRepository;
 import com.team7.agora.domain.trade.service.TradeService;
 import com.team7.agora.domain.user.entity.User;
@@ -39,6 +40,11 @@ public class NegoService {
         NegoOfferStatus.EXTENSION_REQUESTED,
         NegoOfferStatus.EXTENDED,
         NegoOfferStatus.ACCEPTED
+    );
+    private static final List<TradeStatus> BLOCKING_TRADE_STATUSES = List.of(
+        TradeStatus.PAYMENT_PENDING,
+        TradeStatus.PAID,
+        TradeStatus.COMPLETED
     );
 
     private final NegoOfferRepository negoOfferRepository;
@@ -140,7 +146,11 @@ public class NegoService {
             return NegoOfferResponse.from(offer);
         }
 
-        return tradeRepository.findByProductAndBuyer(offer.getChatRoom().getProduct(), offer.getRequester())
+        return tradeRepository.findFirstByProductAndBuyerAndStatusInOrderByIdDesc(
+                offer.getChatRoom().getProduct(),
+                offer.getRequester(),
+                BLOCKING_TRADE_STATUSES
+            )
             .map(trade -> NegoOfferResponse.from(offer, trade, paymentRepository.findByTrade(trade).orElse(null)))
             .orElseGet(() -> NegoOfferResponse.from(offer));
     }
@@ -207,7 +217,11 @@ public class NegoService {
 
         Trade trade = null;
         if (offer.getStatus() == NegoOfferStatus.ACCEPTED) {
-            trade = tradeRepository.findByProductAndBuyer(offer.getChatRoom().getProduct(), offer.getRequester())
+            trade = tradeRepository.findFirstByProductAndBuyerAndStatusOrderByIdDesc(
+                    offer.getChatRoom().getProduct(),
+                    offer.getRequester(),
+                    TradeStatus.PAYMENT_PENDING
+                )
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "취소할 거래를 찾을 수 없습니다."));
             trade.cancel();
         }

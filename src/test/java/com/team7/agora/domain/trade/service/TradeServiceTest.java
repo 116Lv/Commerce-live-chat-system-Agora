@@ -35,6 +35,7 @@ import com.team7.agora.global.auth.AuthUser;
 import com.team7.agora.global.exception.BusinessException;
 import com.team7.agora.global.exception.ErrorCode;
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -123,7 +124,10 @@ class TradeServiceTest {
 
         when(productRepository.findByIdForUpdateAndDeletedAtIsNull(10L)).thenReturn(Optional.of(product));
         when(userRepository.findByIdAndStatusAndDeletedAtIsNull(2L, UserStatus.ACTIVE)).thenReturn(Optional.of(buyer));
-        when(tradeRepository.existsByProductAndStatusNot(product, TradeStatus.CANCELLED)).thenReturn(false);
+        when(tradeRepository.existsByProductAndStatusIn(
+            product,
+            List.of(TradeStatus.PAYMENT_PENDING, TradeStatus.PAID, TradeStatus.COMPLETED)
+        )).thenReturn(false);
         when(chatRoomRepository.findByProductAndSellerAndBuyer(product, seller, buyer)).thenReturn(Optional.of(chatRoom));
         when(negoOfferRepository.findFirstByChatRoomIdAndStatusOrderByCreatedAtDesc(50L, NegoOfferStatus.ACCEPTED))
             .thenReturn(Optional.of(acceptedOffer));
@@ -159,7 +163,10 @@ class TradeServiceTest {
         acceptedOffer.accept();
 
         when(productRepository.findByIdForUpdateAndDeletedAtIsNull(10L)).thenReturn(Optional.of(product));
-        when(tradeRepository.existsByProductAndStatusNot(product, TradeStatus.CANCELLED)).thenReturn(false);
+        when(tradeRepository.existsByProductAndStatusIn(
+            product,
+            List.of(TradeStatus.PAYMENT_PENDING, TradeStatus.PAID, TradeStatus.COMPLETED)
+        )).thenReturn(false);
         when(tradeRepository.save(any(Trade.class))).thenAnswer(invocation -> {
             Trade trade = invocation.getArgument(0);
             assignId(trade, 100L);
@@ -181,12 +188,42 @@ class TradeServiceTest {
         acceptedOffer.accept();
 
         when(productRepository.findByIdForUpdateAndDeletedAtIsNull(10L)).thenReturn(Optional.of(product));
-        when(tradeRepository.existsByProductAndStatusNot(product, TradeStatus.CANCELLED)).thenReturn(false);
+        when(tradeRepository.existsByProductAndStatusIn(
+            product,
+            List.of(TradeStatus.PAYMENT_PENDING, TradeStatus.PAID, TradeStatus.COMPLETED)
+        )).thenReturn(false);
         when(tradeRepository.save(any(Trade.class)))
             .thenThrow(new DataIntegrityViolationException("duplicate active trade"));
 
         assertThatThrownBy(() -> tradeService.createTradeFromAcceptedOffer(product, acceptedOffer))
             .isInstanceOf(BusinessException.class);
+    }
+
+    @Test
+    void createTradeFromAcceptedOfferAllowsProductWhenNoBlockingTradeExists() {
+        ChatRoom chatRoom = ChatRoom.open(product, buyer);
+        assignId(chatRoom, 50L);
+        NegoOffer acceptedOffer = NegoOffer.create(chatRoom, buyer, BigDecimal.valueOf(45000));
+        acceptedOffer.accept();
+
+        when(productRepository.findByIdForUpdateAndDeletedAtIsNull(10L)).thenReturn(Optional.of(product));
+        when(tradeRepository.existsByProductAndStatusIn(
+            product,
+            List.of(TradeStatus.PAYMENT_PENDING, TradeStatus.PAID, TradeStatus.COMPLETED)
+        )).thenReturn(false);
+        when(tradeRepository.save(any(Trade.class))).thenAnswer(invocation -> {
+            Trade trade = invocation.getArgument(0);
+            assignId(trade, 100L);
+            return trade;
+        });
+
+        Trade trade = tradeService.createTradeFromAcceptedOffer(product, acceptedOffer);
+
+        assertThat(trade.getStatus()).isEqualTo(TradeStatus.PAYMENT_PENDING);
+        verify(tradeRepository).existsByProductAndStatusIn(
+            product,
+            List.of(TradeStatus.PAYMENT_PENDING, TradeStatus.PAID, TradeStatus.COMPLETED)
+        );
     }
 
     @Test
