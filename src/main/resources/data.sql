@@ -12,6 +12,22 @@ VALUES
     (3, 'productadmin@test.com', '$2a$10$5XA3pQtBuOJfBIqcOZzcSeKMTBHqQpqFswCqh/fqLyxd5o7vmkY02', 'product-admin', 'PRODUCT_ADMIN', 'ACTIVE'),
     (4, 'settlementadmin@test.com', '$2a$10$5XA3pQtBuOJfBIqcOZzcSeKMTBHqQpqFswCqh/fqLyxd5o7vmkY02', 'settlement-admin', 'SETTLEMENT_ADMIN', 'ACTIVE');
 
+INSERT INTO admin_permissions (admin_id, permission)
+VALUES
+    (1, 'USER_MANAGE'),
+    (1, 'REPORT_MANAGE'),
+    (1, 'PRODUCT_MANAGE'),
+    (1, 'PAYMENT_MANAGE'),
+    (1, 'COUPON_MANAGE'),
+    (1, 'ADMIN_ACCOUNT_MANAGE'),
+    (1, 'APPROVAL_MANAGE'),
+    (2, 'USER_MANAGE'),
+    (2, 'REPORT_MANAGE'),
+    (3, 'PRODUCT_MANAGE'),
+    (3, 'REPORT_MANAGE'),
+    (4, 'PAYMENT_MANAGE'),
+    (4, 'COUPON_MANAGE');
+
 INSERT INTO regions (id, name, code, sido, sigungu, eupmyeondong)
 VALUES
     (1, '서울특별시 강남구 역삼동', '1168010100', '서울특별시', '강남구', '역삼동'),

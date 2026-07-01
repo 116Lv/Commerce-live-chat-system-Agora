@@ -29,7 +29,7 @@ public class AdminApprovalController {
     }
 
     @GetMapping("/approval-requests")
-    @PreAuthorize("hasAuthority('ROOT_ADMIN')")
+    @PreAuthorize("hasAuthority('APPROVAL_MANAGE')")
     public ApiResponse<List<AdminApprovalRequestResponse>> getRequests(
             @AuthenticationPrincipal AdminPrincipal admin,
             @RequestParam(required = false) String status
@@ -37,8 +37,17 @@ public class AdminApprovalController {
         return ApiResponse.success("Approval requests have been loaded.", adminApprovalService.getRequests(admin, status));
     }
 
+    @GetMapping("/approval-requests/{requestId}")
+    @PreAuthorize("hasAuthority('APPROVAL_MANAGE')")
+    public ApiResponse<AdminApprovalRequestResponse> getRequestDetail(
+            @AuthenticationPrincipal AdminPrincipal admin,
+            @PathVariable Long requestId
+    ) {
+        return ApiResponse.success("Approval request has been loaded.", adminApprovalService.getRequestDetail(admin, requestId));
+    }
+
     @PostMapping("/approval-requests/{requestId}/approve")
-    @PreAuthorize("hasAuthority('ROOT_ADMIN')")
+    @PreAuthorize("hasAuthority('APPROVAL_MANAGE')")
     public ApiResponse<AdminApprovalRequestResponse> approve(
             @AuthenticationPrincipal AdminPrincipal admin,
             @PathVariable Long requestId,
@@ -49,7 +58,7 @@ public class AdminApprovalController {
     }
 
     @PostMapping("/approval-requests/{requestId}/reject")
-    @PreAuthorize("hasAuthority('ROOT_ADMIN')")
+    @PreAuthorize("hasAuthority('APPROVAL_MANAGE')")
     public ApiResponse<AdminApprovalRequestResponse> reject(
             @AuthenticationPrincipal AdminPrincipal admin,
             @PathVariable Long requestId,

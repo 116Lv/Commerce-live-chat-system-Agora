@@ -1,6 +1,7 @@
 package com.team7.agora.domain.admin.service;
 
 import com.team7.agora.domain.admin.dto.response.AdminPaymentResponse;
+import com.team7.agora.domain.admin.enums.AdminPermission;
 import com.team7.agora.domain.payment.client.PaymentClient;
 import com.team7.agora.domain.payment.entity.Payment;
 import com.team7.agora.domain.payment.enums.PaymentStatus;
@@ -112,7 +113,7 @@ public class AdminPaymentService {
     }
 
     private void validateSettlementAdmin(AdminPrincipal admin) {
-        if (admin == null || !AdminRoleSupport.isSettlementAdminRole(admin.getRole())) {
+        if (!AdminRoleSupport.hasPermission(admin, AdminPermission.PAYMENT_MANAGE)) {
             throw new BusinessException(ErrorCode.FORBIDDEN, "결제 관리는 정산 관리자만 수행할 수 있습니다.");
         }
     }

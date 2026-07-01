@@ -2,12 +2,17 @@ package com.team7.agora.domain.admin.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.team7.agora.domain.admin.dto.response.AdminUserResponse;
 import com.team7.agora.domain.admin.entity.Admin;
+import com.team7.agora.domain.admin.entity.AdminApprovalRequest;
+import com.team7.agora.domain.admin.enums.AdminApprovalStatus;
 import com.team7.agora.domain.admin.enums.AdminRole;
 import com.team7.agora.domain.admin.enums.AdminStatus;
+import com.team7.agora.domain.admin.repository.AdminApprovalRequestRepository;
 import com.team7.agora.domain.admin.repository.AdminRepository;
 import com.team7.agora.global.auth.AdminPrincipal;
 import com.team7.agora.global.exception.BusinessException;
@@ -25,8 +30,11 @@ class AdminAccountServiceTest {
     @Mock
     private AdminRepository adminRepository;
 
+    @Mock
+    private AdminApprovalRequestRepository approvalRequestRepository;
+
     private AdminAccountService createService() {
-        return new AdminAccountService(adminRepository);
+        return new AdminAccountService(adminRepository, approvalRequestRepository);
     }
 
     private AdminPrincipal principal(AdminRole role) {
@@ -34,13 +42,22 @@ class AdminAccountServiceTest {
     }
 
     @Test
-    void changeRole_rejectsDirectRootRoleChangeBecauseApprovalIsRequired() {
+    void changeRole_rootAdminImmediatelyAppliesRoleAndStoresApprovedHistory() {
         AdminAccountService service = createService();
+        Admin root = Admin.create("root@test.com", "encoded", "root-admin", AdminRole.ROOT_ADMIN);
+        ReflectionTestUtils.setField(root, "id", 99L);
+        Admin target = Admin.create("target@test.com", "encoded", "target-admin", AdminRole.PRODUCT_ADMIN);
+        ReflectionTestUtils.setField(target, "id", 1L);
+        when(adminRepository.findById(99L)).thenReturn(java.util.Optional.of(root));
+        when(adminRepository.findById(1L)).thenReturn(java.util.Optional.of(target));
+        when(approvalRequestRepository.save(any(AdminApprovalRequest.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
 
-        assertThatThrownBy(() -> service.changeRole(principal(AdminRole.ROOT_ADMIN), 1L, AdminRole.PRODUCT_ADMIN))
-                .isInstanceOf(BusinessException.class)
-                .extracting("errorCode")
-                .isEqualTo(ErrorCode.CONFLICT);
+        AdminUserResponse response = service.changeRole(principal(AdminRole.ROOT_ADMIN), 1L, AdminRole.SETTLEMENT_ADMIN);
+
+        assertThat(response.role()).isEqualTo("SETTLEMENT_ADMIN");
+        assertThat(target.getRole()).isEqualTo(AdminRole.SETTLEMENT_ADMIN);
+        verify(approvalRequestRepository).save(any(AdminApprovalRequest.class));
     }
 
     @Test
@@ -56,6 +73,9 @@ class AdminAccountServiceTest {
     @Test
     void changeRole_throwsConflictWhenTargetAlreadyHasRole() {
         AdminAccountService service = createService();
+        Admin target = Admin.create("target@test.com", "encoded", "target-admin", AdminRole.PRODUCT_ADMIN);
+        ReflectionTestUtils.setField(target, "id", 1L);
+        when(adminRepository.findById(1L)).thenReturn(java.util.Optional.of(target));
 
         assertThatThrownBy(() -> service.changeRole(principal(AdminRole.ROOT_ADMIN), 1L, AdminRole.PRODUCT_ADMIN))
                 .isInstanceOf(BusinessException.class)
@@ -90,6 +110,9 @@ class AdminAccountServiceTest {
     @Test
     void changeRole_throwsConflictWhenRootAdminDemotesSelf() {
         AdminAccountService service = createService();
+        Admin target = Admin.create("root@test.com", "encoded", "root-admin", AdminRole.ROOT_ADMIN);
+        ReflectionTestUtils.setField(target, "id", 99L);
+        when(adminRepository.findById(99L)).thenReturn(java.util.Optional.of(target));
 
         assertThatThrownBy(() -> service.changeRole(principal(AdminRole.ROOT_ADMIN), 99L, AdminRole.USER_ADMIN))
                 .isInstanceOf(BusinessException.class)
@@ -100,6 +123,10 @@ class AdminAccountServiceTest {
     @Test
     void changeRole_throwsConflictWhenDemotingLastRootAdmin() {
         AdminAccountService service = createService();
+        Admin target = Admin.create("target@test.com", "encoded", "target-root", AdminRole.ROOT_ADMIN);
+        ReflectionTestUtils.setField(target, "id", 1L);
+        when(adminRepository.findById(1L)).thenReturn(java.util.Optional.of(target));
+        when(adminRepository.countByRole(AdminRole.ROOT_ADMIN)).thenReturn(1L);
 
         assertThatThrownBy(() -> service.changeRole(principal(AdminRole.ROOT_ADMIN), 1L, AdminRole.PRODUCT_ADMIN))
                 .isInstanceOf(BusinessException.class)

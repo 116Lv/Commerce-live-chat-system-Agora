@@ -585,6 +585,38 @@ p {
   .admin-report-toolbar {
     grid-template-columns: 1fr;
   }
+
+  .admin-product-filter-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-search-panel {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-filter-options {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-coupon-list-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-product-filter-actions {
+    justify-content: stretch;
+  }
+
+  .admin-filter-actions {
+    justify-content: stretch;
+  }
+
+  .admin-filter-actions .btn {
+    flex: 1;
+  }
+
+  .admin-product-filter-actions .btn {
+    flex: 1;
+  }
 }
 
 .toolbar-panel,
@@ -609,8 +641,63 @@ p {
   flex-wrap: wrap;
 }
 
-.admin-product-toolbar .form-select {
-  max-width: 240px;
+.admin-product-toolbar {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.admin-product-filter-grid {
+  display: grid;
+  grid-template-columns: minmax(12rem, 1.4fr) minmax(12rem, 1.2fr) minmax(10rem, 0.8fr) minmax(10rem, 0.8fr) auto auto;
+  align-items: end;
+  gap: 0.75rem;
+}
+
+.admin-search-panel {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 0.75rem;
+}
+
+.admin-search-field {
+  grid-column: 1 / -1;
+}
+
+.admin-filter-options {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 14rem));
+  align-items: end;
+  gap: 0.75rem;
+}
+
+.admin-product-filter-grid .form-check {
+  min-height: 38px;
+  display: flex;
+  align-items: center;
+}
+
+.admin-filter-options .form-check {
+  min-height: 38px;
+  display: flex;
+  align-items: center;
+}
+
+.admin-filter-actions,
+.admin-product-filter-actions {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
+}
+
+.admin-search-actions {
+  justify-self: end;
+}
+
+.admin-product-filter-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
 }
 
 .admin-product-actions,
@@ -791,10 +878,31 @@ p {
   max-width: 420px;
 }
 
+.admin-coupon-list-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(22rem, 0.85fr);
+  align-items: start;
+  gap: 1rem;
+}
+
 .admin-coupon-issue-form {
   display: flex;
   align-items: flex-end;
   gap: 0.75rem;
+}
+
+.admin-coupon-stop-form {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.75rem;
+}
+
+.admin-coupon-request-summary,
+.admin-coupon-approval-summary {
+  padding: 0.85rem;
+  border: 1px solid var(--agora-border);
+  border-radius: 8px;
+  background: #fbfdfc;
 }
 
 .coupon-target-chip-list {
@@ -1487,6 +1595,12 @@ p {
 
   .form-actions {
     flex-direction: column-reverse;
+  }
+
+  .admin-coupon-issue-form,
+  .admin-coupon-stop-form {
+    align-items: stretch;
+    flex-direction: column;
   }
 
   .form-actions .btn,
