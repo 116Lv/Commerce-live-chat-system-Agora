@@ -1,36 +1,51 @@
-// 내 정보 조회 응답 값을 담는 DTO
 package com.team7.agora.domain.user.dto.response;
 
+import com.team7.agora.domain.region.entity.UserRegion;
 import com.team7.agora.domain.user.entity.User;
+import java.util.List;
 
-/**
- * User Me 응답 본문을 표현하는 DTO이다.
- * @param id 식별자
- * @param email 이메일
- * @param nickname 닉네임
- * @param role 권한
- * @param status 조회 또는 변경할 상태
- */
 public record UserMeResponse(
         Long id,
         String email,
         String nickname,
+        String phone,
+        int smileScore,
         String role,
-        String status
+        String status,
+        List<PreferredRegionResponse> preferredRegions
 ) {
 
-    /**
-     * 도메인 객체로부터 응답 객체를 생성한다.
-     * @param user 회원 엔티티
-     * @return 클라이언트에 반환할 API 응답
-     */
+    public record PreferredRegionResponse(
+            Long regionId,
+            String name,
+            boolean primaryRegion
+    ) {
+
+        public static PreferredRegionResponse from(UserRegion userRegion) {
+            return new PreferredRegionResponse(
+                    userRegion.getRegion().getId(),
+                    userRegion.getRegion().getName(),
+                    userRegion.isPrimaryRegion()
+            );
+        }
+    }
+
     public static UserMeResponse from(User user) {
+        return from(user, List.of());
+    }
+
+    public static UserMeResponse from(User user, List<UserRegion> preferredRegions) {
         return new UserMeResponse(
                 user.getId(),
                 user.getEmail(),
                 user.getNickname(),
+                user.getPhone(),
+                user.getSmileScore(),
                 user.getRole().name(),
-                user.getStatus().name()
+                user.getStatus().name(),
+                preferredRegions.stream()
+                        .map(PreferredRegionResponse::from)
+                        .toList()
         );
     }
 }
