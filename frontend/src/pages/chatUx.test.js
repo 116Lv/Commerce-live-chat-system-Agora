@@ -85,3 +85,12 @@ test('ChatRoomPage can render a compact product header from room metadata', () =
   assert.match(source, /sellerNickname/);
   assert.match(source, /buyerNickname/);
 });
+
+test('ChatRoomPage scrolls to the latest rendered message', () => {
+  const source = readSource('./ChatRoomPage.jsx');
+
+  assert.match(source, /messageListEndRef/);
+  assert.match(source, /lastRenderedMessageKey/);
+  assert.match(source, /scrollIntoView\(\{ block: 'end', behavior: 'smooth' \}\)/);
+  assert.match(source, /requestAnimationFrame/);
+});
