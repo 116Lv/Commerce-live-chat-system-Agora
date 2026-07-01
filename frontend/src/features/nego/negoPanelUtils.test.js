@@ -4,7 +4,8 @@ import {
   buildPaymentHref,
   getOfferActions,
   getOfferPriceValidation,
-  isOfferPayable
+  isOfferPayable,
+  shouldShowOfferTime
 } from './negoPanelUtils.js';
 
 describe('negotiation panel helpers', () => {
@@ -29,6 +30,14 @@ describe('negotiation panel helpers', () => {
       getOfferActions({ status: 'EXTENSION_REQUESTED' }, { role: 'buyer' }).map((action) => action.key),
       []
     );
+  });
+
+  test('shows offer time while an offer is waiting for response or extension handling', () => {
+    assert.equal(shouldShowOfferTime({ status: 'PENDING' }), true);
+    assert.equal(shouldShowOfferTime({ status: 'EXTENSION_REQUESTED' }), true);
+    assert.equal(shouldShowOfferTime({ status: 'EXTENDED' }), true);
+    assert.equal(shouldShowOfferTime({ status: 'ACCEPTED' }), false);
+    assert.equal(shouldShowOfferTime({ status: 'REJECTED' }), false);
   });
 
   test('falls back to conservative status-aware actions when role is unknown', () => {
