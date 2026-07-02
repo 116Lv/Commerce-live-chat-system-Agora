@@ -9,8 +9,14 @@ import {
   stripAuthorizationHeaders,
   unwrapApiResponse
 } from './client.js';
-import { loginAdmin, loginUser, logoutAdmin, logoutUser, signupUser } from './authApi.js';
-import { setAdminToken, setUserToken } from '../auth/tokenStorage.js';
+import { loginAdmin, loginUser, logoutAdmin, logoutUser, reissueUser, signupUser } from './authApi.js';
+import {
+  getUserRefreshToken,
+  getUserToken,
+  setAdminToken,
+  setUserRefreshToken,
+  setUserToken
+} from '../auth/tokenStorage.js';
 
 const createStorage = () => {
   const store = new Map();
@@ -171,6 +177,33 @@ test('auth API login and signup requests are sent without stored tokens', async 
   });
 });
 
+test('auth API reissue request sends the refresh token without stored access tokens', async () => {
+  let requestConfig;
+  setUserToken('expired-user-token');
+
+  await reissueUser('refresh-token', {
+    headers: { Authorization: 'Bearer leaked-access-token' },
+    adapter: (config) => {
+      requestConfig = config;
+      return Promise.resolve({
+        config,
+        data: {
+          status: 'SUCCESS',
+          message: 'ok',
+          data: { accessToken: 'new-user-token', refreshToken: 'new-refresh-token' }
+        },
+        headers: {},
+        status: 200,
+        statusText: 'OK'
+      });
+    }
+  });
+
+  assert.equal(requestConfig.url, '/api/auth/reissue');
+  assert.equal(requestConfig.headers.Authorization, undefined);
+  assert.deepEqual(JSON.parse(requestConfig.data), { refreshToken: 'refresh-token' });
+});
+
 test('auth API logout still sends the relevant stored token', async () => {
   const seenRequests = [];
   setUserToken('logout-token');
@@ -217,6 +250,124 @@ test('admin logout accepts already-prefixed stored tokens without doubling Beare
   });
 
   assert.equal(requestConfig.headers.Authorization, 'Bearer admin-prefixed-token');
+});
+
+test('reissues user tokens after a user API 401 and retries the original request once', async () => {
+  const seenRequests = [];
+  setUserToken('expired-user-token');
+  setUserRefreshToken('stored-refresh-token');
+
+  const adapter = (config) => {
+    seenRequests.push({
+      url: config.url,
+      authorization: config.headers.Authorization,
+      data: config.data
+    });
+
+    if (config.url === '/api/products' && seenRequests.length === 1) {
+      return Promise.reject({
+        config,
+        response: {
+          config,
+          data: { status: 'ERROR', message: 'Token expired' },
+          headers: {},
+          status: 401,
+          statusText: 'Unauthorized'
+        }
+      });
+    }
+
+    if (config.url === '/api/auth/reissue') {
+      return Promise.resolve({
+        config,
+        data: {
+          status: 'SUCCESS',
+          message: 'ok',
+          data: { accessToken: 'rotated-user-token', refreshToken: 'rotated-refresh-token' }
+        },
+        headers: {},
+        status: 200,
+        statusText: 'OK'
+      });
+    }
+
+    return Promise.resolve({
+      config,
+      data: { status: 'SUCCESS', message: 'ok', data: { id: 7 } },
+      headers: {},
+      status: 200,
+      statusText: 'OK'
+    });
+  };
+
+  const response = await apiClient.get('/api/products', { adapter });
+
+  assert.deepEqual(response, { id: 7 });
+  assert.deepEqual(
+    seenRequests.map((request) => [request.url, request.authorization]),
+    [
+      ['/api/products', 'Bearer expired-user-token'],
+      ['/api/auth/reissue', undefined],
+      ['/api/products', 'Bearer rotated-user-token']
+    ]
+  );
+  assert.deepEqual(JSON.parse(seenRequests[1].data), { refreshToken: 'stored-refresh-token' });
+  assert.equal(getUserToken(), 'rotated-user-token');
+  assert.equal(getUserRefreshToken(), 'rotated-refresh-token');
+});
+
+test('does not reissue admin API 401 responses', async () => {
+  const seenRequests = [];
+  setAdminToken('expired-admin-token');
+  setUserRefreshToken('stored-refresh-token');
+
+  await assert.rejects(
+    apiClient.get('/api/admin/users', {
+      adapter: (config) => {
+        seenRequests.push(config);
+        return Promise.reject({
+          config,
+          response: {
+            config,
+            data: { status: 'ERROR', message: 'Admin token expired' },
+            headers: {},
+            status: 401,
+            statusText: 'Unauthorized'
+          }
+        });
+      }
+    }),
+    /Admin token expired/
+  );
+
+  assert.deepEqual(
+    seenRequests.map((request) => request.url),
+    ['/api/admin/users']
+  );
+});
+
+test('clears stored user tokens when refresh token is missing after a user API 401', async () => {
+  setUserToken('expired-user-token');
+
+  await assert.rejects(
+    apiClient.get('/api/products', {
+      adapter: (config) =>
+        Promise.reject({
+          config,
+          response: {
+            config,
+            data: { status: 'ERROR', message: 'Token expired' },
+            headers: {},
+            status: 401,
+            statusText: 'Unauthorized'
+          }
+        })
+    }),
+    /Token expired/
+  );
+
+  assert.equal(getUserToken(), null);
+  assert.equal(getUserRefreshToken(), null);
 });
 
 test('unwraps ApiResponse data only when the response shape contains data', () => {

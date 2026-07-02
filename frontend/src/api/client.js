@@ -1,5 +1,12 @@
 import axios from 'axios';
-import { getAdminToken, getUserToken } from '../auth/tokenStorage.js';
+import {
+  clearUserTokens,
+  getAdminToken,
+  getUserRefreshToken,
+  getUserToken,
+  setUserRefreshToken,
+  setUserToken
+} from '../auth/tokenStorage.js';
 
 const DEFAULT_API_BASE_URL = 'http://127.0.0.1:8080';
 const API_RESPONSE_KEYS = ['status', 'message', 'data'];
@@ -62,6 +69,49 @@ export const stripAuthorizationHeaders = (headers) => {
   });
 };
 
+const shouldTryUserTokenRefresh = (error) => {
+  const config = error?.config ?? error?.response?.config;
+
+  return (
+    error?.response?.status === 401 &&
+    config &&
+    !config._authRetry &&
+    !config.skipAuthRefresh &&
+    config._authType !== 'none' &&
+    config._authType !== 'admin' &&
+    !isAdminUrl(config.url)
+  );
+};
+
+const persistUserTokenPair = (tokens) => {
+  if (!tokens?.accessToken || !tokens?.refreshToken) {
+    clearUserTokens();
+    throw new Error('Token reissue response did not include required tokens.');
+  }
+
+  setUserToken(tokens.accessToken);
+  setUserRefreshToken(tokens.refreshToken);
+};
+
+const reissueStoredUserTokens = async (adapter) => {
+  const refreshToken = getUserRefreshToken();
+
+  if (!refreshToken) {
+    clearUserTokens();
+    throw new Error('No refresh token is available.');
+  }
+
+  const tokens = await apiClient.post(
+    '/api/auth/reissue',
+    { refreshToken },
+    { authType: 'none', skipAuthRefresh: true, adapter }
+  );
+
+  persistUserTokenPair(tokens);
+
+  return tokens;
+};
+
 export const unwrapApiResponse = (response) => {
   const payload = response?.data;
 
@@ -82,9 +132,20 @@ export const getApiErrorMessage = (error) => {
   return error?.message || 'Request failed';
 };
 
+const toApiError = (error) => {
+  const apiError = new Error(getApiErrorMessage(error));
+  apiError.status = error?.response?.status;
+  apiError.data = error?.response?.data;
+  apiError.cause = error;
+
+  return apiError;
+};
+
 apiClient.interceptors.request.use((config) => {
+  const authType = config.authType || (isAdminUrl(config.url) ? 'admin' : 'user');
   const token = selectAuthToken(config);
   config.headers = config.headers ?? {};
+  config._authType = config.authType ?? authType;
 
   if (token) {
     config.headers.Authorization = formatAuthorizationHeader(token);
@@ -99,13 +160,29 @@ apiClient.interceptors.request.use((config) => {
 
 apiClient.interceptors.response.use(
   (response) => unwrapApiResponse(response),
-  (error) => {
-    const apiError = new Error(getApiErrorMessage(error));
-    apiError.status = error?.response?.status;
-    apiError.data = error?.response?.data;
-    apiError.cause = error;
+  async (error) => {
+    if (shouldTryUserTokenRefresh(error)) {
+      const originalConfig = error.config ?? error.response.config;
 
-    return Promise.reject(apiError);
+      try {
+        const tokens = await reissueStoredUserTokens(originalConfig.adapter);
+        originalConfig._authRetry = true;
+        originalConfig.headers = originalConfig.headers ?? {};
+        originalConfig.headers.Authorization = formatAuthorizationHeader(tokens.accessToken);
+
+        return apiClient(originalConfig);
+      } catch (reissueError) {
+        clearUserTokens();
+
+        if (reissueError.message === 'No refresh token is available.') {
+          return Promise.reject(toApiError(error));
+        }
+
+        return Promise.reject(reissueError);
+      }
+    }
+
+    return Promise.reject(toApiError(error));
   }
 );
 
