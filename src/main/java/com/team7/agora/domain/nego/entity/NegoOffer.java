@@ -178,7 +178,7 @@ public class NegoOffer extends BaseTimeEntity {
      */
     public void cancel() {
         if (!ACTIVE_STATUSES.contains(status) && status != NegoOfferStatus.ACCEPTED) {
-            throw new IllegalStateException("?묐떟 媛?ν븳 媛寃??쒖븞 ?곹깭媛 ?꾨떃?덈떎.");
+            throw new IllegalStateException("응답 가능한 가격 제안 상태가 아닙니다.");
         }
         this.status = NegoOfferStatus.CANCELLED;
         this.respondedAt = AgoraClock.now();

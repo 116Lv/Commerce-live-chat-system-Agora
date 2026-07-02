@@ -282,7 +282,7 @@ public class PaymentService {
         }
         if (payment.getTrade().getStatus() != TradeStatus.PAYMENT_PENDING) {
             payment.releaseCouponReservation();
-            throw new PaymentException(ErrorCode.INVALID_REQUEST, "寃곗젣 ?湲?以묒씤 嫄곕옒留?寃곗젣?????덉뒿?덈떎.");
+            throw new PaymentException(ErrorCode.INVALID_REQUEST, "결제 대기 중인 거래만 결제할 수 있습니다.");
         }
         PaymentStatus previousStatus = payment.getStatus();
         payment.markConfirming();
