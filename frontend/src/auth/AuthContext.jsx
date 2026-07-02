@@ -59,7 +59,7 @@ export function AuthProvider({ children }) {
     const response = await loginUserRequest(credentials);
     const tokens = getUserTokenPair(response);
 
-    persistUserToken(token);
+    persistUserTokens(tokens);
     setUserProfile(null);
     return response;
   };
