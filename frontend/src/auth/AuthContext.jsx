@@ -28,6 +28,7 @@ const getAccessToken = (response) => {
 export function AuthProvider({ children }) {
   const [userToken, setUserTokenState] = useState(() => getUserToken());
   const [adminToken, setAdminTokenState] = useState(() => getAdminToken());
+  const [userProfile, setUserProfile] = useState(null);
 
   const persistUserToken = (token) => {
     setUserToken(token);
@@ -44,7 +45,12 @@ export function AuthProvider({ children }) {
     const token = getAccessToken(response);
 
     persistUserToken(token);
+    setUserProfile(null);
     return response;
+  };
+
+  const updateUserProfile = (profile) => {
+    setUserProfile((current) => ({ ...(current || {}), ...(profile || {}) }));
   };
 
   const signupUser = async (formData) => {
@@ -65,6 +71,7 @@ export function AuthProvider({ children }) {
     } finally {
       clearUserToken();
       setUserTokenState(null);
+      setUserProfile(null);
     }
   };
 
@@ -91,15 +98,17 @@ export function AuthProvider({ children }) {
     () => ({
       userToken,
       adminToken,
+      userProfile,
       isUserAuthenticated: Boolean(userToken),
       isAdminAuthenticated: Boolean(adminToken),
+      updateUserProfile,
       loginUser,
       signupUser,
       logoutUser,
       loginAdmin,
       logoutAdmin
     }),
-    [userToken, adminToken]
+    [userToken, adminToken, userProfile]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
