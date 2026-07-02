@@ -8,6 +8,9 @@ export const signupUser = ({ email, password, nickname, phone }, config = {}) =>
 
 export const logoutUser = (config = {}) => apiClient.post('/api/auth/logout', null, { ...config, authType: 'user' });
 
+export const reissueUser = (refreshToken, config = {}) =>
+  apiClient.post('/api/auth/reissue', { refreshToken }, { ...config, authType: 'none', skipAuthRefresh: true });
+
 export const loginAdmin = ({ email, password }, config = {}) =>
   apiClient.post('/api/admin/auth/login', { email, password }, { ...config, authType: 'none' });
 

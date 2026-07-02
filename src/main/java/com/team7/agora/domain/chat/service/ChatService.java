@@ -195,6 +195,16 @@ public class ChatService {
             .toList();
     }
 
+    public ChatRoomResponse getRoom(Long userId, Long chatRoomId) {
+        ChatRoom chatRoom = findActiveRoom(chatRoomId);
+
+        if (!chatRoom.isParticipant(userId)) {
+            throw new BusinessException(ErrorCode.FORBIDDEN, "채팅방 참여자만 채팅방을 조회할 수 있습니다.");
+        }
+
+        return toRoomResponse(chatRoom, userId);
+    }
+
     /**
      * 사용자가 채팅방 메시지를 읽은 시각을 갱신해 읽음 상태로 표시한다.
      * @param userId 회원 ID

@@ -2,6 +2,7 @@ import { Container, Nav, Navbar, NavDropdown } from 'react-bootstrap';
 import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { Heart, ListChecks, LogOut, MessageCircle, PackagePlus, Search, Star, Ticket, UserRound } from 'lucide-react';
 import { useAuth } from '../auth/AuthContext.jsx';
+import GlobalChatNotification from '../features/chat/GlobalChatNotification.jsx';
 
 const ACCOUNT_LINKS = [
   { to: '/me', label: '내 정보', icon: UserRound },
@@ -131,6 +132,7 @@ export default function UserLayout() {
           </Navbar.Collapse>
         </Container>
       </Navbar>
+      <GlobalChatNotification enabled={isUserAuthenticated} userToken={userToken} />
       <main className="user-main">
         <Container fluid="lg" className="py-4 py-lg-5">
           <Outlet />

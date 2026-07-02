@@ -4,6 +4,8 @@ package com.team7.agora.domain.chat.realtime;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.team7.agora.domain.chat.dto.response.ChatMessageResponse;
+import com.team7.agora.domain.chat.dto.response.ChatNotificationResponse;
+import com.team7.agora.domain.chat.dto.response.ChatRoomResponse;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
 
@@ -14,6 +16,7 @@ import org.springframework.stereotype.Component;
 public class ChatRedisPublisher {
 
     static final String TOPIC_PREFIX = "chat-room:";
+    static final String USER_TOPIC_PREFIX = "chat-user:";
 
     private final StringRedisTemplate redisTemplate;
     private final ObjectMapper objectMapper;
@@ -29,10 +32,29 @@ public class ChatRedisPublisher {
      * @param message 메시지
      */
     public void publish(Long roomId, ChatMessageResponse message) {
+        publishRoomMessage(roomId, message);
+    }
+
+    public void publish(Long roomId, ChatMessageResponse message, ChatRoomResponse room) {
+        publishRoomMessage(roomId, message);
+        publishUserNotification(room.sellerId(), message, room);
+        publishUserNotification(room.buyerId(), message, room);
+    }
+
+    private void publishRoomMessage(Long roomId, ChatMessageResponse message) {
         try {
             redisTemplate.convertAndSend(TOPIC_PREFIX + roomId, objectMapper.writeValueAsString(message));
         } catch (JsonProcessingException e) {
             throw new IllegalStateException("채팅 메시지 직렬화에 실패했습니다.", e);
+        }
+    }
+
+    private void publishUserNotification(Long recipientId, ChatMessageResponse message, ChatRoomResponse room) {
+        try {
+            ChatNotificationResponse notification = ChatNotificationResponse.from(recipientId, message, room);
+            redisTemplate.convertAndSend(USER_TOPIC_PREFIX + recipientId, objectMapper.writeValueAsString(notification));
+        } catch (JsonProcessingException e) {
+            throw new IllegalStateException("채팅 알림 직렬화에 실패했습니다.", e);
         }
     }
 }
