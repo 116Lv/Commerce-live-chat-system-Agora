@@ -6,6 +6,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.team7.agora.domain.product.enums.ProductStatus;
 import com.team7.agora.domain.product.repository.ProductRepository;
 import com.team7.agora.domain.search.dto.ProductSearchCondition;
 import com.team7.agora.domain.search.dto.ProductSearchResponse;
@@ -81,5 +82,29 @@ class ProductSearchCacheLoaderTest {
         productSearchCacheLoader.load(condition);
 
         verify(productRepository, times(2)).search(condition);
+    }
+
+    @Test
+    void load_usesSeparateCacheEntriesForDifferentStatusFilters() {
+        ProductSearchCondition selling = new ProductSearchCondition(
+            "자전거", 1L, "SPORTS", ProductStatus.SELLING, PageRequest.of(0, 20)
+        );
+        ProductSearchCondition sold = new ProductSearchCondition(
+            "자전거", 1L, "SPORTS", ProductStatus.SOLD, PageRequest.of(0, 20)
+        );
+        when(productRepository.search(selling)).thenReturn(new PageImpl<>(List.of(
+            new ProductSearchResponse(1L, "판매중 자전거", BigDecimal.valueOf(73000), "서울 강남구 역삼동")
+        )));
+        when(productRepository.search(sold)).thenReturn(new PageImpl<>(List.of(
+            new ProductSearchResponse(2L, "판매완료 자전거", BigDecimal.valueOf(71000), "서울 강남구 역삼동")
+        )));
+
+        PageResponse<ProductSearchResponse> sellingResult = productSearchCacheLoader.load(selling);
+        PageResponse<ProductSearchResponse> soldResult = productSearchCacheLoader.load(sold);
+
+        assertThat(sellingResult.content()).extracting(ProductSearchResponse::title).containsExactly("판매중 자전거");
+        assertThat(soldResult.content()).extracting(ProductSearchResponse::title).containsExactly("판매완료 자전거");
+        verify(productRepository).search(selling);
+        verify(productRepository).search(sold);
     }
 }

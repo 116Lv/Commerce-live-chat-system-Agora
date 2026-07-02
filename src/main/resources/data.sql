@@ -1,9 +1,9 @@
-INSERT INTO users (id, email, password, nickname, phone, smile_score, role, status, deleted_at)
+INSERT INTO users (id, email, password, nickname, phone, smile_score, role, status, created_at, deleted_at)
 VALUES
-    (1, 'seller@test.com', '$2a$10$5XA3pQtBuOJfBIqcOZzcSeKMTBHqQpqFswCqh/fqLyxd5o7vmkY02', 'seller', '010-1111-1111', 82, 'ROLE_USER', 'ACTIVE', NULL),
-    (2, 'buyer@test.com', '$2a$10$5XA3pQtBuOJfBIqcOZzcSeKMTBHqQpqFswCqh/fqLyxd5o7vmkY02', 'buyer', '010-2222-2222', 75, 'ROLE_USER', 'ACTIVE', NULL),
-    (3, 'user2@test.com', '$2a$10$5XA3pQtBuOJfBIqcOZzcSeKMTBHqQpqFswCqh/fqLyxd5o7vmkY02', 'neighbor', '010-3333-3333', 91, 'ROLE_USER', 'ACTIVE', NULL),
-    (5, 'blocked@test.com', '$2a$10$5XA3pQtBuOJfBIqcOZzcSeKMTBHqQpqFswCqh/fqLyxd5o7vmkY02', 'blocked', '010-5555-5555', 20, 'ROLE_USER', 'BLOCKED', NULL);
+    (1, 'seller@test.com', '$2a$10$5XA3pQtBuOJfBIqcOZzcSeKMTBHqQpqFswCqh/fqLyxd5o7vmkY02', 'seller', '010-1111-1111', 82, 'ROLE_USER', 'ACTIVE', '2026-06-20 09:00:00', NULL),
+    (2, 'buyer@test.com', '$2a$10$5XA3pQtBuOJfBIqcOZzcSeKMTBHqQpqFswCqh/fqLyxd5o7vmkY02', 'buyer', '010-2222-2222', 75, 'ROLE_USER', 'ACTIVE', '2026-06-20 09:10:00', NULL),
+    (3, 'user2@test.com', '$2a$10$5XA3pQtBuOJfBIqcOZzcSeKMTBHqQpqFswCqh/fqLyxd5o7vmkY02', 'neighbor', '010-3333-3333', 91, 'ROLE_USER', 'ACTIVE', '2026-06-21 10:00:00', NULL),
+    (5, 'blocked@test.com', '$2a$10$5XA3pQtBuOJfBIqcOZzcSeKMTBHqQpqFswCqh/fqLyxd5o7vmkY02', 'blocked', '010-5555-5555', 20, 'ROLE_USER', 'BLOCKED', '2026-06-22 11:00:00', NULL);
 
 INSERT INTO admins (id, email, password, nickname, role, status)
 VALUES

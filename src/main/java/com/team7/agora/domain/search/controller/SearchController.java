@@ -1,5 +1,6 @@
 package com.team7.agora.domain.search.controller;
 
+import com.team7.agora.domain.product.enums.ProductStatus;
 import com.team7.agora.domain.search.dto.PopularKeywordResponse;
 import com.team7.agora.domain.search.dto.ProductSearchCondition;
 import com.team7.agora.domain.search.dto.ProductSearchResponse;
@@ -42,6 +43,7 @@ public class SearchController {
      * @param keyword 검색어
      * @param regionId 지역 ID
      * @param category 이미지를 저장할 분류
+     * @param status 상품 판매 상태
      * @param page 조회할 페이지 번호
      * @param size 한 번에 조회할 항목 개수
      * @param sort 정렬 기준 (recent, likes)
@@ -54,6 +56,7 @@ public class SearchController {
         @RequestParam(required = false) String keyword,
         @RequestParam(required = false) Long regionId,
         @RequestParam(required = false) String category,
+        @RequestParam(required = false) ProductStatus status,
         @RequestParam(defaultValue = "0") int page,
         @RequestParam(defaultValue = "20") int size,
         @RequestParam(defaultValue = "recent") String sort,
@@ -62,7 +65,7 @@ public class SearchController {
         popularKeywordService.recordSearchKeyword(viewerId(userDetails), keyword);
         return ResponseEntity.ok(ApiResponse.success("상품 검색 결과입니다.",
             PageResponse.from(productSearchService.searchV1(
-                new ProductSearchCondition(keyword, regionId, category, PageRequest.of(page, size), sort, direction)
+                new ProductSearchCondition(keyword, regionId, category, status, PageRequest.of(page, size), sort, direction)
             ))
         ));
     }
@@ -72,6 +75,7 @@ public class SearchController {
      * @param keyword 검색어
      * @param regionId 지역 ID
      * @param category 이미지를 저장할 분류
+     * @param status 상품 판매 상태
      * @param page 조회할 페이지 번호
      * @param size 한 번에 조회할 항목 개수
      * @param sort 정렬 기준 (recent, likes)
@@ -84,6 +88,7 @@ public class SearchController {
         @RequestParam(required = false) String keyword,
         @RequestParam(required = false) Long regionId,
         @RequestParam(required = false) String category,
+        @RequestParam(required = false) ProductStatus status,
         @RequestParam(defaultValue = "0") int page,
         @RequestParam(defaultValue = "20") int size,
         @RequestParam(defaultValue = "recent") String sort,
@@ -92,7 +97,7 @@ public class SearchController {
         popularKeywordService.recordSearchKeyword(viewerId(userDetails), keyword);
         return ResponseEntity.ok(ApiResponse.success("캐시 적용 상품 검색 결과입니다.",
             productSearchService.searchV2(
-                new ProductSearchCondition(keyword, regionId, category, PageRequest.of(page, size), sort, direction)
+                new ProductSearchCondition(keyword, regionId, category, status, PageRequest.of(page, size), sort, direction)
             )
         ));
     }

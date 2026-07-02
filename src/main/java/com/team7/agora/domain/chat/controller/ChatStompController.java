@@ -41,6 +41,6 @@ public class ChatStompController {
     ) {
         AuthUser authUser = (AuthUser) ((StompPrincipal) principal).authUser();
         ChatMessageResponse response = chatService.sendMessage(authUser.userId(), chatRoomId, request.content());
-        chatRedisPublisher.publish(chatRoomId, response);
+        chatRedisPublisher.publish(chatRoomId, response, chatService.getRoom(authUser.userId(), chatRoomId));
     }
 }

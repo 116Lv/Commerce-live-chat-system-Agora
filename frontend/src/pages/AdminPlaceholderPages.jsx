@@ -218,17 +218,57 @@ export function AdminDashboardPage() {
   }
 
   const stats = dashboardStats(dashboard.data);
+  const pendingReports = Array.isArray(dashboard.data?.pendingReports) ? dashboard.data.pendingReports : [];
 
   return (
     <section>
       <AdminPageHeader title="대시보드" />
       <Row className="g-3 mb-4">
         {stats.map((stat) => (
-          <Col xs={12} md={4} key={stat.label}>
+          <Col xs={12} md={4} xl={2} key={stat.label}>
             <StatCard label={stat.label} value={stat.value} />
           </Col>
         ))}
       </Row>
+      <div className="mb-4">
+        <h2 className="section-title">미처리 신고 리스트</h2>
+        {pendingReports.length === 0 ? (
+          <EmptyState title="미처리 신고가 없습니다" />
+        ) : (
+          <AdminTable>
+            <thead>
+              <tr>
+                <th>신고 ID</th>
+                <th>신고 대상</th>
+                <th>신고 사유</th>
+                <th>신고 일시</th>
+                <th>상태</th>
+                <th>상세</th>
+              </tr>
+            </thead>
+            <tbody>
+              {pendingReports.map((report) => (
+                <tr key={report.reportId}>
+                  <td>{report.reportId}</td>
+                  <td>{report.target || '-'}</td>
+                  <td>{report.reason || '-'}</td>
+                  <td>{formatDateTime(report.reportedAt)}</td>
+                  <td><StatusBadge status={report.status} /></td>
+                  <td>
+                    <Button
+                      size="sm"
+                      variant="outline-primary"
+                      href={`/admin/reports?reportId=${report.reportId}`}
+                    >
+                      보기
+                    </Button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </AdminTable>
+        )}
+      </div>
       <div className="detail-panel">
         <h2 className="section-title">관리자 정보</h2>
         <dl className="compact-list compact-list-inline">

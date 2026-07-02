@@ -141,6 +141,100 @@ p {
   background: var(--agora-page);
 }
 
+.chat-notification-shell {
+  position: fixed;
+  top: 5.35rem;
+  left: 50%;
+  z-index: 1040;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  width: min(42rem, calc(100vw - 2rem));
+  overflow: hidden;
+  border: 1px solid rgba(15, 95, 71, 0.22);
+  border-radius: 8px;
+  background: var(--agora-surface);
+  box-shadow: 0 16px 40px rgb(15 23 42 / 14%);
+  transform: translateX(-50%);
+}
+
+.chat-notification-banner,
+.chat-notification-dismiss {
+  border: 0;
+  background: transparent;
+}
+
+.chat-notification-banner {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0.75rem;
+  min-width: 0;
+  padding: 0.85rem 1rem;
+  color: var(--agora-ink);
+  text-align: left;
+}
+
+.chat-notification-banner:hover,
+.chat-notification-banner:focus {
+  background: #f0f8f4;
+}
+
+.chat-notification-icon {
+  display: grid;
+  width: 2.25rem;
+  aspect-ratio: 1;
+  place-items: center;
+  border-radius: 8px;
+  background: #e8f4ef;
+  color: var(--agora-brand-dark);
+}
+
+.chat-notification-content {
+  display: grid;
+  gap: 0.2rem;
+  min-width: 0;
+}
+
+.chat-notification-title,
+.chat-notification-preview {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chat-notification-title {
+  display: flex;
+  gap: 0.45rem;
+  min-width: 0;
+  color: var(--agora-ink);
+  font-weight: 800;
+}
+
+.chat-notification-title span {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--agora-muted);
+  text-overflow: ellipsis;
+}
+
+.chat-notification-preview {
+  margin-bottom: 0;
+  color: var(--agora-muted);
+  font-size: 0.92rem;
+}
+
+.chat-notification-dismiss {
+  display: grid;
+  width: 2.75rem;
+  place-items: center;
+  color: var(--agora-muted);
+}
+
+.chat-notification-dismiss:hover,
+.chat-notification-dismiss:focus {
+  background: #fff7f0;
+  color: #c2410c;
+}
+
 .page-header {
   display: flex;
   align-items: flex-end;
@@ -1778,6 +1872,16 @@ p {
 
   .chat-compose {
     grid-template-columns: minmax(0, 1fr);
+  }
+
+  .chat-notification-shell {
+    top: 4.95rem;
+    width: min(100vw - 1rem, 34rem);
+  }
+
+  .chat-notification-title {
+    display: grid;
+    gap: 0.05rem;
   }
 
   .message-item {

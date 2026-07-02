@@ -3,7 +3,9 @@ package com.team7.agora.domain.chat.realtime;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.team7.agora.domain.chat.dto.response.ChatMessageResponse;
+import com.team7.agora.domain.chat.dto.response.ChatNotificationResponse;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.connection.Message;
 import org.springframework.data.redis.connection.MessageListener;
@@ -18,6 +20,7 @@ import org.springframework.stereotype.Component;
 public class ChatRedisSubscriber implements MessageListener {
 
     static final String DESTINATION_PREFIX = "/sub/chat/";
+    static final String USER_DESTINATION_PREFIX = "/sub/users/";
 
     private final SimpMessagingTemplate messagingTemplate;
     private final ObjectMapper objectMapper;
@@ -35,6 +38,14 @@ public class ChatRedisSubscriber implements MessageListener {
     @Override
     public void onMessage(Message message, byte[] pattern) {
         try {
+            String channel = new String(message.getChannel(), StandardCharsets.UTF_8);
+            if (channel.startsWith(ChatRedisPublisher.USER_TOPIC_PREFIX)) {
+                ChatNotificationResponse response =
+                    objectMapper.readValue(message.getBody(), ChatNotificationResponse.class);
+                messagingTemplate.convertAndSend(USER_DESTINATION_PREFIX + response.recipientId() + "/chat", response);
+                return;
+            }
+
             ChatMessageResponse response = objectMapper.readValue(message.getBody(), ChatMessageResponse.class);
             messagingTemplate.convertAndSend(DESTINATION_PREFIX + response.chatRoomId(), response);
         } catch (IOException e) {

@@ -7,6 +7,7 @@ import com.team7.agora.domain.report.entity.Report;
 import com.team7.agora.domain.report.enums.ReportStatus;
 import com.team7.agora.domain.user.entity.User;
 import jakarta.persistence.LockModeType;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.domain.Page;
@@ -35,6 +36,11 @@ public interface ReportRepository extends JpaRepository<Report, Long> {
 
     @EntityGraph(attributePaths = {"reporter", "reportedUser", "product"})
     List<Report> findAllByProductIsNotNull();
+
+    long countByCreatedAtGreaterThanEqualAndCreatedAtLessThan(LocalDateTime start, LocalDateTime end);
+
+    @EntityGraph(attributePaths = {"reportedUser", "product"})
+    List<Report> findTop5ByStatusOrderByCreatedAtAsc(ReportStatus status);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select r from Report r where r.id = :id")

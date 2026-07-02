@@ -18,7 +18,7 @@ export default function ReportModal({ show, onHide, productId, userId }) {
   const targetLabel = useMemo(() => {
     const reportTargetType = hasProvidedTarget ? inferredTargetType : targetType;
 
-    return reportTargetType === 'product' ? '상품' : '사용자';
+    return reportTargetType === 'product' ? '상품' : '판매자';
   }, [hasProvidedTarget, inferredTargetType, targetType]);
 
   useEffect(() => {

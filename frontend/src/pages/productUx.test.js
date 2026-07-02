@@ -31,6 +31,19 @@ describe('product list and card UX source', () => {
     assert.doesNotMatch(source, /<Form\.Control[\s\S]{0,200}value=\{draft\.category\}/);
   });
 
+  test('ProductListPage exposes status filter and sends it as a search param', () => {
+    const source = readSource('./ProductListPage.jsx');
+
+    assert.match(source, /PRODUCT_STATUS_OPTIONS/);
+    assert.match(source, /status: ''/);
+    assert.match(source, /status: query\.status/);
+    assert.match(source, /value=\{draft\.status\}/);
+    assert.match(source, /handleStatusChange/);
+    assert.match(source, /setQuery\(\(current\) => \(\{ \.\.\.current, status, page: 0 \}\)\)/);
+    assert.match(source, /판매중/);
+    assert.match(source, /판매완료/);
+  });
+
   test('ProductListPage uses staged normalized region select options', () => {
     const source = readSource('./ProductListPage.jsx');
 
@@ -306,6 +319,27 @@ describe('product detail, favorites, and seller UX source', () => {
     assert.match(source, /getSmileScore/);
     assert.match(source, /sellerSmileScore/);
     assert.match(source, /스마일/);
+  });
+
+  test('ProductDetailPage separates product and seller report actions', () => {
+    const source = readSource('./ProductDetailPage.jsx');
+
+    assert.match(source, /getCurrentUserIdFromToken/);
+    assert.match(source, /const isCurrentUserSeller = currentUserId != null && sellerId != null && currentUserId === sellerId/);
+    assert.match(source, /const showSellerReportAction = sellerId != null && !isCurrentUserSeller/);
+    assert.match(source, /handleReport\('product'\)/);
+    assert.match(source, /상품 신고/);
+    assert.match(source, /handleReport\('seller'\)/);
+    assert.match(source, /판매자 신고/);
+    assert.match(source, /productId=\{reportTarget === 'product' \? Number\(productId\) : undefined\}/);
+    assert.match(source, /userId=\{reportTarget === 'seller' \? Number\(product\.sellerId\) : undefined\}/);
+  });
+
+  test('ReportModal labels fixed user targets as seller reports', () => {
+    const source = readSource('../features/reports/ReportModal.jsx');
+
+    assert.match(source, /reportTargetType === 'product' \? '상품' : '판매자'/);
+    assert.match(source, /createUserReport\(\{ reportedUserId: Number\(reportTargetId\), reason \}\)/);
   });
 
   test('ProductDetailPage renders uploaded images with a direct image carousel', () => {

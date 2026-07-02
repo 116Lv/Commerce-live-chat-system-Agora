@@ -1,4 +1,4 @@
-import { createContext, useContext, useMemo, useState } from 'react';
+import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import {
   loginAdmin as loginAdminRequest,
   loginUser as loginUserRequest,
@@ -8,11 +8,13 @@ import {
 } from '../api/authApi.js';
 import {
   clearAdminToken,
-  clearUserToken,
+  clearUserTokens,
   getAdminToken,
   getUserToken,
   setAdminToken,
-  setUserToken
+  setUserRefreshToken,
+  setUserToken,
+  USER_TOKENS_CHANGED_EVENT
 } from './tokenStorage.js';
 
 const AuthContext = createContext(null);
@@ -25,14 +27,25 @@ const getAccessToken = (response) => {
   return response.accessToken;
 };
 
+const getUserTokenPair = (response) => {
+  const accessToken = getAccessToken(response);
+
+  if (!response?.refreshToken) {
+    throw new Error('Authentication response did not include a refresh token.');
+  }
+
+  return { accessToken, refreshToken: response.refreshToken };
+};
+
 export function AuthProvider({ children }) {
   const [userToken, setUserTokenState] = useState(() => getUserToken());
   const [adminToken, setAdminTokenState] = useState(() => getAdminToken());
   const [userProfile, setUserProfile] = useState(null);
 
-  const persistUserToken = (token) => {
-    setUserToken(token);
-    setUserTokenState(token);
+  const persistUserTokens = ({ accessToken, refreshToken }) => {
+    setUserToken(accessToken);
+    setUserRefreshToken(refreshToken);
+    setUserTokenState(accessToken);
   };
 
   const persistAdminToken = (token) => {
@@ -42,7 +55,7 @@ export function AuthProvider({ children }) {
 
   const loginUser = async (credentials) => {
     const response = await loginUserRequest(credentials);
-    const token = getAccessToken(response);
+    const tokens = getUserTokenPair(response);
 
     persistUserToken(token);
     setUserProfile(null);
@@ -69,7 +82,7 @@ export function AuthProvider({ children }) {
         await logoutUserRequest();
       }
     } finally {
-      clearUserToken();
+      clearUserTokens();
       setUserTokenState(null);
       setUserProfile(null);
     }
@@ -93,6 +106,13 @@ export function AuthProvider({ children }) {
       setAdminTokenState(null);
     }
   };
+
+  useEffect(() => {
+    const syncUserToken = () => setUserTokenState(getUserToken());
+
+    window.addEventListener(USER_TOKENS_CHANGED_EVENT, syncUserToken);
+    return () => window.removeEventListener(USER_TOKENS_CHANGED_EVENT, syncUserToken);
+  }, []);
 
   const value = useMemo(
     () => ({

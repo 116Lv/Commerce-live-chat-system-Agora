@@ -21,6 +21,13 @@ class UserTest {
     }
 
     @Test
+    void signupRecordsCreatedAtForDashboardMetrics() {
+        User user = User.signup("user@test.com", "encoded", "nickname", "01011112222");
+
+        assertThat(user.getCreatedAt()).isNotNull();
+    }
+
+    @Test
     void changeStatusUpdatesToDifferentStatus() {
         User user = User.signup("user@test.com", "encoded", "nickname", "01011112222");
 

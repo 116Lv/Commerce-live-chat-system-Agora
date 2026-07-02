@@ -10,6 +10,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.team7.agora.domain.admin.dto.response.AdminDashboardResponse;
+import com.team7.agora.domain.admin.dto.response.AdminDashboardResponse.PendingReportResponse;
 import com.team7.agora.domain.admin.dto.response.AdminLoginResponse;
 import com.team7.agora.domain.admin.dto.response.AdminMeResponse;
 import com.team7.agora.domain.admin.dto.response.AdminUserResponse;
@@ -120,12 +121,24 @@ class AdminControllerTest {
         // given
         authenticate(AdminRole.USER_ADMIN);
         when(adminService.getDashboard(org.mockito.ArgumentMatchers.any()))
-                .thenReturn(new AdminDashboardResponse("USER_ADMIN", List.of("USERS", "USER_REPORTS")));
+                .thenReturn(new AdminDashboardResponse(
+                        "USER_ADMIN",
+                        List.of("USERS", "USER_REPORTS"),
+                        10,
+                        2,
+                        1,
+                        3,
+                        4,
+                        8,
+                        List.of(new PendingReportResponse(1L, "user01", "욕설", null, "PENDING", "USER"))
+                ));
 
         // when & then
         mockMvc.perform(get("/api/admin/dashboard"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.accessibleMenus[0]").value("USERS"));
+                .andExpect(jsonPath("$.data.accessibleMenus[0]").value("USERS"))
+                .andExpect(jsonPath("$.data.totalUserCount").value(10))
+                .andExpect(jsonPath("$.data.pendingReports[0].reportId").value(1));
     }
 
     @Test

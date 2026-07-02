@@ -42,4 +42,6 @@ public interface TradeRepository extends JpaRepository<Trade, Long> {
     boolean existsByProductAndStatusIn(Product product, Collection<TradeStatus> statuses);
 
     List<Trade> findAllByStatusAndPaymentDueAtLessThanEqual(TradeStatus status, LocalDateTime now);
+
+    long countByCreatedAtGreaterThanEqualAndCreatedAtLessThan(LocalDateTime start, LocalDateTime end);
 }
