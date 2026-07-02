@@ -52,6 +52,10 @@ public class ProductSearchRepositoryImpl implements ProductSearchRepository {
         }
         if (condition.regionId() != null) {
             where.and(region.id.eq(condition.regionId()));
+        } else if (!condition.normalizedSigungu().isBlank()) {
+            where.and(region.sido.eq(condition.normalizedSido())).and(region.sigungu.eq(condition.normalizedSigungu()));
+        } else if (!condition.normalizedSido().isBlank()) {
+            where.and(region.sido.eq(condition.normalizedSido()));
         }
         if (!condition.normalizedCategory().isBlank()) {
             where.and(product.category.eq(condition.normalizedCategory()));

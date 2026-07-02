@@ -1,4 +1,4 @@
-﻿import { useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Button, Col, Form, Row } from 'react-bootstrap';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { ArrowDownWideNarrow, ArrowUpWideNarrow, Search } from 'lucide-react';
@@ -7,11 +7,12 @@ import LoadingState from '../components/LoadingState.jsx';
 import ErrorState from '../components/ErrorState.jsx';
 import EmptyState from '../components/EmptyState.jsx';
 import PopularKeywords from '../components/PopularKeywords.jsx';
-import { getProducts, likeProduct, searchProducts, unlikeProduct } from '../api/productApi.js';
-import { getRegions } from '../api/regionApi.js';
+import RegionPicker from '../components/RegionPicker.jsx';
+import { likeProduct, searchProducts, unlikeProduct } from '../api/productApi.js';
+import { getMe } from '../api/mypageApi.js';
 import { useAuth } from '../auth/AuthContext.jsx';
 import { PageHeader, getPageContent, useApiResource } from './pageUtils.jsx';
-import { PRODUCT_CATEGORIES, getChildRegionOptions, getRegionSelectOptions } from './productFormUtils.js';
+import { PRODUCT_CATEGORIES, parseRegionFilterValue } from './productFormUtils.js';
 
 const SORT_OPTIONS = [
   { value: 'recent', label: '최신순', sort: 'recent', status: '' },
@@ -48,13 +49,13 @@ export default function ProductListPage() {
   const { isUserAuthenticated } = useAuth();
   const [draft, setDraft] = useState(DEFAULT_QUERY);
   const [query, setQuery] = useState(DEFAULT_QUERY);
-  const [selectedParentRegionId, setSelectedParentRegionId] = useState('');
+  const [regionLabel, setRegionLabel] = useState('');
   const [productOverrides, setProductOverrides] = useState({});
   const params = useMemo(
     () => ({
       keyword: query.keyword.trim(),
       category: query.category.trim(),
-      regionId: query.regionId || undefined,
+      ...parseRegionFilterValue(query.regionId),
       status: query.status,
       page: query.page,
       size: query.size,
@@ -65,15 +66,12 @@ export default function ProductListPage() {
   );
 
   const productsState = useApiResource(() => searchProducts(params), [params]);
-  const regionsState = useApiResource(() => getRegions(), []);
+  const profileState = useApiResource(() => (isUserAuthenticated ? getMe() : Promise.resolve(null)), [isUserAuthenticated]);
+  const preferredRegions = profileState.data?.preferredRegions || [];
   const products = getPageContent(productsState.data).map((product) => {
     const productId = product.productId ?? product.id;
     return productOverrides[productId] ? { ...product, ...productOverrides[productId] } : product;
   });
-  const regions = getPageContent(regionsState.data);
-  const parentRegionOptions = getRegionSelectOptions(regions);
-  const childRegionOptions = getChildRegionOptions(regions, selectedParentRegionId);
-  const hasChildRegionOptions = childRegionOptions.length > 0;
 
   const handleSubmit = (event) => {
     event.preventDefault();
@@ -98,11 +96,9 @@ export default function ProductListPage() {
     setQuery((current) => ({ ...current, keyword, page: 0 }));
   };
 
-  const handleParentRegionChange = (event) => {
-    const value = event.target.value;
-    const nextChildren = getChildRegionOptions(regions, value);
-    setSelectedParentRegionId(value);
-    setDraft((current) => ({ ...current, regionId: nextChildren.length > 0 ? '' : value }));
+  const handleRegionChange = (regionId, label) => {
+    setDraft((current) => ({ ...current, regionId }));
+    setRegionLabel(label);
   };
 
   const handleProductLikeToggle = async (product) => {
@@ -153,7 +149,7 @@ export default function ProductListPage() {
 
       <Form className="toolbar-panel mb-4" onSubmit={handleSubmit}>
         <Row className="g-2 align-items-end">
-          <Col xs={12} lg={hasChildRegionOptions ? 3 : 4}>
+          <Col xs={12} lg={4}>
             <Form.Label>검색어</Form.Label>
             <Form.Control
               value={draft.keyword}
@@ -175,38 +171,16 @@ export default function ProductListPage() {
               ))}
             </Form.Select>
           </Col>
-          <Col xs={12} md={4} lg={hasChildRegionOptions ? 2 : 3}>
+          <Col xs={12} md={4} lg={3}>
             <Form.Label>지역</Form.Label>
-            <Form.Select
-              value={selectedParentRegionId}
-              onChange={handleParentRegionChange}
-              disabled={regionsState.loading || Boolean(regionsState.error)}
-            >
-              <option value="">전체</option>
-              {parentRegionOptions.map((region) => (
-                <option key={region.value} value={region.value}>
-                  {region.label}
-                </option>
-              ))}
-            </Form.Select>
+            <RegionPicker
+              preferredRegions={preferredRegions}
+              value={draft.regionId}
+              valueLabel={regionLabel}
+              onChange={handleRegionChange}
+              allowAll
+            />
           </Col>
-          {hasChildRegionOptions ? (
-            <Col xs={12} md={4} lg={2}>
-              <Form.Label>세부 지역</Form.Label>
-              <Form.Select
-                value={draft.regionId}
-                onChange={(event) => setDraft((current) => ({ ...current, regionId: event.target.value }))}
-                disabled={regionsState.loading || Boolean(regionsState.error)}
-              >
-                <option value="">전체</option>
-                {childRegionOptions.map((region) => (
-                  <option key={region.value} value={region.value}>
-                    {region.label}
-                  </option>
-                ))}
-              </Form.Select>
-            </Col>
-          ) : null}
           <Col xs={12} md={4} lg={2}>
             <Form.Label>정렬</Form.Label>
             <div className="product-sort-controls">
@@ -232,11 +206,7 @@ export default function ProductListPage() {
             </div>
           </Col>
           <Col xs={12} md={4} lg={1}>
-            <Button
-              type="submit"
-              className="w-100"
-              aria-label="상품 검색"
-            >
+            <Button type="submit" className="w-100" aria-label="상품 검색">
               <Search size={17} aria-hidden="true" />
             </Button>
           </Col>

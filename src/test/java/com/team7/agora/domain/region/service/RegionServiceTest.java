@@ -88,6 +88,50 @@ class RegionServiceTest {
     }
 
     @Test
+    void findSidoList_returnsDistinctSidoNames() {
+        // given
+        RegionService regionService = createService();
+        when(regionRepository.findDistinctSidoOrderBySido()).thenReturn(List.of("경기도", "서울특별시"));
+
+        // when
+        List<String> sidoList = regionService.findSidoList();
+
+        // then
+        assertThat(sidoList).containsExactly("경기도", "서울특별시");
+    }
+
+    @Test
+    void findSigunguList_returnsDistinctSigunguNamesForSido() {
+        // given
+        RegionService regionService = createService();
+        when(regionRepository.findDistinctSigunguBySidoOrderBySigungu("서울특별시"))
+                .thenReturn(List.of("강남구", "송파구"));
+
+        // when
+        List<String> sigunguList = regionService.findSigunguList("서울특별시");
+
+        // then
+        assertThat(sigunguList).containsExactly("강남구", "송파구");
+    }
+
+    @Test
+    void findDongList_returnsRegionsForSidoAndSigungu() {
+        // given
+        RegionService regionService = createService();
+        Region region = region(1L, "역삼동");
+        when(regionRepository.findBySidoAndSigunguOrderByEupmyeondongAsc("서울", "강남구"))
+                .thenReturn(List.of(region));
+
+        // when
+        List<RegionResponse> dongList = regionService.findDongList("서울", "강남구");
+
+        // then
+        assertThat(dongList).hasSize(1);
+        assertThat(dongList.get(0).regionId()).isEqualTo(1L);
+        assertThat(dongList.get(0).eupmyeondong()).isEqualTo("역삼동");
+    }
+
+    @Test
     void updatePreferredRegions_replacesPreviousRegions() {
         // given
         RegionService regionService = createService();
