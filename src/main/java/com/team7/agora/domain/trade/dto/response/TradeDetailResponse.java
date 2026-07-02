@@ -10,9 +10,13 @@ import java.time.LocalDateTime;
  * Trade Detail 응답 본문을 표현하는 DTO이다.
  * @param tradeId 거래 ID
  * @param productId 상품 ID
+ * @param productTitle 상품명
  * @param sellerId 상품 판매자 ID
+ * @param sellerNickname 판매자 닉네임
  * @param buyerId 구매자 ID
- * @param price 가격
+ * @param buyerNickname 구매자 닉네임
+ * @param price 네고로 결정된 가격
+ * @param paidAmount 쿠폰 할인이 반영된 실제 결제 금액
  * @param tradeStatus 거래 진행 상태
  * @param completedAt 거래가 완료된 시각
  * @param paymentStatus 결제 진행 상태
@@ -21,9 +25,13 @@ import java.time.LocalDateTime;
 public record TradeDetailResponse(
     Long tradeId,
     Long productId,
+    String productTitle,
     Long sellerId,
+    String sellerNickname,
     Long buyerId,
+    String buyerNickname,
     BigDecimal price,
+    BigDecimal paidAmount,
     String tradeStatus,
     LocalDateTime completedAt,
     String paymentStatus,
@@ -41,9 +49,13 @@ public record TradeDetailResponse(
         return new TradeDetailResponse(
             trade.getId(),
             trade.getProduct().getId(),
+            trade.getProduct().getTitle(),
             trade.getSeller().getId(),
+            trade.getSeller().getNickname(),
             trade.getBuyer().getId(),
+            trade.getBuyer().getNickname(),
             trade.getPrice(),
+            payment != null ? payment.getAmount() : trade.getPrice(),
             trade.getStatus().name(),
             trade.getCompletedAt(),
             payment != null ? payment.getStatus().name() : null,

@@ -122,19 +122,19 @@ export default function TradeDetailPage() {
               <h2 className="section-title">거래 정보</h2>
               <StatusBadge status={trade.tradeStatus || trade.status} />
             </div>
-            <MoneyText amount={trade.price} className="product-detail-price" />
+            <MoneyText amount={trade.paidAmount ?? trade.price} className="product-detail-price" />
             <dl className="compact-list mt-3">
               <div>
                 <dt>상품</dt>
-                <dd>{trade.productId}</dd>
+                <dd>{trade.productTitle || `상품 #${trade.productId}`}</dd>
               </div>
               <div>
                 <dt>판매자</dt>
-                <dd>{trade.sellerId}</dd>
+                <dd>{trade.sellerNickname || trade.sellerId}</dd>
               </div>
               <div>
                 <dt>구매자</dt>
-                <dd>{trade.buyerId}</dd>
+                <dd>{trade.buyerNickname || trade.buyerId}</dd>
               </div>
               <div>
                 <dt>거래 상태</dt>
