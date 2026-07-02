@@ -18,7 +18,6 @@ import {
   getMyAdminApprovalRequests,
   getAdminUserReports,
   getAdminUsers,
-  hideAdminProduct,
   normalizeCouponEventPayload,
   normalizeCouponIssuePayload,
   requestAdminProductHideApproval,
@@ -72,7 +71,6 @@ test('admin API maps dashboard, product, user, report, payment, settlement, and 
   await getAdminMe(config);
   await getAdminDashboard(config);
   await getAdminProducts({ reportedOnly: true, approvalStatus: 'REJECTED', page: 1, size: 10 }, config);
-  await hideAdminProduct(7, config);
   await approveAdminProduct(7, config);
   await getAdminUsers({ page: 2, size: 5 }, config);
   await getAdminAccounts(config);
@@ -106,7 +104,6 @@ test('admin API maps dashboard, product, user, report, payment, settlement, and 
     { method: 'get', url: '/api/admin/me', params: undefined, data: undefined },
     { method: 'get', url: '/api/admin/dashboard', params: undefined, data: undefined },
     { method: 'get', url: '/api/admin/products', params: { reportedOnly: true, approvalStatus: 'REJECTED', page: 1, size: 10 }, data: undefined },
-    { method: 'patch', url: '/api/admin/products/7/hide', params: undefined, data: undefined },
     { method: 'patch', url: '/api/admin/products/7/approve', params: undefined, data: undefined },
     { method: 'get', url: '/api/admin/users', params: { page: 2, size: 5 }, data: undefined },
     { method: 'get', url: '/api/admin/accounts', params: undefined, data: undefined },

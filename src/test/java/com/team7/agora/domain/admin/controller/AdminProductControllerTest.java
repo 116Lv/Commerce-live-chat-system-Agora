@@ -2,6 +2,7 @@ package com.team7.agora.domain.admin.controller;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
@@ -131,30 +132,13 @@ class AdminProductControllerTest {
     }
 
     @Test
-    void hideProduct_usesAuthenticatedAdminAndReturnsHiddenProduct() throws Exception {
+    void hideProductEndpointIsNotExposedForProductAdmins() throws Exception {
         authenticate(AdminRole.PRODUCT_ADMIN);
-        when(adminProductService.hideProduct(any(AdminPrincipal.class), eq(1L)))
-                .thenReturn(new AdminProductResponse(
-                        1L,
-                        "Bike",
-                        "Good condition",
-                        BigDecimal.valueOf(100000),
-                        10L,
-                        "seller",
-                        "HIDDEN",
-                        "Hidden",
-                        "REJECTED",
-                        null,
-                        null,
-                        List.of(),
-                        LocalDateTime.parse("2026-07-02T10:00:00")
-                ));
 
         mockMvc.perform(patch("/api/admin/products/{productId}/hide", 1L))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value("SUCCESS"))
-                .andExpect(jsonPath("$.data.id").value(1L))
-                .andExpect(jsonPath("$.data.status").value("HIDDEN"));
+                .andExpect(status().is4xxClientError());
+
+        verifyNoInteractions(adminProductService);
     }
 
     @Test

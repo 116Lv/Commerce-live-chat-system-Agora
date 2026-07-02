@@ -54,15 +54,6 @@ public class AdminProductController {
         return ApiResponse.success("Products have been loaded.", PageResponse.from(responses));
     }
 
-    @PatchMapping("/{productId}/hide")
-    public ApiResponse<AdminProductResponse> hideProduct(
-            @AuthenticationPrincipal AdminPrincipal admin,
-            @PathVariable Long productId
-    ) {
-        AdminProductResponse response = adminProductService.hideProduct(admin, productId);
-        return ApiResponse.success("Product has been hidden.", response);
-    }
-
     @PostMapping("/{productId}/hide-requests")
     public ApiResponse<AdminApprovalRequestResponse> requestHideProduct(
             @AuthenticationPrincipal AdminPrincipal admin,
