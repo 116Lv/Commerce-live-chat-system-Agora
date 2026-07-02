@@ -1,6 +1,7 @@
+import { useState } from 'react';
 import { Container, Nav, Navbar, NavDropdown } from 'react-bootstrap';
 import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom';
-import { Heart, ListChecks, LogOut, MessageCircle, PackagePlus, Search, Star, Ticket, UserRound } from 'lucide-react';
+import { Heart, ListChecks, LogOut, MessageCircle, PackagePlus, RefreshCw, Search, Star, Ticket, UserRound } from 'lucide-react';
 import { useAuth } from '../auth/AuthContext.jsx';
 import GlobalChatNotification from '../features/chat/GlobalChatNotification.jsx';
 
@@ -62,12 +63,32 @@ function UserNavLink({ to, end, children }) {
 
 export default function UserLayout() {
   const navigate = useNavigate();
-  const { isUserAuthenticated, logoutUser, userProfile, userToken } = useAuth();
-  const accountLabel = getAccountLabel(userToken, userProfile);
+  const { extendUserSession, isUserAuthenticated, logoutUser, userToken } = useAuth();
+  const [sessionExtending, setSessionExtending] = useState(false);
+  const [sessionExtendMessage, setSessionExtendMessage] = useState('');
+  const accountLabel = getAccountLabel(userToken);
 
   const handleLogout = async () => {
     await logoutUser();
     navigate('/', { replace: true });
+  };
+
+  const handleExtendSession = async () => {
+    if (sessionExtending) {
+      return;
+    }
+
+    setSessionExtending(true);
+    setSessionExtendMessage('');
+
+    try {
+      await extendUserSession();
+      setSessionExtendMessage('로그인 시간이 연장됐습니다.');
+    } catch (error) {
+      setSessionExtendMessage(error?.message || '로그인 연장에 실패했습니다.');
+    } finally {
+      setSessionExtending(false);
+    }
   };
 
   return (
@@ -120,6 +141,12 @@ export default function UserLayout() {
                       <span>{label}</span>
                     </NavDropdown.Item>
                   ))}
+                  <NavDropdown.Divider />
+                  <NavDropdown.Item as="button" type="button" onClick={handleExtendSession} disabled={sessionExtending}>
+                    <RefreshCw size={16} aria-hidden="true" />
+                    <span>{sessionExtending ? '연장 중...' : '로그인 연장하기'}</span>
+                  </NavDropdown.Item>
+                  {sessionExtendMessage ? <NavDropdown.ItemText>{sessionExtendMessage}</NavDropdown.ItemText> : null}
                   <NavDropdown.Divider />
                   <NavDropdown.Item as="button" type="button" onClick={handleLogout}>
                     <LogOut size={16} aria-hidden="true" />

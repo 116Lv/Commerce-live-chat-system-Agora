@@ -31,17 +31,19 @@ describe('product list and card UX source', () => {
     assert.doesNotMatch(source, /<Form\.Control[\s\S]{0,200}value=\{draft\.category\}/);
   });
 
-  test('ProductListPage exposes status filter and sends it as a search param', () => {
+  test('ProductListPage exposes selling and sold filters in the sort control', () => {
     const source = readSource('./ProductListPage.jsx');
 
-    assert.match(source, /PRODUCT_STATUS_OPTIONS/);
+    assert.match(source, /value: 'status-selling'/);
+    assert.match(source, /value: 'status-sold'/);
     assert.match(source, /status: ''/);
     assert.match(source, /status: query\.status/);
-    assert.match(source, /value=\{draft\.status\}/);
-    assert.match(source, /handleStatusChange/);
-    assert.match(source, /setQuery\(\(current\) => \(\{ \.\.\.current, status, page: 0 \}\)\)/);
+    assert.match(source, /getQueryFromDraft/);
+    assert.match(source, /selectedSort\.status/);
+    assert.match(source, /<Form\.Label>정렬<\/Form\.Label>/);
     assert.match(source, /판매중/);
     assert.match(source, /판매완료/);
+    assert.doesNotMatch(source, /<Form\.Label>판매 상태<\/Form\.Label>/);
   });
 
   test('ProductListPage uses staged normalized region select options', () => {
@@ -105,6 +107,9 @@ describe('header and report modal UX source', () => {
     assert.match(source, /userProfile/);
     assert.match(source, /getAccountLabel\(userToken, userProfile\)/);
     assert.match(source, /logoutUser/);
+    assert.match(source, /extendUserSession/);
+    assert.match(source, /handleExtendSession/);
+    assert.match(source, /로그인 연장하기/);
     assert.match(source, /useNavigate/);
     assert.match(source, /handleLogout/);
     assert.match(source, /navigate\('\/', \{ replace: true \}\)/);

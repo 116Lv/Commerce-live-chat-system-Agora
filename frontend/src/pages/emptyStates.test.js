@@ -79,6 +79,8 @@ test('user layout hides protected navigation while logged out and shows signup',
   assert.match(source, /isUserAuthenticated/);
   assert.match(source, /회원가입/);
   assert.match(source, /로그아웃/);
+  assert.match(source, /로그인 연장하기/);
+  assert.match(source, /extendUserSession/);
   assert.match(source, /to: '\/me\/reviews', label: '후기'/);
   assert.match(source, /isUserAuthenticated \? \(/);
   assert.match(source, /<NavDropdown[\s\S]*?account-dropdown[\s\S]*?\)\s*:\s*\(\s*<>[\s\S]*?<UserNavLink to="\/login">/);
