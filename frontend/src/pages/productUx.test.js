@@ -104,6 +104,8 @@ describe('header and report modal UX source', () => {
     assert.match(source, /NavDropdown/);
     assert.match(source, /account-dropdown/);
     assert.match(source, /getAccountLabel/);
+    assert.match(source, /userProfile/);
+    assert.match(source, /getAccountLabel\(userToken, userProfile\)/);
     assert.match(source, /logoutUser/);
     assert.match(source, /extendUserSession/);
     assert.match(source, /handleExtendSession/);

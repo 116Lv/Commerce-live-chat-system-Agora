@@ -42,6 +42,7 @@ const getUserTokenPair = (response) => {
 export function AuthProvider({ children }) {
   const [userToken, setUserTokenState] = useState(() => getUserToken());
   const [adminToken, setAdminTokenState] = useState(() => getAdminToken());
+  const [userProfile, setUserProfile] = useState(null);
 
   const persistUserTokens = ({ accessToken, refreshToken }) => {
     setUserToken(accessToken);
@@ -58,8 +59,13 @@ export function AuthProvider({ children }) {
     const response = await loginUserRequest(credentials);
     const tokens = getUserTokenPair(response);
 
-    persistUserTokens(tokens);
+    persistUserToken(token);
+    setUserProfile(null);
     return response;
+  };
+
+  const updateUserProfile = (profile) => {
+    setUserProfile((current) => ({ ...(current || {}), ...(profile || {}) }));
   };
 
   const signupUser = async (formData) => {
@@ -80,6 +86,7 @@ export function AuthProvider({ children }) {
     } finally {
       clearUserTokens();
       setUserTokenState(null);
+      setUserProfile(null);
     }
   };
 
@@ -129,8 +136,10 @@ export function AuthProvider({ children }) {
     () => ({
       userToken,
       adminToken,
+      userProfile,
       isUserAuthenticated: Boolean(userToken),
       isAdminAuthenticated: Boolean(adminToken),
+      updateUserProfile,
       loginUser,
       signupUser,
       logoutUser,
@@ -138,7 +147,7 @@ export function AuthProvider({ children }) {
       loginAdmin,
       logoutAdmin
     }),
-    [userToken, adminToken]
+    [userToken, adminToken, userProfile]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

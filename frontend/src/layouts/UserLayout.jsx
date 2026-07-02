@@ -39,7 +39,11 @@ function decodeTokenPayload(token) {
   }
 }
 
-function getAccountLabel(userToken) {
+function getAccountLabel(userToken, userProfile) {
+  if (userProfile?.nickname || userProfile?.name || userProfile?.email) {
+    return userProfile.nickname || userProfile.name || userProfile.email;
+  }
+
   const payload = decodeTokenPayload(userToken);
 
   return payload?.nickname || payload?.name || payload?.email || '내 계정';
