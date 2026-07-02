@@ -31,6 +31,19 @@ describe('product list and card UX source', () => {
     assert.doesNotMatch(source, /<Form\.Control[\s\S]{0,200}value=\{draft\.category\}/);
   });
 
+  test('ProductListPage exposes status filter and sends it as a search param', () => {
+    const source = readSource('./ProductListPage.jsx');
+
+    assert.match(source, /PRODUCT_STATUS_OPTIONS/);
+    assert.match(source, /status: ''/);
+    assert.match(source, /status: query\.status/);
+    assert.match(source, /value=\{draft\.status\}/);
+    assert.match(source, /handleStatusChange/);
+    assert.match(source, /setQuery\(\(current\) => \(\{ \.\.\.current, status, page: 0 \}\)\)/);
+    assert.match(source, /판매중/);
+    assert.match(source, /판매완료/);
+  });
+
   test('ProductListPage uses staged normalized region select options', () => {
     const source = readSource('./ProductListPage.jsx');
 

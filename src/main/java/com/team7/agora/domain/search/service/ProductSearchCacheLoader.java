@@ -36,6 +36,7 @@ public class ProductSearchCacheLoader {
     @Cacheable(
         cacheNames = CacheConfig.PRODUCT_SEARCH_CACHE,
         key = "'search:' + #condition.normalizedKeyword() + ':' + #condition.regionId() + ':' + #condition.normalizedCategory()"
+            + " + ':' + #condition.normalizedStatus()"
             + " + ':' + #condition.pageable().pageNumber + ':' + #condition.pageable().pageSize"
             + " + ':' + #condition.normalizedSort() + ':' + #condition.normalizedDirection()"
     )
