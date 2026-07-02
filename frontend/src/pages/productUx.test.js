@@ -33,6 +33,7 @@ describe('product list and card UX source', () => {
 
   test('ProductListPage exposes selling and sold filters in the sort control', () => {
     const source = readSource('./ProductListPage.jsx');
+    const styles = readSource('../styles/theme.css');
 
     assert.match(source, /value: 'status-selling'/);
     assert.match(source, /value: 'status-sold'/);
@@ -41,6 +42,10 @@ describe('product list and card UX source', () => {
     assert.match(source, /getQueryFromDraft/);
     assert.match(source, /selectedSort\.status/);
     assert.match(source, /<Form\.Label>정렬<\/Form\.Label>/);
+    assert.match(source, /product-sort-controls/);
+    assert.match(source, /aria-label="상품 정렬"/);
+    assert.match(styles, /\.product-sort-controls/);
+    assert.match(styles, /grid-template-columns: minmax\(0, 1fr\) 3rem/);
     assert.match(source, /판매중/);
     assert.match(source, /판매완료/);
     assert.doesNotMatch(source, /<Form\.Label>판매 상태<\/Form\.Label>/);
@@ -94,6 +99,14 @@ describe('product list and card UX source', () => {
     assert.match(source, /setProductOverrides/);
     assert.match(source, /handleProductLikeToggle/);
     assert.match(source, /onLikeToggle=\{handleProductLikeToggle\}/);
+  });
+
+  test('ProductListPage refreshes liked sort results after a successful like change', () => {
+    const source = readSource('./ProductListPage.jsx');
+
+    assert.match(source, /if \(query\.sort === 'likes'\) \{/);
+    assert.match(source, /productsState\.reload\(\);/);
+    assert.match(source, /catch \{[\s\S]{0,120}setProductOverrides/);
   });
 });
 

@@ -129,6 +129,9 @@ export default function ProductListPage() {
           likeCount: response.likeCount ?? optimistic.likeCount
         }
       }));
+      if (query.sort === 'likes') {
+        productsState.reload();
+      }
     } catch {
       setProductOverrides((current) => ({ ...current, [productId]: { liked, likeCount } }));
     }
@@ -150,7 +153,7 @@ export default function ProductListPage() {
 
       <Form className="toolbar-panel mb-4" onSubmit={handleSubmit}>
         <Row className="g-2 align-items-end">
-          <Col xs={12} lg={4}>
+          <Col xs={12} lg={hasChildRegionOptions ? 3 : 4}>
             <Form.Label>검색어</Form.Label>
             <Form.Control
               value={draft.keyword}
@@ -204,34 +207,37 @@ export default function ProductListPage() {
               </Form.Select>
             </Col>
           ) : null}
-          <Col xs={12} md={4} lg={1}>
-            <Button type="submit" className="w-100" aria-label="상품 검색">
-              <Search size={17} aria-hidden="true" />
-            </Button>
-          </Col>
           <Col xs={12} md={4} lg={2}>
             <Form.Label>정렬</Form.Label>
-            <Form.Select value={draft.sort} onChange={handleSortChange}>
-              {SORT_OPTIONS.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </Form.Select>
+            <div className="product-sort-controls">
+              <Form.Select value={draft.sort} onChange={handleSortChange} aria-label="상품 정렬">
+                {SORT_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </Form.Select>
+              <Button
+                variant="outline-secondary"
+                onClick={handleDirectionToggle}
+                aria-label={query.direction === 'asc' ? '오름차순 정렬중, 내림차순으로 보기' : '내림차순 정렬중, 오름차순으로 보기'}
+                title={query.direction === 'asc' ? '오름차순' : '내림차순'}
+              >
+                {query.direction === 'asc' ? (
+                  <ArrowUpWideNarrow size={17} aria-hidden="true" />
+                ) : (
+                  <ArrowDownWideNarrow size={17} aria-hidden="true" />
+                )}
+              </Button>
+            </div>
           </Col>
           <Col xs={12} md={4} lg={1}>
             <Button
-              variant="outline-secondary"
+              type="submit"
               className="w-100"
-              onClick={handleDirectionToggle}
-              aria-label={query.direction === 'asc' ? '오름차순 정렬중, 내림차순으로 보기' : '내림차순 정렬중, 오름차순으로 보기'}
-              title={query.direction === 'asc' ? '오름차순' : '내림차순'}
+              aria-label="상품 검색"
             >
-              {query.direction === 'asc' ? (
-                <ArrowUpWideNarrow size={17} aria-hidden="true" />
-              ) : (
-                <ArrowDownWideNarrow size={17} aria-hidden="true" />
-              )}
+              <Search size={17} aria-hidden="true" />
             </Button>
           </Col>
         </Row>

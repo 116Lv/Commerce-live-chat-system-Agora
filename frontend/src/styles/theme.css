@@ -726,6 +726,18 @@ p {
   padding: 1rem;
 }
 
+.product-sort-controls {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 3rem;
+  gap: 0.5rem;
+}
+
+.product-sort-controls .btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .admin-product-toolbar,
 .admin-approval-toolbar {
   display: flex;
