@@ -41,7 +41,7 @@ public class S3ImageStorageClient implements ImageStorageClient {
     @Override
     public String store(String category, MultipartFile file) {
         if (file == null || file.isEmpty()) {
-            throw new BusinessException(ErrorCode.INVALID_REQUEST, "?낅줈?쒗븷 ?대?吏媛 ?놁뒿?덈떎.");
+            throw new BusinessException(ErrorCode.INVALID_REQUEST, "업로드할 이미지가 없습니다.");
         }
         validateRequiredProperties();
         validateCategory(category);
@@ -59,7 +59,7 @@ public class S3ImageStorageClient implements ImageStorageClient {
         try (InputStream inputStream = file.getInputStream()) {
             s3Client.putObject(request, RequestBody.fromInputStream(inputStream, file.getSize()));
         } catch (IOException | S3Exception | SdkClientException e) {
-            throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR, "?대?吏 ??μ뿉 ?ㅽ뙣?덉뒿?덈떎.");
+            throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR, "이미지 저장에 실패했습니다.");
         }
 
         return properties.resolvedPublicBaseUrl() + "/" + key;
@@ -67,13 +67,13 @@ public class S3ImageStorageClient implements ImageStorageClient {
 
     private void validateRequiredProperties() {
         if (!StringUtils.hasText(properties.bucket()) || !StringUtils.hasText(properties.region())) {
-            throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR, "?대?吏 ??μ뿉 ?ㅽ뙣?덉뒿?덈떎.");
+            throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR, "이미지 저장에 실패했습니다.");
         }
     }
 
     private void validateCategory(String category) {
         if (!ALLOWED_CATEGORIES.contains(category)) {
-            throw new BusinessException(ErrorCode.INVALID_REQUEST, "吏?먰븯吏 ?딅뒗 ?낅줈??寃쎈줈?낅땲??");
+            throw new BusinessException(ErrorCode.INVALID_REQUEST, "지원하지 않는 업로드 경로입니다.");
         }
     }
 
