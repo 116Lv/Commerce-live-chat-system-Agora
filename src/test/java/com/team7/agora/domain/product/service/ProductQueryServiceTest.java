@@ -106,7 +106,47 @@ class ProductQueryServiceTest {
             List.of(5L), ProductStatus.HIDDEN, ProductApprovalStatus.APPROVED, PageRequest.of(0, 20)
         )).thenReturn(new PageImpl<>(List.of(product)));
 
-        List<ProductResponse> responses = service.getProducts(null, 5L, PageRequest.of(0, 20));
+        List<ProductResponse> responses = service.getProducts(null, 5L, null, null, PageRequest.of(0, 20));
+
+        assertThat(responses).hasSize(1);
+    }
+
+    @Test
+    void getProductsFiltersBySidoWhenRegionIdAbsent() {
+        ProductService service = newService();
+        User seller = User.signup("seller@test.com", "password", "판매자", "01011112222");
+        assignId(seller, 1L);
+        Product product = Product.create(
+            seller,
+            Region.create("서울 강남구 역삼동", "1168010100", "서울", "강남구", "역삼동"),
+            "자전거", "상태 좋아요", BigDecimal.valueOf(50000), "스포츠"
+        );
+        assignId(product, 10L);
+        when(productRepository.findAllByRegion_SidoAndDeletedAtIsNullAndStatusNotAndApprovalStatus(
+            "서울", ProductStatus.HIDDEN, ProductApprovalStatus.APPROVED, PageRequest.of(0, 20)
+        )).thenReturn(new PageImpl<>(List.of(product)));
+
+        List<ProductResponse> responses = service.getProducts(null, null, "서울", null, PageRequest.of(0, 20));
+
+        assertThat(responses).hasSize(1);
+    }
+
+    @Test
+    void getProductsFiltersBySidoAndSigunguWhenRegionIdAbsent() {
+        ProductService service = newService();
+        User seller = User.signup("seller@test.com", "password", "판매자", "01011112222");
+        assignId(seller, 1L);
+        Product product = Product.create(
+            seller,
+            Region.create("서울 강남구 역삼동", "1168010100", "서울", "강남구", "역삼동"),
+            "자전거", "상태 좋아요", BigDecimal.valueOf(50000), "스포츠"
+        );
+        assignId(product, 10L);
+        when(productRepository.findAllByRegion_SidoAndRegion_SigunguAndDeletedAtIsNullAndStatusNotAndApprovalStatus(
+            "서울", "강남구", ProductStatus.HIDDEN, ProductApprovalStatus.APPROVED, PageRequest.of(0, 20)
+        )).thenReturn(new PageImpl<>(List.of(product)));
+
+        List<ProductResponse> responses = service.getProducts(null, null, "서울", "강남구", PageRequest.of(0, 20));
 
         assertThat(responses).hasSize(1);
     }
@@ -127,7 +167,7 @@ class ProductQueryServiceTest {
         ))
             .thenReturn(new PageImpl<>(List.of(product)));
 
-        List<ProductResponse> responses = service.getProducts(null, null, PageRequest.of(0, 20));
+        List<ProductResponse> responses = service.getProducts(null, null, null, null, PageRequest.of(0, 20));
 
         assertThat(responses).hasSize(1);
     }
@@ -149,7 +189,7 @@ class ProductQueryServiceTest {
             ProductStatus.HIDDEN, ProductApprovalStatus.APPROVED, PageRequest.of(0, 20)
         )).thenReturn(new PageImpl<>(List.of()));
 
-        service.getProducts(2L, null, PageRequest.of(0, 20));
+        service.getProducts(2L, null, null, null, PageRequest.of(0, 20));
 
         org.mockito.Mockito.verify(productRepository).findAllByDeletedAtIsNullAndStatusNotAndApprovalStatus(
             ProductStatus.HIDDEN, ProductApprovalStatus.APPROVED, PageRequest.of(0, 20)
@@ -271,7 +311,7 @@ class ProductQueryServiceTest {
         when(productImageRepository.findAllByProductIdInOrderByProductIdAscSortOrderAsc(List.of(10L)))
             .thenReturn(List.of(image));
 
-        List<ProductResponse> responses = service.getProducts(2L, 5L, PageRequest.of(0, 20));
+        List<ProductResponse> responses = service.getProducts(2L, 5L, null, null, PageRequest.of(0, 20));
 
         assertThat(responses).hasSize(1);
         ProductResponse response = responses.get(0);

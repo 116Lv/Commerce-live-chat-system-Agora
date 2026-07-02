@@ -5,8 +5,12 @@ import org.springframework.data.domain.Pageable;
 
 /**
  * 상품 검색 조건 데이터를 전달하는 DTO이다.
+ * regionId가 있으면 읍/면/동 단위로 정확히 매칭하고, regionId가 없고 sigungu(+sido)가 있으면 해당 시/군/구 전체를,
+ * sido만 있으면 해당 시/도 전체를 대상으로 검색한다(regionId &gt; sido+sigungu &gt; sido 우선순위).
  * @param keyword 검색어
- * @param regionId 지역 ID
+ * @param regionId 지역 ID (읍/면/동 단위 정확한 매칭)
+ * @param sido 시/도 이름 (넓은 범위 검색용)
+ * @param sigungu 시/군/구 이름 (넓은 범위 검색용, sido와 함께 사용)
  * @param category 업로드 카테고리
  * @param status 상품 판매 상태
  * @param pageable 페이지 요청 정보
@@ -16,6 +20,8 @@ import org.springframework.data.domain.Pageable;
 public record ProductSearchCondition(
     String keyword,
     Long regionId,
+    String sido,
+    String sigungu,
     String category,
     ProductStatus status,
     Pageable pageable,
@@ -24,7 +30,7 @@ public record ProductSearchCondition(
 ) {
 
     public ProductSearchCondition(String keyword, Long regionId, String category, Pageable pageable) {
-        this(keyword, regionId, category, null, pageable, null, null);
+        this(keyword, regionId, null, null, category, null, pageable, null, null);
     }
 
     public ProductSearchCondition(
@@ -34,7 +40,7 @@ public record ProductSearchCondition(
         ProductStatus status,
         Pageable pageable
     ) {
-        this(keyword, regionId, category, status, pageable, null, null);
+        this(keyword, regionId, null, null, category, status, pageable, null, null);
     }
 
     public ProductSearchCondition(
@@ -45,7 +51,7 @@ public record ProductSearchCondition(
         String sort,
         String direction
     ) {
-        this(keyword, regionId, category, null, pageable, sort, direction);
+        this(keyword, regionId, null, null, category, null, pageable, sort, direction);
     }
 
     /**
@@ -71,6 +77,14 @@ public record ProductSearchCondition(
             return status;
         }
         return null;
+    }
+
+    public String normalizedSido() {
+        return sido == null ? "" : sido.trim();
+    }
+
+    public String normalizedSigungu() {
+        return sigungu == null ? "" : sigungu.trim();
     }
 
     public String normalizedSort() {

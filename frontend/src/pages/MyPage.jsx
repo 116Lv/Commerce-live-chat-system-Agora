@@ -3,9 +3,10 @@ import { Alert, Button, Form } from 'react-bootstrap';
 import LoadingState from '../components/LoadingState.jsx';
 import ErrorState from '../components/ErrorState.jsx';
 import EmptyState from '../components/EmptyState.jsx';
+import RegionCascadeSelect from '../components/RegionCascadeSelect.jsx';
 import { getMyCoupons } from '../api/couponApi.js';
 import { changePassword, getMe, updateProfile } from '../api/mypageApi.js';
-import { getRegions, updatePreferredRegions } from '../api/regionApi.js';
+import { updatePreferredRegions } from '../api/regionApi.js';
 import { useAuth } from '../auth/AuthContext.jsx';
 import { formatCouponMoney, sortMyCoupons } from './couponUtils.js';
 import { PageHeader, getPageContent, useApiResource } from './pageUtils.jsx';
@@ -15,7 +16,6 @@ const MIN_REGION_COUNT = 3;
 const MAX_REGION_COUNT = 5;
 
 const toRegionId = (region) => region?.regionId ?? region?.id;
-const toSelectedRegionId = (value) => Number(value);
 
 const getPrimaryRegion = (regions = []) => regions.find((region) => region.primaryRegion) || regions[0] || null;
 
@@ -60,17 +60,16 @@ function CouponPreview({ coupons, loading, error }) {
 export default function MyPage() {
   const { updateUserProfile } = useAuth();
   const profileState = useApiResource(() => getMe(), []);
-  const regionsState = useApiResource(() => getRegions(), []);
   const couponsState = useApiResource(() => getMyCoupons(), []);
   const coupons = getPageContent(couponsState.data);
-  const regions = getPageContent(regionsState.data);
   const profile = profileState.data;
 
   const [nickname, setNickname] = useState('');
   const [phone, setPhone] = useState('');
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
-  const [selectedRegionIds, setSelectedRegionIds] = useState([]);
+  const [selectedRegions, setSelectedRegions] = useState([]);
+  const [primaryRegionId, setPrimaryRegionId] = useState('');
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -82,20 +81,61 @@ export default function MyPage() {
 
     setNickname(profile.nickname || '');
     setPhone(profile.phone || '');
-    setSelectedRegionIds((profile.preferredRegions || []).map((region) => toRegionId(region)).filter(Boolean));
+
+    const preferredRegions = profile.preferredRegions || [];
+    setSelectedRegions(
+      preferredRegions
+        .map((region) => ({ ...region, regionId: toRegionId(region) }))
+        .filter((region) => region.regionId)
+    );
+    const primary = getPrimaryRegion(preferredRegions);
+    setPrimaryRegionId(primary ? String(toRegionId(primary)) : '');
   }, [profile]);
 
   const primaryRegion = getPrimaryRegion(profile?.preferredRegions);
-  const selectedPrimaryRegionId = selectedRegionIds[0] || null;
 
-  const handleRegionChange = (event) => {
-    const nextIds = Array.from(event.target.selectedOptions, (option) => toSelectedRegionId(option.value)).filter(Boolean);
-    setSelectedRegionIds(nextIds);
+  const handleAddRegion = (region) => {
+    setError('');
+    setSelectedRegions((current) => {
+      if (current.some((item) => item.regionId === region.regionId)) {
+        setError('이미 선택한 지역이에요.');
+        return current;
+      }
+
+      if (current.length >= MAX_REGION_COUNT) {
+        setError(`선호지역은 최대 ${MAX_REGION_COUNT}개까지 선택할 수 있습니다.`);
+        return current;
+      }
+
+      const next = [...current, region];
+      if (!primaryRegionId) {
+        setPrimaryRegionId(String(region.regionId));
+      }
+      return next;
+    });
+  };
+
+  const handleRemoveRegion = (regionId) => {
+    setError('');
+    setSelectedRegions((current) => {
+      const next = current.filter((region) => region.regionId !== regionId);
+      if (primaryRegionId === String(regionId)) {
+        setPrimaryRegionId(next[0] ? String(next[0].regionId) : '');
+      }
+      return next;
+    });
   };
 
   const validateForm = () => {
-    if (selectedRegionIds.length > 0 && (selectedRegionIds.length < MIN_REGION_COUNT || selectedRegionIds.length > MAX_REGION_COUNT)) {
+    if (
+      selectedRegions.length > 0 &&
+      (selectedRegions.length < MIN_REGION_COUNT || selectedRegions.length > MAX_REGION_COUNT)
+    ) {
       return `선호지역은 ${MIN_REGION_COUNT}개 이상 ${MAX_REGION_COUNT}개 이하로 선택해주세요.`;
+    }
+
+    if (selectedRegions.length > 0 && !primaryRegionId) {
+      return '대표 선호지역을 선택해주세요.';
     }
 
     if ((currentPassword || newPassword) && (!currentPassword || !newPassword)) {
@@ -126,8 +166,11 @@ export default function MyPage() {
       const updatedProfile = await updateProfile({ nickname, phone });
       updateUserProfile({ nickname: updatedProfile?.nickname || nickname, phone: updatedProfile?.phone || phone });
 
-      if (selectedRegionIds.length > 0) {
-        await updatePreferredRegions({ regionIds: selectedRegionIds, primaryRegionId: selectedPrimaryRegionId });
+      if (selectedRegions.length > 0) {
+        await updatePreferredRegions({
+          regionIds: selectedRegions.map((region) => region.regionId),
+          primaryRegionId: Number(primaryRegionId)
+        });
       }
 
       if (currentPassword && newPassword) {
@@ -208,18 +251,39 @@ export default function MyPage() {
             </Form.Group>
             <Form.Group className="mypage-field" controlId="mypage-regions">
               <Form.Label>선호지역</Form.Label>
-              <Form.Select multiple value={selectedRegionIds.map(String)} onChange={handleRegionChange} disabled={regionsState.loading}>
-                {regions.map((region) => {
-                  const regionId = toRegionId(region);
-                  return (
-                    <option key={regionId} value={regionId}>
-                      {region.name}
-                    </option>
-                  );
-                })}
-              </Form.Select>
+              <RegionCascadeSelect onAdd={handleAddRegion} disabled={submitting || selectedRegions.length >= MAX_REGION_COUNT} />
+              {selectedRegions.length === 0 ? (
+                <EmptyState title="아직 선택한 지역이 없어요" />
+              ) : (
+                <div className="stack-list mt-2">
+                  {selectedRegions.map((region) => (
+                    <div className="d-flex align-items-center justify-content-between gap-3" key={region.regionId}>
+                      <span>{region.name}</span>
+                      <div className="d-flex align-items-center gap-2">
+                        <Form.Check
+                          type="radio"
+                          id={`mypage-primary-region-${region.regionId}`}
+                          name="mypagePrimaryRegionId"
+                          label="대표"
+                          value={region.regionId}
+                          checked={primaryRegionId === String(region.regionId)}
+                          onChange={(event) => setPrimaryRegionId(event.target.value)}
+                        />
+                        <Button
+                          type="button"
+                          variant="outline-secondary"
+                          size="sm"
+                          onClick={() => handleRemoveRegion(region.regionId)}
+                        >
+                          삭제
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </Form.Group>
-            <Button className="mypage-submit-button" type="submit" disabled={submitting || regionsState.loading}>
+            <Button className="mypage-submit-button" type="submit" disabled={submitting}>
               {submitting ? '수정 중' : '수정'}
             </Button>
           </Form>

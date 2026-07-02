@@ -4,16 +4,15 @@ import { describe, test } from 'node:test';
 import {
   PRODUCT_CATEGORIES,
   formatPriceInput,
-  getChildRegionOptions,
   getProductCategoryLabel,
   getProductImageUrl,
   getProductImageUrls,
   getProductRegionLabel,
   getProductStatusLabel,
   getProductTitle,
-  getRegionSelectOptions,
   normalizeRegionLabel,
   parsePriceInput,
+  parseRegionFilterValue,
   validateProductForm
 } from './productFormUtils.js';
 
@@ -216,52 +215,12 @@ describe('product form utilities', () => {
     assert.equal(normalizeRegionLabel(null), '');
   });
 
-  test('returns select options using normalized region labels', () => {
-    const regions = [
-      { regionId: 1, name: '서울 강남구' },
-      { id: 2, sido: '경기도', sigungu: '성남시', eupmyeondong: '정자동' }
-    ];
-
-    assert.deepEqual(getRegionSelectOptions(regions), [
-      { value: '1', label: '서울 강남구' },
-      { value: '2', label: '경기도 성남시 정자동' }
-    ]);
+  test('parses region filter values into regionId, sido, or sido+sigungu query params', () => {
+    assert.deepEqual(parseRegionFilterValue(''), {});
+    assert.deepEqual(parseRegionFilterValue(null), {});
+    assert.deepEqual(parseRegionFilterValue('357'), { regionId: '357' });
+    assert.deepEqual(parseRegionFilterValue('sido:서울특별시'), { sido: '서울특별시' });
+    assert.deepEqual(parseRegionFilterValue('sigungu:서울특별시:강남구'), { sido: '서울특별시', sigungu: '강남구' });
   });
 
-  test('returns child options from flat parent identifiers', () => {
-    const regions = [
-      { regionId: 1, name: '서울' },
-      { regionId: 11, parentId: 1, name: '강남구' },
-      { id: 12, parentRegionId: '1', name: '서초구' },
-      { regionId: 21, parentId: 2, name: '분당구' }
-    ];
-
-    assert.deepEqual(getChildRegionOptions(regions, 1), [
-      { value: '11', label: '강남구' },
-      { value: '12', label: '서초구' }
-    ]);
-  });
-
-  test('returns child options from nested children arrays', () => {
-    const regions = [
-      {
-        regionId: 1,
-        name: '서울',
-        children: [
-          { regionId: 11, name: '강남구' },
-          { id: 12, name: '서초구' }
-        ]
-      },
-      {
-        regionId: 2,
-        name: '경기',
-        children: [{ regionId: 21, name: '분당구' }]
-      }
-    ];
-
-    assert.deepEqual(getChildRegionOptions(regions, '1'), [
-      { value: '11', label: '강남구' },
-      { value: '12', label: '서초구' }
-    ]);
-  });
 });

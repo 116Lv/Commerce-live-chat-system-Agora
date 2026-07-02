@@ -20,7 +20,11 @@ import lombok.NoArgsConstructor;
 @Entity
 @Table(
         name = "regions",
-        indexes = @Index(name = "idx_regions_name", columnList = "name")
+        indexes = {
+                @Index(name = "idx_regions_name", columnList = "name"),
+                @Index(name = "idx_regions_sido", columnList = "sido"),
+                @Index(name = "idx_regions_sido_sigungu", columnList = "sido, sigungu")
+        }
 )
 public class Region {
 

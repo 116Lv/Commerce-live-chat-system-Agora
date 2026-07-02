@@ -149,7 +149,7 @@ class ProductServiceTest {
             pageable
         )).thenReturn(new PageImpl<>(List.of(), pageable, 0));
 
-        productService.getProducts(1L, null, pageable);
+        productService.getProducts(1L, null, null, null, pageable);
 
         verify(productRepository).findAllByDeletedAtIsNullAndStatusNotAndApprovalStatus(
             ProductStatus.HIDDEN,

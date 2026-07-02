@@ -75,7 +75,9 @@ public class ProductController {
     /**
      * 상품 정보를 조회하는 GET /api/products 요청을 처리한다.
      * @param userDetails 현재 로그인한 사용자 정보
-     * @param regionId 지역 ID
+     * @param regionId 지역 ID (읍/면/동 단위 정확한 매칭, 우선 적용)
+     * @param sido 시/도 이름 (regionId가 없을 때 해당 시/도 전체를 조회)
+     * @param sigungu 시/군/구 이름 (regionId가 없을 때 sido와 함께 해당 시/군/구 전체를 조회)
      * @param page 조회할 페이지 번호
      * @param size 한 번에 조회할 항목 개수
      * @return 클라이언트에 반환할 API 응답
@@ -84,11 +86,13 @@ public class ProductController {
     public ResponseEntity<ApiResponse<List<ProductResponse>>> getProducts(
         @AuthenticationPrincipal CustomUserDetails userDetails,
         @RequestParam(required = false) Long regionId,
+        @RequestParam(required = false) String sido,
+        @RequestParam(required = false) String sigungu,
         @RequestParam(defaultValue = "0") int page,
         @RequestParam(defaultValue = "20") int size
     ) {
         Long viewerId = userDetails == null ? null : userDetails.getUserId();
-        List<ProductResponse> responses = productService.getProducts(viewerId, regionId, PageRequest.of(page, size));
+        List<ProductResponse> responses = productService.getProducts(viewerId, regionId, sido, sigungu, PageRequest.of(page, size));
         return ResponseEntity.ok(ApiResponse.success("상품 목록을 조회했습니다.", responses));
     }
 

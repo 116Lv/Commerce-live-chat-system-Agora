@@ -104,6 +104,23 @@ public interface ProductRepository extends JpaRepository<Product, Long>, Product
     );
 
     @EntityGraph(attributePaths = {"seller", "region"})
+    Page<Product> findAllByRegion_SidoAndRegion_SigunguAndDeletedAtIsNullAndStatusNotAndApprovalStatus(
+        String sido,
+        String sigungu,
+        ProductStatus status,
+        ProductApprovalStatus approvalStatus,
+        Pageable pageable
+    );
+
+    @EntityGraph(attributePaths = {"seller", "region"})
+    Page<Product> findAllByRegion_SidoAndDeletedAtIsNullAndStatusNotAndApprovalStatus(
+        String sido,
+        ProductStatus status,
+        ProductApprovalStatus approvalStatus,
+        Pageable pageable
+    );
+
+    @EntityGraph(attributePaths = {"seller", "region"})
     List<Product> findAllBySellerAndDeletedAtIsNull(User seller);
 
     @Modifying(clearAutomatically = true, flushAutomatically = true)

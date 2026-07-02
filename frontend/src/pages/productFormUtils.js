@@ -48,11 +48,6 @@ const uniqueParts = (parts) => {
 
 const getRegionValue = (region) => region?.regionId ?? region?.id;
 
-const toOption = (region) => ({
-  value: String(getRegionValue(region)),
-  label: normalizeRegionLabel(region)
-});
-
 export function formatPriceInput(value) {
   const digits = digitsOnly(value);
 
@@ -128,24 +123,21 @@ export function normalizeRegionLabel(region) {
   return value === undefined || value === null ? '' : String(value);
 }
 
-export function getRegionSelectOptions(regions = []) {
-  return regions.filter((region) => getRegionValue(region) !== undefined && getRegionValue(region) !== null).map(toOption);
-}
-
-export function getChildRegionOptions(regions = [], parentId) {
-  if (parentId === undefined || parentId === null || String(parentId).trim() === '') {
-    return [];
+export function parseRegionFilterValue(value) {
+  if (!value) {
+    return {};
   }
 
-  const normalizedParentId = String(parentId);
-  const nestedParent = regions.find((region) => String(getRegionValue(region)) === normalizedParentId);
-  const nestedChildren = Array.isArray(nestedParent?.children) ? nestedParent.children : [];
-  const flatChildren = regions.filter((region) => {
-    const childParentId = region?.parentId ?? region?.parentRegionId;
-    return childParentId !== undefined && childParentId !== null && String(childParentId) === normalizedParentId;
-  });
+  if (value.startsWith('sigungu:')) {
+    const [, sido, sigungu] = value.split(':');
+    return { sido, sigungu };
+  }
 
-  return getRegionSelectOptions([...nestedChildren, ...flatChildren]);
+  if (value.startsWith('sido:')) {
+    return { sido: value.slice(5) };
+  }
+
+  return { regionId: value };
 }
 
 export function getProductCategoryLabel(product = {}) {
