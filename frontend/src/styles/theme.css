@@ -816,6 +816,20 @@ p {
   min-height: 2.25rem;
 }
 
+.admin-approval-actions {
+  min-width: 9.5rem;
+  justify-content: flex-end;
+  white-space: nowrap;
+}
+
+.admin-approval-action-group {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.4rem;
+  flex-wrap: nowrap;
+}
+
 .admin-product-actions-cell {
   min-width: 12rem;
   vertical-align: middle;

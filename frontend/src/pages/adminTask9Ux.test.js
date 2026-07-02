@@ -98,6 +98,9 @@ test('remaining admin pages expose page-specific Korean filter UX', () => {
   assert.match(pages, /filteredUsers/);
   assert.match(pages, /handleUserSearch/);
   assert.match(pages, /handleUserReset/);
+  assert.doesNotMatch(pages, /user\.role/);
+  assert.match(pages, /<th>회원 ID<\/th>/);
+  assert.ok(pages.indexOf('<th>회원 ID</th>') < pages.indexOf('<th>회원</th>'));
   assert.match(pages, /회원 검색/);
   assert.match(pages, /회원 상태/);
   assert.doesNotMatch(pages, /회원 권한/);
@@ -126,6 +129,10 @@ test('remaining admin pages expose page-specific Korean filter UX', () => {
 
   assert.match(pages, /approvalFilters/);
   assert.match(pages, /filteredApprovals/);
+  assert.match(pages, /approvalTargetSummary/);
+  assert.match(pages, /approvalOperationLabel/);
+  assert.match(pages, /couponPayload\?\.eventName/);
+  assert.match(pages, /admin-approval-action-group/);
   assert.match(pages, /승인 요청 검색/);
   assert.match(pages, /요청 권한/);
 
@@ -151,6 +158,8 @@ test('admin search panels use a full-width keyword row with compact filters and 
   assert.match(styles, /\.admin-filter-options/);
   assert.match(styles, /\.admin-search-actions/);
   assert.match(styles, /justify-self: end/);
+  assert.match(styles, /\.admin-approval-action-group/);
+  assert.match(styles, /flex-wrap: nowrap/);
 });
 
 test('admin coupon individual issue form is limited while issued coupon list stays visible for every event type', () => {

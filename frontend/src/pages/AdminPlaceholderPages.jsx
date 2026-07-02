@@ -780,10 +780,9 @@ export function AdminUsersPage() {
         <AdminTable>
           <thead>
             <tr>
+              <th>회원 ID</th>
               <th>회원</th>
-              <th>ID</th>
               <th>이메일</th>
-              <th>권한</th>
               <th>상태</th>
               <th>변경</th>
             </tr>
@@ -791,10 +790,9 @@ export function AdminUsersPage() {
           <tbody>
             {filteredUsers.map((user) => (
               <tr key={getId(user, ['id', 'userId'])}>
-                <td>{user.nickname || '-'}</td>
                 <td>{getId(user, ['id', 'userId']) || '-'}</td>
+                <td>{user.nickname || '-'}</td>
                 <td>{user.email || '-'}</td>
-                <td>{user.role || '-'}</td>
                 <td>
                   <StatusBadge status={user.status} />
                 </td>
@@ -846,9 +844,13 @@ function ReportTable({ rows, type, memos, setMemo, onResolve }) {
           const targetTitle = type === 'product'
             ? report.productTitle || `상품 #${report.productId}`
             : report.reportedUserNickname || `회원 #${report.reportedUserId}`;
+          const productSellerId = report.productSellerId || report.reportedUserId;
+          const productSellerName = report.productSellerNickname || report.reportedUserNickname;
+          const productSellerEmail = report.productSellerEmail || report.reportedUserEmail;
           const targetSubText = type === 'product'
-            ? `신고 대상 ${report.reportedUserNickname || report.reportedUserEmail || report.reportedUserId || '-'}`
+            ? `상품 ID ${report.productId || '-'} · 판매자 ${productSellerName || productSellerEmail || '-'} (#${productSellerId || '-'})`
             : report.reportedUserEmail || `회원 ID ${report.reportedUserId || '-'}`;
+          const isResolved = String(report.status).toUpperCase() === 'RESOLVED';
 
           return (
             <tr key={memoKey}>
@@ -860,6 +862,15 @@ function ReportTable({ rows, type, memos, setMemo, onResolve }) {
               <td>
                 <div>{targetTitle}</div>
                 <small className="text-muted">{targetSubText}</small>
+                {type === 'product' ? (
+                  <div className="d-flex flex-wrap gap-2 mt-1">
+                    <small className="text-muted">
+                      가격 <MoneyText amount={report.productPrice} />
+                    </small>
+                    <StatusBadge status={report.productStatus} />
+                    <StatusBadge status={report.productApprovalStatus} />
+                  </div>
+                ) : null}
               </td>
               <td>{report.reason || '-'}</td>
               <td>
@@ -868,19 +879,26 @@ function ReportTable({ rows, type, memos, setMemo, onResolve }) {
                 </Badge>
               </td>
               <td>
-                <Form.Control
-                  size="sm"
-                  value={memos[memoKey] || ''}
-                  placeholder="처리 메모"
-                  onChange={(event) => setMemo(memoKey, event.target.value)}
-                />
+                {isResolved ? (
+                  <div>
+                    <div>{report.adminMemo || '-'}</div>
+                    <small className="text-muted">{formatDateTime(report.resolvedAt)}</small>
+                  </div>
+                ) : (
+                  <Form.Control
+                    size="sm"
+                    value={memos[memoKey] || ''}
+                    placeholder="처리 메모"
+                    onChange={(event) => setMemo(memoKey, event.target.value)}
+                  />
+                )}
               </td>
               <td className="text-end">
                 <ActionButton
                   icon={CheckCircle2}
                   size="sm"
                   variant="outline-primary"
-                  disabled={!String(memos[memoKey] || '').trim()}
+                  disabled={isResolved || !String(memos[memoKey] || '').trim()}
                   onClick={() => onResolve(reportId, memos[memoKey] || '')}
                 >
                   처리
@@ -2139,6 +2157,10 @@ function getApprovalRequestTargetLabel(request) {
     return request.targetProductTitle || (request.targetProductId ? `#${request.targetProductId}` : '-');
   }
 
+  if (String(request.operation || '').startsWith('COUPON_')) {
+    return request.couponPayload?.eventName || request.reason || approvalOperationLabel(request.operation);
+  }
+
   return request.targetAdminNickname || request.targetAdminId || '-';
 }
 
@@ -2147,8 +2169,35 @@ function getApprovalRequestTargetDetail(request) {
     return request.targetProductId ? `#${request.targetProductId}` : '-';
   }
 
+  if (String(request.operation || '').startsWith('COUPON_')) {
+    const eventId = request.couponPayload?.couponEventId;
+    const eventType = request.couponPayload?.eventType ? formatAdminCouponType(request.couponPayload.eventType) : '';
+    return [
+      eventId ? `이벤트 ID ${eventId}` : '',
+      eventType
+    ].filter(Boolean).join(' · ') || approvalOperationLabel(request.operation);
+  }
+
   return request.targetAdminEmail || '-';
 }
+
+function approvalOperationLabel(operation) {
+  const key = String(operation || 'ADMIN_ROLE_CHANGE').toUpperCase();
+  const labels = {
+    ADMIN_ROLE_CHANGE: '관리자 권한 변경',
+    PRODUCT_HIDE: '상품 숨김',
+    COUPON_EVENT_CREATE: '쿠폰 이벤트 생성',
+    COUPON_EVENT_STOP: '쿠폰 이벤트 중단',
+    COUPON_INDIVIDUAL_ISSUE: '쿠폰 개별 발급'
+  };
+
+  return labels[key] || key;
+}
+
+const approvalTargetSummary = (request = {}) => ({
+  title: getApprovalRequestTargetLabel(request),
+  subtitle: getApprovalRequestTargetDetail(request)
+});
 
 function ApprovalRequestTable({ rows, memos = {}, setMemo, onApprove, onReject, showActions = false }) {
   if (rows.length === 0) {
@@ -2173,11 +2222,15 @@ function ApprovalRequestTable({ rows, memos = {}, setMemo, onApprove, onReject, 
           const requestId = getId(request, ['id', 'requestId']);
           const memo = memos[requestId] || '';
           const pending = String(request.status || '').toUpperCase() === 'PENDING';
+          const target = approvalTargetSummary(request);
+          const requestedWork = request.requestedRole
+            ? formatAdminRole(request.requestedRole)
+            : approvalOperationLabel(request.operation);
 
           return (
             <tr key={requestId}>
               <td>
-                <div>#{requestId} {request.operation || 'ADMIN_ROLE_CHANGE'}</div>
+                <div>#{requestId} {approvalOperationLabel(request.operation)}</div>
                 <small className="text-muted">{request.reason || '-'}</small>
               </td>
               <td>
@@ -2185,10 +2238,10 @@ function ApprovalRequestTable({ rows, memos = {}, setMemo, onApprove, onReject, 
                 <small className="text-muted">{request.requesterEmail || '-'}</small>
               </td>
               <td>
-                <div>{getApprovalRequestTargetLabel(request)}</div>
-                <small className="text-muted">{getApprovalRequestTargetDetail(request)}</small>
+                <div>{target.title}</div>
+                <small className="text-muted">{target.subtitle}</small>
               </td>
-              <td>{formatAdminRole(request.requestedRole)}</td>
+              <td>{requestedWork}</td>
               <td>
                 <ApprovalStatusBadge status={request.status} />
               </td>
@@ -2204,24 +2257,26 @@ function ApprovalRequestTable({ rows, memos = {}, setMemo, onApprove, onReject, 
               ) : null}
               {showActions ? (
                 <td className="text-end admin-approval-actions">
-                  <ActionButton
-                    icon={CheckCircle2}
-                    size="sm"
-                    variant="outline-primary"
-                    disabled={!pending}
-                    onClick={() => onApprove(requestId, memo)}
-                  >
-                    승인
-                  </ActionButton>
-                  <ActionButton
-                    icon={EyeOff}
-                    size="sm"
-                    variant="outline-danger"
-                    disabled={!pending}
-                    onClick={() => onReject(requestId, memo)}
-                  >
-                    거절
-                  </ActionButton>
+                  <div className="admin-approval-action-group">
+                    <ActionButton
+                      icon={CheckCircle2}
+                      size="sm"
+                      variant="outline-primary"
+                      disabled={!pending}
+                      onClick={() => onApprove(requestId, memo)}
+                    >
+                      승인
+                    </ActionButton>
+                    <ActionButton
+                      icon={EyeOff}
+                      size="sm"
+                      variant="outline-danger"
+                      disabled={!pending}
+                      onClick={() => onReject(requestId, memo)}
+                    >
+                      거절
+                    </ActionButton>
+                  </div>
                 </td>
               ) : null}
             </tr>
@@ -2244,13 +2299,19 @@ export function AdminApprovalsPage() {
       request.requestId,
       request.operation,
       request.reason,
+      approvalOperationLabel(request.operation),
+      approvalTargetSummary(request).title,
+      approvalTargetSummary(request).subtitle,
       request.requesterNickname,
       request.requesterEmail,
       request.targetAdminNickname,
       request.targetAdminEmail,
       request.targetAdminId,
       request.targetProductTitle,
-      request.targetProductId
+      request.targetProductId,
+      request.couponPayload?.eventName,
+      request.couponPayload?.eventType,
+      request.couponPayload?.couponEventId
     ].some((value) => includesKeyword(value, approvalFilters.keyword));
     const roleMatch = !approvalFilters.requestedRole
       || String(request.requestedRole || '').toUpperCase() === approvalFilters.requestedRole;
@@ -2343,12 +2404,18 @@ export function AdminMyApprovalRequestsPage() {
       request.requestId,
       request.operation,
       request.reason,
+      approvalOperationLabel(request.operation),
+      approvalTargetSummary(request).title,
+      approvalTargetSummary(request).subtitle,
       request.targetAdminNickname,
       request.targetAdminEmail,
       request.targetAdminId,
       request.targetProductTitle,
       request.targetProductId,
-      request.requestedRole
+      request.requestedRole,
+      request.couponPayload?.eventName,
+      request.couponPayload?.eventType,
+      request.couponPayload?.couponEventId
     ].some((value) => includesKeyword(value, myApprovalFilters.keyword));
     const statusMatch = !myApprovalFilters.status || String(request.status || '').toUpperCase() === myApprovalFilters.status;
 

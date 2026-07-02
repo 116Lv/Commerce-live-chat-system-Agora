@@ -1,7 +1,7 @@
 package com.team7.agora.domain.admin.controller;
 
 import com.team7.agora.domain.admin.dto.request.AdminUserStatusUpdateRequest;
-import com.team7.agora.domain.admin.dto.response.AdminUserResponse;
+import com.team7.agora.domain.admin.dto.response.AdminManagedUserResponse;
 import com.team7.agora.domain.admin.service.AdminUserService;
 import com.team7.agora.global.auth.AdminPrincipal;
 import com.team7.agora.global.response.ApiResponse;
@@ -45,12 +45,12 @@ public class AdminUserController {
      * @return 클라이언트에 반환할 API 응답
      */
     @GetMapping
-    public ApiResponse<PageResponse<AdminUserResponse>> getUsers(
+    public ApiResponse<PageResponse<AdminManagedUserResponse>> getUsers(
             @AuthenticationPrincipal AdminPrincipal admin,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size
     ) {
-        Page<AdminUserResponse> responses = adminUserService.getUsers(admin, PageRequest.of(page, size));
+        Page<AdminManagedUserResponse> responses = adminUserService.getUsers(admin, PageRequest.of(page, size));
         return ApiResponse.success("사용자 목록을 조회했습니다.", PageResponse.from(responses));
     }
 
@@ -62,12 +62,12 @@ public class AdminUserController {
      * @return 클라이언트에 반환할 API 응답
      */
     @PatchMapping("/{userId}/status")
-    public ApiResponse<AdminUserResponse> changeStatus(
+    public ApiResponse<AdminManagedUserResponse> changeStatus(
             @AuthenticationPrincipal AdminPrincipal admin,
             @PathVariable Long userId,
             @Valid @RequestBody AdminUserStatusUpdateRequest request
     ) {
-        AdminUserResponse response = adminUserService.changeStatus(admin, userId, request.status());
+        AdminManagedUserResponse response = adminUserService.changeStatus(admin, userId, request.status());
         return ApiResponse.success("사용자 상태가 변경되었습니다.", response);
     }
 }

@@ -288,8 +288,16 @@ export const reportMatchesSearch = (report = {}, search = '') => {
     report.reportedUserEmail,
     report.productId,
     report.productTitle,
+    report.productSellerId,
+    report.productSellerNickname,
+    report.productSellerEmail,
+    report.productPrice,
+    report.productStatus,
+    report.productApprovalStatus,
     report.reason,
-    report.status
+    report.status,
+    report.adminMemo,
+    report.resolvedAt
   ]
     .filter((value) => value !== undefined && value !== null)
     .some((value) => String(value).toLowerCase().includes(keyword));
