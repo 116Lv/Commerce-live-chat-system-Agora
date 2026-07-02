@@ -5,12 +5,11 @@ import { test } from 'node:test';
 const readPage = (name) => readFileSync(new URL(`./${name}`, import.meta.url), 'utf8');
 const readSource = (path) => readFileSync(new URL(path, import.meta.url), 'utf8');
 
-test('sell product page renders an empty state when regions are unavailable', () => {
+test('sell product page always offers a region picker with a cascading fallback', () => {
   const source = readPage('SellProductPage.jsx');
 
-  assert.match(source, /import EmptyState from '\.\.\/components\/EmptyState\.jsx';/);
-  assert.match(source, /!regionsState\.loading && !regionsState\.error && regions\.length === 0/);
-  assert.match(source, /regions\.length > 0/);
+  assert.match(source, /import RegionPicker from '\.\.\/components\/RegionPicker\.jsx';/);
+  assert.match(source, /<RegionPicker/);
 });
 
 test('my page renders an empty state when the profile payload is missing', () => {
@@ -124,14 +123,15 @@ test('signup collects phone and sends new users to region setup', () => {
   assert.match(userSignup, /navigate\('\/regions\/setup'/);
 });
 
-test('region setup page lets users choose preferred and primary regions', () => {
+test('region setup page lets users cascade sido/sigungu/dong to choose preferred and primary regions', () => {
   const source = readPage('UserPlaceholderPages.jsx');
 
+  assert.match(source, /import RegionCascadeSelect from '\.\.\/components\/RegionCascadeSelect\.jsx';/);
   assert.match(source, /updatePreferredRegions/);
-  assert.match(source, /selectedRegionIds/);
+  assert.match(source, /selectedRegions/);
   assert.match(source, /primaryRegionId/);
-  assert.match(source, /관심 지역은 3개 이상 5개 이하로 선택해 주세요\./);
-  assert.match(source, /type="checkbox"/);
+  assert.match(source, /시\/도, 시\/군\/구, 읍\/면\/동 순서로 관심 지역을 3개 이상 5개 이하로 선택해 주세요\./);
+  assert.match(source, /<RegionCascadeSelect onAdd=\{handleAddRegion\}/);
   assert.match(source, /type="radio"/);
   assert.match(source, /관심 지역 저장/);
 });

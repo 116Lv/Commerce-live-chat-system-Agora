@@ -51,15 +51,12 @@ describe('product list and card UX source', () => {
     assert.doesNotMatch(source, /<Form\.Label>판매 상태<\/Form\.Label>/);
   });
 
-  test('ProductListPage uses staged normalized region select options', () => {
+  test('ProductListPage picks region via preferred regions with a cascading fallback', () => {
     const source = readSource('./ProductListPage.jsx');
 
-    assert.match(source, /getRegionSelectOptions/);
-    assert.match(source, /getChildRegionOptions/);
-    assert.match(source, /selectedParentRegionId/);
-    assert.match(source, /handleParentRegionChange/);
-    assert.match(source, /parentRegionOptions\.map/);
-    assert.match(source, /childRegionOptions\.map/);
+    assert.match(source, /import RegionPicker from '\.\.\/components\/RegionPicker\.jsx';/);
+    assert.match(source, /preferredRegions/);
+    assert.match(source, /<RegionPicker[\s\S]{0,300}allowAll/);
   });
 
   test('ProductCard does not render chat metadata', () => {
@@ -242,12 +239,12 @@ describe('sell and edit product form UX source', () => {
     }
   });
 
-  test('sell product form renders staged region selectors or fallback options and preview card', () => {
+  test('sell product form picks region via preferred regions with a cascading fallback and shows a preview card', () => {
     const sellSource = readSource('./SellProductPage.jsx');
 
-    assert.match(sellSource, /getRegionSelectOptions/);
-    assert.match(sellSource, /getChildRegionOptions/);
-    assert.match(sellSource, /selectedParentRegionId/);
+    assert.match(sellSource, /import RegionPicker from '\.\.\/components\/RegionPicker\.jsx';/);
+    assert.match(sellSource, /preferredRegions/);
+    assert.match(sellSource, /<RegionPicker/);
     assert.match(sellSource, /product-form-preview/);
     assert.match(sellSource, /ProductCard/);
   });
@@ -269,16 +266,13 @@ describe('sell and edit product form UX source', () => {
 });
 
 describe('home product search UX source', () => {
-  test('HomePage uses fixed categories and staged normalized region filters', () => {
+  test('HomePage uses fixed categories and picks region via preferred regions with a cascading fallback', () => {
     const source = readSource('./UserPlaceholderPages.jsx');
 
     assert.match(source, /PRODUCT_CATEGORIES/);
-    assert.match(source, /getRegionSelectOptions/);
-    assert.match(source, /getChildRegionOptions/);
-    assert.match(source, /selectedParentRegionId/);
-    assert.match(source, /handleParentRegionChange/);
-    assert.match(source, /parentRegionOptions\.map/);
-    assert.match(source, /childRegionOptions\.map/);
+    assert.match(source, /import RegionPicker from '\.\/RegionPicker\.jsx';|import RegionPicker from '\.\.\/components\/RegionPicker\.jsx';/);
+    assert.match(source, /preferredRegions/);
+    assert.match(source, /<RegionPicker[\s\S]{0,300}allowAll/);
     assert.match(source, /<Form\.Select[\s\S]{0,300}value=\{draft\.category\}/);
     assert.doesNotMatch(source, /<Form\.Control[\s\S]{0,220}value=\{draft\.category\}/);
   });

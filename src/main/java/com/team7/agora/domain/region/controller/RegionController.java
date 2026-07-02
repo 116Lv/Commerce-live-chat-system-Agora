@@ -35,4 +35,37 @@ public class RegionController {
     ) {
         return ApiResponse.success("지역을 조회했습니다.", regionService.findRegions(keyword));
     }
+
+    /**
+     * 전국 시/도 목록을 조회하는 GET /api/regions/sido 요청을 처리한다.
+     * @return 클라이언트에 반환할 API 응답
+     */
+    @GetMapping("/api/regions/sido")
+    public ApiResponse<List<String>> findSidoList() {
+        return ApiResponse.success("시/도 목록을 조회했습니다.", regionService.findSidoList());
+    }
+
+    /**
+     * 시/도에 속한 시/군/구 목록을 조회하는 GET /api/regions/sigungu 요청을 처리한다.
+     * @param sido 시도 이름
+     * @return 클라이언트에 반환할 API 응답
+     */
+    @GetMapping("/api/regions/sigungu")
+    public ApiResponse<List<String>> findSigunguList(@RequestParam String sido) {
+        return ApiResponse.success("시/군/구 목록을 조회했습니다.", regionService.findSigunguList(sido));
+    }
+
+    /**
+     * 시/도, 시/군/구에 속한 읍/면/동 목록을 조회하는 GET /api/regions/dong 요청을 처리한다.
+     * @param sido 시도 이름
+     * @param sigungu 시군구 이름
+     * @return 클라이언트에 반환할 API 응답
+     */
+    @GetMapping("/api/regions/dong")
+    public ApiResponse<List<RegionResponse>> findDongList(
+            @RequestParam String sido,
+            @RequestParam String sigungu
+    ) {
+        return ApiResponse.success("읍/면/동 목록을 조회했습니다.", regionService.findDongList(sido, sigungu));
+    }
 }

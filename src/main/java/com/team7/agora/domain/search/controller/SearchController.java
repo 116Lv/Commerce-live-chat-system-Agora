@@ -41,7 +41,9 @@ public class SearchController {
     /**
      * 검색 정보를 조회하는 GET /api/v1/products/search 요청을 처리한다.
      * @param keyword 검색어
-     * @param regionId 지역 ID
+     * @param regionId 지역 ID (읍/면/동 단위 정확한 매칭, 우선 적용)
+     * @param sido 시/도 이름 (regionId가 없을 때 해당 시/도 전체를 검색)
+     * @param sigungu 시/군/구 이름 (regionId가 없을 때 sido와 함께 해당 시/군/구 전체를 검색)
      * @param category 이미지를 저장할 분류
      * @param status 상품 판매 상태
      * @param page 조회할 페이지 번호
@@ -55,6 +57,8 @@ public class SearchController {
         @AuthenticationPrincipal CustomUserDetails userDetails,
         @RequestParam(required = false) String keyword,
         @RequestParam(required = false) Long regionId,
+        @RequestParam(required = false) String sido,
+        @RequestParam(required = false) String sigungu,
         @RequestParam(required = false) String category,
         @RequestParam(required = false) ProductStatus status,
         @RequestParam(defaultValue = "0") int page,
@@ -65,7 +69,7 @@ public class SearchController {
         popularKeywordService.recordSearchKeyword(viewerId(userDetails), keyword);
         return ResponseEntity.ok(ApiResponse.success("상품 검색 결과입니다.",
             PageResponse.from(productSearchService.searchV1(
-                new ProductSearchCondition(keyword, regionId, category, status, PageRequest.of(page, size), sort, direction)
+                new ProductSearchCondition(keyword, regionId, sido, sigungu, category, status, PageRequest.of(page, size), sort, direction)
             ))
         ));
     }
@@ -73,7 +77,9 @@ public class SearchController {
     /**
      * 검색 정보를 조회하는 GET /api/v2/products/search 요청을 처리한다.
      * @param keyword 검색어
-     * @param regionId 지역 ID
+     * @param regionId 지역 ID (읍/면/동 단위 정확한 매칭, 우선 적용)
+     * @param sido 시/도 이름 (regionId가 없을 때 해당 시/도 전체를 검색)
+     * @param sigungu 시/군/구 이름 (regionId가 없을 때 sido와 함께 해당 시/군/구 전체를 검색)
      * @param category 이미지를 저장할 분류
      * @param status 상품 판매 상태
      * @param page 조회할 페이지 번호
@@ -87,6 +93,8 @@ public class SearchController {
         @AuthenticationPrincipal CustomUserDetails userDetails,
         @RequestParam(required = false) String keyword,
         @RequestParam(required = false) Long regionId,
+        @RequestParam(required = false) String sido,
+        @RequestParam(required = false) String sigungu,
         @RequestParam(required = false) String category,
         @RequestParam(required = false) ProductStatus status,
         @RequestParam(defaultValue = "0") int page,
@@ -97,7 +105,7 @@ public class SearchController {
         popularKeywordService.recordSearchKeyword(viewerId(userDetails), keyword);
         return ResponseEntity.ok(ApiResponse.success("캐시 적용 상품 검색 결과입니다.",
             productSearchService.searchV2(
-                new ProductSearchCondition(keyword, regionId, category, status, PageRequest.of(page, size), sort, direction)
+                new ProductSearchCondition(keyword, regionId, sido, sigungu, category, status, PageRequest.of(page, size), sort, direction)
             )
         ));
     }

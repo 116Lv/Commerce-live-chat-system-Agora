@@ -24,6 +24,7 @@
   - 전체: macOS/Linux `./gradlew clean build` · Windows `.\gradlew.bat clean build`
   - 단일 테스트: `./gradlew test --tests "*NegoServiceTest"` (Windows는 `.\gradlew.bat`)
 - Windows 비ASCII 경로 함정: 경로에 한글 등이 있으면 테스트 워커 classpath argfile이 깨진다. `~/.gradle/gradle.properties`에 `localBuildDir=C:/agora-build` 같은 ASCII 경로를 설정한다(커밋 금지). 자세한 건 `build.gradle` 상단 주석 참고.
+- 위 `localBuildDir`만으로 해결 안 될 수 있다: 홈 디렉터리(`GRADLE_USER_HOME` 기본값, `~/.gradle/caches`)에도 한글이 섞여 있으면 여전히 `GradleWorkerMain을 찾을 수 없음` 에러가 난다. `-g C:/ascii-path` 옵션(또는 `GRADLE_USER_HOME` 환경변수)으로 캐시 위치도 ASCII 경로로 돌려야 한다.
 
 ## 3. ⚠️ DB 스키마는 **두 경로**다 — 컬럼 추가 시 세 곳을 동기화한다
 이 저장소에서 가장 자주 터지는 회귀 지점이다.

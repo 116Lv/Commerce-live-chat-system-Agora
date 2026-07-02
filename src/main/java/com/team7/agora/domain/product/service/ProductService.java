@@ -160,25 +160,47 @@ public class ProductService {
 
     /**
      * 'getProducts' 메서드는 필요한 데이터를 조회해 호출한 쪽에 반환한다.
+     * regionId가 있으면 정확히 그 지역만, regionId가 없고 sigungu(+sido)가 있으면 해당 시/군/구 전체를,
+     * sido만 있으면 해당 시/도 전체를 대상으로 조회한다(regionId &gt; sido+sigungu &gt; sido 우선순위).
      * @param viewerId 상품을 조회하는 회원 ID
      * @param regionId 지역 ID
+     * @param sido 시/도 이름 (넓은 범위 조회용)
+     * @param sigungu 시/군/구 이름 (넓은 범위 조회용, sido와 함께 사용)
      * @param pageable 페이지 요청 정보
      * @return 클라이언트에 반환할 API 응답
      */
-    public List<ProductResponse> getProducts(Long viewerId, Long regionId, Pageable pageable) {
+    public List<ProductResponse> getProducts(Long viewerId, Long regionId, String sido, String sigungu, Pageable pageable) {
         List<Long> regionIds = resolveRegionIds(viewerId, regionId);
-        Page<Product> products = (regionIds == null)
-            ? productRepository.findAllByDeletedAtIsNullAndStatusNotAndApprovalStatus(
-                ProductStatus.HIDDEN,
-                ProductApprovalStatus.APPROVED,
-                pageable
-            )
-            : productRepository.findAllByRegionIdInAndDeletedAtIsNullAndStatusNotAndApprovalStatus(
+        Page<Product> products;
+        if (regionIds != null) {
+            products = productRepository.findAllByRegionIdInAndDeletedAtIsNullAndStatusNotAndApprovalStatus(
                 regionIds,
                 ProductStatus.HIDDEN,
                 ProductApprovalStatus.APPROVED,
                 pageable
             );
+        } else if (sigungu != null && !sigungu.isBlank()) {
+            products = productRepository.findAllByRegion_SidoAndRegion_SigunguAndDeletedAtIsNullAndStatusNotAndApprovalStatus(
+                sido,
+                sigungu,
+                ProductStatus.HIDDEN,
+                ProductApprovalStatus.APPROVED,
+                pageable
+            );
+        } else if (sido != null && !sido.isBlank()) {
+            products = productRepository.findAllByRegion_SidoAndDeletedAtIsNullAndStatusNotAndApprovalStatus(
+                sido,
+                ProductStatus.HIDDEN,
+                ProductApprovalStatus.APPROVED,
+                pageable
+            );
+        } else {
+            products = productRepository.findAllByDeletedAtIsNullAndStatusNotAndApprovalStatus(
+                ProductStatus.HIDDEN,
+                ProductApprovalStatus.APPROVED,
+                pageable
+            );
+        }
         return toResponses(products.getContent(), viewerId);
     }
 

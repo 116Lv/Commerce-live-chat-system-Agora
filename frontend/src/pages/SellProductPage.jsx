@@ -1,48 +1,34 @@
-﻿import { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Alert, Button, Card, Col, Form, Row } from 'react-bootstrap';
 import { Link, useNavigate } from 'react-router-dom';
 import ProductCard from '../components/ProductCard.jsx';
-import LoadingState from '../components/LoadingState.jsx';
-import EmptyState from '../components/EmptyState.jsx';
 import ProductImageDropzone from '../components/ProductImageDropzone.jsx';
+import RegionPicker from '../components/RegionPicker.jsx';
 import { createProduct, uploadProductImages } from '../api/productApi.js';
-import { getRegions } from '../api/regionApi.js';
-import { PageHeader, getPageContent, useApiResource } from './pageUtils.jsx';
+import { getMe } from '../api/mypageApi.js';
+import { PageHeader, useApiResource } from './pageUtils.jsx';
 import { PRODUCT_APPROVAL_MESSAGE, submitSellProduct } from './sellProductSubmit.js';
-import {
-  PRODUCT_CATEGORIES,
-  formatPriceInput,
-  getChildRegionOptions,
-  getRegionSelectOptions,
-  parsePriceInput,
-  validateProductForm
-} from './productFormUtils.js';
+import { PRODUCT_CATEGORIES, formatPriceInput, parsePriceInput, validateProductForm } from './productFormUtils.js';
 
 const initialForm = { title: '', description: '', price: '', category: '', regionId: '', images: [] };
 
 export default function SellProductPage() {
   const navigate = useNavigate();
   const [form, setForm] = useState(initialForm);
+  const [regionLabel, setRegionLabel] = useState('');
   const [fieldErrors, setFieldErrors] = useState({});
   const [selectedImagePreviews, setSelectedImagePreviews] = useState([]);
-  const [selectedParentRegionId, setSelectedParentRegionId] = useState('');
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
-  const regionsState = useApiResource(() => getRegions(), []);
-  const regions = getPageContent(regionsState.data);
-  const parentRegionOptions = getRegionSelectOptions(regions);
-  const childRegionOptions = getChildRegionOptions(regions, selectedParentRegionId);
-  const hasChildRegionOptions = childRegionOptions.length > 0;
-  const regionOptionsUnavailable = !regionsState.loading && (Boolean(regionsState.error) || parentRegionOptions.length === 0);
-  const selectedRegionOptions = hasChildRegionOptions ? childRegionOptions : parentRegionOptions;
-  const selectedRegionLabel = selectedRegionOptions.find((region) => region.value === String(form.regionId))?.label || '';
+  const profileState = useApiResource(() => getMe(), []);
+  const preferredRegions = profileState.data?.preferredRegions || [];
   const selectedImagePreview = selectedImagePreviews[0]?.url || '';
   const previewProduct = {
     title: form.title || '상품 미리보기',
     price: parsePriceInput(form.price),
     category: form.category,
     categoryLabel: form.category,
-    regionFullName: selectedRegionLabel,
+    regionFullName: regionLabel,
     primaryImageUrl: selectedImagePreviews[0]?.url,
     status: 'SELLING',
     statusLabel: '판매중',
@@ -76,11 +62,9 @@ export default function SellProductPage() {
 
   const handlePriceChange = (event) => updateField('price', formatPriceInput(event.target.value));
 
-  const handleParentRegionChange = (event) => {
-    const value = event.target.value;
-    const nextChildren = getChildRegionOptions(regions, value);
-    setSelectedParentRegionId(value);
-    updateField('regionId', nextChildren.length > 0 ? '' : value);
+  const handleRegionChange = (regionId, label) => {
+    updateField('regionId', regionId);
+    setRegionLabel(label);
   };
 
   const removeSelectedImage = (indexToRemove = 0) => {
@@ -127,12 +111,6 @@ export default function SellProductPage() {
   return (
     <section>
       <PageHeader title="상품 등록" />
-      {regionsState.loading ? <LoadingState label="지역 불러오는 중" /> : null}
-      {regionOptionsUnavailable ? <Alert variant="warning">지역 목록을 불러오지 못해 직접 입력으로 등록할 수 있어요.</Alert> : null}
-      {!regionsState.loading && !regionsState.error && regions.length === 0 ? (
-        <EmptyState title="지역 목록이 비어 있어요" message="직접 입력으로 계속 등록할 수 있어요." />
-      ) : null}
-      {regions.length > 0 ? null : null}
       {error ? <Alert variant="danger">{error}</Alert> : null}
       <Form noValidate onSubmit={handleSubmit}>
         <Row className="g-4 product-form-layout">
@@ -191,47 +169,13 @@ export default function SellProductPage() {
                   </Col>
                   <Col xs={12} md={6}>
                     <Form.Label>지역</Form.Label>
-                    {regionOptionsUnavailable ? (
-                      <Form.Control
-                        value={form.regionId}
-                        onChange={(event) => updateField('regionId', event.target.value)}
-                        placeholder="吏??ID"
-                        isInvalid={Boolean(fieldErrors.regionId)}
-                        disabled={submitting}
-                        required
-                      />
-                    ) : (
-                      <Row className="g-2">
-                        <Col xs={12} md={hasChildRegionOptions ? 6 : 12}>
-                          <Form.Select value={selectedParentRegionId} onChange={handleParentRegionChange} disabled={submitting} required>
-                            <option value="">시도 선택</option>
-                            {parentRegionOptions.map((region) => (
-                              <option key={region.value} value={region.value}>
-                                {region.label}
-                              </option>
-                            ))}
-                          </Form.Select>
-                        </Col>
-                        {hasChildRegionOptions ? (
-                          <Col xs={12} md={6}>
-                            <Form.Select
-                              value={form.regionId}
-                              onChange={(event) => updateField('regionId', event.target.value)}
-                              isInvalid={Boolean(fieldErrors.regionId)}
-                              disabled={submitting}
-                              required
-                            >
-                              <option value="">구군 선택</option>
-                              {childRegionOptions.map((region) => (
-                                <option key={region.value} value={region.value}>
-                                  {region.label}
-                                </option>
-                              ))}
-                            </Form.Select>
-                          </Col>
-                        ) : null}
-                      </Row>
-                    )}
+                    <RegionPicker
+                      preferredRegions={preferredRegions}
+                      value={form.regionId}
+                      valueLabel={regionLabel}
+                      onChange={handleRegionChange}
+                      disabled={submitting}
+                    />
                     <Form.Control.Feedback type="invalid" className={fieldErrors.regionId ? 'd-block' : ''}>
                       {fieldErrors.regionId}
                     </Form.Control.Feedback>

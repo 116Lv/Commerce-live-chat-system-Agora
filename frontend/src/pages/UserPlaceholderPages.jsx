@@ -6,11 +6,14 @@ import EmptyState from '../components/EmptyState.jsx';
 import ErrorState from '../components/ErrorState.jsx';
 import LoadingState from '../components/LoadingState.jsx';
 import ProductCard from '../components/ProductCard.jsx';
+import RegionCascadeSelect from '../components/RegionCascadeSelect.jsx';
+import RegionPicker from '../components/RegionPicker.jsx';
 import { getProducts, likeProduct, searchProducts, unlikeProduct } from '../api/productApi.js';
-import { getRegions, updatePreferredRegions } from '../api/regionApi.js';
+import { updatePreferredRegions } from '../api/regionApi.js';
+import { getMe } from '../api/mypageApi.js';
 import { useAuth } from '../auth/AuthContext.jsx';
 import { PageHeader, getPageContent, useApiResource } from './pageUtils.jsx';
-import { PRODUCT_CATEGORIES, getChildRegionOptions, getRegionSelectOptions } from './productFormUtils.js';
+import { PRODUCT_CATEGORIES, parseRegionFilterValue } from './productFormUtils.js';
 
 const HOME_QUERY = { keyword: '', category: '', regionId: '', page: 0, size: 20 };
 
@@ -29,13 +32,13 @@ export function HomePage() {
   const { isUserAuthenticated } = useAuth();
   const [draft, setDraft] = useState(HOME_QUERY);
   const [query, setQuery] = useState(HOME_QUERY);
-  const [selectedParentRegionId, setSelectedParentRegionId] = useState('');
+  const [regionLabel, setRegionLabel] = useState('');
   const [productOverrides, setProductOverrides] = useState({});
   const params = useMemo(
     () => ({
       keyword: query.keyword.trim(),
       category: query.category.trim(),
-      regionId: query.regionId || undefined,
+      ...parseRegionFilterValue(query.regionId),
       page: query.page,
       size: query.size
     }),
@@ -46,15 +49,12 @@ export function HomePage() {
     () => (params.keyword || params.category ? searchProducts(params) : getProducts(params)),
     [params]
   );
-  const regionsState = useApiResource(() => getRegions(), []);
+  const profileState = useApiResource(() => (isUserAuthenticated ? getMe() : Promise.resolve(null)), [isUserAuthenticated]);
+  const preferredRegions = profileState.data?.preferredRegions || [];
   const products = getPageContent(productsState.data).map((product) => {
     const productId = product.productId ?? product.id;
     return productOverrides[productId] ? { ...product, ...productOverrides[productId] } : product;
   });
-  const regions = getPageContent(regionsState.data);
-  const parentRegionOptions = getRegionSelectOptions(regions);
-  const childRegionOptions = getChildRegionOptions(regions, selectedParentRegionId);
-  const hasChildRegionOptions = childRegionOptions.length > 0;
   const productRegistrationMessage = location.state?.productRegistrationMessage;
 
   const handleSubmit = (event) => {
@@ -65,14 +65,12 @@ export function HomePage() {
   const handleReset = () => {
     setDraft(HOME_QUERY);
     setQuery(HOME_QUERY);
-    setSelectedParentRegionId('');
+    setRegionLabel('');
   };
 
-  const handleParentRegionChange = (event) => {
-    const value = event.target.value;
-    const nextChildren = getChildRegionOptions(regions, value);
-    setSelectedParentRegionId(value);
-    setDraft((current) => ({ ...current, regionId: nextChildren.length > 0 ? '' : value }));
+  const handleRegionChange = (regionId, label) => {
+    setDraft((current) => ({ ...current, regionId }));
+    setRegionLabel(label);
   };
 
   const handleProductLikeToggle = async (product) => {
@@ -146,36 +144,14 @@ export function HomePage() {
               </Form.Group>
               <Form.Group controlId="home-region">
                 <Form.Label>지역</Form.Label>
-                <Form.Select
-                  value={selectedParentRegionId}
-                  onChange={handleParentRegionChange}
-                  disabled={regionsState.loading || Boolean(regionsState.error)}
-                >
-                  <option value="">전체 지역</option>
-                  {parentRegionOptions.map((region) => (
-                    <option key={region.value} value={region.value}>
-                      {region.label}
-                    </option>
-                  ))}
-                </Form.Select>
+                <RegionPicker
+                  preferredRegions={preferredRegions}
+                  value={draft.regionId}
+                  valueLabel={regionLabel}
+                  onChange={handleRegionChange}
+                  allowAll
+                />
               </Form.Group>
-              {hasChildRegionOptions ? (
-                <Form.Group controlId="home-child-region">
-                  <Form.Label>세부 지역</Form.Label>
-                  <Form.Select
-                    value={draft.regionId}
-                    onChange={(event) => setDraft((current) => ({ ...current, regionId: event.target.value }))}
-                    disabled={regionsState.loading || Boolean(regionsState.error)}
-                  >
-                    <option value="">전체 세부 지역</option>
-                    {childRegionOptions.map((region) => (
-                      <option key={region.value} value={region.value}>
-                        {region.label}
-                      </option>
-                    ))}
-                  </Form.Select>
-                </Form.Group>
-              ) : null}
               <div className="d-grid gap-2">
                 <Button type="submit">
                   <Search size={17} aria-hidden="true" />
@@ -219,24 +195,18 @@ export function HomePage() {
 
 export function RegionSetupPage() {
   const navigate = useNavigate();
-  const regionsState = useApiResource(() => getRegions(), []);
-  const regions = getPageContent(regionsState.data);
-  const regionOptions = getRegionSelectOptions(regions);
-  const [selectedRegionIds, setSelectedRegionIds] = useState([]);
+  const [selectedRegions, setSelectedRegions] = useState([]);
   const [primaryRegionId, setPrimaryRegionId] = useState('');
   const [actionMessage, setActionMessage] = useState('');
   const [actionError, setActionError] = useState('');
   const [saving, setSaving] = useState(false);
 
-  const toggleRegion = (regionId) => {
+  const handleAddRegion = (region) => {
     setActionError('');
-    setSelectedRegionIds((current) => {
-      if (current.includes(regionId)) {
-        const next = current.filter((id) => id !== regionId);
-        if (primaryRegionId === regionId) {
-          setPrimaryRegionId(next[0] || '');
-        }
-        return next;
+    setSelectedRegions((current) => {
+      if (current.some((item) => item.regionId === region.regionId)) {
+        setActionError('이미 선택한 지역이에요.');
+        return current;
       }
 
       if (current.length >= 5) {
@@ -244,9 +214,20 @@ export function RegionSetupPage() {
         return current;
       }
 
-      const next = [...current, regionId];
+      const next = [...current, region];
       if (!primaryRegionId) {
-        setPrimaryRegionId(regionId);
+        setPrimaryRegionId(String(region.regionId));
+      }
+      return next;
+    });
+  };
+
+  const handleRemoveRegion = (regionId) => {
+    setActionError('');
+    setSelectedRegions((current) => {
+      const next = current.filter((region) => region.regionId !== regionId);
+      if (primaryRegionId === String(regionId)) {
+        setPrimaryRegionId(next[0] ? String(next[0].regionId) : '');
       }
       return next;
     });
@@ -257,12 +238,12 @@ export function RegionSetupPage() {
     setActionMessage('');
     setActionError('');
 
-    if (selectedRegionIds.length < 3 || selectedRegionIds.length > 5) {
+    if (selectedRegions.length < 3 || selectedRegions.length > 5) {
       setActionError('관심 지역은 3개 이상 5개 이하로 선택해 주세요.');
       return;
     }
 
-    if (!primaryRegionId || !selectedRegionIds.includes(primaryRegionId)) {
+    if (!primaryRegionId) {
       setActionError('대표 관심 지역을 선택해 주세요.');
       return;
     }
@@ -270,7 +251,7 @@ export function RegionSetupPage() {
     setSaving(true);
     try {
       await updatePreferredRegions({
-        regionIds: selectedRegionIds.map(Number),
+        regionIds: selectedRegions.map((region) => region.regionId),
         primaryRegionId: Number(primaryRegionId)
       });
       setActionMessage('관심 지역이 저장되었습니다.');
@@ -287,52 +268,48 @@ export function RegionSetupPage() {
       <PageHeader title="관심 지역 설정" eyebrow="계정" />
       {actionMessage ? <Alert variant="success">{actionMessage}</Alert> : null}
       {actionError ? <Alert variant="danger">{actionError}</Alert> : null}
-      {regionsState.loading ? <LoadingState label="지역 불러오는 중" /> : null}
-      {regionsState.error ? (
-        <ErrorState title="지역을 불러오지 못했어요" message={regionsState.error.message} onRetry={regionsState.reload} />
-      ) : null}
-      {!regionsState.loading && !regionsState.error && regionOptions.length === 0 ? (
-        <EmptyState title="선택할 수 있는 지역이 없어요" />
-      ) : null}
-      {!regionsState.loading && !regionsState.error && regionOptions.length > 0 ? (
-        <Form className="detail-panel stack-list" onSubmit={handleSubmit}>
-          <p className="text-muted mb-0">관심 지역은 3개 이상 5개 이하로 선택해 주세요.</p>
+      <Form className="detail-panel stack-list" onSubmit={handleSubmit}>
+        <p className="text-muted mb-0">시/도, 시/군/구, 읍/면/동 순서로 관심 지역을 3개 이상 5개 이하로 선택해 주세요.</p>
+        <RegionCascadeSelect onAdd={handleAddRegion} disabled={saving || selectedRegions.length >= 5} />
+        {selectedRegions.length === 0 ? (
+          <EmptyState title="아직 선택한 지역이 없어요" />
+        ) : (
           <div className="stack-list">
-            {regionOptions.map((region) => {
-              const checked = selectedRegionIds.includes(region.value);
-              return (
-                <div className="d-flex align-items-center justify-content-between gap-3" key={region.value}>
-                  <Form.Check
-                    type="checkbox"
-                    id={`preferred-region-${region.value}`}
-                    label={region.label}
-                    checked={checked}
-                    onChange={() => toggleRegion(region.value)}
-                  />
+            {selectedRegions.map((region) => (
+              <div className="d-flex align-items-center justify-content-between gap-3" key={region.regionId}>
+                <span>{region.name}</span>
+                <div className="d-flex align-items-center gap-2">
                   <Form.Check
                     type="radio"
-                    id={`primary-region-${region.value}`}
+                    id={`primary-region-${region.regionId}`}
                     name="primaryRegionId"
                     label="대표"
-                    value={region.value}
-                    checked={primaryRegionId === region.value}
-                    disabled={!checked}
+                    value={region.regionId}
+                    checked={primaryRegionId === String(region.regionId)}
                     onChange={(event) => setPrimaryRegionId(event.target.value)}
                   />
+                  <Button
+                    type="button"
+                    variant="outline-secondary"
+                    size="sm"
+                    onClick={() => handleRemoveRegion(region.regionId)}
+                  >
+                    삭제
+                  </Button>
                 </div>
-              );
-            })}
+              </div>
+            ))}
           </div>
-          <div className="d-flex justify-content-end gap-2">
-            <Button type="button" variant="outline-secondary" onClick={() => navigate('/')}>
-              나중에 설정
-            </Button>
-            <Button type="submit" disabled={saving}>
-              {saving ? '저장 중...' : '관심 지역 저장'}
-            </Button>
-          </div>
-        </Form>
-      ) : null}
+        )}
+        <div className="d-flex justify-content-end gap-2">
+          <Button type="button" variant="outline-secondary" onClick={() => navigate('/')}>
+            나중에 설정
+          </Button>
+          <Button type="submit" disabled={saving}>
+            {saving ? '저장 중...' : '관심 지역 저장'}
+          </Button>
+        </div>
+      </Form>
     </section>
   );
 }

@@ -88,6 +88,35 @@ public class RegionService {
                 .toList();
     }
 
+    /**
+     * 전국 시/도 목록을 조회한다.
+     * @return 클라이언트에 반환할 API 응답
+     */
+    public List<String> findSidoList() {
+        return regionRepository.findDistinctSidoOrderBySido();
+    }
+
+    /**
+     * 특정 시/도에 속한 시/군/구 목록을 조회한다.
+     * @param sido 시도 이름
+     * @return 클라이언트에 반환할 API 응답
+     */
+    public List<String> findSigunguList(String sido) {
+        return regionRepository.findDistinctSigunguBySidoOrderBySigungu(sido);
+    }
+
+    /**
+     * 특정 시/도, 시/군/구에 속한 읍/면/동 목록을 조회한다.
+     * @param sido 시도 이름
+     * @param sigungu 시군구 이름
+     * @return 클라이언트에 반환할 API 응답
+     */
+    public List<RegionResponse> findDongList(String sido, String sigungu) {
+        return regionRepository.findBySidoAndSigunguOrderByEupmyeondongAsc(sido, sigungu).stream()
+                .map(RegionResponse::from)
+                .toList();
+    }
+
     private void validateRegionSelection(List<Long> regionIds, Long primaryRegionId) {
         if (regionIds == null || regionIds.size() < MIN_REGION_COUNT || regionIds.size() > MAX_REGION_COUNT) {
             throw new BusinessException(ErrorCode.INVALID_REQUEST, "관심 지역은 3개 이상 5개 이하로 선택해야 합니다.");

@@ -40,7 +40,7 @@ class SearchControllerTest {
         )));
 
         ResponseEntity<ApiResponse<PageResponse<ProductSearchResponse>>> response =
-            controller.searchV1(null, "자전거", null, null, null, 0, 20, "recent", "desc");
+            controller.searchV1(null, "자전거", null, null, null, null, null, 0, 20, "recent", "desc");
 
         verify(popularKeywordService).recordSearchKeyword(null, "자전거");
         assertThat(response.getStatusCode().value()).isEqualTo(200);
@@ -56,10 +56,24 @@ class SearchControllerTest {
         )));
 
         ResponseEntity<ApiResponse<PageResponse<ProductSearchResponse>>> response =
-            controller.searchV1(null, null, null, null, null, 0, 20, "recent", "desc");
+            controller.searchV1(null, null, null, null, null, null, null, 0, 20, "recent", "desc");
 
         assertThat(response.getStatusCode().value()).isEqualTo(200);
         assertThat(response.getBody().data().content()).hasSize(2);
+    }
+
+    @Test
+    void searchV1_withSidoAndSigungu_forwardsThemToSearchCondition() {
+        SearchController controller = new SearchController(productSearchService, popularKeywordService);
+        when(productSearchService.searchV1(any())).thenReturn(new PageImpl<>(List.of()));
+        ArgumentCaptor<ProductSearchCondition> captor = ArgumentCaptor.forClass(ProductSearchCondition.class);
+
+        controller.searchV1(null, null, null, "서울특별시", "강남구", null, null, 0, 20, "recent", "desc");
+
+        verify(productSearchService).searchV1(captor.capture());
+        assertThat(captor.getValue().sido()).isEqualTo("서울특별시");
+        assertThat(captor.getValue().sigungu()).isEqualTo("강남구");
+        assertThat(captor.getValue().regionId()).isNull();
     }
 
     @Test
@@ -70,7 +84,7 @@ class SearchControllerTest {
         ))));
 
         ResponseEntity<ApiResponse<PageResponse<ProductSearchResponse>>> response =
-            controller.searchV2(null, "자전거", null, null, null, 0, 20, "recent", "desc");
+            controller.searchV2(null, "자전거", null, null, null, null, null, 0, 20, "recent", "desc");
 
         verify(popularKeywordService).recordSearchKeyword(null, "자전거");
         assertThat(response.getStatusCode().value()).isEqualTo(200);
@@ -84,7 +98,7 @@ class SearchControllerTest {
         ArgumentCaptor<ProductSearchCondition> captor = ArgumentCaptor.forClass(ProductSearchCondition.class);
 
         ResponseEntity<ApiResponse<PageResponse<ProductSearchResponse>>> response =
-            controller.searchV2(null, null, null, null, ProductStatus.SOLD, 0, 20, "recent", "desc");
+            controller.searchV2(null, null, null, null, null, null, ProductStatus.SOLD, 0, 20, "recent", "desc");
 
         verify(productSearchService).searchV2(captor.capture());
         assertThat(response.getStatusCode().value()).isEqualTo(200);

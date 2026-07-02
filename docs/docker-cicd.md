@@ -85,3 +85,21 @@ For an EC2-based first deployment:
 5. Add GitHub Actions deployment after image registry and SSH secrets are decided.
 
 For a later production-grade setup, move MySQL to RDS, Redis to ElastiCache, images to ECR, and frontend static assets to S3 + CloudFront.
+
+## Region Seed Data (One-Time, Manual)
+
+The `migrate` service only mounts `src/main/resources/db/migration` (versioned Flyway schema changes). It does **not** run `src/main/resources/db/seed/regions.sql`, which loads the ~5,066 nationwide 읍/면/동 rows into the `regions` table. This is intentional — it is reference/master data, not a schema change — but it means it has to be loaded manually once per database (RDS included).
+
+Run it from anywhere that can reach the database (typically an SSH session on the EC2 host, since RDS security groups usually only allow the app's VPC):
+
+```bash
+docker run --rm -i mysql:8 mysql --default-character-set=utf8mb4 \
+  -h <rds-endpoint> -u <user> -p<password> <database> \
+  < src/main/resources/db/seed/regions.sql
+```
+
+Notes:
+
+- `--default-character-set=utf8mb4` is required — without it the Korean region names are stored corrupted (mojibake), even though the file itself is valid UTF-8.
+- The script is safe to re-run (`ON DUPLICATE KEY UPDATE` on the unique `code` column), so it does not need to be wired into the automated deploy pipeline. Run it once after the first deploy that includes the region feature; skip it on later deploys.
+- No app restart is needed after loading — the region endpoints (`/api/regions/**`) query the table directly on every request.

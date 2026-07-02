@@ -42,12 +42,14 @@ class ProductSearchRepositoryImplTest {
     private UserRepository userRepository;
 
     private Region seoul;
+    private Region seoulOtherGu;
     private Region busan;
     private User seller;
 
     @BeforeEach
     void setUp() {
         seoul = regionRepository.save(Region.create("테스트 서울 강남구 역삼동", "9999999901", "서울", "강남구", "역삼동"));
+        seoulOtherGu = regionRepository.save(Region.create("테스트 서울 종로구 청운동", "9999999903", "서울", "종로구", "청운동"));
         busan = regionRepository.save(Region.create("테스트 부산 해운대구 우동", "9999999902", "부산", "해운대구", "우동"));
         seller = userRepository.save(User.signup("seller-search-it@test.com", "encoded", "판매자", "01099998888"));
     }
@@ -85,6 +87,47 @@ class ProductSearchRepositoryImplTest {
         assertThat(results).hasSize(1);
         assertThat(results.getContent().get(0).title()).isEqualTo("서울 상품");
         assertThat(results.getContent().get(0).regionFullName()).isEqualTo(seoul.getName());
+    }
+
+    @Test
+    void search_filtersBySidoWhenRegionIdAbsent() {
+        String category = "QDSL_IT_SIDO";
+        saveApproved(Product.create(seller, seoul, "강남구 상품", "설명", BigDecimal.valueOf(10000), category));
+        saveApproved(Product.create(seller, seoulOtherGu, "종로구 상품", "설명", BigDecimal.valueOf(10000), category));
+        saveApproved(Product.create(seller, busan, "부산 상품", "설명", BigDecimal.valueOf(10000), category));
+
+        Page<ProductSearchResponse> results = productRepository.search(
+            new ProductSearchCondition(null, null, "서울", null, category, null, PageRequest.of(0, 20), null, null)
+        );
+
+        assertThat(results).extracting(ProductSearchResponse::title)
+            .containsExactlyInAnyOrder("강남구 상품", "종로구 상품");
+    }
+
+    @Test
+    void search_filtersBySigunguWhenRegionIdAbsent() {
+        String category = "QDSL_IT_SIGUNGU";
+        saveApproved(Product.create(seller, seoul, "강남구 상품", "설명", BigDecimal.valueOf(10000), category));
+        saveApproved(Product.create(seller, seoulOtherGu, "종로구 상품", "설명", BigDecimal.valueOf(10000), category));
+
+        Page<ProductSearchResponse> results = productRepository.search(
+            new ProductSearchCondition(null, null, "서울", "강남구", category, null, PageRequest.of(0, 20), null, null)
+        );
+
+        assertThat(results).extracting(ProductSearchResponse::title).containsExactly("강남구 상품");
+    }
+
+    @Test
+    void search_prefersRegionIdOverSidoAndSigunguWhenBothProvided() {
+        String category = "QDSL_IT_REGION_PRIORITY";
+        saveApproved(Product.create(seller, seoul, "강남구 상품", "설명", BigDecimal.valueOf(10000), category));
+        saveApproved(Product.create(seller, busan, "부산 상품", "설명", BigDecimal.valueOf(10000), category));
+
+        Page<ProductSearchResponse> results = productRepository.search(
+            new ProductSearchCondition(null, busan.getId(), "서울", "강남구", category, null, PageRequest.of(0, 20), null, null)
+        );
+
+        assertThat(results).extracting(ProductSearchResponse::title).containsExactly("부산 상품");
     }
 
     @Test
