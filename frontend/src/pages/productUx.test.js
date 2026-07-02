@@ -306,6 +306,27 @@ describe('product detail, favorites, and seller UX source', () => {
     assert.match(source, /스마일/);
   });
 
+  test('ProductDetailPage separates product and seller report actions', () => {
+    const source = readSource('./ProductDetailPage.jsx');
+
+    assert.match(source, /getCurrentUserIdFromToken/);
+    assert.match(source, /const isCurrentUserSeller = currentUserId != null && sellerId != null && currentUserId === sellerId/);
+    assert.match(source, /const showSellerReportAction = sellerId != null && !isCurrentUserSeller/);
+    assert.match(source, /handleReport\('product'\)/);
+    assert.match(source, /상품 신고/);
+    assert.match(source, /handleReport\('seller'\)/);
+    assert.match(source, /판매자 신고/);
+    assert.match(source, /productId=\{reportTarget === 'product' \? Number\(productId\) : undefined\}/);
+    assert.match(source, /userId=\{reportTarget === 'seller' \? Number\(product\.sellerId\) : undefined\}/);
+  });
+
+  test('ReportModal labels fixed user targets as seller reports', () => {
+    const source = readSource('../features/reports/ReportModal.jsx');
+
+    assert.match(source, /reportTargetType === 'product' \? '상품' : '판매자'/);
+    assert.match(source, /createUserReport\(\{ reportedUserId: Number\(reportTargetId\), reason \}\)/);
+  });
+
   test('ProductDetailPage renders uploaded images with a direct image carousel', () => {
     const source = readSource('./ProductDetailPage.jsx');
 

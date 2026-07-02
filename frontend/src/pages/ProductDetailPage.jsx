@@ -19,15 +19,33 @@ import {
   getProductStatusLabel
 } from './productFormUtils.js';
 
+const getCurrentUserIdFromToken = (token) => {
+  if (!token) {
+    return null;
+  }
+
+  try {
+    const [, payload] = token.split('.');
+    const base64 = payload.replace(/-/g, '+').replace(/_/g, '/');
+    const decoded = JSON.parse(window.atob(base64.padEnd(base64.length + ((4 - (base64.length % 4)) % 4), '=')));
+    const userId = decoded?.userId ?? decoded?.id ?? decoded?.sub;
+
+    return userId == null ? null : String(userId);
+  } catch {
+    return null;
+  }
+};
+
 export default function ProductDetailPage() {
   const { productId } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
   const { isUserAuthenticated } = useAuth();
+  const { userToken } = useAuth();
   const [actionMessage, setActionMessage] = useState('');
   const [actionError, setActionError] = useState('');
   const [submitting, setSubmitting] = useState('');
-  const [showReport, setShowReport] = useState(false);
+  const [reportTarget, setReportTarget] = useState('');
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [sellerSmileScore, setSellerSmileScore] = useState(null);
   const { data: product, error, loading, reload } = useApiResource(() => getProduct(productId), [productId]);
@@ -116,12 +134,12 @@ export default function ProductDetailPage() {
     }
   };
 
-  const handleReport = () => {
+  const handleReport = (target) => {
     if (!requireAuth()) {
       return;
     }
 
-    setShowReport(true);
+    setReportTarget(target);
   };
 
   const handlePreviousImage = () => {
@@ -150,6 +168,10 @@ export default function ProductDetailPage() {
   const regionLabel = getProductRegionLabel(product);
   const statusLabel = getProductStatusLabel(product);
   const createdAtLabel = product.createdAt ? formatDateTime(product.createdAt) : '-';
+  const currentUserId = getCurrentUserIdFromToken(userToken);
+  const sellerId = product.sellerId == null ? null : String(product.sellerId);
+  const isCurrentUserSeller = currentUserId != null && sellerId != null && currentUserId === sellerId;
+  const showSellerReportAction = sellerId != null && !isCurrentUserSeller;
 
   return (
     <section>
@@ -237,9 +259,14 @@ export default function ProductDetailPage() {
               <Button onClick={handleOpenChat} disabled={Boolean(submitting)} variant="outline-primary">
                 <MessageCircle size={17} aria-hidden="true" /> 채팅
               </Button>
-              <Button onClick={handleReport} disabled={Boolean(submitting)} variant="outline-danger">
-                <Flag size={17} aria-hidden="true" /> 신고
+              <Button onClick={() => handleReport('product')} disabled={Boolean(submitting)} variant="outline-danger">
+                <Flag size={17} aria-hidden="true" /> 상품 신고
               </Button>
+              {showSellerReportAction ? (
+                <Button onClick={() => handleReport('seller')} disabled={Boolean(submitting)} variant="outline-danger">
+                  <Flag size={17} aria-hidden="true" /> 판매자 신고
+                </Button>
+              ) : null}
             </ButtonGroup>
           </div>
         </Col>
@@ -248,7 +275,12 @@ export default function ProductDetailPage() {
         <h2>설명</h2>
         <p className="mb-0 pre-line">{product.description || '설명이 없어요.'}</p>
       </div>
-      <ReportModal show={showReport} onHide={() => setShowReport(false)} productId={Number(productId)} />
+      <ReportModal
+        show={Boolean(reportTarget)}
+        onHide={() => setReportTarget('')}
+        productId={reportTarget === 'product' ? Number(productId) : undefined}
+        userId={reportTarget === 'seller' ? Number(product.sellerId) : undefined}
+      />
     </section>
   );
 }
