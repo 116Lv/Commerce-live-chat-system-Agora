@@ -24,7 +24,8 @@
 - **개발 기간**: 2026.06.22 ~ 2026.07.03 (12일)
 - **팀 구성**: 풀스택 4인 팀
 - **저장소**: https://github.com/sparta-spring4/Commerce-live-chat-system-Agora
-- **배포**: 미배포 (로컬 실행 환경 제공)
+- **배포**: [http://43.200.163.20](http://43.200.163.20) (AWS EC2 + Docker Compose, GitHub Actions CD)
+  > ⚠️ 프로젝트 기간 중 운영되는 데모용 인스턴스입니다. 이후 링크가 닫혀 있다면 [실행 방법](#실행-방법)을 참고해 로컬에서 그대로 재현할 수 있습니다.
 
 ---
 
@@ -32,16 +33,17 @@
 
 1. [팀 구성](#팀-구성)
 2. [프로젝트 소개](#프로젝트-소개)
-3. [핵심 기술 챌린지](#핵심-기술-챌린지)
-4. [기술 스택](#기술-스택)
-5. [시스템 아키텍처](#시스템-아키텍처)
-6. [스크린샷](#스크린샷)
-7. [실행 방법](#실행-방법)
-8. [테스트](#테스트)
-9. [프로젝트 구조](#프로젝트-구조)
-10. [CI / 협업 방식](#ci--협업-방식)
-11. [문서](#문서)
-12. [AI 활용 — Agent 협업 개발](#ai-활용--agent-협업-개발)
+3. [핵심 플로우](#핵심-플로우)
+4. [핵심 기술 챌린지](#핵심-기술-챌린지)
+5. [기술 스택](#기술-스택)
+6. [시스템 아키텍처](#시스템-아키텍처)
+7. [스크린샷](#스크린샷)
+8. [실행 방법](#실행-방법)
+9. [테스트](#테스트)
+10. [프로젝트 구조](#프로젝트-구조)
+11. [CI / 협업 방식](#ci--협업-방식)
+12. [문서](#문서)
+13. [AI 활용 — Agent 협업 개발](#ai-활용--agent-협업-개발)
 
 ---
 
@@ -80,9 +82,19 @@ Agora는 **판매자와 구매자가 직접 거래하는 중고거래 커머스*
 
 ---
 
+## 핵심 플로우
+
+채팅으로 가격을 제안하고, 판매자가 승인하면 결제로 이어지는 **협상 → 거래** 흐름입니다.
+
+<img src="./docs/screenshots/chat_nego_flow.gif" alt="채팅 → 네고 → 결제 흐름" width="320" />
+
+구매자가 채팅으로 응답 기한 연장을 요청 → 판매자가 연장을 승인 → 제안을 최종 수락하면 거래가 생성되고, 구매자는 결제 화면으로 바로 이동합니다.
+
+---
+
 ## 핵심 기술 챌린지
 
-이 프로젝트의 기술적 핵심은 **성능과 정합성**입니다. "적용 전/후를 실측으로 증명"하는 것을 목표로 진행했습니다.
+이 프로젝트의 기술적 핵심은 **성능과 정합성**입니다. 가능한 부분은 적용 전/후를 실측으로 검증했고, 나머지는 설계 근거와 트레이드오프 분석으로 뒷받침했습니다.
 
 ### 1. 검색 캐싱 & 어뷰징 방지 — v1 vs v2 성능 비교 + Redis ZSET dedup TTL
 
@@ -97,8 +109,8 @@ Agora는 **판매자와 구매자가 직접 거래하는 중고거래 커머스*
 **적용 방식**
 - `spring-boot-starter-cache` + `@EnableCaching`, AOP 기반 `@Cacheable`로 구현.
 - 캐시 저장소는 Redis(`RedisCacheManager`), TTL 60초.
-- **Cache Key 설계**: 검색어·지역·카테고리·페이지를 조합해 조건별로 분리 → 캐시 충돌 방지.
-  `'search:' + keyword + ':' + regionId + ':' + category + ':' + page + ':' + size`
+- **Cache Key 설계**: 검색어·지역(regionId/시도/시군구)·카테고리·상태·정렬 조건을 모두 조합해 조건별로 분리 → 캐시 충돌 방지.
+  `'search:' + keyword + ':' + regionId + ':' + category + ':' + status + ':' + sido + ':' + sigungu + ':' + page + ':' + size + ':' + sort + ':' + direction`
 - **Cache-aside(Lazy Loading)** 전략: 캐시 미스일 때만 DB를 조회하고 결과를 채운다.
 
 **k6 부하 테스트 결과** (MySQL 상품 5만 건, 300 vUser Ramp-up, 실측)
@@ -189,6 +201,20 @@ SETNX popular:keyword:dedup:{userId}:{keyword}  (TTL 1분)
 - 검색은 항상 `상태(판매중) + 미삭제`를 전제로 하므로 이 조건을 인덱스 선두에 배치했습니다.
 - 지역·카테고리 필터가 자주 결합되므로 `(region, status, deleted)`, `(category, status, deleted)` 복합 인덱스를 별도로 두었습니다.
 
+**EXPLAIN 비교** (상품 약 5만 건 기준)
+
+```sql
+EXPLAIN SELECT * FROM products
+WHERE category = ? AND status = 'SELLING' AND deleted_at IS NULL;
+```
+
+| 구분 | type | key | rows |
+|------|------|-----|------|
+| BEFORE (인덱스 적용 전) | `ALL` (풀스캔) | `NULL` | 49,507 |
+| AFTER (인덱스 적용 후) | `ref` | `idx_products_category_status_deleted` | 18,426 |
+
+풀스캔이 인덱스 조회(`ref`)로 바뀌면서 스캔 로우 수가 약 1/3로 줄었습니다.
+
 > 검색 쿼리는 QueryDSL 동적 쿼리로 작성되며, 최종 SQL은 `title`/`description`에 대한 `LIKE` 구문 + `Page` 기반 페이징(count 쿼리 분리)으로 나갑니다.
 
 ---
@@ -259,8 +285,9 @@ SEND    → 세션 속성에서 StompPrincipal 복원 → principal 정상 전�
 | **Realtime** | WebSocket + STOMP, Redis Pub/Sub |
 | **Payment** | PortOne 결제 연동 |
 | **Build / Test** | Gradle Wrapper, JUnit 5, k6(부하 테스트) |
-| **Frontend** | React 19, Vite, Bootstrap, `@stomp/stompjs` |
-| **CI** | GitHub Actions |
+| **Frontend** | React 19, Vite, React Router, React Bootstrap, Axios, `@stomp/stompjs`(+ SockJS) |
+| **Deploy** | Docker Compose, Nginx(정적 서빙 + 리버스 프록시), AWS EC2, AWS RDS(MySQL) |
+| **CI / CD** | GitHub Actions (CI: 빌드·테스트, CD: EC2 배포) |
 
 ---
 
@@ -302,9 +329,9 @@ flowchart LR
 
 ## 스크린샷
 
-| 상품 목록 | 채팅 + 네고 오퍼 | 거래 내역 |
-|:---------:|:----------------:|:---------:|
-| ![상품 목록](./docs/screenshots/product_list.png) | ![채팅 + 네고](./docs/screenshots/chat_nego.png) | ![거래 내역](./docs/screenshots/trade_history.png) |
+| 상품 목록 | 관심 지역 설정 | 거래 상세 |
+|:---------:|:--------------:|:---------:|
+| <img src="./docs/screenshots/product_list.png" alt="상품 목록" width="270" /> | <img src="./docs/screenshots/region_setup.png" alt="관심 지역 설정" width="270" /> | <img src="./docs/screenshots/trade_detail.png" alt="거래 상세" width="270" /> |
 
 ---
 
@@ -347,6 +374,18 @@ npm run dev      # http://localhost:5173
 > ⚠️ **Windows에서 프로젝트 경로에 한글이 포함된 경우**, 테스트 워커 classpath argfile이 깨질 수 있습니다.
 > `~/.gradle/gradle.properties`에 `localBuildDir=C:/agora-build` 같은 **ASCII 경로**를 설정하세요(커밋 금지). 자세한 내용은 [`build.gradle`](build.gradle) 상단 주석 참고.
 
+### 배포 환경 (운영)
+
+[http://43.200.163.20](http://43.200.163.20) 에서 실제 운영 환경이 돌고 있습니다.
+
+- **인프라**: AWS EC2 1대에 `backend` / `frontend` / `redis` / `migrate` 컨테이너를 Docker Compose로 올리고, MySQL은 컨테이너가 아닌 **별도 AWS RDS**를 사용합니다.
+- **Nginx**: `frontend` 컨테이너의 Nginx가 정적 파일을 서빙하면서 `/api`, `/ws`, `/uploads`를 내부 `backend:8080`으로 리버스 프록시합니다.
+- **업로드 이미지**: AWS S3에 저장됩니다(`STORAGE_TYPE=s3`, `S3ImageStorageClient`). 로컬 실행 시에는 `STORAGE_TYPE=local`로 EC2/로컬 디스크의 `uploads` 디렉터리를 사용합니다.
+- **운영 프로파일**: 애플리케이션은 `docker` 프로파일로 실행되고(`ddl-auto: validate`), 스키마 마이그레이션은 애플리케이션이 아니라 별도 `migrate` 컨테이너(Flyway)가 담당합니다.
+- **CI/CD**: GitHub Actions로 CI(빌드·테스트)와 CD를 구성했습니다. `dev` 브랜치에 push되면 CD 워크플로가 EC2에 SSH 접속해 최신 코드를 `git fetch` + `reset --hard`한 뒤 `docker compose up -d --build`로 자동 재빌드·재배포합니다([`.github/workflows/deploy.yml`](.github/workflows/deploy.yml)).
+
+로컬에서 이 배포 구성을 그대로 재현하는 방법은 [`docs/docker-cicd.md`](docs/docker-cicd.md)에 정리되어 있습니다.
+
 ---
 
 ## 테스트
@@ -382,10 +421,14 @@ src/main/java/com/team7/agora
     ├── websocket/  storage/  time/(AgoraClock)  exception/  response/
 
 frontend/src
-├── api/        # axios API 클라이언트
-├── auth/       # AuthContext, 인증 훅
-├── features/   # 도메인별 컴포넌트 (chat, nego 등)
-└── pages/      # 라우팅 페이지
+├── api/         # axios API 클라이언트
+├── app/         # 라우트 정의 (routes.jsx)
+├── auth/        # AuthContext, 인증 훅
+├── components/  # 공용 UI 컴포넌트 (ProductCard, RegionPicker, StatusBadge 등)
+├── features/    # 도메인별 컴포넌트 (chat, nego 등)
+├── layouts/     # UserLayout, AdminLayout
+├── pages/       # 라우팅 페이지
+└── styles/      # 전역 스타일
 ```
 
 **컨벤션**
@@ -417,6 +460,8 @@ frontend/src
 | 캐싱 전략 설계 | [Wiki - Caching Strategy](https://github.com/sparta-spring4/Commerce-live-chat-system-Agora/wiki/Caching-Strategy) |
 | 거래·결제 흐름 | [Wiki - Trade Payment Flow](https://github.com/sparta-spring4/Commerce-live-chat-system-Agora/wiki/Trade-Payment-Flow) |
 | 분산 락 설계 노트 | [docs/redisson-distributed-lock-guide.md](docs/redisson-distributed-lock-guide.md) |
+| Docker / CI-CD 배포 가이드 | [docs/docker-cicd.md](docs/docker-cicd.md) |
+| 로컬 개발 가이드 | [docs/local-development.md](docs/local-development.md) |
 | 운영 규칙(브랜치·PR·리뷰) | [AGENTS.md](AGENTS.md) |
 
 ---
