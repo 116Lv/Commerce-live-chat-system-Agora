@@ -5,6 +5,7 @@ import com.team7.agora.domain.admin.dto.response.AdminReportResponse;
 import com.team7.agora.domain.admin.enums.AdminPermission;
 import com.team7.agora.domain.report.entity.Report;
 import com.team7.agora.domain.report.repository.ReportRepository;
+import com.team7.agora.domain.search.service.ProductSearchService;
 import com.team7.agora.global.auth.AdminPrincipal;
 import com.team7.agora.global.exception.BusinessException;
 import com.team7.agora.global.exception.ErrorCode;
@@ -20,13 +21,15 @@ import org.springframework.transaction.annotation.Transactional;
 public class AdminReportService {
 
     private final ReportRepository reportRepository;
+    private final ProductSearchService productSearchService;
 
     /**
      * 필요한 의존성을 주입받아 컴포넌트를 생성한다.
      * @param reportRepository 데이터를 조회하고 저장하는 리포지토리
      */
-    public AdminReportService(ReportRepository reportRepository) {
+    public AdminReportService(ReportRepository reportRepository, ProductSearchService productSearchService) {
         this.reportRepository = reportRepository;
+        this.productSearchService = productSearchService;
     }
 
     /**
@@ -135,6 +138,7 @@ public class AdminReportService {
         }
 
         report.getProduct().hide();
+        productSearchService.evictSearchCache();
         report.resolve(adminMemo);
         return AdminReportResponse.from(report);
     }

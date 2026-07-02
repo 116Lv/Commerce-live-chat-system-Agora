@@ -12,6 +12,7 @@ import com.team7.agora.domain.product.entity.Product;
 import com.team7.agora.domain.region.entity.Region;
 import com.team7.agora.domain.report.entity.Report;
 import com.team7.agora.domain.report.repository.ReportRepository;
+import com.team7.agora.domain.search.service.ProductSearchService;
 import com.team7.agora.domain.user.entity.User;
 import com.team7.agora.domain.user.enums.UserStatus;
 import com.team7.agora.domain.admin.enums.AdminRole;
@@ -34,6 +35,9 @@ class AdminReportServiceTest {
     @Mock
     private ReportRepository reportRepository;
 
+    @Mock
+    private ProductSearchService productSearchService;
+
     private AdminReportService adminReportService;
 
     private final AdminPrincipal userAdmin = new AdminPrincipal(
@@ -51,7 +55,7 @@ class AdminReportServiceTest {
 
     @BeforeEach
     void setUp() {
-        adminReportService = new AdminReportService(reportRepository);
+        adminReportService = new AdminReportService(reportRepository, productSearchService);
         User reporter = User.signup("reporter@test.com", "password", "신고자", "01011112222");
         assignId(reporter, 1L);
         User reportedUser = User.signup("reported@test.com", "password", "피신고자", "01044445555");
@@ -215,6 +219,7 @@ class AdminReportServiceTest {
         assertThat(productReport.getProduct().getStatus().name()).isEqualTo("HIDDEN");
         assertThat(productReport.getProduct().getApprovalStatus().name()).isEqualTo("REJECTED");
         assertThat(response.adminMemo()).isEqualTo("가품 판매 확인");
+        verify(productSearchService).evictSearchCache();
     }
 
     @Test
