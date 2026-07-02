@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Map;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -130,7 +131,7 @@ public class AdminProductService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "Product not found."));
         product.hide();
         productSearchService.evictSearchCache();
-        return AdminProductResponse.from(product);
+        return toProductResponseWithImages(product);
     }
 
     @Transactional
@@ -138,6 +139,9 @@ public class AdminProductService {
         validateProductAdmin(admin);
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "Product not found."));
+        if (product.getStatus() == ProductStatus.HIDDEN) {
+            throw new BusinessException(ErrorCode.CONFLICT, "Product is already hidden.");
+        }
         Admin requester = getCurrentAdmin(admin);
         String pendingRequestKey = AdminApprovalRequest.buildProductHidePendingRequestKey(productId);
         if (approvalRequestRepository.existsByPendingRequestKey(pendingRequestKey)) {
@@ -145,7 +149,11 @@ public class AdminProductService {
         }
 
         AdminApprovalRequest request = AdminApprovalRequest.createProductHide(requester, productId, product.getTitle(), reason);
-        return AdminApprovalRequestResponse.from(approvalRequestRepository.save(request));
+        try {
+            return AdminApprovalRequestResponse.from(approvalRequestRepository.save(request));
+        } catch (DataIntegrityViolationException ex) {
+            throw new BusinessException(ErrorCode.CONFLICT, "A pending product hide approval request already exists.");
+        }
     }
 
     @Transactional
@@ -155,7 +163,12 @@ public class AdminProductService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "Product not found."));
         product.approve();
         productSearchService.evictSearchCache();
-        return AdminProductResponse.from(product);
+        return toProductResponseWithImages(product);
+    }
+
+    private AdminProductResponse toProductResponseWithImages(Product product) {
+        Map<Long, List<String>> imageUrls = findImageUrls(List.of(product));
+        return AdminProductResponse.from(product, imageUrls.getOrDefault(product.getId(), List.of()));
     }
 
     private String normalizeFilter(String value) {

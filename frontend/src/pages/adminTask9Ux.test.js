@@ -41,6 +41,16 @@ test('admin task 9 pages expose approval request and product approval actions', 
   assert.match(pages, /PENDING/);
 });
 
+test('admin product hide approval requests expose product targets in approval queues', () => {
+  const pages = readSource('./AdminPlaceholderPages.jsx');
+
+  assert.match(pages, /getApprovalRequestTargetLabel/);
+  assert.match(pages, /request\.targetProductTitle/);
+  assert.match(pages, /request\.targetProductId/);
+  assert.match(pages, /targetProductTitle,\s*request\.targetProductId/s);
+  assert.match(pages, /normalizedApproval === 'PENDING' \|\| normalizedApproval === 'REJECTED'/);
+});
+
 test('admin products expose domain-specific search conditions and operations table structure', () => {
   const pages = readSource('./AdminPlaceholderPages.jsx');
 

@@ -512,11 +512,11 @@ export function AdminProductsPage() {
                     <ActionButton icon={Search} size="sm" variant="outline-secondary" onClick={() => openProductModal(product, 'detail')}>
                       상세
                     </ActionButton>
-                    {normalizedApproval === 'PENDING' ? (
+                    {normalizedApproval === 'PENDING' || normalizedApproval === 'REJECTED' ? (
                       <ActionButton
                         icon={CheckCircle2}
                         size="sm"
-                        variant="outline-primary"
+                        variant={normalizedApproval === 'PENDING' ? 'outline-primary' : 'outline-success'}
                         onClick={() => openProductModal(product, 'approve')}
                       >
                         승인
@@ -644,7 +644,7 @@ export function AdminProductsPage() {
           <ActionButton
             icon={CheckCircle2}
             variant={selectedApprovalStatus === 'PENDING' ? 'primary' : 'success'}
-            disabled={!selectedProduct || selectedApprovalStatus !== 'PENDING'}
+            disabled={!selectedProduct || !(selectedApprovalStatus === 'PENDING' || selectedApprovalStatus === 'REJECTED')}
             onClick={() => handleApprove(selectedProduct)}
           >
             승인
@@ -2134,6 +2134,22 @@ function ApprovalStatusBadge({ status }) {
   return <Badge bg={variant}>{normalized}</Badge>;
 }
 
+function getApprovalRequestTargetLabel(request) {
+  if (request.operation === 'PRODUCT_HIDE') {
+    return request.targetProductTitle || (request.targetProductId ? `#${request.targetProductId}` : '-');
+  }
+
+  return request.targetAdminNickname || request.targetAdminId || '-';
+}
+
+function getApprovalRequestTargetDetail(request) {
+  if (request.operation === 'PRODUCT_HIDE') {
+    return request.targetProductId ? `#${request.targetProductId}` : '-';
+  }
+
+  return request.targetAdminEmail || '-';
+}
+
 function ApprovalRequestTable({ rows, memos = {}, setMemo, onApprove, onReject, showActions = false }) {
   if (rows.length === 0) {
     return <EmptyState title="조건에 맞는 승인 요청이 없습니다" />;
@@ -2169,8 +2185,8 @@ function ApprovalRequestTable({ rows, memos = {}, setMemo, onApprove, onReject, 
                 <small className="text-muted">{request.requesterEmail || '-'}</small>
               </td>
               <td>
-                <div>{request.targetAdminNickname || request.targetAdminId || '-'}</div>
-                <small className="text-muted">{request.targetAdminEmail || '-'}</small>
+                <div>{getApprovalRequestTargetLabel(request)}</div>
+                <small className="text-muted">{getApprovalRequestTargetDetail(request)}</small>
               </td>
               <td>{formatAdminRole(request.requestedRole)}</td>
               <td>
@@ -2232,7 +2248,9 @@ export function AdminApprovalsPage() {
       request.requesterEmail,
       request.targetAdminNickname,
       request.targetAdminEmail,
-      request.targetAdminId
+      request.targetAdminId,
+      request.targetProductTitle,
+      request.targetProductId
     ].some((value) => includesKeyword(value, approvalFilters.keyword));
     const roleMatch = !approvalFilters.requestedRole
       || String(request.requestedRole || '').toUpperCase() === approvalFilters.requestedRole;
@@ -2328,6 +2346,8 @@ export function AdminMyApprovalRequestsPage() {
       request.targetAdminNickname,
       request.targetAdminEmail,
       request.targetAdminId,
+      request.targetProductTitle,
+      request.targetProductId,
       request.requestedRole
     ].some((value) => includesKeyword(value, myApprovalFilters.keyword));
     const statusMatch = !myApprovalFilters.status || String(request.status || '').toUpperCase() === myApprovalFilters.status;

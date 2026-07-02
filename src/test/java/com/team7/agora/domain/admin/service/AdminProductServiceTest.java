@@ -16,6 +16,7 @@ import com.team7.agora.domain.admin.enums.AdminStatus;
 import com.team7.agora.domain.admin.repository.AdminApprovalRequestRepository;
 import com.team7.agora.domain.admin.repository.AdminRepository;
 import com.team7.agora.domain.product.entity.Product;
+import com.team7.agora.domain.product.entity.ProductImage;
 import com.team7.agora.domain.product.enums.ProductApprovalStatus;
 import com.team7.agora.domain.product.enums.ProductStatus;
 import com.team7.agora.domain.product.repository.ProductImageRepository;
@@ -36,6 +37,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.dao.DataIntegrityViolationException;
 
 @ExtendWith(MockitoExtension.class)
 class AdminProductServiceTest {
@@ -285,6 +287,34 @@ class AdminProductServiceTest {
     }
 
     @Test
+    void requestHideProduct_translatesPendingRequestUniqueRaceToConflict() {
+        AdminProductService service = createService();
+        Product product = product(1L);
+        Admin requester = admin(99L);
+        when(productRepository.findById(1L)).thenReturn(Optional.of(product));
+        when(adminRepository.findById(99L)).thenReturn(Optional.of(requester));
+        when(approvalRequestRepository.existsByPendingRequestKey("PRODUCT_HIDE:1")).thenReturn(false);
+        when(approvalRequestRepository.save(org.mockito.ArgumentMatchers.any(AdminApprovalRequest.class)))
+                .thenThrow(new DataIntegrityViolationException("duplicate pending request"));
+
+        assertThatThrownBy(() -> service.requestHideProduct(principal(AdminRole.PRODUCT_ADMIN), 1L, "신고 누적"))
+                .isInstanceOf(BusinessException.class)
+                .hasMessageContaining("pending product hide approval request");
+    }
+
+    @Test
+    void requestHideProduct_rejectsAlreadyHiddenProduct() {
+        AdminProductService service = createService();
+        Product product = product(1L);
+        product.hide();
+        when(productRepository.findById(1L)).thenReturn(Optional.of(product));
+
+        assertThatThrownBy(() -> service.requestHideProduct(principal(AdminRole.PRODUCT_ADMIN), 1L, "신고 누적"))
+                .isInstanceOf(BusinessException.class)
+                .hasMessageContaining("already hidden");
+    }
+
+    @Test
     void getProducts_rejectsNonProductAdmin() {
         AdminProductService service = createService();
 
@@ -297,11 +327,14 @@ class AdminProductServiceTest {
         AdminProductService service = createService();
         Product product = product(1L);
         when(productRepository.findById(1L)).thenReturn(Optional.of(product));
+        when(productImageRepository.findAllByProductIdInOrderByProductIdAscSortOrderAsc(List.of(1L)))
+                .thenReturn(List.of(ProductImage.create(product, "/uploads/products/bike.jpg", 0)));
 
         AdminProductResponse response = service.hideProduct(principal(AdminRole.PRODUCT_ADMIN), 1L);
 
         assertThat(response.status()).isEqualTo("HIDDEN");
         assertThat(response.approvalStatus()).isEqualTo("REJECTED");
+        assertThat(response.imageUrls()).containsExactly("/uploads/products/bike.jpg");
         assertThat(product.getStatus()).isEqualTo(ProductStatus.HIDDEN);
         assertThat(product.getApprovalStatus()).isEqualTo(ProductApprovalStatus.REJECTED);
         verify(productSearchService).evictSearchCache();
@@ -312,11 +345,14 @@ class AdminProductServiceTest {
         AdminProductService service = createService();
         Product product = product(1L);
         when(productRepository.findById(1L)).thenReturn(Optional.of(product));
+        when(productImageRepository.findAllByProductIdInOrderByProductIdAscSortOrderAsc(List.of(1L)))
+                .thenReturn(List.of(ProductImage.create(product, "/uploads/products/bike.jpg", 0)));
 
         AdminProductResponse response = service.approveProduct(principal(AdminRole.PRODUCT_ADMIN), 1L);
 
         assertThat(response.status()).isEqualTo("SELLING");
         assertThat(response.approvalStatus()).isEqualTo("APPROVED");
+        assertThat(response.imageUrls()).containsExactly("/uploads/products/bike.jpg");
         assertThat(product.getStatus()).isEqualTo(ProductStatus.SELLING);
         assertThat(product.getApprovalStatus()).isEqualTo(ProductApprovalStatus.APPROVED);
         verify(productSearchService).evictSearchCache();
