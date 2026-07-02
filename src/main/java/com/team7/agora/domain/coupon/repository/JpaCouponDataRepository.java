@@ -16,6 +16,10 @@ import org.springframework.data.repository.query.Param;
 interface JpaCouponDataRepository extends JpaRepository<Coupon, Long> {
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select c from Coupon c where c.id = :id")
+    Optional<Coupon> findByIdForUpdate(@Param("id") Long id);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
     Optional<Coupon> findFirstByCouponEventIdAndUserIsNullAndStatusOrderByIdAsc(Long eventId, CouponStatus status);
 
     List<Coupon> findAllByUserIdAndStatusIn(Long userId, Collection<CouponStatus> statuses);

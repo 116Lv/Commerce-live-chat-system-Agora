@@ -33,6 +33,8 @@ describe('coupon formatting utilities', () => {
   test('maps status labels, badge variants, filters, expiry priority, and issue buttons defensively', () => {
     assert.deepEqual(getCouponStatusMeta({ status: 'ACTIVE' }), { label: '발급 가능', variant: 'success' });
     assert.deepEqual(getCouponStatusMeta({ status: 'USED' }), { label: '사용 완료', variant: 'secondary' });
+    assert.deepEqual(getCouponStatusMeta({ status: 'PAYMENT_PENDING' }), { label: '결제 시도중', variant: 'warning' });
+    assert.equal(toCouponFilter({ status: 'PAYMENT_PENDING' }), 'pending');
     assert.equal(toCouponFilter({ status: 'EXPIRED' }), 'expired');
     assert.equal(getExpiryPriority({ status: 'ISSUED', expiresAt: '2026-07-01T00:00:00+09:00' }, new Date('2026-06-29T00:00:00+09:00')), 'soon');
     assert.deepEqual(buildIssueButtonState({ issuedByMe: true }), { disabled: true, label: '이미 발급됨' });

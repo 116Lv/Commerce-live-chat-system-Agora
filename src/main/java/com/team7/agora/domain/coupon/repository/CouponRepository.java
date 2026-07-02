@@ -15,6 +15,8 @@ public interface CouponRepository {
 
     Optional<Coupon> findById(Long couponId);
 
+    Optional<Coupon> findByIdForUpdate(Long couponId);
+
     Optional<Coupon> findFirstAvailableSlotForUpdate(Long eventId);
 
     List<Coupon> findAllByUserIdAndStatusIn(Long userId, Collection<CouponStatus> statuses);

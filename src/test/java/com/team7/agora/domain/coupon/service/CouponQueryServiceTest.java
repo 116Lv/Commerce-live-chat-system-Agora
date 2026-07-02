@@ -62,7 +62,7 @@ class CouponQueryServiceTest {
         when(userRepository.existsById(10L)).thenReturn(true);
         when(couponRepository.findAllByUserIdAndStatusIn(
                 10L,
-                List.of(CouponStatus.ISSUED, CouponStatus.USED, CouponStatus.EXPIRED)
+                List.of(CouponStatus.ISSUED, CouponStatus.PAYMENT_PENDING, CouponStatus.USED, CouponStatus.EXPIRED)
             ))
             .thenReturn(List.of(coupon));
 

@@ -81,17 +81,36 @@ public class Coupon {
     }
 
     public void use(LocalDateTime now) {
-        if (status != CouponStatus.ISSUED) {
+        if (status != CouponStatus.ISSUED && status != CouponStatus.PAYMENT_PENDING) {
             throw new BusinessException(ErrorCode.CONFLICT, "발급된 쿠폰만 사용할 수 있습니다.");
         }
-        if (!isUsableAt(now)) {
+        if (status == CouponStatus.ISSUED && !isUsableAt(now)) {
             throw new BusinessException(ErrorCode.CONFLICT, "만료된 쿠폰은 사용할 수 없습니다.");
         }
         this.status = CouponStatus.USED;
     }
 
+    public void reserveForPayment(Long userId, LocalDateTime now) {
+        if (status != CouponStatus.ISSUED) {
+            throw new BusinessException(ErrorCode.CONFLICT, "Issued coupon is required for payment.");
+        }
+        if (user == null || !user.getId().equals(userId)) {
+            throw new BusinessException(ErrorCode.FORBIDDEN, "Only the coupon owner can use the coupon.");
+        }
+        if (status == CouponStatus.ISSUED && !isUsableAt(now)) {
+            throw new BusinessException(ErrorCode.CONFLICT, "Expired coupon cannot be used.");
+        }
+        this.status = CouponStatus.PAYMENT_PENDING;
+    }
+
+    public void releasePaymentReservation() {
+        if (status == CouponStatus.PAYMENT_PENDING) {
+            this.status = CouponStatus.ISSUED;
+        }
+    }
+
     public void expire() {
-        if (status == CouponStatus.ISSUED) {
+        if (status == CouponStatus.ISSUED || status == CouponStatus.PAYMENT_PENDING) {
             this.status = CouponStatus.EXPIRED;
         }
     }

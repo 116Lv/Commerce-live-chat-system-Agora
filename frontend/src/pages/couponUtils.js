@@ -45,6 +45,9 @@ export const getDiscountConditionText = (coupon) => {
 export const getCouponStatusMeta = (coupon) => {
   const status = typeof coupon === 'string' ? coupon : coupon?.status;
   const key = String(status || '').toUpperCase();
+  if (key === 'PAYMENT_PENDING') {
+    return { label: '결제 시도중', variant: 'warning' };
+  }
   return STATUS_META[key] || { label: status || '-', variant: 'light' };
 };
 
@@ -56,6 +59,10 @@ export const toCouponFilter = (coupon, now = new Date()) => {
     return 'used';
   }
 
+  if (status === 'PAYMENT_PENDING') {
+    return 'pending';
+  }
+
   if (status === 'EXPIRED' || (expiresAt && expiresAt < now)) {
     return 'expired';
   }
@@ -64,7 +71,7 @@ export const toCouponFilter = (coupon, now = new Date()) => {
 };
 
 export const sortMyCoupons = (coupons, now = new Date()) => {
-  const order = { usable: 0, used: 1, expired: 2 };
+  const order = { usable: 0, pending: 1, used: 2, expired: 3 };
 
   return [...(coupons || [])].sort((a, b) => {
     const filterDiff = order[toCouponFilter(a, now)] - order[toCouponFilter(b, now)];

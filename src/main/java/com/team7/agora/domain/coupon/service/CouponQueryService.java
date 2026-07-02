@@ -44,7 +44,7 @@ public class CouponQueryService {
 
         return couponRepository.findAllByUserIdAndStatusIn(
                 userId,
-                List.of(CouponStatus.ISSUED, CouponStatus.USED, CouponStatus.EXPIRED)
+                List.of(CouponStatus.ISSUED, CouponStatus.PAYMENT_PENDING, CouponStatus.USED, CouponStatus.EXPIRED)
             )
             .stream()
             .map(MyCouponResponse::from)

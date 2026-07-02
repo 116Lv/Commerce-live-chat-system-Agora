@@ -60,7 +60,7 @@ public class PaymentController {
         @AuthenticationPrincipal CustomUserDetails userDetails,
         @Valid @RequestBody PaymentPrepareRequest request
     ) {
-        return prepareResponse(userDetails, request.tradeId());
+        return prepareResponse(userDetails, request.tradeId(), request.couponId());
     }
 
     /**
@@ -126,8 +126,13 @@ public class PaymentController {
     }
 
     private ApiResponse<PaymentResponse> prepareResponse(CustomUserDetails userDetails, Long tradeId) {
-        PaymentResponse response = paymentService.prepare(userDetails.getUserId(), tradeId);
+        PaymentResponse response = paymentService.prepare(userDetails.getUserId(), tradeId, null);
         return ApiResponse.success("결제가 준비되었습니다.", response);
+    }
+
+    private ApiResponse<PaymentResponse> prepareResponse(CustomUserDetails userDetails, Long tradeId, Long couponId) {
+        PaymentResponse response = paymentService.prepare(userDetails.getUserId(), tradeId, couponId);
+        return ApiResponse.success("Payment prepared.", response);
     }
 
     private ApiResponse<PaymentResponse> confirmResponse(CustomUserDetails userDetails, Long paymentId, String paymentKey) {

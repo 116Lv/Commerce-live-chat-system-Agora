@@ -1,5 +1,6 @@
 package com.team7.agora.domain.payment.entity;
 
+import com.team7.agora.domain.coupon.entity.Coupon;
 import com.team7.agora.domain.payment.enums.PaymentStatus;
 import com.team7.agora.domain.payment.exception.PaymentException;
 import com.team7.agora.domain.trade.entity.Trade;
@@ -33,10 +34,10 @@ import lombok.NoArgsConstructor;
         @Index(name = "idx_payments_payment_key", columnList = "payment_key"),
         @Index(name = "idx_payments_status_requested", columnList = "status, requested_at")
     }
+)
 /**
  * 결제 도메인 정보를 영속화하는 JPA 엔티티이다.
  */
-)
 public class Payment {
 
     @Id
@@ -53,6 +54,16 @@ public class Payment {
 
     @Column(nullable = false, precision = 12, scale = 0)
     private BigDecimal amount;
+
+    @Column(nullable = false, precision = 12, scale = 0)
+    private BigDecimal originalAmount;
+
+    @Column(nullable = false, precision = 12, scale = 0)
+    private BigDecimal discountAmount;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "coupon_id")
+    private Coupon coupon;
 
     @Column(nullable = false, unique = true, length = 80)
     private String orderId;
@@ -75,6 +86,8 @@ public class Payment {
         this.trade = trade;
         this.payer = payer;
         this.amount = amount;
+        this.originalAmount = amount;
+        this.discountAmount = BigDecimal.ZERO;
         this.orderId = orderId;
         this.status = PaymentStatus.READY;
         this.requestedAt = AgoraClock.now();
@@ -90,6 +103,57 @@ public class Payment {
      */
     public static Payment ready(Trade trade, User payer, BigDecimal amount, String orderId) {
         return new Payment(trade, payer, amount, orderId);
+    }
+
+    public static Payment ready(
+        Trade trade,
+        User payer,
+        BigDecimal originalAmount,
+        BigDecimal discountAmount,
+        Coupon coupon,
+        String orderId
+    ) {
+        Payment payment = new Payment(trade, payer, originalAmount.subtract(discountAmount), orderId);
+        payment.originalAmount = originalAmount;
+        payment.discountAmount = discountAmount;
+        payment.coupon = coupon;
+        return payment;
+    }
+
+    public boolean hasCoupon() {
+        return coupon != null;
+    }
+
+    public boolean isUsingCoupon(Long couponId) {
+        return coupon != null && coupon.getId().equals(couponId);
+    }
+
+    public void applyCoupon(Coupon coupon, BigDecimal originalAmount, BigDecimal discountAmount) {
+        if (status != PaymentStatus.READY) {
+            throw new PaymentException(ErrorCode.CONFLICT, "Ready payment is required to apply coupon.");
+        }
+        if (this.coupon != null && !this.coupon.getId().equals(coupon.getId())) {
+            throw new PaymentException(ErrorCode.CONFLICT, "Payment already has a different coupon.");
+        }
+        this.coupon = coupon;
+        this.originalAmount = originalAmount;
+        this.discountAmount = discountAmount;
+        this.amount = originalAmount.subtract(discountAmount);
+    }
+
+    public void useReservedCoupon() {
+        if (coupon != null) {
+            coupon.use();
+        }
+    }
+
+    public void releaseCouponReservation() {
+        if (coupon != null) {
+            coupon.releasePaymentReservation();
+            this.coupon = null;
+            this.discountAmount = BigDecimal.ZERO;
+            this.amount = this.originalAmount;
+        }
     }
 
     /**

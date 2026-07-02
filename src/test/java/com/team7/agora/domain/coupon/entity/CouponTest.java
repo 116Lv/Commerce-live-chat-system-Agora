@@ -2,9 +2,11 @@ package com.team7.agora.domain.coupon.entity;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static com.team7.agora.support.TestEntityIds.assignId;
 
 import com.team7.agora.domain.coupon.enums.CouponEventType;
 import com.team7.agora.domain.coupon.enums.CouponStatus;
+import com.team7.agora.domain.user.entity.User;
 import com.team7.agora.global.exception.BusinessException;
 import java.time.LocalDateTime;
 import org.junit.jupiter.api.Test;
@@ -47,6 +49,25 @@ class CouponTest {
         assertThat(available.isUsableAt(issuedAt)).isFalse();
         assertThat(used.isUsableAt(issuedAt.plusDays(1))).isFalse();
         assertThat(expired.isUsableAt(issuedAt.plusDays(7).plusNanos(1))).isFalse();
+    }
+
+    @Test
+    void reserveForPaymentBlocksAnotherPaymentUntilReleased() {
+        LocalDateTime issuedAt = LocalDateTime.of(2026, 6, 30, 12, 0);
+        User user = User.signup("buyer@test.com", "password", "buyer", "01012345678");
+        assignId(user, 10L);
+        Coupon coupon = Coupon.createAvailableSlot(event());
+        coupon.assign(user, issuedAt, 7);
+
+        coupon.reserveForPayment(10L, issuedAt.plusDays(1));
+
+        assertThat(coupon.getStatus()).isEqualTo(CouponStatus.PAYMENT_PENDING);
+        assertThatThrownBy(() -> coupon.reserveForPayment(10L, issuedAt.plusDays(1)))
+            .isInstanceOf(BusinessException.class);
+
+        coupon.releasePaymentReservation();
+
+        assertThat(coupon.getStatus()).isEqualTo(CouponStatus.ISSUED);
     }
 
     private CouponEvent event() {

@@ -33,6 +33,11 @@ class CouponRepositoryAdapter implements CouponRepository {
     }
 
     @Override
+    public Optional<Coupon> findByIdForUpdate(Long couponId) {
+        return repository.findByIdForUpdate(couponId);
+    }
+
+    @Override
     public Optional<Coupon> findFirstAvailableSlotForUpdate(Long eventId) {
         return repository.findFirstByCouponEventIdAndUserIsNullAndStatusOrderByIdAsc(eventId, CouponStatus.AVAILABLE);
     }

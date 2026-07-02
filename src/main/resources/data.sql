@@ -137,13 +137,13 @@ VALUES
     (4, 7, 1, 3, 'CANCELLED', 33000, '2026-06-23 11:00:00', NULL, NULL),
     (5, 3, 2, 3, 'EXPIRED', 42000, '2026-06-23 11:30:00', NULL, NULL);
 
-INSERT INTO payments (id, trade_id, payer_id, amount, order_id, payment_key, status, requested_at, paid_at, refunded_at)
+INSERT INTO payments (id, trade_id, payer_id, amount, original_amount, discount_amount, order_id, payment_key, status, requested_at, paid_at, refunded_at)
 VALUES
-    (1, 1, 2, 580000, 'order-dummy-trade-1', 'payment-key-dummy-1', 'PAID', '2026-06-23 09:30:00', '2026-06-23 09:31:00', NULL),
-    (2, 2, 2, 60000, 'order-dummy-trade-2', 'payment-key-dummy-2', 'PAID', '2026-06-22 17:50:00', '2026-06-22 17:51:00', NULL),
-    (3, 3, 1, 23000, 'order-dummy-trade-3', NULL, 'READY', '2026-06-23 10:30:00', NULL, NULL),
-    (4, 4, 3, 33000, 'order-dummy-trade-4', 'payment-key-dummy-4', 'REFUNDED', '2026-06-23 11:00:00', '2026-06-23 11:01:00', '2026-06-23 11:30:00'),
-    (5, 5, 3, 42000, 'order-dummy-trade-5', NULL, 'FAILED', '2026-06-23 12:00:00', NULL, NULL);
+    (1, 1, 2, 580000, 580000, 0, 'order-dummy-trade-1', 'payment-key-dummy-1', 'PAID', '2026-06-23 09:30:00', '2026-06-23 09:31:00', NULL),
+    (2, 2, 2, 60000, 60000, 0, 'order-dummy-trade-2', 'payment-key-dummy-2', 'PAID', '2026-06-22 17:50:00', '2026-06-22 17:51:00', NULL),
+    (3, 3, 1, 23000, 23000, 0, 'order-dummy-trade-3', NULL, 'READY', '2026-06-23 10:30:00', NULL, NULL),
+    (4, 4, 3, 33000, 33000, 0, 'order-dummy-trade-4', 'payment-key-dummy-4', 'REFUNDED', '2026-06-23 11:00:00', '2026-06-23 11:01:00', '2026-06-23 11:30:00'),
+    (5, 5, 3, 42000, 42000, 0, 'order-dummy-trade-5', NULL, 'FAILED', '2026-06-23 12:00:00', NULL, NULL);
 
 INSERT INTO settlements (id, payment_id, seller_id, amount, status, created_at, settled_at)
 VALUES
