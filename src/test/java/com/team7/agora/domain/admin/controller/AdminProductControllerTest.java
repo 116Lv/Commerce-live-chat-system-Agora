@@ -5,15 +5,18 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.team7.agora.domain.admin.dto.response.AdminApprovalRequestResponse;
 import com.team7.agora.domain.admin.dto.response.AdminProductResponse;
 import com.team7.agora.domain.admin.enums.AdminRole;
 import com.team7.agora.domain.admin.enums.AdminStatus;
 import com.team7.agora.domain.admin.service.AdminProductService;
 import com.team7.agora.global.auth.AdminPrincipal;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -65,12 +68,17 @@ class AdminProductControllerTest {
                         List.of(new AdminProductResponse(
                                 1L,
                                 "Bike",
+                                "Good condition",
                                 BigDecimal.valueOf(100000),
                                 10L,
                                 "seller",
                                 "SELLING",
                                 "Selling",
-                                "PENDING"
+                                "PENDING",
+                                null,
+                                null,
+                                List.of(),
+                                LocalDateTime.parse("2026-07-02T10:00:00")
                         )),
                         PageRequest.of(0, 20),
                         42
@@ -129,12 +137,17 @@ class AdminProductControllerTest {
                 .thenReturn(new AdminProductResponse(
                         1L,
                         "Bike",
+                        "Good condition",
                         BigDecimal.valueOf(100000),
                         10L,
                         "seller",
                         "HIDDEN",
                         "Hidden",
-                        "REJECTED"
+                        "REJECTED",
+                        null,
+                        null,
+                        List.of(),
+                        LocalDateTime.parse("2026-07-02T10:00:00")
                 ));
 
         mockMvc.perform(patch("/api/admin/products/{productId}/hide", 1L))
@@ -151,12 +164,17 @@ class AdminProductControllerTest {
                 .thenReturn(new AdminProductResponse(
                         1L,
                         "Bike",
+                        "Good condition",
                         BigDecimal.valueOf(100000),
                         10L,
                         "seller",
                         "SELLING",
                         "Selling",
-                        "APPROVED"
+                        "APPROVED",
+                        null,
+                        null,
+                        List.of(),
+                        LocalDateTime.parse("2026-07-02T10:00:00")
                 ));
 
         mockMvc.perform(patch("/api/admin/products/{productId}/approve", 1L))
@@ -164,6 +182,44 @@ class AdminProductControllerTest {
                 .andExpect(jsonPath("$.status").value("SUCCESS"))
                 .andExpect(jsonPath("$.data.id").value(1L))
                 .andExpect(jsonPath("$.data.approvalStatus").value("APPROVED"));
+    }
+
+    @Test
+    void requestHideProduct_usesAuthenticatedAdminAndReturnsApprovalRequest() throws Exception {
+        authenticate(AdminRole.PRODUCT_ADMIN);
+        when(adminProductService.requestHideProduct(any(AdminPrincipal.class), eq(1L), eq("신고 누적")))
+                .thenReturn(new AdminApprovalRequestResponse(
+                        15L,
+                        "PRODUCT_HIDE",
+                        "PENDING",
+                        99L,
+                        "admin@test.com",
+                        "admin",
+                        null,
+                        null,
+                        null,
+                        null,
+                        1L,
+                        "Bike",
+                        "신고 누적",
+                        null,
+                        null,
+                        null,
+                        null,
+                        LocalDateTime.parse("2026-07-02T10:00:00"),
+                        null
+                ));
+
+        mockMvc.perform(post("/api/admin/products/{productId}/hide-requests", 1L)
+                        .contentType("application/json")
+                        .content("""
+                                {"reason":"신고 누적"}
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("SUCCESS"))
+                .andExpect(jsonPath("$.data.operation").value("PRODUCT_HIDE"))
+                .andExpect(jsonPath("$.data.status").value("PENDING"))
+                .andExpect(jsonPath("$.data.targetProductId").value(1L));
     }
 
     private void authenticate(AdminRole role) {

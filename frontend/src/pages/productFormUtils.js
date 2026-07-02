@@ -179,6 +179,19 @@ export function getProductRegionLabel(product = {}) {
   return normalizeRegionLabel(product.region) || '-';
 }
 
+const DEFAULT_API_BASE_URL = 'http://127.0.0.1:8080';
+
+function getUploadImageUrl(url) {
+  const normalizedUrl = url.startsWith('uploads/') ? `/${url}` : url;
+  const apiBaseUrl = (import.meta.env?.VITE_API_BASE_URL || DEFAULT_API_BASE_URL).replace(/\/+$/, '');
+
+  if (!normalizedUrl.startsWith('/uploads/') || !apiBaseUrl || apiBaseUrl === '/') {
+    return normalizedUrl;
+  }
+
+  return `${apiBaseUrl}${normalizedUrl}`;
+}
+
 export function normalizeProductImageUrl(value) {
   if (value && typeof value === 'object') {
     return normalizeProductImageUrl(value.imageUrl || value.url || value.path || value.thumbnailUrl || value.primaryImageUrl || '');
@@ -190,11 +203,11 @@ export function normalizeProductImageUrl(value) {
     return '';
   }
 
-  if (/^(?:https?:|blob:|data:|\/)/i.test(url)) {
+  if (/^(?:https?:|blob:|data:)/i.test(url)) {
     return url;
   }
 
-  return url.startsWith('uploads/') ? `/${url}` : url;
+  return url.startsWith('/uploads/') || url.startsWith('uploads/') ? getUploadImageUrl(url) : url;
 }
 
 export function getProductImageUrl(product = {}) {

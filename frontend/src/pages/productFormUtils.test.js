@@ -56,15 +56,17 @@ describe('product form utilities', () => {
   });
 
   test('normalizes uploaded image paths so nested routes can render them', () => {
-    assert.equal(getProductImageUrl({ primaryImageUrl: 'uploads/products/main.svg' }), '/uploads/products/main.svg');
+    assert.equal(getProductImageUrl({ primaryImageUrl: 'uploads/products/main.svg' }), 'http://127.0.0.1:8080/uploads/products/main.svg');
   });
 
   test('normalizes detail image arrays and falls back to the primary image', () => {
     assert.deepEqual(getProductImageUrls({ imageUrls: ['uploads/products/main.svg', '/uploads/products/detail.svg'] }), [
-      '/uploads/products/main.svg',
-      '/uploads/products/detail.svg'
+      'http://127.0.0.1:8080/uploads/products/main.svg',
+      'http://127.0.0.1:8080/uploads/products/detail.svg'
     ]);
-    assert.deepEqual(getProductImageUrls({ primaryImageUrl: 'uploads/products/main.svg' }), ['/uploads/products/main.svg']);
+    assert.deepEqual(getProductImageUrls({ primaryImageUrl: 'uploads/products/main.svg' }), [
+      'http://127.0.0.1:8080/uploads/products/main.svg'
+    ]);
   });
 
   test('normalizes object-shaped detail image arrays from upload responses', () => {
@@ -75,7 +77,7 @@ describe('product form utilities', () => {
           { url: '/uploads/products/detail.jpg', sortOrder: 1 }
         ]
       }),
-      ['/uploads/products/main.jpg', '/uploads/products/detail.jpg']
+      ['http://127.0.0.1:8080/uploads/products/main.jpg', 'http://127.0.0.1:8080/uploads/products/detail.jpg']
     );
   });
 

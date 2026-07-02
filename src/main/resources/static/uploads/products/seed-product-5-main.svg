@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="720" viewBox="0 0 960 720">
+  <rect width="960" height="720" fill="#eef6ff"/>
+  <circle cx="480" cy="360" r="188" fill="none" stroke="#0f766e" stroke-width="34"/>
+  <circle cx="480" cy="360" r="58" fill="#0f766e"/>
+  <rect x="454" y="148" width="52" height="148" rx="24" fill="#334155"/>
+  <rect x="454" y="424" width="52" height="148" rx="24" fill="#334155"/>
+  <text x="480" y="650" text-anchor="middle" font-family="Arial, sans-serif" font-size="34" font-weight="700" fill="#075985">Bicycle Helmet</text>
+</svg>

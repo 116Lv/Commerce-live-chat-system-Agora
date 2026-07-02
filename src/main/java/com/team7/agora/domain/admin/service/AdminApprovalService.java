@@ -16,6 +16,9 @@ import com.team7.agora.domain.coupon.repository.AdminCouponApprovalPayloadReposi
 import com.team7.agora.domain.coupon.repository.CouponEventRepository;
 import com.team7.agora.domain.coupon.repository.CouponRepository;
 import com.team7.agora.domain.coupon.service.CouponSlotService;
+import com.team7.agora.domain.product.entity.Product;
+import com.team7.agora.domain.product.repository.ProductRepository;
+import com.team7.agora.domain.search.service.ProductSearchService;
 import com.team7.agora.global.auth.AdminPrincipal;
 import com.team7.agora.global.exception.BusinessException;
 import com.team7.agora.global.exception.ErrorCode;
@@ -36,6 +39,8 @@ public class AdminApprovalService {
     private final CouponEventRepository couponEventRepository;
     private final CouponRepository couponRepository;
     private final CouponSlotService couponSlotService;
+    private final ProductRepository productRepository;
+    private final ProductSearchService productSearchService;
 
     public AdminApprovalService(
             AdminApprovalRequestRepository approvalRequestRepository,
@@ -43,7 +48,9 @@ public class AdminApprovalService {
             AdminCouponApprovalPayloadRepository approvalPayloadRepository,
             CouponEventRepository couponEventRepository,
             CouponRepository couponRepository,
-            CouponSlotService couponSlotService
+            CouponSlotService couponSlotService,
+            ProductRepository productRepository,
+            ProductSearchService productSearchService
     ) {
         this.approvalRequestRepository = approvalRequestRepository;
         this.adminRepository = adminRepository;
@@ -51,6 +58,8 @@ public class AdminApprovalService {
         this.couponEventRepository = couponEventRepository;
         this.couponRepository = couponRepository;
         this.couponSlotService = couponSlotService;
+        this.productRepository = productRepository;
+        this.productSearchService = productSearchService;
     }
 
     public List<AdminApprovalRequestResponse> getRequests(AdminPrincipal admin, String status) {
@@ -142,6 +151,12 @@ public class AdminApprovalService {
                 validateRoleChange(admin, request.getTargetAdmin(), request.getRequestedRole());
                 request.applyRoleChange();
             }
+            case PRODUCT_HIDE -> {
+                Product product = productRepository.findById(request.getTargetProductId())
+                        .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "Product not found."));
+                product.hide();
+                productSearchService.evictSearchCache();
+            }
             case COUPON_EVENT_CREATE -> {
                 AdminCouponApprovalPayload requiredPayload = requirePayload(payload);
                 CouponEvent event = findCouponEvent(requiredPayload.getCouponEventId());
@@ -178,7 +193,8 @@ public class AdminApprovalService {
     }
 
     private Optional<AdminCouponApprovalPayload> findPayload(AdminApprovalRequest request) {
-        if (request.getOperation() == AdminApprovalOperation.ADMIN_ROLE_CHANGE) {
+        if (request.getOperation() == AdminApprovalOperation.ADMIN_ROLE_CHANGE
+                || request.getOperation() == AdminApprovalOperation.PRODUCT_HIDE) {
             return Optional.empty();
         }
         return approvalPayloadRepository.findByApprovalRequest(request);

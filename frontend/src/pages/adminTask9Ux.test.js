@@ -48,20 +48,26 @@ test('admin products expose domain-specific search conditions and operations tab
   assert.match(pages, /appliedProductFilters/);
   assert.match(pages, /handleProductSearch/);
   assert.match(pages, /handleProductReset/);
-  assert.match(pages, /상품명/);
-  assert.match(pages, /판매자 닉네임/);
+  assert.match(pages, /검색란/);
+  assert.match(pages, /상품명, 판매자ID, 판매자 닉네임 검색/);
+  assert.doesNotMatch(pages, /<Form.Label>판매자 닉네임<\/Form.Label>/);
   assert.match(pages, /판매상태/);
   assert.match(pages, /승인상태/);
   assert.match(pages, /신고 상품만/);
   assert.match(pages, /검색/);
   assert.match(pages, /초기화/);
+  assert.match(pages, /상품 ID/);
   assert.match(pages, /등록일/);
   assert.match(pages, /신고/);
   assert.match(pages, /admin-search-panel/);
   assert.match(pages, /admin-filter-options/);
   assert.match(pages, /admin-product-filter-summary/);
   assert.match(pages, /keyword: productFilters\.keyword\.trim\(\)/);
-  assert.match(pages, /sellerKeyword: productFilters\.sellerKeyword\.trim\(\)/);
+  assert.doesNotMatch(pages, /sellerKeyword: productFilters\.sellerKeyword\.trim\(\)/);
+  assert.match(pages, /selectedProductAction/);
+  assert.match(pages, /requestAdminProductHideApproval/);
+  assert.match(pages, /admin-product-detail-media/);
+  assert.match(pages, /상품 설명/);
 });
 
 test('admin product approval closes the detail modal after a successful approve action', () => {
@@ -72,7 +78,7 @@ test('admin product approval closes the detail modal after a successful approve 
 
   assert.match(handleApprove, /approveAdminProduct\(productId\)/);
   assert.match(handleApprove, /updateProductRow/);
-  assert.match(handleApprove, /setSelectedProduct\(null\)/);
+  assert.match(handleApprove, /closeProductModal\(\)/);
 });
 
 test('remaining admin pages expose page-specific Korean filter UX', () => {
