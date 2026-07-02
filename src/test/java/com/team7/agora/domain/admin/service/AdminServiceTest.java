@@ -12,11 +12,21 @@ import com.team7.agora.domain.admin.enums.AdminPermission;
 import com.team7.agora.domain.admin.enums.AdminRole;
 import com.team7.agora.domain.admin.enums.AdminStatus;
 import com.team7.agora.domain.admin.repository.AdminRepository;
+import com.team7.agora.domain.product.enums.ProductApprovalStatus;
+import com.team7.agora.domain.product.repository.ProductRepository;
+import com.team7.agora.domain.report.entity.Report;
+import com.team7.agora.domain.report.enums.ReportStatus;
+import com.team7.agora.domain.report.repository.ReportRepository;
+import com.team7.agora.domain.trade.repository.TradeRepository;
+import com.team7.agora.domain.user.repository.UserRepository;
 import com.team7.agora.global.auth.AdminPrincipal;
 import com.team7.agora.global.exception.BusinessException;
 import com.team7.agora.global.exception.ErrorCode;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.Set;
+import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -29,8 +39,20 @@ class AdminServiceTest {
     @Mock
     private AdminRepository adminRepository;
 
+    @Mock
+    private UserRepository userRepository;
+
+    @Mock
+    private ReportRepository reportRepository;
+
+    @Mock
+    private ProductRepository productRepository;
+
+    @Mock
+    private TradeRepository tradeRepository;
+
     private AdminService createService() {
-        return new AdminService(adminRepository);
+        return new AdminService(adminRepository, userRepository, reportRepository, productRepository, tradeRepository);
     }
 
     private AdminPrincipal principal(AdminRole role) {
@@ -84,6 +106,47 @@ class AdminServiceTest {
 
         assertThat(response.accessibleMenus())
                 .contains("PAYMENTS", "REFUNDS", "SETTLEMENTS", "COUPONS", "USER_REPORTS", "PRODUCT_REPORTS");
+    }
+
+    @Test
+    void getDashboard_returnsOperationalMetricsAndPendingReports() {
+        AdminService service = createService();
+        LocalDate today = LocalDate.now();
+        LocalDateTime start = today.atStartOfDay();
+        LocalDateTime end = today.plusDays(1).atStartOfDay();
+        Report report = org.mockito.Mockito.mock(Report.class);
+
+        when(userRepository.count()).thenReturn(1245L);
+        when(userRepository.countByCreatedAtGreaterThanEqualAndCreatedAtLessThan(start, end)).thenReturn(32L);
+        when(reportRepository.countByCreatedAtGreaterThanEqualAndCreatedAtLessThan(start, end)).thenReturn(8L);
+        when(tradeRepository.countByCreatedAtGreaterThanEqualAndCreatedAtLessThan(start, end)).thenReturn(156L);
+        when(productRepository.countByApprovalStatusAndCreatedAtGreaterThanEqualAndCreatedAtLessThan(
+                ProductApprovalStatus.PENDING,
+                start,
+                end
+        )).thenReturn(5L);
+        when(productRepository.countByApprovalStatus(ProductApprovalStatus.APPROVED)).thenReturn(87L);
+        when(reportRepository.findTop5ByStatusOrderByCreatedAtAsc(ReportStatus.PENDING)).thenReturn(List.of(report));
+        when(report.getId()).thenReturn(101L);
+        when(report.getProduct()).thenReturn(null);
+        when(report.getReportedUser()).thenReturn(null);
+        when(report.getReason()).thenReturn("욕설");
+        when(report.getCreatedAt()).thenReturn(LocalDateTime.of(2026, 6, 29, 13, 30));
+        when(report.getStatus()).thenReturn(ReportStatus.PENDING);
+
+        AdminDashboardResponse response = service.getDashboard(principal(AdminRole.ROOT_ADMIN));
+
+        assertThat(response.totalUserCount()).isEqualTo(1245L);
+        assertThat(response.todayNewUserCount()).isEqualTo(32L);
+        assertThat(response.todayReportCount()).isEqualTo(8L);
+        assertThat(response.todayTradeCount()).isEqualTo(156L);
+        assertThat(response.todayProductRequestCount()).isEqualTo(5L);
+        assertThat(response.registeredProductCount()).isEqualTo(87L);
+        assertThat(response.pendingReports()).hasSize(1);
+        assertThat(response.pendingReports().get(0).reportId()).isEqualTo(101L);
+        assertThat(response.pendingReports().get(0).target()).isEqualTo("-");
+        assertThat(response.pendingReports().get(0).reason()).isEqualTo("욕설");
+        assertThat(response.pendingReports().get(0).status()).isEqualTo("PENDING");
     }
 
     @Test

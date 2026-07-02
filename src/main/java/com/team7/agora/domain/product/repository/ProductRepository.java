@@ -7,6 +7,7 @@ import com.team7.agora.domain.search.dto.ProductSearchCondition;
 import com.team7.agora.domain.search.dto.ProductSearchResponse;
 import com.team7.agora.domain.user.entity.User;
 import jakarta.persistence.LockModeType;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.domain.Page;
@@ -109,4 +110,12 @@ public interface ProductRepository extends JpaRepository<Product, Long>, Product
 
     @Query("select p.likeCount from Product p where p.id = :productId")
     int findLikeCountById(@Param("productId") Long productId);
+
+    long countByApprovalStatus(ProductApprovalStatus approvalStatus);
+
+    long countByApprovalStatusAndCreatedAtGreaterThanEqualAndCreatedAtLessThan(
+        ProductApprovalStatus approvalStatus,
+        LocalDateTime start,
+        LocalDateTime end
+    );
 }

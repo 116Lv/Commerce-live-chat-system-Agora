@@ -3,6 +3,7 @@ package com.team7.agora.domain.user.repository;
 import com.team7.agora.domain.user.entity.User;
 import com.team7.agora.domain.user.enums.UserStatus;
 import jakarta.persistence.LockModeType;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.domain.Page;
@@ -42,4 +43,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
     Page<User> findAllByStatus(UserStatus status, Pageable pageable);
 
     Page<User> findAllByDeletedAtIsNull(Pageable pageable);
+
+    long countByCreatedAtGreaterThanEqualAndCreatedAtLessThan(LocalDateTime start, LocalDateTime end);
 }

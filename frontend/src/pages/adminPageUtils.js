@@ -323,11 +323,14 @@ export const paymentVerificationSummary = (payment = {}) => {
 };
 
 export const dashboardStats = (dashboard = {}) => {
-  const menus = Array.isArray(dashboard.accessibleMenus) ? dashboard.accessibleMenus : [];
+  const formatMetric = (value, suffix) => `${Number(value || 0).toLocaleString()}${suffix}`;
 
   return [
-    { label: '권한', value: dashboard.role || '-' },
-    { label: '접근 메뉴', value: menus.length },
-    { label: '메뉴 목록', value: menus.length ? menus.join(', ') : '-' }
+    { label: '총 가입자', value: formatMetric(dashboard.totalUserCount, '명') },
+    { label: '오늘 신규 가입자', value: formatMetric(dashboard.todayNewUserCount, '명') },
+    { label: '오늘 신고 수', value: formatMetric(dashboard.todayReportCount, '건') },
+    { label: '오늘 거래량', value: formatMetric(dashboard.todayTradeCount, '건') },
+    { label: '오늘 등록요청', value: formatMetric(dashboard.todayProductRequestCount, '건') },
+    { label: '등록된 상품 수', value: formatMetric(dashboard.registeredProductCount, '건') }
   ];
 };
