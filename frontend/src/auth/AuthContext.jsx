@@ -4,12 +4,14 @@ import {
   loginUser as loginUserRequest,
   logoutAdmin as logoutAdminRequest,
   logoutUser as logoutUserRequest,
+  reissueUser as reissueUserRequest,
   signupUser as signupUserRequest
 } from '../api/authApi.js';
 import {
   clearAdminToken,
   clearUserTokens,
   getAdminToken,
+  getUserRefreshToken,
   getUserToken,
   setAdminToken,
   setUserRefreshToken,
@@ -81,6 +83,22 @@ export function AuthProvider({ children }) {
     }
   };
 
+  const extendUserSession = async () => {
+    const refreshToken = getUserRefreshToken();
+
+    if (!refreshToken) {
+      clearUserTokens();
+      setUserTokenState(null);
+      throw new Error('로그인 연장에 필요한 refresh token이 없습니다.');
+    }
+
+    const response = await reissueUserRequest(refreshToken);
+    const tokens = getUserTokenPair(response);
+
+    persistUserTokens(tokens);
+    return response;
+  };
+
   const loginAdmin = async (credentials) => {
     const response = await loginAdminRequest(credentials);
     const token = getAccessToken(response);
@@ -116,6 +134,7 @@ export function AuthProvider({ children }) {
       loginUser,
       signupUser,
       logoutUser,
+      extendUserSession,
       loginAdmin,
       logoutAdmin
     }),
