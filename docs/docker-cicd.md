@@ -76,15 +76,15 @@ Backend:  http://localhost:8080
 
 ## AWS Path
 
-For an EC2-based first deployment:
+For an EC2-based deployment:
 
 1. Install Docker and Docker Compose on EC2.
 2. Copy or create the production `.env` on the server.
 3. Set `PUBLIC_API_BASE_URL` to the public backend URL.
 4. Run `docker compose -f docker-compose.prod.yml up --build -d`.
-5. Add GitHub Actions deployment after image registry and SSH secrets are decided.
+5. GitHub Actions CD (`.github/workflows/deploy.yml`) is already wired up: on every `dev` push it SSHes into EC2, does `git fetch` + `reset --hard`, then `docker compose up -d --build`.
 
-For a later production-grade setup, move MySQL to RDS, Redis to ElastiCache, images to ECR, and frontend static assets to S3 + CloudFront.
+MySQL already runs on a separate AWS RDS instance instead of the `mysql` service above (see [Region Seed Data](#region-seed-data-one-time-manual) below for how to reach it). Remaining production-grade improvements not yet done: Redis on ElastiCache, Docker images on ECR, and frontend static assets behind S3 + CloudFront.
 
 ## Region Seed Data (One-Time, Manual)
 
