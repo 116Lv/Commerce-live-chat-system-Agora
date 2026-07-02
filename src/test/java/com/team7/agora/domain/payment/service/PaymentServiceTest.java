@@ -8,6 +8,11 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.team7.agora.domain.coupon.entity.Coupon;
+import com.team7.agora.domain.coupon.entity.CouponEvent;
+import com.team7.agora.domain.coupon.enums.CouponEventType;
+import com.team7.agora.domain.coupon.enums.CouponStatus;
+import com.team7.agora.domain.coupon.repository.CouponRepository;
 import com.team7.agora.domain.payment.client.PaymentClient;
 import com.team7.agora.domain.payment.dto.response.PaymentResponse;
 import com.team7.agora.domain.payment.entity.Payment;
@@ -41,6 +46,9 @@ class PaymentServiceTest {
     private PaymentRepository paymentRepository;
 
     @Mock
+    private CouponRepository couponRepository;
+
+    @Mock
     private SettlementRepository settlementRepository;
 
     @Mock
@@ -64,6 +72,7 @@ class PaymentServiceTest {
         };
         paymentService = new PaymentService(
             paymentRepository,
+            couponRepository,
             settlementRepository,
             tradeRepository,
             paymentClient,
@@ -101,6 +110,39 @@ class PaymentServiceTest {
         assertThat(response.buyerEmail()).isEqualTo("buyer@test.com");
         assertThat(response.buyerName()).isEqualTo("구매자");
         assertThat(response.buyerTel()).isEqualTo("01033334444");
+    }
+
+    @Test
+    void prepareWithCouponReservesCouponAndDiscountsPaymentAmount() {
+        Coupon coupon = issuedCoupon(3000, 10000);
+        when(tradeRepository.findByIdForUpdate(100L)).thenReturn(Optional.of(trade));
+        when(paymentRepository.existsByTrade(trade)).thenReturn(false);
+        when(couponRepository.findByIdForUpdate(500L)).thenReturn(Optional.of(coupon));
+        when(paymentRepository.save(any(Payment.class))).thenAnswer(invocation -> {
+            Payment payment = invocation.getArgument(0);
+            assignId(payment, 1000L);
+            return payment;
+        });
+
+        PaymentResponse response = paymentService.prepare(2L, 100L, 500L);
+
+        assertThat(response.amount()).isEqualByComparingTo(BigDecimal.valueOf(47000));
+        assertThat(response.originalAmount()).isEqualByComparingTo(BigDecimal.valueOf(50000));
+        assertThat(response.discountAmount()).isEqualByComparingTo(BigDecimal.valueOf(3000));
+        assertThat(response.couponId()).isEqualTo(500L);
+        assertThat(coupon.getStatus()).isEqualTo(CouponStatus.PAYMENT_PENDING);
+    }
+
+    @Test
+    void prepareWithPaymentPendingCouponRejectsDuplicateUse() {
+        Coupon coupon = issuedCoupon(3000, 10000);
+        coupon.reserveForPayment(2L, coupon.getIssuedAt().plusDays(1));
+        when(tradeRepository.findByIdForUpdate(100L)).thenReturn(Optional.of(trade));
+        when(paymentRepository.existsByTrade(trade)).thenReturn(false);
+        when(couponRepository.findByIdForUpdate(500L)).thenReturn(Optional.of(coupon));
+
+        assertThatThrownBy(() -> paymentService.prepare(2L, 100L, 500L))
+            .isInstanceOf(RuntimeException.class);
     }
 
     @Test
@@ -193,6 +235,26 @@ class PaymentServiceTest {
         assertThat(response.status()).isEqualTo("PAID");
         assertThat(response.paymentKey()).isEqualTo("payment-key");
         assertThat(response.settlementId()).isEqualTo(2000L);
+    }
+
+    @Test
+    void confirmMarksReservedCouponUsed() {
+        Coupon coupon = issuedCoupon(3000, 10000);
+        coupon.reserveForPayment(2L, coupon.getIssuedAt().plusDays(1));
+        Payment payment = Payment.ready(trade, buyer, BigDecimal.valueOf(50000), BigDecimal.valueOf(3000), coupon, "order-1");
+        assignId(payment, 1000L);
+        when(paymentRepository.findByIdForUpdate(1000L)).thenReturn(Optional.of(payment), Optional.of(payment));
+        when(paymentClient.confirm("payment-key", "order-1", BigDecimal.valueOf(47000))).thenReturn(true);
+        when(settlementRepository.save(any(Settlement.class))).thenAnswer(invocation -> {
+            Settlement settlement = invocation.getArgument(0);
+            assignId(settlement, 2000L);
+            return settlement;
+        });
+
+        PaymentResponse response = paymentService.confirm(2L, 1000L, "payment-key");
+
+        assertThat(response.status()).isEqualTo("PAID");
+        assertThat(coupon.getStatus()).isEqualTo(CouponStatus.USED);
     }
 
     @Test
@@ -358,5 +420,23 @@ class PaymentServiceTest {
         assertThatThrownBy(() -> paymentService.getRefundStatus(
             new AuthUser(3L, "stranger@test.com", "ROLE_USER", "제3자"), 1000L
         )).isInstanceOf(PaymentException.class);
+    }
+
+    private Coupon issuedCoupon(int discountAmount, int minOrderAmount) {
+        CouponEvent event = CouponEvent.create(
+            CouponEventType.FIRST_COME,
+            "Payment coupon",
+            10,
+            java.time.LocalDateTime.now().minusDays(1),
+            java.time.LocalDateTime.now().plusDays(1),
+            discountAmount,
+            minOrderAmount,
+            7
+        );
+        assignId(event, 400L);
+        Coupon coupon = Coupon.createAvailableSlot(event);
+        assignId(coupon, 500L);
+        coupon.assign(buyer, java.time.LocalDateTime.now().minusHours(1), event.getValidDays());
+        return coupon;
     }
 }

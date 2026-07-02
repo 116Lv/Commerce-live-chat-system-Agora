@@ -72,6 +72,11 @@ describe('checkout and payment result UX source', () => {
     const indexSource = readFileSync(resolve(__dirname, '../../index.html'), 'utf8');
 
     assert.match(source, /checkout-order-summary/);
+    assert.match(source, /getMyCoupons/);
+    assert.match(source, /selectedCouponId/);
+    assert.match(source, /handleCouponApply/);
+    assert.match(source, /preparePayment\(tradeId,\s*\{\s*couponId: Number\(selectedCouponId\)/);
+    assert.match(source, /payment\.discountAmount/);
     assert.match(source, /requestPaymentApproval/);
     assert.match(source, /navigate\(`\/payments\/result\?/);
     assert.match(apiSource, /requestPaymentApproval/);

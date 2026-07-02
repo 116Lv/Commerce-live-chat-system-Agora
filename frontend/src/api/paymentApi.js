@@ -1,7 +1,12 @@
 import apiClient from './client.js';
 
-export const preparePayment = (tradeId, config = {}) =>
-  apiClient.post(`/api/payments/trades/${tradeId}/prepare`, null, config);
+export const preparePayment = (tradeId, options = {}, config = {}) => {
+  if (Object.prototype.hasOwnProperty.call(options, 'couponId')) {
+    return apiClient.post('/api/payments/prepare', { tradeId: Number(tradeId), couponId: options.couponId || null }, config);
+  }
+
+  return apiClient.post(`/api/payments/trades/${tradeId}/prepare`, null, options);
+};
 
 export const confirmPayment = (paymentId, payload, config = {}) =>
   apiClient.post(`/api/payments/${paymentId}/confirm`, payload, config);

@@ -29,7 +29,11 @@ public record PaymentResponse(
     Long settlementId,
     String buyerEmail,
     String buyerName,
-    String buyerTel
+    String buyerTel,
+    BigDecimal originalAmount,
+    BigDecimal discountAmount,
+    Long couponId,
+    String couponName
 ) {
     public PaymentResponse(
         Long paymentId,
@@ -41,7 +45,7 @@ public record PaymentResponse(
         String status,
         Long settlementId
     ) {
-        this(paymentId, tradeId, payerId, amount, orderId, paymentKey, status, settlementId, null, null, null);
+        this(paymentId, tradeId, payerId, amount, orderId, paymentKey, status, settlementId, null, null, null, amount, BigDecimal.ZERO, null, null);
     }
 
     /**
@@ -72,7 +76,11 @@ public record PaymentResponse(
             settlementId,
             payer.getEmail(),
             payer.getNickname(),
-            payer.getPhone()
+            payer.getPhone(),
+            payment.getOriginalAmount(),
+            payment.getDiscountAmount(),
+            payment.getCoupon() == null ? null : payment.getCoupon().getId(),
+            payment.getCoupon() == null ? null : payment.getCoupon().getCouponEvent().getName()
         );
     }
 }

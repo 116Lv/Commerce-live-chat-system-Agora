@@ -33,6 +33,18 @@ import {
   readPendingChatMessages
 } from '../features/chat/useChatSocket.js';
 
+const createStorage = () => {
+  const store = new Map();
+  return {
+    getItem: (key) => (store.has(key) ? store.get(key) : null),
+    setItem: (key, value) => store.set(key, String(value)),
+    removeItem: (key) => store.delete(key),
+    clear: () => store.clear()
+  };
+};
+
+globalThis.localStorage = createStorage();
+
 const captureRequest = () => {
   const requests = [];
   const adapter = (config) => {
@@ -105,6 +117,7 @@ test('trade, payment, review, and report APIs map action endpoints', async () =>
   await expireReservation(11, config);
   await requestRatingMessage(11, config);
   await preparePayment(11, config);
+  await preparePayment(11, { couponId: 33 }, config);
   await confirmPayment(22, { paymentKey: 'pk_test' }, config);
   await refundPayment(22, { reason: 'cancel' }, config);
   await getRefundStatus(22, config);
@@ -119,6 +132,7 @@ test('trade, payment, review, and report APIs map action endpoints', async () =>
     { method: 'post', url: '/api/trades/11/expire-reservation', params: undefined, data: null },
     { method: 'post', url: '/api/trades/11/rating-request-message', params: undefined, data: null },
     { method: 'post', url: '/api/payments/trades/11/prepare', params: undefined, data: null },
+    { method: 'post', url: '/api/payments/prepare', params: undefined, data: { tradeId: 11, couponId: 33 } },
     { method: 'post', url: '/api/payments/22/confirm', params: undefined, data: { paymentKey: 'pk_test' } },
     { method: 'post', url: '/api/payments/22/refund', params: undefined, data: { reason: 'cancel' } },
     { method: 'get', url: '/api/payments/22/refund', params: undefined, data: undefined },

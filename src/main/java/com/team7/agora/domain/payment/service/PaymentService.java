@@ -1,5 +1,7 @@
 package com.team7.agora.domain.payment.service;
 
+import com.team7.agora.domain.coupon.entity.Coupon;
+import com.team7.agora.domain.coupon.repository.CouponRepository;
 import com.team7.agora.domain.payment.client.PaymentClient;
 import com.team7.agora.domain.payment.dto.response.PaymentResponse;
 import com.team7.agora.domain.payment.dto.response.RefundStatusResponse;
@@ -35,6 +37,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 public class PaymentService {
 
     private final PaymentRepository paymentRepository;
+    private final CouponRepository couponRepository;
     private final SettlementRepository settlementRepository;
     private final TradeRepository tradeRepository;
     private final PaymentClient paymentClient;
@@ -50,12 +53,29 @@ public class PaymentService {
     @Autowired
     public PaymentService(
         PaymentRepository paymentRepository,
+        CouponRepository couponRepository,
         SettlementRepository settlementRepository,
         TradeRepository tradeRepository,
         PaymentClient paymentClient,
         PlatformTransactionManager transactionManager
     ) {
-        this(paymentRepository, settlementRepository, tradeRepository, paymentClient, new TransactionTemplate(transactionManager));
+        this(paymentRepository, couponRepository, settlementRepository, tradeRepository, paymentClient, new TransactionTemplate(transactionManager));
+    }
+
+    PaymentService(
+        PaymentRepository paymentRepository,
+        CouponRepository couponRepository,
+        SettlementRepository settlementRepository,
+        TradeRepository tradeRepository,
+        PaymentClient paymentClient,
+        TransactionOperations transactionOperations
+    ) {
+        this.paymentRepository = paymentRepository;
+        this.couponRepository = couponRepository;
+        this.settlementRepository = settlementRepository;
+        this.tradeRepository = tradeRepository;
+        this.paymentClient = paymentClient;
+        this.transactionOperations = transactionOperations;
     }
 
     PaymentService(
@@ -65,11 +85,7 @@ public class PaymentService {
         PaymentClient paymentClient,
         TransactionOperations transactionOperations
     ) {
-        this.paymentRepository = paymentRepository;
-        this.settlementRepository = settlementRepository;
-        this.tradeRepository = tradeRepository;
-        this.paymentClient = paymentClient;
-        this.transactionOperations = transactionOperations;
+        this(paymentRepository, null, settlementRepository, tradeRepository, paymentClient, transactionOperations);
     }
 
     /**
@@ -80,6 +96,11 @@ public class PaymentService {
      */
     @Transactional
     public PaymentResponse prepare(Long payerId, Long tradeId) {
+        return prepare(payerId, tradeId, null);
+    }
+
+    @Transactional
+    public PaymentResponse prepare(Long payerId, Long tradeId, Long couponId) {
         Trade trade = findTradeForUpdate(tradeId);
 
         if (!trade.getBuyer().getId().equals(payerId)) {
@@ -89,6 +110,15 @@ public class PaymentService {
         if (existingPayment != null) {
             if (existingPayment.getStatus() == PaymentStatus.READY
                 || existingPayment.getStatus() == PaymentStatus.CONFIRMING) {
+                if (couponId != null) {
+                    if (existingPayment.getStatus() != PaymentStatus.READY) {
+                        if (!existingPayment.isUsingCoupon(couponId)) {
+                            throw new PaymentException(ErrorCode.CONFLICT, "Payment approval is already in progress.");
+                        }
+                        return PaymentResponse.from(existingPayment);
+                    }
+                    applyCouponToExistingReadyPayment(existingPayment, payerId, couponId);
+                }
                 return PaymentResponse.from(existingPayment);
             }
             throw new PaymentException(ErrorCode.CONFLICT, "이미 결제가 생성된 거래입니다.");
@@ -103,15 +133,35 @@ public class PaymentService {
             throw new PaymentException(ErrorCode.CONFLICT, "이미 결제가 생성된 거래입니다.");
         }
 
-        Payment payment = Payment.ready(
-            trade,
-            trade.getBuyer(),
-            trade.getPrice(),
-            "order-" + UUID.randomUUID().toString().replace("-", "")
-        );
+        Coupon coupon = null;
+        BigDecimal originalAmount = trade.getPrice();
+        BigDecimal discountAmount = BigDecimal.ZERO;
+        if (couponId != null) {
+            coupon = reserveCouponForPayment(payerId, originalAmount, couponId);
+            discountAmount = couponDiscountAmount(coupon, originalAmount);
+        }
+
+        Payment payment = coupon == null
+            ? Payment.ready(
+                trade,
+                trade.getBuyer(),
+                originalAmount,
+                "order-" + UUID.randomUUID().toString().replace("-", "")
+            )
+            : Payment.ready(
+                trade,
+                trade.getBuyer(),
+                originalAmount,
+                discountAmount,
+                coupon,
+                "order-" + UUID.randomUUID().toString().replace("-", "")
+            );
         try {
             return PaymentResponse.from(paymentRepository.save(payment));
         } catch (DataIntegrityViolationException e) {
+            if (coupon != null) {
+                coupon.releasePaymentReservation();
+            }
             throw new PaymentException(ErrorCode.CONFLICT, "이미 결제가 생성된 거래입니다.");
         }
     }
@@ -123,6 +173,35 @@ public class PaymentService {
      * @param paymentKey 결제 승인 키
      * @return 클라이언트에 반환할 API 응답
      */
+    private void applyCouponToExistingReadyPayment(Payment payment, Long payerId, Long couponId) {
+        if (payment.isUsingCoupon(couponId)) {
+            return;
+        }
+        if (payment.hasCoupon()) {
+            throw new PaymentException(ErrorCode.CONFLICT, "Payment already has a different coupon.");
+        }
+        Coupon coupon = reserveCouponForPayment(payerId, payment.getOriginalAmount(), couponId);
+        payment.applyCoupon(coupon, payment.getOriginalAmount(), couponDiscountAmount(coupon, payment.getOriginalAmount()));
+    }
+
+    private Coupon reserveCouponForPayment(Long payerId, BigDecimal originalAmount, Long couponId) {
+        if (couponRepository == null) {
+            throw new PaymentException(ErrorCode.INTERNAL_SERVER_ERROR, "Coupon repository is not configured.");
+        }
+        Coupon coupon = couponRepository.findByIdForUpdate(couponId)
+            .orElseThrow(() -> new PaymentException(ErrorCode.NOT_FOUND, "Coupon not found."));
+        if (BigDecimal.valueOf(coupon.getCouponEvent().getMinOrderAmount()).compareTo(originalAmount) > 0) {
+            throw new PaymentException(ErrorCode.INVALID_REQUEST, "Coupon minimum order amount is not satisfied.");
+        }
+        coupon.reserveForPayment(payerId, com.team7.agora.global.time.AgoraClock.now());
+        return coupon;
+    }
+
+    private BigDecimal couponDiscountAmount(Coupon coupon, BigDecimal originalAmount) {
+        BigDecimal discountAmount = BigDecimal.valueOf(coupon.getCouponEvent().getDiscountAmount());
+        return discountAmount.compareTo(originalAmount) > 0 ? originalAmount : discountAmount;
+    }
+
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public PaymentResponse confirm(Long payerId, Long paymentId, String paymentKey) {
         ConfirmationAttempt attempt = reserveConfirmationById(paymentId, payment -> payment.validatePayer(payerId));
@@ -164,6 +243,7 @@ public class PaymentService {
             if (payment.getStatus() == PaymentStatus.PAID) {
                 return PaymentResponse.from(payment);
             }
+            payment.useReservedCoupon();
             payment.markPaid(paymentKey);
             payment.getTrade().markPaid();
             Settlement settlement = settlementRepository.save(Settlement.pending(payment));
@@ -201,6 +281,7 @@ public class PaymentService {
             throw new PaymentException(ErrorCode.CONFLICT, "approval in progress");
         }
         if (payment.getTrade().getStatus() != TradeStatus.PAYMENT_PENDING) {
+            payment.releaseCouponReservation();
             throw new PaymentException(ErrorCode.INVALID_REQUEST, "寃곗젣 ?湲?以묒씤 嫄곕옒留?寃곗젣?????덉뒿?덈떎.");
         }
         PaymentStatus previousStatus = payment.getStatus();
@@ -212,6 +293,7 @@ public class PaymentService {
         transactionOperations.execute(status -> {
             Payment payment = findPaymentForUpdate(paymentId);
             payment.markFailed();
+            payment.releaseCouponReservation();
             return null;
         });
     }

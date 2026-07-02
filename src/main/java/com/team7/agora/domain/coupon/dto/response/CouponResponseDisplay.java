@@ -68,6 +68,7 @@ final class CouponResponseDisplay {
         return switch (status) {
             case AVAILABLE -> "Available";
             case ISSUED -> "Issued";
+            case PAYMENT_PENDING -> "Payment pending";
             case USED -> "Used";
             case EXPIRED -> "Expired";
         };
