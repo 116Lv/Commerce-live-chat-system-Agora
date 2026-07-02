@@ -25,9 +25,16 @@ import com.team7.agora.domain.coupon.repository.AdminCouponApprovalPayloadReposi
 import com.team7.agora.domain.coupon.repository.CouponEventRepository;
 import com.team7.agora.domain.coupon.repository.CouponRepository;
 import com.team7.agora.domain.coupon.service.CouponSlotService;
+import com.team7.agora.domain.product.repository.ProductRepository;
+import com.team7.agora.domain.product.entity.Product;
+import com.team7.agora.domain.product.enums.ProductStatus;
+import com.team7.agora.domain.region.entity.Region;
+import com.team7.agora.domain.search.service.ProductSearchService;
+import com.team7.agora.domain.user.entity.User;
 import com.team7.agora.global.auth.AdminPrincipal;
 import com.team7.agora.global.exception.BusinessException;
 import com.team7.agora.global.exception.ErrorCode;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -58,6 +65,12 @@ class AdminApprovalServiceTest {
     @Mock
     private CouponSlotService couponSlotService;
 
+    @Mock
+    private ProductRepository productRepository;
+
+    @Mock
+    private ProductSearchService productSearchService;
+
     private AdminApprovalService createService() {
         return new AdminApprovalService(
                 approvalRequestRepository,
@@ -65,7 +78,9 @@ class AdminApprovalServiceTest {
                 approvalPayloadRepository,
                 couponEventRepository,
                 couponRepository,
-                couponSlotService
+                couponSlotService,
+                productRepository,
+                productSearchService
         );
     }
 
@@ -458,6 +473,27 @@ class AdminApprovalServiceTest {
     }
 
     @Test
+    void approveProductHideRequestHidesProductAfterApproval() {
+        AdminApprovalService service = createService();
+        Admin root = admin(1L, "root@test.com", "root", AdminRole.ROOT_ADMIN);
+        Admin requester = admin(2L, "product-admin@test.com", "product-admin", AdminRole.PRODUCT_ADMIN);
+        Product product = product(7L);
+        AdminApprovalRequest request = AdminApprovalRequest.createProductHide(requester, 7L, "Bike", "신고 누적");
+        assignId(request, 10L);
+        when(adminRepository.findById(1L)).thenReturn(Optional.of(root));
+        when(approvalRequestRepository.findByIdForUpdate(10L)).thenReturn(Optional.of(request));
+        when(productRepository.findById(7L)).thenReturn(Optional.of(product));
+
+        AdminApprovalRequestResponse response = service.approve(principal(1L, AdminRole.ROOT_ADMIN), 10L, "승인");
+
+        assertThat(response.status()).isEqualTo(AdminApprovalStatus.APPROVED.name());
+        assertThat(response.targetProductId()).isEqualTo(7L);
+        assertThat(product.getStatus()).isEqualTo(ProductStatus.HIDDEN);
+        verify(productSearchService).evictSearchCache();
+    }
+
+
+    @Test
     void reject_marksPendingRequestRejectedWithoutApplyingRole() {
         AdminApprovalService service = createService();
         Admin root = admin(1L, "root@test.com", "root", AdminRole.ROOT_ADMIN);
@@ -496,6 +532,16 @@ class AdminApprovalServiceTest {
                 0,
                 30
         );
+    }
+
+    private Product product(Long id) {
+        User seller = User.signup("seller@test.com", "encoded", "seller", "01011112222");
+        assignId(seller, 10L);
+        Region region = Region.create("Seoul Gangnam", "1168010100", "Seoul", "Gangnam", "Yeoksam");
+        assignId(region, 1L);
+        Product product = Product.create(seller, region, "Bike", "Good condition", BigDecimal.valueOf(100000), "SPORTS");
+        assignId(product, id);
+        return product;
     }
 
     private CouponEvent pendingEvent(CouponEventType type) {

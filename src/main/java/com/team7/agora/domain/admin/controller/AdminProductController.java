@@ -1,5 +1,7 @@
 package com.team7.agora.domain.admin.controller;
 
+import com.team7.agora.domain.admin.dto.request.AdminProductHideApprovalRequest;
+import com.team7.agora.domain.admin.dto.response.AdminApprovalRequestResponse;
 import com.team7.agora.domain.admin.dto.response.AdminProductResponse;
 import com.team7.agora.domain.admin.service.AdminProductService;
 import com.team7.agora.global.auth.AdminPrincipal;
@@ -12,6 +14,8 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -50,13 +54,14 @@ public class AdminProductController {
         return ApiResponse.success("Products have been loaded.", PageResponse.from(responses));
     }
 
-    @PatchMapping("/{productId}/hide")
-    public ApiResponse<AdminProductResponse> hideProduct(
+    @PostMapping("/{productId}/hide-requests")
+    public ApiResponse<AdminApprovalRequestResponse> requestHideProduct(
             @AuthenticationPrincipal AdminPrincipal admin,
-            @PathVariable Long productId
+            @PathVariable Long productId,
+            @RequestBody AdminProductHideApprovalRequest request
     ) {
-        AdminProductResponse response = adminProductService.hideProduct(admin, productId);
-        return ApiResponse.success("Product has been hidden.", response);
+        AdminApprovalRequestResponse response = adminProductService.requestHideProduct(admin, productId, request.reason());
+        return ApiResponse.success("Product hide approval request has been created.", response);
     }
 
     @PatchMapping("/{productId}/approve")

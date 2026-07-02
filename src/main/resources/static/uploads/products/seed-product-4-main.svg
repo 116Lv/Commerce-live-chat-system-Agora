@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="720" viewBox="0 0 960 720">
+  <rect width="960" height="720" fill="#f6f0e8"/>
+  <rect x="210" y="180" width="540" height="260" rx="18" fill="#b77943"/>
+  <rect x="250" y="440" width="54" height="160" rx="12" fill="#6b4423"/>
+  <rect x="656" y="440" width="54" height="160" rx="12" fill="#6b4423"/>
+  <rect x="296" y="220" width="368" height="40" rx="10" fill="#d9a066"/>
+  <text x="480" y="115" text-anchor="middle" font-family="Arial, sans-serif" font-size="34" font-weight="700" fill="#6b4423">Wood Desk</text>
+</svg>

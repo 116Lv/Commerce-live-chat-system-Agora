@@ -12,6 +12,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 public class UploadResourceConfig implements WebMvcConfigurer {
 
     private static final String FILE_URI_PREFIX = "file:";
+    private static final String SEEDED_UPLOAD_LOCATION = "classpath:/static/uploads/";
 
     private final String uploadLocation;
 
@@ -25,6 +26,6 @@ public class UploadResourceConfig implements WebMvcConfigurer {
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
         registry.addResourceHandler("/uploads/**")
-            .addResourceLocations(uploadLocation.endsWith("/") ? uploadLocation : uploadLocation + "/");
+            .addResourceLocations(uploadLocation.endsWith("/") ? uploadLocation : uploadLocation + "/", SEEDED_UPLOAD_LOCATION);
     }
 }

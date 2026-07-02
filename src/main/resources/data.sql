@@ -62,12 +62,12 @@ VALUES
 
 INSERT INTO product_images (id, product_id, image_url, sort_order)
 VALUES
-    (1, 1, '/uploads/products/seed-product-1-main.jpg', 0),
-    (2, 1, '/uploads/products/seed-product-1-detail.jpg', 1),
-    (3, 2, '/uploads/products/seed-product-2-main.jpg', 0),
-    (4, 3, '/uploads/products/seed-product-3-main.jpg', 0),
-    (5, 4, '/uploads/products/seed-product-4-main.jpg', 0),
-    (6, 5, '/uploads/products/seed-product-5-main.jpg', 0);
+    (1, 1, '/uploads/products/seed-product-1-main.svg', 0),
+    (2, 1, '/uploads/products/seed-product-1-detail.svg', 1),
+    (3, 2, '/uploads/products/seed-product-2-main.svg', 0),
+    (4, 3, '/uploads/products/seed-product-3-main.svg', 0),
+    (5, 4, '/uploads/products/seed-product-4-main.svg', 0),
+    (6, 5, '/uploads/products/seed-product-5-main.svg', 0);
 
 INSERT INTO product_likes (id, product_id, user_id)
 VALUES

@@ -7,12 +7,19 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.team7.agora.domain.admin.entity.Admin;
+import com.team7.agora.domain.admin.entity.AdminApprovalRequest;
+import com.team7.agora.domain.admin.enums.AdminApprovalOperation;
 import com.team7.agora.domain.admin.dto.response.AdminProductResponse;
 import com.team7.agora.domain.admin.enums.AdminRole;
 import com.team7.agora.domain.admin.enums.AdminStatus;
+import com.team7.agora.domain.admin.repository.AdminApprovalRequestRepository;
+import com.team7.agora.domain.admin.repository.AdminRepository;
 import com.team7.agora.domain.product.entity.Product;
+import com.team7.agora.domain.product.entity.ProductImage;
 import com.team7.agora.domain.product.enums.ProductApprovalStatus;
 import com.team7.agora.domain.product.enums.ProductStatus;
+import com.team7.agora.domain.product.repository.ProductImageRepository;
 import com.team7.agora.domain.product.repository.ProductRepository;
 import com.team7.agora.domain.region.entity.Region;
 import com.team7.agora.domain.report.repository.ReportRepository;
@@ -30,6 +37,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.dao.DataIntegrityViolationException;
 
 @ExtendWith(MockitoExtension.class)
 class AdminProductServiceTest {
@@ -43,6 +51,15 @@ class AdminProductServiceTest {
     @Mock
     private ProductSearchService productSearchService;
 
+    @Mock
+    private ProductImageRepository productImageRepository;
+
+    @Mock
+    private AdminRepository adminRepository;
+
+    @Mock
+    private AdminApprovalRequestRepository approvalRequestRepository;
+
     @Test
     void getProducts_returnsProductList() {
         AdminProductService service = createService();
@@ -55,6 +72,8 @@ class AdminProductServiceTest {
         assertThat(responses.getContent()).hasSize(1);
         assertThat(responses.getContent().get(0).id()).isEqualTo(1L);
         assertThat(responses.getContent().get(0).title()).isEqualTo("Bike");
+        assertThat(responses.getContent().get(0).description()).isEqualTo("Good condition");
+        assertThat(responses.getContent().get(0).createdAt()).isNotNull();
         assertThat(responses.getTotalElements()).isEqualTo(42);
         assertThat(responses.getTotalPages()).isEqualTo(3);
     }
@@ -65,6 +84,7 @@ class AdminProductServiceTest {
         Product product = product(1L);
         product.hide();
         when(productRepository.findAdminProducts(
+                null,
                 null,
                 null,
                 null,
@@ -94,6 +114,7 @@ class AdminProductServiceTest {
                 null,
                 null,
                 null,
+                null,
                 ProductApprovalStatus.PENDING,
                 PageRequest.of(0, 20)
         ))
@@ -115,6 +136,7 @@ class AdminProductServiceTest {
         Product product = product(1L);
         product.approve();
         when(productRepository.findAdminProducts(
+                null,
                 null,
                 null,
                 null,
@@ -181,6 +203,7 @@ class AdminProductServiceTest {
         when(productRepository.findAdminProducts(
                 "Bike",
                 "seller",
+                null,
                 ProductStatus.SELLING,
                 ProductApprovalStatus.APPROVED,
                 pageable
@@ -200,6 +223,7 @@ class AdminProductServiceTest {
         verify(productRepository).findAdminProducts(
                 "Bike",
                 "seller",
+                null,
                 ProductStatus.SELLING,
                 ProductApprovalStatus.APPROVED,
                 pageable
@@ -214,6 +238,7 @@ class AdminProductServiceTest {
         when(reportRepository.findDistinctReportedProductsByFilters(
                 "Bike",
                 "seller",
+                null,
                 ProductStatus.SELLING,
                 ProductApprovalStatus.PENDING,
                 pageable
@@ -233,10 +258,60 @@ class AdminProductServiceTest {
         verify(reportRepository).findDistinctReportedProductsByFilters(
                 "Bike",
                 "seller",
+                null,
                 ProductStatus.SELLING,
                 ProductApprovalStatus.PENDING,
                 pageable
         );
+    }
+
+    @Test
+    void requestHideProductCreatesPendingApprovalWithoutHidingProduct() {
+        AdminProductService service = createService();
+        Product product = product(1L);
+        Admin requester = admin(99L);
+        when(productRepository.findById(1L)).thenReturn(Optional.of(product));
+        when(adminRepository.findById(99L)).thenReturn(Optional.of(requester));
+        when(approvalRequestRepository.existsByPendingRequestKey("PRODUCT_HIDE:1")).thenReturn(false);
+        when(approvalRequestRepository.save(org.mockito.ArgumentMatchers.any(AdminApprovalRequest.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        var response = service.requestHideProduct(principal(AdminRole.PRODUCT_ADMIN), 1L, "신고 누적");
+
+        assertThat(response.operation()).isEqualTo(AdminApprovalOperation.PRODUCT_HIDE.name());
+        assertThat(response.status()).isEqualTo("PENDING");
+        assertThat(response.targetProductId()).isEqualTo(1L);
+        assertThat(product.getStatus()).isEqualTo(ProductStatus.SELLING);
+        assertThat(product.getApprovalStatus()).isEqualTo(ProductApprovalStatus.PENDING);
+        verify(productSearchService, never()).evictSearchCache();
+    }
+
+    @Test
+    void requestHideProduct_translatesPendingRequestUniqueRaceToConflict() {
+        AdminProductService service = createService();
+        Product product = product(1L);
+        Admin requester = admin(99L);
+        when(productRepository.findById(1L)).thenReturn(Optional.of(product));
+        when(adminRepository.findById(99L)).thenReturn(Optional.of(requester));
+        when(approvalRequestRepository.existsByPendingRequestKey("PRODUCT_HIDE:1")).thenReturn(false);
+        when(approvalRequestRepository.save(org.mockito.ArgumentMatchers.any(AdminApprovalRequest.class)))
+                .thenThrow(new DataIntegrityViolationException("duplicate pending request"));
+
+        assertThatThrownBy(() -> service.requestHideProduct(principal(AdminRole.PRODUCT_ADMIN), 1L, "신고 누적"))
+                .isInstanceOf(BusinessException.class)
+                .hasMessageContaining("pending product hide approval request");
+    }
+
+    @Test
+    void requestHideProduct_rejectsAlreadyHiddenProduct() {
+        AdminProductService service = createService();
+        Product product = product(1L);
+        product.hide();
+        when(productRepository.findById(1L)).thenReturn(Optional.of(product));
+
+        assertThatThrownBy(() -> service.requestHideProduct(principal(AdminRole.PRODUCT_ADMIN), 1L, "신고 누적"))
+                .isInstanceOf(BusinessException.class)
+                .hasMessageContaining("already hidden");
     }
 
     @Test
@@ -252,11 +327,14 @@ class AdminProductServiceTest {
         AdminProductService service = createService();
         Product product = product(1L);
         when(productRepository.findById(1L)).thenReturn(Optional.of(product));
+        when(productImageRepository.findAllByProductIdInOrderByProductIdAscSortOrderAsc(List.of(1L)))
+                .thenReturn(List.of(ProductImage.create(product, "/uploads/products/bike.jpg", 0)));
 
         AdminProductResponse response = service.hideProduct(principal(AdminRole.PRODUCT_ADMIN), 1L);
 
         assertThat(response.status()).isEqualTo("HIDDEN");
         assertThat(response.approvalStatus()).isEqualTo("REJECTED");
+        assertThat(response.imageUrls()).containsExactly("/uploads/products/bike.jpg");
         assertThat(product.getStatus()).isEqualTo(ProductStatus.HIDDEN);
         assertThat(product.getApprovalStatus()).isEqualTo(ProductApprovalStatus.REJECTED);
         verify(productSearchService).evictSearchCache();
@@ -267,11 +345,14 @@ class AdminProductServiceTest {
         AdminProductService service = createService();
         Product product = product(1L);
         when(productRepository.findById(1L)).thenReturn(Optional.of(product));
+        when(productImageRepository.findAllByProductIdInOrderByProductIdAscSortOrderAsc(List.of(1L)))
+                .thenReturn(List.of(ProductImage.create(product, "/uploads/products/bike.jpg", 0)));
 
         AdminProductResponse response = service.approveProduct(principal(AdminRole.PRODUCT_ADMIN), 1L);
 
         assertThat(response.status()).isEqualTo("SELLING");
         assertThat(response.approvalStatus()).isEqualTo("APPROVED");
+        assertThat(response.imageUrls()).containsExactly("/uploads/products/bike.jpg");
         assertThat(product.getStatus()).isEqualTo(ProductStatus.SELLING);
         assertThat(product.getApprovalStatus()).isEqualTo(ProductApprovalStatus.APPROVED);
         verify(productSearchService).evictSearchCache();
@@ -304,7 +385,14 @@ class AdminProductServiceTest {
     }
 
     private AdminProductService createService() {
-        return new AdminProductService(productRepository, reportRepository, productSearchService);
+        return new AdminProductService(
+                productRepository,
+                reportRepository,
+                productSearchService,
+                productImageRepository,
+                adminRepository,
+                approvalRequestRepository
+        );
     }
 
     private User user(Long id, String email, String nickname) {
@@ -315,5 +403,11 @@ class AdminProductServiceTest {
 
     private AdminPrincipal principal(AdminRole role) {
         return new AdminPrincipal(99L, "admin@test.com", "encoded", role, AdminStatus.ACTIVE, "admin");
+    }
+
+    private Admin admin(Long id) {
+        Admin admin = Admin.create("admin@test.com", "encoded", "admin", AdminRole.PRODUCT_ADMIN);
+        assignId(admin, id);
+        return admin;
     }
 }

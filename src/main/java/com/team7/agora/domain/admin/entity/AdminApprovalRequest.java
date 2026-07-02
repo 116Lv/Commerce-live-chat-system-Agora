@@ -53,6 +53,11 @@ public class AdminApprovalRequest extends BaseTimeEntity {
     @Column(name = "requested_role", length = 30)
     private AdminRole requestedRole;
 
+    private Long targetProductId;
+
+    @Column(length = 100)
+    private String targetProductTitle;
+
     @Column(nullable = false, length = 500)
     private String reason;
 
@@ -88,6 +93,17 @@ public class AdminApprovalRequest extends BaseTimeEntity {
         this.pendingRequestKey = pendingRequestKey;
     }
 
+    private AdminApprovalRequest(Admin requester, Long targetProductId, String targetProductTitle, String reason) {
+        markCreatedNow();
+        this.operation = AdminApprovalOperation.PRODUCT_HIDE;
+        this.status = AdminApprovalStatus.PENDING;
+        this.requester = requester;
+        this.targetProductId = targetProductId;
+        this.targetProductTitle = normalizeOptionalText(targetProductTitle);
+        this.reason = normalizeText(reason);
+        this.pendingRequestKey = buildProductHidePendingRequestKey(targetProductId);
+    }
+
     public static AdminApprovalRequest createRoleChange(
             Admin requester,
             Admin targetAdmin,
@@ -110,6 +126,13 @@ public class AdminApprovalRequest extends BaseTimeEntity {
             throw new BusinessException(ErrorCode.INVALID_REQUEST);
         }
         return new AdminApprovalRequest(operation, requester, reason, pendingRequestKey);
+    }
+
+    public static AdminApprovalRequest createProductHide(Admin requester, Long targetProductId, String targetProductTitle, String reason) {
+        if (requester == null || targetProductId == null) {
+            throw new BusinessException(ErrorCode.INVALID_REQUEST);
+        }
+        return new AdminApprovalRequest(requester, targetProductId, targetProductTitle, reason);
     }
 
     public void approve(Admin approver, String memo) {
@@ -164,5 +187,9 @@ public class AdminApprovalRequest extends BaseTimeEntity {
 
     private String buildPendingRequestKey(Admin requester, Admin targetAdmin, AdminRole requestedRole) {
         return requester.getId() + ":" + targetAdmin.getId() + ":" + requestedRole.name();
+    }
+
+    public static String buildProductHidePendingRequestKey(Long productId) {
+        return "PRODUCT_HIDE:" + productId;
     }
 }

@@ -70,7 +70,12 @@ public interface ProductRepository extends JpaRepository<Product, Long>, Product
     @Query("""
         select p from Product p
         join p.seller seller
-        where (:keyword is null or lower(p.title) like lower(concat('%', :keyword, '%')))
+        where (
+            :keyword is null
+            or lower(p.title) like lower(concat('%', :keyword, '%'))
+            or lower(seller.nickname) like lower(concat('%', :keyword, '%'))
+            or (:sellerIdKeyword is not null and seller.id = :sellerIdKeyword)
+          )
           and (:sellerKeyword is null or lower(seller.nickname) like lower(concat('%', :sellerKeyword, '%')))
           and (:status is null or p.status = :status)
           and (:approvalStatus is null or p.approvalStatus = :approvalStatus)
@@ -78,6 +83,7 @@ public interface ProductRepository extends JpaRepository<Product, Long>, Product
     Page<Product> findAdminProducts(
         @Param("keyword") String keyword,
         @Param("sellerKeyword") String sellerKeyword,
+        @Param("sellerIdKeyword") Long sellerIdKeyword,
         @Param("status") ProductStatus status,
         @Param("approvalStatus") ProductApprovalStatus approvalStatus,
         Pageable pageable

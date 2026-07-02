@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Alert, Badge, Button, ButtonGroup, Card, Col, Form, InputGroup, Modal, ProgressBar, Row, Tab, Table, Tabs } from 'react-bootstrap';
-import { CheckCircle2, EyeOff, RefreshCw, Search, Send } from 'lucide-react';
+import { CheckCircle2, ChevronLeft, ChevronRight, EyeOff, RefreshCw, Search, Send } from 'lucide-react';
 import {
   approveAdminApprovalRequest,
   approveAdminProduct,
@@ -18,7 +18,7 @@ import {
   getAdminRefunds,
   getAdminUserReports,
   getAdminUsers,
-  hideAdminProduct,
+  requestAdminProductHideApproval,
   requestCouponEventCreateApproval,
   requestCouponEventIndividualIssue,
   requestCouponEventStopApproval,
@@ -35,6 +35,7 @@ import ErrorState from '../components/ErrorState.jsx';
 import LoadingState from '../components/LoadingState.jsx';
 import MoneyText from '../components/MoneyText.jsx';
 import StatusBadge from '../components/StatusBadge.jsx';
+import { getProductImageUrls } from './productFormUtils.js';
 import { formatDateTime, statusText } from './pageUtils.jsx';
 import {
   ADMIN_ROLE_LABELS,
@@ -297,7 +298,6 @@ export function AdminDashboardPage() {
 export function AdminProductsPage() {
   const defaultProductFilters = {
     keyword: '',
-    sellerKeyword: '',
     status: '',
     approvalStatus: '',
     reportedOnly: false
@@ -305,11 +305,13 @@ export function AdminProductsPage() {
   const [productFilters, setProductFilters] = useState(defaultProductFilters);
   const [appliedProductFilters, setAppliedProductFilters] = useState(defaultProductFilters);
   const [selectedProduct, setSelectedProduct] = useState(null);
+  const [selectedProductAction, setSelectedProductAction] = useState('');
+  const [activeProductImageIndex, setActiveProductImageIndex] = useState(0);
+  const [hideCause, setHideCause] = useState('');
   const products = useAdminResource(
     () => getAdminProducts({ ...appliedProductFilters, page: 0, size: PAGE_SIZE }),
     [
       appliedProductFilters.keyword,
-      appliedProductFilters.sellerKeyword,
       appliedProductFilters.status,
       appliedProductFilters.approvalStatus,
       appliedProductFilters.reportedOnly
@@ -326,7 +328,6 @@ export function AdminProductsPage() {
     event.preventDefault();
     setAppliedProductFilters({
       keyword: productFilters.keyword.trim(),
-      sellerKeyword: productFilters.sellerKeyword.trim(),
       status: productFilters.status,
       approvalStatus: productFilters.approvalStatus,
       reportedOnly: productFilters.reportedOnly
@@ -339,8 +340,7 @@ export function AdminProductsPage() {
   };
 
   const appliedProductFilterChips = [
-    appliedProductFilters.keyword ? `상품명: ${appliedProductFilters.keyword}` : '',
-    appliedProductFilters.sellerKeyword ? `판매자: ${appliedProductFilters.sellerKeyword}` : '',
+    appliedProductFilters.keyword ? `검색란: ${appliedProductFilters.keyword}` : '',
     appliedProductFilters.status ? `판매상태: ${statusText(appliedProductFilters.status)}` : '',
     appliedProductFilters.approvalStatus ? `승인상태: ${appliedProductFilters.approvalStatus}` : '',
     appliedProductFilters.reportedOnly ? '신고 상품만' : ''
@@ -351,17 +351,53 @@ export function AdminProductsPage() {
     setSelectedProduct(updated);
   };
 
+  const openProductModal = (product, action) => {
+    setSelectedProduct(product);
+    setSelectedProductAction(action);
+    setActiveProductImageIndex(0);
+    setHideCause('');
+  };
+
+  const closeProductModal = () => {
+    setSelectedProduct(null);
+    setSelectedProductAction('');
+    setActiveProductImageIndex(0);
+    setHideCause('');
+  };
+
   const handleHide = (product) => {
     const productId = getId(product, ['id', 'productId']);
-    run(() => hideAdminProduct(productId), '상품을 숨김 처리했습니다.', updateProductRow);
+    run(
+      () => requestAdminProductHideApproval(productId, hideCause.trim()),
+      '상품 숨김 승인요청이 접수되었습니다.',
+      () => {
+        products.reload();
+        closeProductModal();
+      }
+    );
   };
 
   const handleApprove = (product) => {
     const productId = getId(product, ['id', 'productId']);
     run(() => approveAdminProduct(productId), '상품을 승인했습니다.', (updated) => {
       updateProductRow(updated);
-      setSelectedProduct(null);
+      closeProductModal();
     });
+  };
+
+  const selectedProductImages = getProductImageUrls(selectedProduct || {});
+  const hasMultipleSelectedProductImages = selectedProductImages.length > 1;
+  const currentSelectedProductImage =
+    selectedProductImages[activeProductImageIndex] || selectedProductImages[0] || '';
+  const selectedProductId = selectedProduct ? getId(selectedProduct, ['id', 'productId']) : null;
+  const selectedApprovalStatus = String(selectedProduct?.approvalStatus || 'APPROVED').toUpperCase();
+
+  const handlePreviousProductImage = () => {
+    setActiveProductImageIndex((current) => (current <= 0 ? selectedProductImages.length - 1 : current - 1));
+  };
+
+  const handleNextProductImage = () => {
+    setActiveProductImageIndex((current) => (current + 1) % selectedProductImages.length);
   };
 
   return (
@@ -369,22 +405,14 @@ export function AdminProductsPage() {
       <AdminPageHeader title="상품 관리" />
       <Form className="toolbar-panel mb-3 admin-search-panel admin-product-toolbar" onSubmit={handleProductSearch}>
         <Form.Group className="admin-search-field" controlId="admin-product-keyword">
-            <Form.Label>상품명</Form.Label>
+            <Form.Label>검색란</Form.Label>
             <Form.Control
               value={productFilters.keyword}
-              placeholder="상품명 검색"
+              placeholder="상품명, 판매자ID, 판매자 닉네임 검색"
               onChange={(event) => updateProductFilter('keyword', event.target.value)}
             />
           </Form.Group>
         <div className="admin-filter-options">
-          <Form.Group controlId="admin-product-seller">
-            <Form.Label>판매자 닉네임</Form.Label>
-            <Form.Control
-              value={productFilters.sellerKeyword}
-              placeholder="판매자 닉네임 검색"
-              onChange={(event) => updateProductFilter('sellerKeyword', event.target.value)}
-            />
-          </Form.Group>
           <Form.Group controlId="admin-product-status">
             <Form.Label>판매상태</Form.Label>
             <Form.Select value={productFilters.status} onChange={(event) => updateProductFilter('status', event.target.value)}>
@@ -441,6 +469,7 @@ export function AdminProductsPage() {
         <AdminTable>
           <thead>
             <tr>
+              <th>상품 ID</th>
               <th>상품명</th>
               <th>판매자</th>
               <th>가격</th>
@@ -448,7 +477,7 @@ export function AdminProductsPage() {
               <th>승인상태</th>
               <th>신고</th>
               <th>등록일</th>
-              <th className="text-end">작업</th>
+              <th className="text-center">작업</th>
             </tr>
           </thead>
           <tbody>
@@ -459,6 +488,7 @@ export function AdminProductsPage() {
 
               return (
                 <tr key={productId}>
+                  <td>#{productId}</td>
                   <td>{product.title || '-'}</td>
                   <td>
                     <div>{product.sellerNickname || '-'}</div>
@@ -471,34 +501,37 @@ export function AdminProductsPage() {
                     <StatusBadge status={product.status} />
                   </td>
                   <td>
-                    <Badge bg={normalizedApproval === 'REJECTED' ? 'danger' : normalizedApproval === 'PENDING' ? 'warning' : 'success'}>
+                    <Badge bg={normalizedApproval === 'REJECTED' ? 'danger' : normalizedApproval === 'PENDING' ? 'primary' : 'success'}>
                       {normalizedApproval}
                     </Badge>
                   </td>
                   <td>{product.reportCount || product.reportedCount || product.reportedOnly ? '있음' : '-'}</td>
                   <td>{formatDateTime(product.createdAt)}</td>
-                  <td className="text-end admin-product-actions">
-                    <ActionButton icon={Search} size="sm" variant="outline-secondary" onClick={() => setSelectedProduct(product)}>
+                  <td className="text-center admin-product-actions-cell">
+                    <div className="admin-product-actions">
+                    <ActionButton icon={Search} size="sm" variant="outline-secondary" onClick={() => openProductModal(product, 'detail')}>
                       상세
                     </ActionButton>
-                    <ActionButton
-                      icon={CheckCircle2}
-                      size="sm"
-                      variant="outline-primary"
-                      disabled={normalizedApproval === 'APPROVED'}
-                      onClick={() => handleApprove(product)}
-                    >
-                      승인
-                    </ActionButton>
+                    {normalizedApproval === 'PENDING' || normalizedApproval === 'REJECTED' ? (
+                      <ActionButton
+                        icon={CheckCircle2}
+                        size="sm"
+                        variant={normalizedApproval === 'PENDING' ? 'outline-primary' : 'outline-success'}
+                        onClick={() => openProductModal(product, 'approve')}
+                      >
+                        승인
+                      </ActionButton>
+                    ) : null}
                     <ActionButton
                       icon={EyeOff}
                       size="sm"
                       variant="outline-danger"
                       disabled={normalizedStatus === 'HIDDEN'}
-                      onClick={() => handleHide(product)}
+                      onClick={() => openProductModal(product, 'hide')}
                     >
                       숨김
                     </ActionButton>
+                    </div>
                   </td>
                 </tr>
               );
@@ -506,50 +539,152 @@ export function AdminProductsPage() {
           </tbody>
         </AdminTable>
       ) : null}
-      <Modal show={Boolean(selectedProduct)} onHide={() => setSelectedProduct(null)} centered>
+      <Modal show={selectedProductAction === 'detail'} onHide={closeProductModal} centered size="lg">
         <Modal.Header closeButton>
-          <Modal.Title>상품 승인 상세</Modal.Title>
+          <Modal.Title>상품 상세</Modal.Title>
         </Modal.Header>
         <Modal.Body>
           {selectedProduct ? (
-            <dl className="compact-list compact-list-inline admin-product-detail">
-              <div>
-                <dt>상품</dt>
-                <dd>{selectedProduct.title || '-'}</dd>
+            <div className="admin-product-detail">
+              <div className="admin-product-detail-media">
+                {selectedProductImages.length > 0 ? (
+                  <div className="product-detail-carousel">
+                    {hasMultipleSelectedProductImages ? (
+                      <>
+                        <button
+                          type="button"
+                          className="product-detail-carousel-button product-detail-carousel-prev"
+                          onClick={handlePreviousProductImage}
+                          aria-label="이전 이미지"
+                        >
+                          <ChevronLeft size={22} aria-hidden="true" />
+                        </button>
+                        <button
+                          type="button"
+                          className="product-detail-carousel-button product-detail-carousel-next"
+                          onClick={handleNextProductImage}
+                          aria-label="다음 이미지"
+                        >
+                          <ChevronRight size={22} aria-hidden="true" />
+                        </button>
+                      </>
+                    ) : null}
+                    <img
+                      src={currentSelectedProductImage}
+                      alt={`${selectedProduct.title || '상품'} 이미지 ${activeProductImageIndex + 1}`}
+                    />
+                    {hasMultipleSelectedProductImages ? (
+                      <span className="product-detail-image-counter">
+                        {activeProductImageIndex + 1} / {selectedProductImages.length}
+                      </span>
+                    ) : null}
+                  </div>
+                ) : (
+                  <span>이미지 없음</span>
+                )}
               </div>
-              <div>
-                <dt>판매자</dt>
-                <dd>{selectedProduct.sellerNickname || selectedProduct.sellerId || '-'}</dd>
-              </div>
-              <div>
-                <dt>가격</dt>
-                <dd>
-                  <MoneyText amount={selectedProduct.price} />
-                </dd>
-              </div>
-              <div>
-                <dt>판매상태</dt>
-                <dd>{selectedProduct.statusLabel || selectedProduct.status || '-'}</dd>
-              </div>
-              <div>
-                <dt>승인상태</dt>
-                <dd>{selectedProduct.approvalStatus || 'APPROVED'}</dd>
-              </div>
-            </dl>
+              <dl className="compact-list compact-list-inline">
+                <div>
+                  <dt>상품 ID</dt>
+                  <dd>#{selectedProductId}</dd>
+                </div>
+                <div>
+                  <dt>상품명</dt>
+                  <dd>{selectedProduct.title || '-'}</dd>
+                </div>
+                <div>
+                  <dt>판매자</dt>
+                  <dd>{selectedProduct.sellerNickname || '-'} / #{selectedProduct.sellerId || '-'}</dd>
+                </div>
+                <div>
+                  <dt>가격</dt>
+                  <dd>
+                    <MoneyText amount={selectedProduct.price} />
+                  </dd>
+                </div>
+                <div>
+                  <dt>판매상태</dt>
+                  <dd>{selectedProduct.statusLabel || selectedProduct.status || '-'}</dd>
+                </div>
+                <div>
+                  <dt>승인상태</dt>
+                  <dd>{selectedProduct.approvalStatus || 'APPROVED'}</dd>
+                </div>
+                <div>
+                  <dt>등록일</dt>
+                  <dd>{formatDateTime(selectedProduct.createdAt)}</dd>
+                </div>
+                <div>
+                  <dt>상품 설명</dt>
+                  <dd>{selectedProduct.description || '-'}</dd>
+                </div>
+              </dl>
+            </div>
           ) : null}
         </Modal.Body>
         <Modal.Footer>
+          <Button variant="outline-secondary" onClick={closeProductModal}>
+            닫기
+          </Button>
+        </Modal.Footer>
+      </Modal>
+      <Modal show={selectedProductAction === 'approve'} onHide={closeProductModal} centered>
+        <Modal.Header closeButton>
+          <Modal.Title>상품 승인</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
           {selectedProduct ? (
-            <ActionButton
-              icon={CheckCircle2}
-              variant="primary"
-              disabled={String(selectedProduct.approvalStatus || 'APPROVED').toUpperCase() === 'APPROVED'}
-              onClick={() => handleApprove(selectedProduct)}
-            >
-              승인
-            </ActionButton>
+            <div>
+              <p className="mb-2"><strong>{selectedProduct.title || '-'}</strong></p>
+              <p className="text-muted mb-0">승인 대기 상품을 판매 가능 상태로 변경합니다.</p>
+            </div>
           ) : null}
-          <Button variant="outline-secondary" onClick={() => setSelectedProduct(null)}>
+        </Modal.Body>
+        <Modal.Footer>
+          <ActionButton
+            icon={CheckCircle2}
+            variant={selectedApprovalStatus === 'PENDING' ? 'primary' : 'success'}
+            disabled={!selectedProduct || !(selectedApprovalStatus === 'PENDING' || selectedApprovalStatus === 'REJECTED')}
+            onClick={() => handleApprove(selectedProduct)}
+          >
+            승인
+          </ActionButton>
+          <Button variant="outline-secondary" onClick={closeProductModal}>
+            닫기
+          </Button>
+        </Modal.Footer>
+      </Modal>
+      <Modal show={selectedProductAction === 'hide'} onHide={closeProductModal} centered>
+        <Modal.Header closeButton>
+          <Modal.Title>상품 숨김 승인요청</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          {selectedProduct ? (
+            <>
+              <p className="mb-3"><strong>{selectedProduct.title || '-'}</strong> 숨김 처리를 승인 요청합니다.</p>
+              <Form.Group controlId="admin-product-hide-reason">
+                <Form.Label>요청 사유</Form.Label>
+                <Form.Control
+                  as="textarea"
+                  rows={3}
+                  value={hideCause}
+                  placeholder="승인자가 확인할 숨김 처리 사유"
+                  onChange={(event) => setHideCause(event.target.value)}
+                />
+              </Form.Group>
+            </>
+          ) : null}
+        </Modal.Body>
+        <Modal.Footer>
+          <ActionButton
+            icon={Send}
+            variant="danger"
+            disabled={!selectedProduct || !hideCause.trim()}
+            onClick={() => handleHide(selectedProduct)}
+          >
+            승인요청
+          </ActionButton>
+          <Button variant="outline-secondary" onClick={closeProductModal}>
             닫기
           </Button>
         </Modal.Footer>
@@ -1999,6 +2134,22 @@ function ApprovalStatusBadge({ status }) {
   return <Badge bg={variant}>{normalized}</Badge>;
 }
 
+function getApprovalRequestTargetLabel(request) {
+  if (request.operation === 'PRODUCT_HIDE') {
+    return request.targetProductTitle || (request.targetProductId ? `#${request.targetProductId}` : '-');
+  }
+
+  return request.targetAdminNickname || request.targetAdminId || '-';
+}
+
+function getApprovalRequestTargetDetail(request) {
+  if (request.operation === 'PRODUCT_HIDE') {
+    return request.targetProductId ? `#${request.targetProductId}` : '-';
+  }
+
+  return request.targetAdminEmail || '-';
+}
+
 function ApprovalRequestTable({ rows, memos = {}, setMemo, onApprove, onReject, showActions = false }) {
   if (rows.length === 0) {
     return <EmptyState title="조건에 맞는 승인 요청이 없습니다" />;
@@ -2034,8 +2185,8 @@ function ApprovalRequestTable({ rows, memos = {}, setMemo, onApprove, onReject, 
                 <small className="text-muted">{request.requesterEmail || '-'}</small>
               </td>
               <td>
-                <div>{request.targetAdminNickname || request.targetAdminId || '-'}</div>
-                <small className="text-muted">{request.targetAdminEmail || '-'}</small>
+                <div>{getApprovalRequestTargetLabel(request)}</div>
+                <small className="text-muted">{getApprovalRequestTargetDetail(request)}</small>
               </td>
               <td>{formatAdminRole(request.requestedRole)}</td>
               <td>
@@ -2097,7 +2248,9 @@ export function AdminApprovalsPage() {
       request.requesterEmail,
       request.targetAdminNickname,
       request.targetAdminEmail,
-      request.targetAdminId
+      request.targetAdminId,
+      request.targetProductTitle,
+      request.targetProductId
     ].some((value) => includesKeyword(value, approvalFilters.keyword));
     const roleMatch = !approvalFilters.requestedRole
       || String(request.requestedRole || '').toUpperCase() === approvalFilters.requestedRole;
@@ -2193,6 +2346,8 @@ export function AdminMyApprovalRequestsPage() {
       request.targetAdminNickname,
       request.targetAdminEmail,
       request.targetAdminId,
+      request.targetProductTitle,
+      request.targetProductId,
       request.requestedRole
     ].some((value) => includesKeyword(value, myApprovalFilters.keyword));
     const statusMatch = !myApprovalFilters.status || String(request.status || '').toUpperCase() === myApprovalFilters.status;

@@ -56,8 +56,8 @@ export const getAdminProducts = (params = {}, config = {}) =>
     params: compactParams({ reportedOnly: false, page: 0, size: 20, ...params })
   });
 
-export const hideAdminProduct = (productId, config = {}) =>
-  apiClient.patch(`/api/admin/products/${productId}/hide`, undefined, config);
+export const requestAdminProductHideApproval = (productId, reason, config = {}) =>
+  apiClient.post(`/api/admin/products/${productId}/hide-requests`, { reason }, config);
 
 export const approveAdminProduct = (productId, config = {}) =>
   apiClient.patch(`/api/admin/products/${productId}/approve`, undefined, config);

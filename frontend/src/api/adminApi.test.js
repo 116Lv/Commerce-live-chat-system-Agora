@@ -18,9 +18,9 @@ import {
   getMyAdminApprovalRequests,
   getAdminUserReports,
   getAdminUsers,
-  hideAdminProduct,
   normalizeCouponEventPayload,
   normalizeCouponIssuePayload,
+  requestAdminProductHideApproval,
   requestCouponEventCreateApproval,
   requestCouponEventIndividualIssue,
   requestCouponEventStopApproval,
@@ -71,7 +71,6 @@ test('admin API maps dashboard, product, user, report, payment, settlement, and 
   await getAdminMe(config);
   await getAdminDashboard(config);
   await getAdminProducts({ reportedOnly: true, approvalStatus: 'REJECTED', page: 1, size: 10 }, config);
-  await hideAdminProduct(7, config);
   await approveAdminProduct(7, config);
   await getAdminUsers({ page: 2, size: 5 }, config);
   await getAdminAccounts(config);
@@ -87,6 +86,7 @@ test('admin API maps dashboard, product, user, report, payment, settlement, and 
   await getAdminProductReports({ status: 'RESOLVED' }, config);
   await resolveAdminUserReport(11, '처리 완료', config);
   await resolveAdminProductReport(12, '상품 숨김', config);
+  await requestAdminProductHideApproval(7, '신고 누적 상품 숨김', config);
   await getAdminPayments({ status: 'PAID', page: 0, size: 20 }, config);
   await getAdminPayments({ status: '', page: 0, size: 20 }, config);
   await verifyAdminPayment(15, config);
@@ -104,7 +104,6 @@ test('admin API maps dashboard, product, user, report, payment, settlement, and 
     { method: 'get', url: '/api/admin/me', params: undefined, data: undefined },
     { method: 'get', url: '/api/admin/dashboard', params: undefined, data: undefined },
     { method: 'get', url: '/api/admin/products', params: { reportedOnly: true, approvalStatus: 'REJECTED', page: 1, size: 10 }, data: undefined },
-    { method: 'patch', url: '/api/admin/products/7/hide', params: undefined, data: undefined },
     { method: 'patch', url: '/api/admin/products/7/approve', params: undefined, data: undefined },
     { method: 'get', url: '/api/admin/users', params: { page: 2, size: 5 }, data: undefined },
     { method: 'get', url: '/api/admin/accounts', params: undefined, data: undefined },
@@ -125,6 +124,7 @@ test('admin API maps dashboard, product, user, report, payment, settlement, and 
     { method: 'get', url: '/api/admin/reports/products', params: { status: 'RESOLVED' }, data: undefined },
     { method: 'post', url: '/api/admin/reports/users/11/resolve', params: undefined, data: { adminMemo: '처리 완료' } },
     { method: 'post', url: '/api/admin/reports/products/12/resolve', params: undefined, data: { adminMemo: '상품 숨김' } },
+    { method: 'post', url: '/api/admin/products/7/hide-requests', params: undefined, data: { reason: '신고 누적 상품 숨김' } },
     { method: 'get', url: '/api/admin/payments', params: { status: 'PAID', page: 0, size: 20 }, data: undefined },
     { method: 'get', url: '/api/admin/payments', params: { status: '', page: 0, size: 20 }, data: undefined },
     { method: 'post', url: '/api/admin/payments/15/verify', params: undefined, data: null },
@@ -232,7 +232,6 @@ test('admin list APIs include backend default paging and filter params', async (
   await getAdminProducts(
     {
       keyword: '의자',
-      sellerKeyword: 'seller01',
       status: 'AVAILABLE',
       approvalStatus: 'PENDING',
       reportedOnly: true,
@@ -254,7 +253,6 @@ test('admin list APIs include backend default paging and filter params', async (
         page: 2,
         size: 30,
         keyword: '의자',
-        sellerKeyword: 'seller01',
         status: 'AVAILABLE',
         approvalStatus: 'PENDING'
       },
