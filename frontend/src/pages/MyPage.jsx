@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Alert, Button, Form } from 'react-bootstrap';
 import LoadingState from '../components/LoadingState.jsx';
 import ErrorState from '../components/ErrorState.jsx';
@@ -6,7 +6,8 @@ import EmptyState from '../components/EmptyState.jsx';
 import { getMyCoupons } from '../api/couponApi.js';
 import { changePassword, getMe, updateProfile } from '../api/mypageApi.js';
 import { getRegions, updatePreferredRegions } from '../api/regionApi.js';
-import { formatCouponMoney, sortMyCoupons, toCouponFilter } from './couponUtils.js';
+import { useAuth } from '../auth/AuthContext.jsx';
+import { formatCouponMoney, sortMyCoupons } from './couponUtils.js';
 import { PageHeader, getPageContent, useApiResource } from './pageUtils.jsx';
 
 const PASSWORD_MIN_LENGTH = 8;
@@ -30,21 +31,26 @@ function SmileScoreRing({ score }) {
 }
 
 function CouponPreview({ coupons, loading, error }) {
-  const usableCoupons = useMemo(
-    () => sortMyCoupons(coupons).filter((coupon) => toCouponFilter(coupon) === 'usable'),
-    [coupons]
-  );
-  const coupon = usableCoupons[0] || coupons[0];
+  const previewCoupons = sortMyCoupons(coupons);
 
   return (
     <section className="mypage-panel mypage-coupon-panel" aria-labelledby="mypage-coupon-title">
       <h2 id="mypage-coupon-title">받은 쿠폰</h2>
       {loading ? <p className="mypage-muted">쿠폰 불러오는 중</p> : null}
       {error ? <p className="mypage-muted">쿠폰을 불러오지 못했어요</p> : null}
-      {!loading && !error ? (
+      {!loading && !error && previewCoupons.length === 0 ? (
         <div className="mypage-coupon-row">
-          <span>{coupon?.eventName || coupon?.name || '보유 쿠폰이 없어요'}</span>
-          {coupon ? <strong>{formatCouponMoney(coupon.discountAmount)}</strong> : null}
+          <span>보유 쿠폰이 없어요</span>
+        </div>
+      ) : null}
+      {!loading && !error && previewCoupons.length > 0 ? (
+        <div className="mypage-coupon-list">
+          {previewCoupons.map((coupon, index) => (
+            <div className="mypage-coupon-row" key={coupon.couponId ?? coupon.id ?? `${coupon.eventName || coupon.name}-${index}`}>
+              <span>{coupon.eventName || coupon.name || '이름 없는 쿠폰'}</span>
+              <strong>{formatCouponMoney(coupon.discountAmount)}</strong>
+            </div>
+          ))}
         </div>
       ) : null}
     </section>
@@ -52,6 +58,7 @@ function CouponPreview({ coupons, loading, error }) {
 }
 
 export default function MyPage() {
+  const { updateUserProfile } = useAuth();
   const profileState = useApiResource(() => getMe(), []);
   const regionsState = useApiResource(() => getRegions(), []);
   const couponsState = useApiResource(() => getMyCoupons(), []);
@@ -116,7 +123,8 @@ export default function MyPage() {
     }
 
     try {
-      await updateProfile({ nickname, phone });
+      const updatedProfile = await updateProfile({ nickname, phone });
+      updateUserProfile({ nickname: updatedProfile?.nickname || nickname, phone: updatedProfile?.phone || phone });
 
       if (selectedRegionIds.length > 0) {
         await updatePreferredRegions({ regionIds: selectedRegionIds, primaryRegionId: selectedPrimaryRegionId });

@@ -38,7 +38,11 @@ function decodeTokenPayload(token) {
   }
 }
 
-function getAccountLabel(userToken) {
+function getAccountLabel(userToken, userProfile) {
+  if (userProfile?.nickname || userProfile?.name || userProfile?.email) {
+    return userProfile.nickname || userProfile.name || userProfile.email;
+  }
+
   const payload = decodeTokenPayload(userToken);
 
   return payload?.nickname || payload?.name || payload?.email || '내 계정';
@@ -58,8 +62,8 @@ function UserNavLink({ to, end, children }) {
 
 export default function UserLayout() {
   const navigate = useNavigate();
-  const { isUserAuthenticated, logoutUser, userToken } = useAuth();
-  const accountLabel = getAccountLabel(userToken);
+  const { isUserAuthenticated, logoutUser, userProfile, userToken } = useAuth();
+  const accountLabel = getAccountLabel(userToken, userProfile);
 
   const handleLogout = async () => {
     await logoutUser();

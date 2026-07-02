@@ -1332,6 +1332,11 @@ p {
   font-weight: 900;
 }
 
+.mypage-coupon-list {
+  display: grid;
+  gap: 0.65rem;
+}
+
 .mypage-coupon-row {
   display: flex;
   align-items: center;
