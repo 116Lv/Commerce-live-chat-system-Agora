@@ -1,6 +1,10 @@
 package com.team7.agora.domain.admin.dto.response;
 
+import com.team7.agora.domain.product.entity.Product;
 import com.team7.agora.domain.report.entity.Report;
+import com.team7.agora.domain.user.entity.User;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 /**
  * Admin Report List 응답 본문을 표현하는 DTO이다.
@@ -21,8 +25,16 @@ public record AdminReportListResponse(
     String reportedUserEmail,
     Long productId,
     String productTitle,
+    BigDecimal productPrice,
+    String productStatus,
+    String productApprovalStatus,
+    Long productSellerId,
+    String productSellerNickname,
+    String productSellerEmail,
     String reason,
-    String status
+    String status,
+    String adminMemo,
+    LocalDateTime resolvedAt
 ) {
 
     /**
@@ -31,8 +43,10 @@ public record AdminReportListResponse(
      * @return 클라이언트에 반환할 API 응답
      */
     public static AdminReportListResponse from(Report report) {
-        Long productId = report.getProduct() == null ? null : report.getProduct().getId();
-        String productTitle = report.getProduct() == null ? null : report.getProduct().getTitle();
+        Product product = report.getProduct();
+        User seller = product == null ? null : product.getSeller();
+        Long productId = product == null ? null : product.getId();
+        String productTitle = product == null ? null : product.getTitle();
         return new AdminReportListResponse(
             report.getId(),
             report.getReporter().getId(),
@@ -43,8 +57,16 @@ public record AdminReportListResponse(
             report.getReportedUser().getEmail(),
             productId,
             productTitle,
+            product == null ? null : product.getPrice(),
+            product == null ? null : product.getStatus().name(),
+            product == null ? null : product.getApprovalStatus().name(),
+            seller == null ? null : seller.getId(),
+            seller == null ? null : seller.getNickname(),
+            seller == null ? null : seller.getEmail(),
             report.getReason(),
-            report.getStatus().name()
+            report.getStatus().name(),
+            report.getAdminMemo(),
+            report.getResolvedAt()
         );
     }
 }

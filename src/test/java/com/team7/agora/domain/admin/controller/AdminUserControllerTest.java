@@ -8,7 +8,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.team7.agora.domain.admin.dto.response.AdminUserResponse;
+import com.team7.agora.domain.admin.dto.response.AdminManagedUserResponse;
 import com.team7.agora.domain.admin.service.AdminUserService;
 import com.team7.agora.domain.admin.enums.AdminRole;
 import com.team7.agora.domain.admin.enums.AdminStatus;
@@ -55,7 +55,7 @@ class AdminUserControllerTest {
         authenticate(AdminRole.USER_ADMIN);
         when(adminUserService.getUsers(any(AdminPrincipal.class), any()))
                 .thenReturn(new PageImpl<>(
-                        List.of(new AdminUserResponse(1L, "user@test.com", "동네유저", "ROLE_USER", "ACTIVE")),
+                        List.of(new AdminManagedUserResponse(1L, "user@test.com", "동네유저", "ACTIVE")),
                         PageRequest.of(0, 20),
                         42
                 ));
@@ -77,7 +77,7 @@ class AdminUserControllerTest {
     void changeStatus_usesAuthenticatedAdminAndReturnsUpdatedUser() throws Exception {
         authenticate(AdminRole.USER_ADMIN);
         when(adminUserService.changeStatus(any(AdminPrincipal.class), eq(1L), eq(UserStatus.BLOCKED)))
-                .thenReturn(new AdminUserResponse(1L, "user@test.com", "동네유저", "ROLE_USER", "BLOCKED"));
+                .thenReturn(new AdminManagedUserResponse(1L, "user@test.com", "동네유저", "BLOCKED"));
 
         mockMvc.perform(patch("/api/admin/users/{userId}/status", 1L)
                         .contentType(MediaType.APPLICATION_JSON)

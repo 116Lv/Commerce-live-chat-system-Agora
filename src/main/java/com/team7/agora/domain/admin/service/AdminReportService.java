@@ -134,6 +134,7 @@ public class AdminReportService {
             throw new BusinessException(ErrorCode.INVALID_REQUEST, "상품 신고가 아닙니다.");
         }
 
+        report.getProduct().hide();
         report.resolve(adminMemo);
         return AdminReportResponse.from(report);
     }

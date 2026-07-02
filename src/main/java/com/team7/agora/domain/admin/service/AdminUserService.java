@@ -1,6 +1,6 @@
 package com.team7.agora.domain.admin.service;
 
-import com.team7.agora.domain.admin.dto.response.AdminUserResponse;
+import com.team7.agora.domain.admin.dto.response.AdminManagedUserResponse;
 import com.team7.agora.domain.admin.enums.AdminPermission;
 import com.team7.agora.domain.user.entity.User;
 import com.team7.agora.domain.user.enums.UserStatus;
@@ -36,10 +36,10 @@ public class AdminUserService {
      * @param pageable 페이지 요청 정보
      * @return 클라이언트에 반환할 API 응답
      */
-    public Page<AdminUserResponse> getUsers(AdminPrincipal admin, Pageable pageable) {
+    public Page<AdminManagedUserResponse> getUsers(AdminPrincipal admin, Pageable pageable) {
         validateUserAdmin(admin);
         return userRepository.findAllByDeletedAtIsNull(pageable)
-                .map(AdminUserResponse::from);
+                .map(AdminManagedUserResponse::from);
     }
 
     /**
@@ -50,12 +50,12 @@ public class AdminUserService {
      * @return 클라이언트에 반환할 API 응답
      */
     @Transactional
-    public AdminUserResponse changeStatus(AdminPrincipal admin, Long userId, UserStatus status) {
+    public AdminManagedUserResponse changeStatus(AdminPrincipal admin, Long userId, UserStatus status) {
         validateUserAdmin(admin);
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "사용자를 찾을 수 없습니다."));
         user.changeStatus(status);
-        return AdminUserResponse.from(user);
+        return AdminManagedUserResponse.from(user);
     }
 
     private void validateUserAdmin(AdminPrincipal admin) {

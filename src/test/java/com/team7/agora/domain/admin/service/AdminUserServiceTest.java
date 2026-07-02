@@ -5,7 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.when;
 
-import com.team7.agora.domain.admin.dto.response.AdminUserResponse;
+import com.team7.agora.domain.admin.dto.response.AdminManagedUserResponse;
 import com.team7.agora.domain.user.entity.User;
 import com.team7.agora.domain.admin.enums.AdminRole;
 import com.team7.agora.domain.admin.enums.AdminStatus;
@@ -37,7 +37,7 @@ class AdminUserServiceTest {
         when(userRepository.findAllByDeletedAtIsNull(PageRequest.of(0, 20)))
                 .thenReturn(new PageImpl<>(List.of(user), PageRequest.of(0, 20), 42));
 
-        Page<AdminUserResponse> responses = service.getUsers(principal(AdminRole.USER_ADMIN), PageRequest.of(0, 20));
+        Page<AdminManagedUserResponse> responses = service.getUsers(principal(AdminRole.USER_ADMIN), PageRequest.of(0, 20));
 
         assertThat(responses.getContent()).hasSize(1);
         assertThat(responses.getContent().get(0).id()).isEqualTo(1L);
@@ -53,7 +53,7 @@ class AdminUserServiceTest {
         when(userRepository.findAllByDeletedAtIsNull(PageRequest.of(0, 20)))
                 .thenReturn(new PageImpl<>(List.of(), PageRequest.of(0, 20), 0));
 
-        Page<AdminUserResponse> responses = service.getUsers(principal(AdminRole.USER_ADMIN), PageRequest.of(0, 20));
+        Page<AdminManagedUserResponse> responses = service.getUsers(principal(AdminRole.USER_ADMIN), PageRequest.of(0, 20));
 
         assertThat(responses.getContent()).isEmpty();
         assertThat(responses.getTotalElements()).isZero();
@@ -74,7 +74,7 @@ class AdminUserServiceTest {
         assignId(user, 1L);
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
 
-        AdminUserResponse response = service.changeStatus(principal(AdminRole.USER_ADMIN), 1L, UserStatus.BLOCKED);
+        AdminManagedUserResponse response = service.changeStatus(principal(AdminRole.USER_ADMIN), 1L, UserStatus.BLOCKED);
 
         assertThat(response.status()).isEqualTo("BLOCKED");
         assertThat(user.getStatus()).isEqualTo(UserStatus.BLOCKED);
@@ -87,7 +87,7 @@ class AdminUserServiceTest {
         assignId(user, 1L);
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
 
-        AdminUserResponse response = service.changeStatus(principal(AdminRole.USER_ADMIN), 1L, UserStatus.DELETED);
+        AdminManagedUserResponse response = service.changeStatus(principal(AdminRole.USER_ADMIN), 1L, UserStatus.DELETED);
 
         assertThat(response.email()).isNotEqualTo("user@test.com");
         assertThat(response.email()).startsWith("deleted-user-");
@@ -109,7 +109,7 @@ class AdminUserServiceTest {
         assignId(user, 1L);
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
 
-        AdminUserResponse response = service.changeStatus(principal(AdminRole.ROOT_ADMIN), 1L, UserStatus.BLOCKED);
+        AdminManagedUserResponse response = service.changeStatus(principal(AdminRole.ROOT_ADMIN), 1L, UserStatus.BLOCKED);
 
         assertThat(response.status()).isEqualTo("BLOCKED");
         assertThat(user.getStatus()).isEqualTo(UserStatus.BLOCKED);

@@ -154,7 +154,26 @@ class AdminReportServiceTest {
         assertThat(responses.get(0).reportId()).isEqualTo(100L);
         assertThat(responses.get(0).productId()).isEqualTo(10L);
         assertThat(responses.get(0).status()).isEqualTo("PENDING");
+        assertThat(responses.get(0).productPrice()).isEqualByComparingTo(BigDecimal.valueOf(50000));
+        assertThat(responses.get(0).productStatus()).isEqualTo("SELLING");
+        assertThat(responses.get(0).productApprovalStatus()).isEqualTo("PENDING");
+        assertThat(responses.get(0).productSellerId()).isEqualTo(2L);
+        assertThat(responses.get(0).productSellerEmail()).isEqualTo("seller@test.com");
+        assertThat(responses.get(0).adminMemo()).isNull();
+        assertThat(responses.get(0).resolvedAt()).isNull();
         assertThat(responses.get(0).productTitle()).isEqualTo("가품 의심 상품");
+    }
+
+    @Test
+    void getProductReports_includesResolvedMemo() {
+        productReport.resolve("신고 사유 확인");
+        when(reportRepository.findAllByProductIsNotNull()).thenReturn(List.of(productReport));
+
+        List<AdminReportListResponse> responses = adminReportService.getProductReports(productAdmin, "RESOLVED", null);
+
+        assertThat(responses).hasSize(1);
+        assertThat(responses.get(0).adminMemo()).isEqualTo("신고 사유 확인");
+        assertThat(responses.get(0).resolvedAt()).isNotNull();
     }
 
     @Test
@@ -193,6 +212,9 @@ class AdminReportServiceTest {
 
         assertThat(response.reportId()).isEqualTo(100L);
         assertThat(response.status()).isEqualTo("RESOLVED");
+        assertThat(productReport.getProduct().getStatus().name()).isEqualTo("HIDDEN");
+        assertThat(productReport.getProduct().getApprovalStatus().name()).isEqualTo("REJECTED");
+        assertThat(response.adminMemo()).isEqualTo("가품 판매 확인");
     }
 
     @Test
