@@ -30,8 +30,15 @@ test('my page replaces menu tiles with a profile edit layout', () => {
   assert.match(source, /className="mypage-edit-grid"/);
   assert.match(source, /changePassword/);
   assert.match(source, /updatePreferredRegions/);
+  assert.match(source, /const \{ updateUserProfile \} = useAuth\(\);/);
+  assert.match(source, /updateUserProfile\(\{ nickname: updatedProfile\?\.nickname \|\| nickname/);
+  assert.doesNotMatch(source, /usableCoupons\[0\] \|\| coupons\[0\]/);
+  assert.doesNotMatch(source, /toCouponFilter/);
+  assert.match(source, /const previewCoupons = sortMyCoupons\(coupons\);/);
+  assert.match(source, /previewCoupons\.map/);
   assert.match(styles, /\.mypage-edit-grid/);
   assert.match(styles, /\.mypage-smile-ring/);
+  assert.match(styles, /\.mypage-coupon-list/);
 });
 
 test('product detail protects like action and does not expose edit without owner data', () => {
@@ -72,6 +79,8 @@ test('user layout hides protected navigation while logged out and shows signup',
   assert.match(source, /isUserAuthenticated/);
   assert.match(source, /회원가입/);
   assert.match(source, /로그아웃/);
+  assert.match(source, /로그인 연장하기/);
+  assert.match(source, /extendUserSession/);
   assert.match(source, /to: '\/me\/reviews', label: '후기'/);
   assert.match(source, /isUserAuthenticated \? \(/);
   assert.match(source, /<NavDropdown[\s\S]*?account-dropdown[\s\S]*?\)\s*:\s*\(\s*<>[\s\S]*?<UserNavLink to="\/login">/);

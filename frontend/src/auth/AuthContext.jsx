@@ -4,12 +4,14 @@ import {
   loginUser as loginUserRequest,
   logoutAdmin as logoutAdminRequest,
   logoutUser as logoutUserRequest,
+  reissueUser as reissueUserRequest,
   signupUser as signupUserRequest
 } from '../api/authApi.js';
 import {
   clearAdminToken,
   clearUserTokens,
   getAdminToken,
+  getUserRefreshToken,
   getUserToken,
   setAdminToken,
   setUserRefreshToken,
@@ -40,6 +42,7 @@ const getUserTokenPair = (response) => {
 export function AuthProvider({ children }) {
   const [userToken, setUserTokenState] = useState(() => getUserToken());
   const [adminToken, setAdminTokenState] = useState(() => getAdminToken());
+  const [userProfile, setUserProfile] = useState(null);
 
   const persistUserTokens = ({ accessToken, refreshToken }) => {
     setUserToken(accessToken);
@@ -56,8 +59,13 @@ export function AuthProvider({ children }) {
     const response = await loginUserRequest(credentials);
     const tokens = getUserTokenPair(response);
 
-    persistUserTokens(tokens);
+    persistUserToken(token);
+    setUserProfile(null);
     return response;
+  };
+
+  const updateUserProfile = (profile) => {
+    setUserProfile((current) => ({ ...(current || {}), ...(profile || {}) }));
   };
 
   const signupUser = async (formData) => {
@@ -78,7 +86,24 @@ export function AuthProvider({ children }) {
     } finally {
       clearUserTokens();
       setUserTokenState(null);
+      setUserProfile(null);
     }
+  };
+
+  const extendUserSession = async () => {
+    const refreshToken = getUserRefreshToken();
+
+    if (!refreshToken) {
+      clearUserTokens();
+      setUserTokenState(null);
+      throw new Error('로그인 연장에 필요한 refresh token이 없습니다.');
+    }
+
+    const response = await reissueUserRequest(refreshToken);
+    const tokens = getUserTokenPair(response);
+
+    persistUserTokens(tokens);
+    return response;
   };
 
   const loginAdmin = async (credentials) => {
@@ -111,15 +136,18 @@ export function AuthProvider({ children }) {
     () => ({
       userToken,
       adminToken,
+      userProfile,
       isUserAuthenticated: Boolean(userToken),
       isAdminAuthenticated: Boolean(adminToken),
+      updateUserProfile,
       loginUser,
       signupUser,
       logoutUser,
+      extendUserSession,
       loginAdmin,
       logoutAdmin
     }),
-    [userToken, adminToken]
+    [userToken, adminToken, userProfile]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

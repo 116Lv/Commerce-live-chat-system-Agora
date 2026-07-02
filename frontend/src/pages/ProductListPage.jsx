@@ -14,14 +14,10 @@ import { PageHeader, getPageContent, useApiResource } from './pageUtils.jsx';
 import { PRODUCT_CATEGORIES, getChildRegionOptions, getRegionSelectOptions } from './productFormUtils.js';
 
 const SORT_OPTIONS = [
-  { value: 'recent', label: '최신순' },
-  { value: 'likes', label: '찜순' }
-];
-
-const PRODUCT_STATUS_OPTIONS = [
-  { value: '', label: '전체' },
-  { value: 'SELLING', label: '판매중' },
-  { value: 'SOLD', label: '판매완료' }
+  { value: 'recent', label: '최신순', sort: 'recent', status: '' },
+  { value: 'likes', label: '찜순', sort: 'likes', status: '' },
+  { value: 'status-selling', label: '판매중', sort: 'recent', status: 'SELLING' },
+  { value: 'status-sold', label: '판매완료', sort: 'recent', status: 'SOLD' }
 ];
 
 const DEFAULT_QUERY = {
@@ -33,6 +29,17 @@ const DEFAULT_QUERY = {
   size: 20,
   sort: 'recent',
   direction: 'desc'
+};
+
+const getQueryFromDraft = (draft) => {
+  const selectedSort = SORT_OPTIONS.find((option) => option.value === draft.sort) || SORT_OPTIONS[0];
+
+  return {
+    ...draft,
+    sort: selectedSort.sort,
+    status: selectedSort.status,
+    page: 0
+  };
 };
 
 export default function ProductListPage() {
@@ -70,19 +77,14 @@ export default function ProductListPage() {
 
   const handleSubmit = (event) => {
     event.preventDefault();
-    setQuery({ ...draft, page: 0 });
+    setQuery(getQueryFromDraft(draft));
   };
 
   const handleSortChange = (event) => {
-    const sort = event.target.value;
-    setDraft((current) => ({ ...current, sort }));
-    setQuery((current) => ({ ...current, sort, page: 0 }));
-  };
+    const selectedSort = SORT_OPTIONS.find((option) => option.value === event.target.value) || SORT_OPTIONS[0];
 
-  const handleStatusChange = (event) => {
-    const status = event.target.value;
-    setDraft((current) => ({ ...current, status }));
-    setQuery((current) => ({ ...current, status, page: 0 }));
+    setDraft((current) => ({ ...current, sort: selectedSort.value, status: selectedSort.status }));
+    setQuery((current) => ({ ...current, sort: selectedSort.sort, status: selectedSort.status, page: 0 }));
   };
 
   const handleDirectionToggle = () => {
@@ -166,16 +168,6 @@ export default function ProductListPage() {
               {PRODUCT_CATEGORIES.map((category) => (
                 <option key={category.value} value={category.value}>
                   {category.label}
-                </option>
-              ))}
-            </Form.Select>
-          </Col>
-          <Col xs={12} md={4} lg={2}>
-            <Form.Label>판매 상태</Form.Label>
-            <Form.Select value={draft.status} onChange={handleStatusChange}>
-              {PRODUCT_STATUS_OPTIONS.map((status) => (
-                <option key={status.value || 'all'} value={status.value}>
-                  {status.label}
                 </option>
               ))}
             </Form.Select>
