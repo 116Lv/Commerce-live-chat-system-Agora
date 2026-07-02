@@ -10,6 +10,7 @@ import static org.mockito.Mockito.when;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.team7.agora.domain.chat.dto.response.ChatMessageResponse;
+import com.team7.agora.domain.chat.dto.response.ChatNotificationResponse;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import org.junit.jupiter.api.Test;
@@ -36,6 +37,7 @@ class ChatRedisSubscriberTest {
         ChatMessageResponse payload = new ChatMessageResponse(
             1L, 100L, 2L, "구매자", "안녕하세요", "TEXT", OffsetDateTime.now(ZoneOffset.UTC)
         );
+        when(redisMessage.getChannel()).thenReturn("chat-room:100".getBytes());
         when(redisMessage.getBody()).thenReturn(objectMapper.writeValueAsBytes(payload));
 
         subscriber.onMessage(redisMessage, "chat-room:100".getBytes());
@@ -44,8 +46,31 @@ class ChatRedisSubscriberTest {
     }
 
     @Test
+    void onMessage_forwardsUserNotificationToUserDestination() throws Exception {
+        ChatRedisSubscriber subscriber = new ChatRedisSubscriber(messagingTemplate, objectMapper);
+        ChatNotificationResponse payload = new ChatNotificationResponse(
+            1L,
+            1L,
+            100L,
+            2L,
+            "구매자",
+            "안녕하세요",
+            "TEXT",
+            "자전거",
+            OffsetDateTime.now(ZoneOffset.UTC)
+        );
+        when(redisMessage.getChannel()).thenReturn("chat-user:1".getBytes());
+        when(redisMessage.getBody()).thenReturn(objectMapper.writeValueAsBytes(payload));
+
+        subscriber.onMessage(redisMessage, "chat-user:1".getBytes());
+
+        verify(messagingTemplate).convertAndSend(eq("/sub/users/1/chat"), eq(payload));
+    }
+
+    @Test
     void onMessage_doesNotForwardInvalidPayload() {
         ChatRedisSubscriber subscriber = new ChatRedisSubscriber(messagingTemplate, objectMapper);
+        when(redisMessage.getChannel()).thenReturn("chat-room:100".getBytes());
         when(redisMessage.getBody()).thenReturn("not-json".getBytes());
 
         subscriber.onMessage(redisMessage, "chat-room:100".getBytes());

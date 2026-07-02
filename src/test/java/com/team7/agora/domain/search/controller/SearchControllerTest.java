@@ -5,7 +5,9 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.team7.agora.domain.product.enums.ProductStatus;
 import com.team7.agora.domain.search.dto.PopularKeywordResponse;
+import com.team7.agora.domain.search.dto.ProductSearchCondition;
 import com.team7.agora.domain.search.dto.ProductSearchResponse;
 import com.team7.agora.domain.search.service.PopularKeywordService;
 import com.team7.agora.domain.search.service.ProductSearchService;
@@ -15,6 +17,7 @@ import java.math.BigDecimal;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.PageImpl;
@@ -37,7 +40,7 @@ class SearchControllerTest {
         )));
 
         ResponseEntity<ApiResponse<PageResponse<ProductSearchResponse>>> response =
-            controller.searchV1(null, "자전거", null, null, 0, 20, "recent", "desc");
+            controller.searchV1(null, "자전거", null, null, null, 0, 20, "recent", "desc");
 
         verify(popularKeywordService).recordSearchKeyword(null, "자전거");
         assertThat(response.getStatusCode().value()).isEqualTo(200);
@@ -53,7 +56,7 @@ class SearchControllerTest {
         )));
 
         ResponseEntity<ApiResponse<PageResponse<ProductSearchResponse>>> response =
-            controller.searchV1(null, null, null, null, 0, 20, "recent", "desc");
+            controller.searchV1(null, null, null, null, null, 0, 20, "recent", "desc");
 
         assertThat(response.getStatusCode().value()).isEqualTo(200);
         assertThat(response.getBody().data().content()).hasSize(2);
@@ -67,11 +70,25 @@ class SearchControllerTest {
         ))));
 
         ResponseEntity<ApiResponse<PageResponse<ProductSearchResponse>>> response =
-            controller.searchV2(null, "자전거", null, null, 0, 20, "recent", "desc");
+            controller.searchV2(null, "자전거", null, null, null, 0, 20, "recent", "desc");
 
         verify(popularKeywordService).recordSearchKeyword(null, "자전거");
         assertThat(response.getStatusCode().value()).isEqualTo(200);
         assertThat(response.getBody().data().content()).hasSize(1);
+    }
+
+    @Test
+    void searchV2_passesStatusFilterToServiceCondition() {
+        SearchController controller = new SearchController(productSearchService, popularKeywordService);
+        when(productSearchService.searchV2(any())).thenReturn(PageResponse.from(new PageImpl<>(List.of())));
+        ArgumentCaptor<ProductSearchCondition> captor = ArgumentCaptor.forClass(ProductSearchCondition.class);
+
+        ResponseEntity<ApiResponse<PageResponse<ProductSearchResponse>>> response =
+            controller.searchV2(null, null, null, null, ProductStatus.SOLD, 0, 20, "recent", "desc");
+
+        verify(productSearchService).searchV2(captor.capture());
+        assertThat(response.getStatusCode().value()).isEqualTo(200);
+        assertThat(captor.getValue().status()).isEqualTo(ProductStatus.SOLD);
     }
 
     @Test

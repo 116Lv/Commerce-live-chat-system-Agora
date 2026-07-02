@@ -56,6 +56,9 @@ public class ProductSearchRepositoryImpl implements ProductSearchRepository {
         if (!condition.normalizedCategory().isBlank()) {
             where.and(product.category.eq(condition.normalizedCategory()));
         }
+        if (condition.normalizedStatus() != null) {
+            where.and(product.status.eq(condition.normalizedStatus()));
+        }
 
         List<ProductSearchResponse> content = queryFactory
             .select(Projections.constructor(

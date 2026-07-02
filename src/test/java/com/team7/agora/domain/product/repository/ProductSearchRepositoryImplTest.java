@@ -102,6 +102,29 @@ class ProductSearchRepositoryImplTest {
     }
 
     @Test
+    void search_filtersByStatus() {
+        String category = "QDSL_IT_STATUS";
+        saveApproved(Product.create(seller, seoul, "판매중 상품", "설명", BigDecimal.valueOf(30000), category));
+        Product sold = saveApproved(Product.create(seller, seoul, "판매완료 상품", "설명", BigDecimal.valueOf(15000), category));
+        sold.markSold();
+        productRepository.save(sold);
+        Product reserved = saveApproved(Product.create(seller, seoul, "예약중 상품", "설명", BigDecimal.valueOf(20000), category));
+        reserved.markReserved();
+        productRepository.save(reserved);
+
+        Page<ProductSearchResponse> soldResults = productRepository.search(
+            new ProductSearchCondition(null, null, category, ProductStatus.SOLD, PageRequest.of(0, 20))
+        );
+        Page<ProductSearchResponse> allResults = productRepository.search(
+            new ProductSearchCondition(null, null, category, null, PageRequest.of(0, 20))
+        );
+
+        assertThat(soldResults).extracting(ProductSearchResponse::title).containsExactly("판매완료 상품");
+        assertThat(allResults).extracting(ProductSearchResponse::title)
+            .containsExactlyInAnyOrder("판매중 상품", "판매완료 상품", "예약중 상품");
+    }
+
+    @Test
     void search_returnsCardMetadata() {
         String category = "QDSL_IT_METADATA";
         Product product = Product.create(seller, seoul, "Card metadata bike", "description", BigDecimal.valueOf(30000), category);
