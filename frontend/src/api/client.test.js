@@ -316,6 +316,81 @@ test('reissues user tokens after a user API 401 and retries the original request
   assert.equal(getUserRefreshToken(), 'rotated-refresh-token');
 });
 
+test('shares one refresh request across concurrent user API 401 responses', async () => {
+  const seenRequests = [];
+  const protectedAttempts = new Map();
+  let reissueCount = 0;
+  setUserToken('expired-user-token');
+  setUserRefreshToken('stored-refresh-token');
+
+  const adapter = (config) => {
+    seenRequests.push({
+      url: config.url,
+      authorization: config.headers.Authorization,
+      data: config.data
+    });
+
+    if (config.url === '/api/auth/reissue') {
+      reissueCount += 1;
+      return Promise.resolve({
+        config,
+        data: {
+          status: 'SUCCESS',
+          message: 'ok',
+          data: { accessToken: 'rotated-user-token', refreshToken: 'rotated-refresh-token' }
+        },
+        headers: {},
+        status: 200,
+        statusText: 'OK'
+      });
+    }
+
+    const attempts = (protectedAttempts.get(config.url) || 0) + 1;
+    protectedAttempts.set(config.url, attempts);
+
+    if (attempts === 1) {
+      return Promise.reject({
+        config,
+        response: {
+          config,
+          data: { status: 'ERROR', message: 'Token expired' },
+          headers: {},
+          status: 401,
+          statusText: 'Unauthorized'
+        }
+      });
+    }
+
+    return Promise.resolve({
+      config,
+      data: { status: 'SUCCESS', message: 'ok', data: { url: config.url } },
+      headers: {},
+      status: 200,
+      statusText: 'OK'
+    });
+  };
+
+  const responses = await Promise.all([
+    apiClient.get('/api/products', { adapter }),
+    apiClient.get('/api/users/me', { adapter })
+  ]);
+
+  assert.deepEqual(responses, [{ url: '/api/products' }, { url: '/api/users/me' }]);
+  assert.equal(reissueCount, 1);
+  assert.deepEqual(
+    seenRequests.map((request) => [request.url, request.authorization]),
+    [
+      ['/api/products', 'Bearer expired-user-token'],
+      ['/api/users/me', 'Bearer expired-user-token'],
+      ['/api/auth/reissue', undefined],
+      ['/api/products', 'Bearer rotated-user-token'],
+      ['/api/users/me', 'Bearer rotated-user-token']
+    ]
+  );
+  assert.equal(getUserToken(), 'rotated-user-token');
+  assert.equal(getUserRefreshToken(), 'rotated-refresh-token');
+});
+
 test('does not reissue admin API 401 responses', async () => {
   const seenRequests = [];
   setAdminToken('expired-admin-token');

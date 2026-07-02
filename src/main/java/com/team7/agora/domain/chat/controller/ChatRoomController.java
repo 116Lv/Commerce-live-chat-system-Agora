@@ -81,7 +81,8 @@ public class ChatRoomController {
         @RequestParam("image") MultipartFile image
     ) {
         ChatMessageResponse response = chatService.sendImageMessage(userDetails.getUserId(), chatRoomId, image);
-        chatRedisPublisher.publish(chatRoomId, response);
+        ChatRoomResponse room = chatService.getRoom(userDetails.getUserId(), chatRoomId);
+        chatRedisPublisher.publish(chatRoomId, response, room);
         return ApiResponse.success("이미지 메시지를 전송했습니다.", response);
     }
 

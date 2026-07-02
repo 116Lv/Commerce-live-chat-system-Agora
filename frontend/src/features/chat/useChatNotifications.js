@@ -1,12 +1,14 @@
-import { useCallback, useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { Client } from '@stomp/stompjs';
-import { getMyRooms } from '../../api/chatApi.js';
 import { formatAuthorizationHeader } from '../../api/client.js';
 import { getUserToken } from '../../auth/tokenStorage.js';
-import { CHAT_DESTINATIONS, getSocketUrl } from './useChatSocket.js';
+import { getSocketUrl } from './useChatSocket.js';
 
 const NOTIFICATION_PREVIEW_LIMIT = 80;
-const ROOM_REFRESH_MS = 60000;
+
+export const CHAT_NOTIFICATION_DESTINATIONS = {
+  subscribe: (userId) => `/sub/users/${userId}/chat`
+};
 
 const decodeBase64Url = (value) => {
   const normalized = String(value || '').replace(/-/g, '+').replace(/_/g, '/');
@@ -86,7 +88,7 @@ export const createChatNotification = (message = {}, room, { activeChatRoomId, c
     return null;
   }
 
-  const context = room?.productTitle || `Chat room #${roomId}`;
+  const context = message.productTitle || room?.productTitle || `Chat room #${roomId}`;
   const sender = message.senderNickname || 'Unknown sender';
   const preview = getChatMessagePreview(message);
 
@@ -130,19 +132,13 @@ export default function useChatNotifications({ enabled, activeChatRoomId, curren
     onNotificationRef.current = onNotification;
   }, [onNotification]);
 
-  const loadRooms = useCallback(async () => {
-    const rooms = await getMyRooms();
-    roomMapRef.current = createRoomMap(rooms);
-    return Array.from(roomMapRef.current.keys());
-  }, []);
-
   useEffect(() => {
-    if (!enabled) {
+    if (!enabled || currentUserId == null) {
       return undefined;
     }
 
     let disposed = false;
-    const subscriptions = new Map();
+    let subscription = null;
     const client = new Client({
       brokerURL: getSocketUrl(),
       connectHeaders: getConnectHeaders(),
@@ -150,66 +146,35 @@ export default function useChatNotifications({ enabled, activeChatRoomId, curren
       debug: () => {}
     });
 
-    const syncRoomSubscriptions = async () => {
-      const roomIds = await loadRooms();
-
-      if (disposed || !client.connected) {
+    const subscribeUserNotifications = () => {
+      if (disposed || !client.connected || subscription) {
         return;
       }
 
-      const nextRoomIds = new Set(roomIds);
-      Array.from(subscriptions.entries()).forEach(([roomId, subscription]) => {
-        if (!nextRoomIds.has(roomId)) {
-          subscription.unsubscribe();
-          subscriptions.delete(roomId);
-        }
-      });
-
-      roomIds.forEach((roomId) => {
-        if (subscriptions.has(roomId)) {
-          return;
-        }
-
-        const subscription = client.subscribe(CHAT_DESTINATIONS.subscribe(roomId), (frame) => {
-          const message = parseFrameBody(frame.body);
-          const notification = createChatNotification(message, roomMapRef.current.get(String(message.chatRoomId)), {
-            activeChatRoomId: activeChatRoomIdRef.current,
-            currentUserId: currentUserIdRef.current
-          });
-
-          if (notification) {
-            onNotificationRef.current?.(notification);
-          }
+      subscription = client.subscribe(CHAT_NOTIFICATION_DESTINATIONS.subscribe(currentUserId), (frame) => {
+        const message = parseFrameBody(frame.body);
+        const notification = createChatNotification(message, roomMapRef.current.get(String(message.chatRoomId)), {
+          activeChatRoomId: activeChatRoomIdRef.current,
+          currentUserId: currentUserIdRef.current
         });
-        subscriptions.set(roomId, subscription);
+
+        if (notification) {
+          onNotificationRef.current?.(notification);
+        }
       });
     };
 
     client.onConnect = () => {
-      syncRoomSubscriptions().catch(() => {});
+      subscription = null;
+      subscribeUserNotifications();
     };
 
     client.activate();
-    const intervalId = window.setInterval(() => {
-      if (client.connected) {
-        syncRoomSubscriptions().catch(() => {});
-      }
-    }, ROOM_REFRESH_MS);
-    const handleFocus = () => {
-      if (client.connected) {
-        syncRoomSubscriptions().catch(() => {});
-      }
-    };
-
-    window.addEventListener('focus', handleFocus);
 
     return () => {
       disposed = true;
-      window.clearInterval(intervalId);
-      window.removeEventListener('focus', handleFocus);
-      subscriptions.forEach((subscription) => subscription.unsubscribe());
-      subscriptions.clear();
+      subscription?.unsubscribe();
       client.deactivate();
     };
-  }, [enabled, loadRooms]);
+  }, [currentUserId, enabled]);
 }

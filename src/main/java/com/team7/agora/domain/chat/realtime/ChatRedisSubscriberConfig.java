@@ -1,4 +1,4 @@
-// 모든 chat-room:* 채널을 구독하는 Redis 리스너 컨테이너 설정
+// 모든 채팅 Redis Pub/Sub 채널을 구독하는 리스너 컨테이너 설정
 package com.team7.agora.domain.chat.realtime;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -17,6 +17,7 @@ import org.springframework.data.redis.listener.RedisMessageListenerContainer;
 public class ChatRedisSubscriberConfig {
 
     private static final String CHAT_ROOM_PATTERN = ChatRedisPublisher.TOPIC_PREFIX + "*";
+    private static final String CHAT_USER_PATTERN = ChatRedisPublisher.USER_TOPIC_PREFIX + "*";
 
     /**
      * Java 시간 타입을 지원하는 채팅 Redis 페이로드용 ObjectMapper를 생성한다.
@@ -28,7 +29,7 @@ public class ChatRedisSubscriberConfig {
     }
 
     /**
-     * 모든 채팅방 Redis 채널을 구독하는 리스너 컨테이너를 생성한다.
+     * 모든 채팅방과 사용자별 알림 Redis 채널을 구독하는 리스너 컨테이너를 생성한다.
      * @param connectionFactory Redis 연결 팩토리
      * @param chatRedisSubscriber 채팅 Redis 구독자
      * @return Redis 메시지 리스너 컨테이너
@@ -46,6 +47,7 @@ public class ChatRedisSubscriberConfig {
         RedisMessageListenerContainer container = new RedisMessageListenerContainer();
         container.setConnectionFactory(connectionFactory);
         container.addMessageListener(chatRedisSubscriber, new PatternTopic(CHAT_ROOM_PATTERN));
+        container.addMessageListener(chatRedisSubscriber, new PatternTopic(CHAT_USER_PATTERN));
         return container;
     }
 }

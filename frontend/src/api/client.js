@@ -93,6 +93,8 @@ const persistUserTokenPair = (tokens) => {
   setUserRefreshToken(tokens.refreshToken);
 };
 
+let userTokenRefreshPromise = null;
+
 const reissueStoredUserTokens = async (adapter) => {
   const refreshToken = getUserRefreshToken();
 
@@ -110,6 +112,16 @@ const reissueStoredUserTokens = async (adapter) => {
   persistUserTokenPair(tokens);
 
   return tokens;
+};
+
+const getSharedUserTokenRefresh = (adapter) => {
+  if (!userTokenRefreshPromise) {
+    userTokenRefreshPromise = reissueStoredUserTokens(adapter).finally(() => {
+      userTokenRefreshPromise = null;
+    });
+  }
+
+  return userTokenRefreshPromise;
 };
 
 export const unwrapApiResponse = (response) => {
@@ -165,7 +177,7 @@ apiClient.interceptors.response.use(
       const originalConfig = error.config ?? error.response.config;
 
       try {
-        const tokens = await reissueStoredUserTokens(originalConfig.adapter);
+        const tokens = await getSharedUserTokenRefresh(originalConfig.adapter);
         originalConfig._authRetry = true;
         originalConfig.headers = originalConfig.headers ?? {};
         originalConfig.headers.Authorization = formatAuthorizationHeader(tokens.accessToken);

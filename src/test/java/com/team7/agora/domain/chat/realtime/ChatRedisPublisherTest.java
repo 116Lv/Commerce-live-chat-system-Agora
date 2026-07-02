@@ -5,6 +5,9 @@ import static org.mockito.Mockito.verify;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.team7.agora.domain.chat.dto.response.ChatMessageResponse;
+import com.team7.agora.domain.chat.dto.response.ChatNotificationResponse;
+import com.team7.agora.domain.chat.dto.response.ChatRoomResponse;
+import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import org.junit.jupiter.api.Test;
@@ -31,5 +34,46 @@ class ChatRedisPublisherTest {
         publisher.publish(100L, message);
 
         verify(redisTemplate).convertAndSend("chat-room:100", objectMapper.writeValueAsString(message));
+    }
+
+    @Test
+    void publishWithRoom_sendsUserNotificationsToParticipantChannels() throws Exception {
+        ChatRedisPublisher publisher = new ChatRedisPublisher(redisTemplate, objectMapper);
+        OffsetDateTime createdAt = OffsetDateTime.now(ZoneOffset.UTC);
+        ChatMessageResponse message = new ChatMessageResponse(
+            1L, 100L, 2L, "구매자", "안녕하세요", "TEXT", createdAt
+        );
+        ChatRoomResponse room = new ChatRoomResponse(
+            100L,
+            10L,
+            1L,
+            2L,
+            "ACTIVE",
+            "자전거",
+            BigDecimal.valueOf(50000),
+            "SELLING",
+            "/uploads/products/bike.jpg",
+            "판매자",
+            "구매자",
+            1L,
+            "안녕하세요",
+            "TEXT",
+            2L,
+            "구매자",
+            createdAt,
+            1L
+        );
+
+        publisher.publish(100L, message, room);
+
+        verify(redisTemplate).convertAndSend("chat-room:100", objectMapper.writeValueAsString(message));
+        verify(redisTemplate).convertAndSend(
+            "chat-user:1",
+            objectMapper.writeValueAsString(ChatNotificationResponse.from(1L, message, room))
+        );
+        verify(redisTemplate).convertAndSend(
+            "chat-user:2",
+            objectMapper.writeValueAsString(ChatNotificationResponse.from(2L, message, room))
+        );
     }
 }
