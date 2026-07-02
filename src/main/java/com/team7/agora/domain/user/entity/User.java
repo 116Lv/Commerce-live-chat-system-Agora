@@ -1,5 +1,6 @@
 package com.team7.agora.domain.user.entity;
 
+import com.team7.agora.domain.common.entity.BaseTimeEntity;
 import com.team7.agora.domain.user.enums.UserRole;
 import com.team7.agora.domain.user.enums.UserStatus;
 import com.team7.agora.global.exception.BusinessException;
@@ -26,7 +27,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
 @Table(name = "users")
-public class User {
+public class User extends BaseTimeEntity {
 
     private static final String DELETED_DISPLAY_NAME = "탈퇴한 사용자";
     private static final String DELETED_EMAIL_DOMAIN = "@agora.local";
@@ -68,6 +69,7 @@ public class User {
         this.smileScore = 60;
         this.role = UserRole.ROLE_USER;
         this.status = UserStatus.ACTIVE;
+        markCreatedNow();
     }
 
     /**

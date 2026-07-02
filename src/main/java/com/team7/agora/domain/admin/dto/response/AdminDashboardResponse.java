@@ -10,6 +10,23 @@ import java.util.List;
  */
 public record AdminDashboardResponse(
         String role,
-        List<String> accessibleMenus
+        List<String> accessibleMenus,
+        long totalUserCount,
+        long todayNewUserCount,
+        long todayReportCount,
+        long todayTradeCount,
+        long todayProductRequestCount,
+        long registeredProductCount,
+        List<PendingReportResponse> pendingReports
 ) {
+
+    public record PendingReportResponse(
+            Long reportId,
+            String target,
+            String reason,
+            java.time.LocalDateTime reportedAt,
+            String status,
+            String type
+    ) {
+    }
 }
