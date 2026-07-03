@@ -322,17 +322,18 @@ public class PaymentService {
     }
 
     /**
-     * 결제 환불 요청을 검증하고 결제 상태를 환불 처리로 갱신한다.
+     * 구매자의 환불 신청을 받아 결제에 표시한다. 실제 환불은 관리자 승인 이후 처리된다.
      * @param payerId 결제자 ID
      * @param paymentId 결제 ID
-     * @param reason 처리 사유
+     * @param reason 환불 신청 사유
      * @return 클라이언트에 반환할 API 응답
      */
     @Transactional
-    public PaymentResponse refund(Long payerId, Long paymentId, String reason) {
-        Payment payment = findPayment(paymentId);
+    public PaymentResponse requestRefund(Long payerId, Long paymentId, String reason) {
+        Payment payment = findPaymentForUpdate(paymentId);
         payment.validatePayer(payerId);
-        throw new PaymentException(ErrorCode.INVALID_REQUEST, "환불은 관리자 승인 및 결제사 검증 이후 처리됩니다.");
+        payment.requestRefund(reason);
+        return PaymentResponse.from(payment);
     }
 
     /**

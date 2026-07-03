@@ -5,5 +5,6 @@ public enum AdminApprovalOperation {
     PRODUCT_HIDE,
     COUPON_EVENT_CREATE,
     COUPON_EVENT_STOP,
-    COUPON_EVENT_ISSUE
+    COUPON_EVENT_ISSUE,
+    PAYMENT_REFUND
 }

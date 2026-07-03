@@ -19,6 +19,7 @@ import java.time.LocalDateTime;
  * @param paidAmount 쿠폰 할인이 반영된 실제 결제 금액
  * @param tradeStatus 거래 진행 상태
  * @param completedAt 거래가 완료된 시각
+ * @param paymentId 결제 ID
  * @param paymentStatus 결제 진행 상태
  * @param settlementStatus 정산 진행 상태
  */
@@ -34,6 +35,7 @@ public record TradeDetailResponse(
     BigDecimal paidAmount,
     String tradeStatus,
     LocalDateTime completedAt,
+    Long paymentId,
     String paymentStatus,
     String settlementStatus
 ) {
@@ -58,6 +60,7 @@ public record TradeDetailResponse(
             payment != null ? payment.getAmount() : trade.getPrice(),
             trade.getStatus().name(),
             trade.getCompletedAt(),
+            payment != null ? payment.getId() : null,
             payment != null ? payment.getStatus().name() : null,
             settlement != null ? settlement.getStatus().name() : null
         );

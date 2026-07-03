@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
-import { Alert, Button, Col, Row } from 'react-bootstrap';
+import { Alert, Button, Col, Form, Row } from 'react-bootstrap';
 import { Link, useParams } from 'react-router-dom';
 import { completeTrade, getTradeDetail } from '../api/tradeApi.js';
 import { getSmileScore } from '../api/mypageApi.js';
+import { getRefundStatus, refundPayment } from '../api/paymentApi.js';
 import { getUserToken } from '../auth/tokenStorage.js';
 import ErrorState from '../components/ErrorState.jsx';
 import LoadingState from '../components/LoadingState.jsx';
@@ -47,6 +48,16 @@ export default function TradeDetailPage() {
   const canCompleteTrade = isCurrentUserBuyer && tradeStatus === 'PAID';
   const canReviewTrade = isCurrentUserBuyer && tradeStatus === 'COMPLETED';
   const canRequestRefund = isCurrentUserBuyer && paymentStatus === 'PAID';
+  const paymentId = trade?.paymentId;
+  const {
+    data: refundStatus,
+    reload: reloadRefundStatus
+  } = useApiResource(() => (paymentId ? getRefundStatus(paymentId) : Promise.resolve(null)), [paymentId]);
+  const refundRequested = Boolean(refundStatus?.refundRequestedAt);
+  const [refundReason, setRefundReason] = useState('');
+  const [refundBusy, setRefundBusy] = useState(false);
+  const [refundMessage, setRefundMessage] = useState('');
+  const [refundError, setRefundError] = useState('');
 
   useEffect(() => {
     let disposed = false;
@@ -75,6 +86,29 @@ export default function TradeDetailPage() {
       disposed = true;
     };
   }, [counterpartUserId, isCurrentUserParticipant]);
+
+  const handleRequestRefund = async (event) => {
+    event.preventDefault();
+    setRefundMessage('');
+    setRefundError('');
+
+    if (!refundReason.trim()) {
+      setRefundError('환불 사유를 입력해 주세요.');
+      return;
+    }
+
+    setRefundBusy(true);
+    try {
+      await refundPayment(paymentId, { reason: refundReason.trim() });
+      setRefundMessage('환불이 신청되었습니다. 관리자 확인 후 처리됩니다.');
+      setRefundReason('');
+      await reloadRefundStatus();
+    } catch (err) {
+      setRefundError(err.message);
+    } finally {
+      setRefundBusy(false);
+    }
+  };
 
   const runTradeAction = async (key, action, success) => {
     setMessage('');
@@ -181,9 +215,33 @@ export default function TradeDetailPage() {
           <Col xs={12} lg={5}>
             <div className="detail-panel">
               <h2 className="section-title">환불 안내</h2>
-              <p className="text-muted mb-0">
-                환불은 관리자 승인 및 결제사 검증 이후 처리됩니다. 환불이 필요하면 관리자에게 문의해 주세요.
+              <p className="text-muted">
+                환불은 관리자 승인 및 결제사 검증 이후 처리됩니다. 아래에서 환불을 신청하면 관리자 확인 후 처리됩니다.
               </p>
+              {refundMessage ? <Alert variant="success">{refundMessage}</Alert> : null}
+              {refundError ? <Alert variant="danger">{refundError}</Alert> : null}
+              {refundRequested ? (
+                <Alert variant="info" className="mb-0">
+                  {formatDateTime(refundStatus.refundRequestedAt)}에 환불을 신청했습니다. 관리자 확인 후 처리됩니다.
+                </Alert>
+              ) : (
+                <Form onSubmit={handleRequestRefund}>
+                  <Form.Group className="mb-2" controlId="refund-reason">
+                    <Form.Label>환불 사유</Form.Label>
+                    <Form.Control
+                      as="textarea"
+                      rows={3}
+                      maxLength={500}
+                      value={refundReason}
+                      onChange={(event) => setRefundReason(event.target.value)}
+                      placeholder="환불 사유를 입력해 주세요."
+                    />
+                  </Form.Group>
+                  <Button type="submit" variant="outline-danger" disabled={refundBusy}>
+                    {refundBusy ? '신청 중' : '환불 신청'}
+                  </Button>
+                </Form>
+              )}
             </div>
           </Col>
         ) : null}

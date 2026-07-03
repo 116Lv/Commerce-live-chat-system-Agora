@@ -25,11 +25,17 @@ import com.team7.agora.domain.coupon.repository.AdminCouponApprovalPayloadReposi
 import com.team7.agora.domain.coupon.repository.CouponEventRepository;
 import com.team7.agora.domain.coupon.repository.CouponRepository;
 import com.team7.agora.domain.coupon.service.CouponSlotService;
+import com.team7.agora.domain.payment.entity.Payment;
+import com.team7.agora.domain.payment.enums.PaymentStatus;
+import com.team7.agora.domain.payment.repository.PaymentRepository;
 import com.team7.agora.domain.product.repository.ProductRepository;
 import com.team7.agora.domain.product.entity.Product;
 import com.team7.agora.domain.product.enums.ProductStatus;
 import com.team7.agora.domain.region.entity.Region;
 import com.team7.agora.domain.search.service.ProductSearchService;
+import com.team7.agora.domain.settlement.entity.Settlement;
+import com.team7.agora.domain.settlement.repository.SettlementRepository;
+import com.team7.agora.domain.trade.entity.Trade;
 import com.team7.agora.domain.user.entity.User;
 import com.team7.agora.global.auth.AdminPrincipal;
 import com.team7.agora.global.exception.BusinessException;
@@ -71,6 +77,12 @@ class AdminApprovalServiceTest {
     @Mock
     private ProductSearchService productSearchService;
 
+    @Mock
+    private PaymentRepository paymentRepository;
+
+    @Mock
+    private SettlementRepository settlementRepository;
+
     private AdminApprovalService createService() {
         return new AdminApprovalService(
                 approvalRequestRepository,
@@ -80,7 +92,9 @@ class AdminApprovalServiceTest {
                 couponRepository,
                 couponSlotService,
                 productRepository,
-                productSearchService
+                productSearchService,
+                paymentRepository,
+                settlementRepository
         );
     }
 
@@ -492,6 +506,45 @@ class AdminApprovalServiceTest {
         verify(productSearchService).evictSearchCache();
     }
 
+    @Test
+    void approvePaymentRefundMarksPaymentRefundedAndCancelsSettlement() {
+        AdminApprovalService service = createService();
+        Admin root = admin(1L, "root@test.com", "root", AdminRole.ROOT_ADMIN);
+        Admin requester = admin(2L, "settlement-admin@test.com", "settlement-admin", AdminRole.SETTLEMENT_ADMIN);
+        Payment payment = paidPayment(20L);
+        AdminApprovalRequest request = AdminApprovalRequest.createPaymentRefund(requester, 20L, "구매자 요청");
+        assignId(request, 10L);
+        Settlement settlement = org.mockito.Mockito.mock(Settlement.class);
+        when(adminRepository.findById(1L)).thenReturn(Optional.of(root));
+        when(approvalRequestRepository.findByIdForUpdate(10L)).thenReturn(Optional.of(request));
+        when(paymentRepository.findById(20L)).thenReturn(Optional.of(payment));
+        when(settlementRepository.findByPaymentTradeId(payment.getTrade().getId())).thenReturn(Optional.of(settlement));
+
+        AdminApprovalRequestResponse response = service.approve(principal(1L, AdminRole.ROOT_ADMIN), 10L, "승인");
+
+        assertThat(response.status()).isEqualTo(AdminApprovalStatus.APPROVED.name());
+        assertThat(payment.getStatus()).isEqualTo(PaymentStatus.REFUNDED);
+        verify(settlement).cancel();
+    }
+
+    @Test
+    void rejectPaymentRefundCancelsRefundRequestWithoutRefundingPayment() {
+        AdminApprovalService service = createService();
+        Admin root = admin(1L, "root@test.com", "root", AdminRole.ROOT_ADMIN);
+        Admin requester = admin(2L, "settlement-admin@test.com", "settlement-admin", AdminRole.SETTLEMENT_ADMIN);
+        Payment payment = paidPayment(21L);
+        AdminApprovalRequest request = AdminApprovalRequest.createPaymentRefund(requester, 21L, "구매자 요청");
+        assignId(request, 11L);
+        when(adminRepository.findById(1L)).thenReturn(Optional.of(root));
+        when(approvalRequestRepository.findByIdForUpdate(11L)).thenReturn(Optional.of(request));
+        when(paymentRepository.findById(21L)).thenReturn(Optional.of(payment));
+
+        AdminApprovalRequestResponse response = service.reject(principal(1L, AdminRole.ROOT_ADMIN), 11L, "환불 사유 불충분");
+
+        assertThat(response.status()).isEqualTo(AdminApprovalStatus.REJECTED.name());
+        assertThat(payment.getStatus()).isEqualTo(PaymentStatus.PAID);
+        assertThat(payment.getRefundRequestedAt()).isNull();
+    }
 
     @Test
     void reject_marksPendingRequestRejectedWithoutApplyingRole() {
@@ -542,6 +595,24 @@ class AdminApprovalServiceTest {
         Product product = Product.create(seller, region, "Bike", "Good condition", BigDecimal.valueOf(100000), "SPORTS");
         assignId(product, id);
         return product;
+    }
+
+    private Payment paidPayment(Long id) {
+        User seller = User.signup("payment-seller@test.com", "encoded", "seller", "01011112222");
+        assignId(seller, 30L);
+        User buyer = User.signup("payment-buyer@test.com", "encoded", "buyer", "01033334444");
+        assignId(buyer, 31L);
+        Region region = Region.create("Seoul Gangnam", "1168010100", "Seoul", "Gangnam", "Yeoksam");
+        assignId(region, 1L);
+        Product product = Product.create(seller, region, "Bike", "Good condition", BigDecimal.valueOf(50000), "SPORTS");
+        assignId(product, 40L);
+        Trade trade = Trade.start(product, seller, buyer, BigDecimal.valueOf(50000));
+        assignId(trade, id + 1000);
+        Payment payment = Payment.ready(trade, buyer, BigDecimal.valueOf(50000), "order-" + id);
+        assignId(payment, id);
+        payment.markPaid("payment-key-" + id);
+        payment.requestRefund("구매자 요청");
+        return payment;
     }
 
     private CouponEvent pendingEvent(CouponEventType type) {

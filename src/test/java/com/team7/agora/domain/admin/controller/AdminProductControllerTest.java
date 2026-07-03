@@ -185,6 +185,7 @@ class AdminProductControllerTest {
                         null,
                         1L,
                         "Bike",
+                        null,
                         "신고 누적",
                         null,
                         null,

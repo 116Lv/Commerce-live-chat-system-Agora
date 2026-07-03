@@ -94,7 +94,8 @@ public class PaymentController {
     }
 
     /**
-     * 결제 상태를 변경하는 POST /api/payments/{paymentId}/refund 요청을 처리한다.
+     * 환불을 신청하는 POST /api/payments/{paymentId}/refund 요청을 처리한다.
+     * 실제 환불은 관리자 승인 이후 처리되며, 이 요청은 환불 신청만 기록한다.
      * @param userDetails 현재 로그인한 사용자 정보
      * @param paymentId 대상 결제 ID
      * @param request 클라이언트가 전달한 요청 본문
@@ -106,8 +107,8 @@ public class PaymentController {
         @PathVariable Long paymentId,
         @Valid @RequestBody PaymentRefundRequest request
     ) {
-        PaymentResponse response = paymentService.refund(userDetails.getUserId(), paymentId, request.reason());
-        return ApiResponse.success("결제가 환불되었습니다.", response);
+        PaymentResponse response = paymentService.requestRefund(userDetails.getUserId(), paymentId, request.reason());
+        return ApiResponse.success("환불이 신청되었습니다. 관리자 확인 후 처리됩니다.", response);
     }
 
     /**

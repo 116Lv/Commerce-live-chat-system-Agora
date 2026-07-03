@@ -1,5 +1,6 @@
 package com.team7.agora.domain.admin.controller;
 
+import com.team7.agora.domain.admin.dto.response.AdminApprovalRequestResponse;
 import com.team7.agora.domain.admin.dto.response.AdminPaymentResponse;
 import com.team7.agora.domain.admin.service.AdminPaymentService;
 import com.team7.agora.domain.payment.enums.PaymentStatus;
@@ -80,5 +81,32 @@ public class AdminPaymentController {
         @AuthenticationPrincipal AdminPrincipal userDetails
     ) {
         return ApiResponse.success("환불 목록을 조회했습니다.", adminPaymentService.getRefunds(userDetails));
+    }
+
+    /**
+     * 구매자가 환불을 신청한 결제 목록을 조회하는 GET /api/admin/refund-requests 요청을 처리한다.
+     * @param userDetails 현재 로그인한 사용자 정보
+     * @return 클라이언트에 반환할 API 응답
+     */
+    @GetMapping("/api/admin/refund-requests")
+    public ApiResponse<List<AdminPaymentResponse>> getRefundRequests(
+        @AuthenticationPrincipal AdminPrincipal userDetails
+    ) {
+        return ApiResponse.success("환불 신청 목록을 조회했습니다.", adminPaymentService.getRefundRequests(userDetails));
+    }
+
+    /**
+     * 환불 신청을 승인요청으로 접수하는 POST /api/admin/payments/{paymentId}/refund-requests 요청을 처리한다.
+     * @param userDetails 현재 로그인한 사용자 정보
+     * @param paymentId 대상 결제 ID
+     * @return 클라이언트에 반환할 API 응답
+     */
+    @PostMapping("/api/admin/payments/{paymentId}/refund-requests")
+    public ApiResponse<AdminApprovalRequestResponse> requestRefundApproval(
+        @AuthenticationPrincipal AdminPrincipal userDetails,
+        @PathVariable Long paymentId
+    ) {
+        AdminApprovalRequestResponse response = adminPaymentService.requestRefundApproval(userDetails, paymentId);
+        return ApiResponse.success("환불 승인요청이 등록되었습니다.", response);
     }
 }

@@ -16,8 +16,10 @@ import {
   getAdminProducts,
   getAdminProductReports,
   getAdminRefunds,
+  getAdminRefundRequests,
   getAdminUserReports,
   getAdminUsers,
+  requestAdminPaymentRefundApproval,
   requestAdminProductHideApproval,
   requestCouponEventCreateApproval,
   requestCouponEventIndividualIssue,
@@ -1110,11 +1112,55 @@ function PaymentTable({ rows, onVerify, onSettle, showVerify }) {
   );
 }
 
+function RefundRequestTable({ rows, onFileApproval }) {
+  if (rows.length === 0) {
+    return <EmptyState title="환불 신청 내역이 없습니다" />;
+  }
+
+  return (
+    <AdminTable>
+      <thead>
+        <tr>
+          <th>결제</th>
+          <th>주문</th>
+          <th>금액</th>
+          <th>환불 사유</th>
+          <th>신청일</th>
+          <th className="text-end">작업</th>
+        </tr>
+      </thead>
+      <tbody>
+        {rows.map((payment) => {
+          const paymentId = getId(payment, ['paymentId', 'id']);
+
+          return (
+            <tr key={paymentId}>
+              <td>#{paymentId}</td>
+              <td>{payment.orderId || '-'}</td>
+              <td>
+                <MoneyText amount={payment.amount} />
+              </td>
+              <td>{payment.refundReason || '-'}</td>
+              <td>{formatDateTime(payment.refundRequestedAt)}</td>
+              <td className="text-end">
+                <ActionButton icon={Send} variant="outline-danger" onClick={() => onFileApproval(paymentId)}>
+                  승인요청
+                </ActionButton>
+              </td>
+            </tr>
+          );
+        })}
+      </tbody>
+    </AdminTable>
+  );
+}
+
 export function AdminPaymentsPage() {
   const [paymentFilters, setPaymentFilters] = useState({ status: '', keyword: '', settlementStatus: '' });
   const [verifiedPayment, setVerifiedPayment] = useState(null);
   const payments = useAdminResource(() => getAdminPayments({ status: paymentFilters.status, page: 0, size: PAGE_SIZE }), [paymentFilters.status]);
   const refunds = useAdminResource(getAdminRefunds, []);
+  const refundRequests = useAdminResource(getAdminRefundRequests, []);
   const { notice, actionError, run } = useActionFeedback();
   const paymentMatchesFilters = (payment) => {
     const keywordMatch = [
@@ -1156,6 +1202,12 @@ export function AdminPaymentsPage() {
     run(() => settleAdminSettlement(settlementId), '정산을 실행했습니다.', () => {
       payments.reload();
       refunds.reload();
+    });
+  };
+
+  const handleFileRefundApproval = (paymentId) => {
+    run(() => requestAdminPaymentRefundApproval(paymentId), '환불 승인요청을 등록했습니다.', () => {
+      refundRequests.reload();
     });
   };
 
@@ -1216,6 +1268,14 @@ export function AdminPaymentsPage() {
       {payments.error ? <ErrorState title="결제 조회 실패" message={payments.error.message} onRetry={payments.reload} /> : null}
       {!payments.loading && !payments.error ? (
         <PaymentTable rows={filteredPayments} onVerify={handleVerify} onSettle={handleSettle} showVerify />
+      ) : null}
+      <h2 className="section-title mt-4">환불 신청</h2>
+      {refundRequests.loading ? <LoadingState label="환불 신청을 불러오는 중" /> : null}
+      {refundRequests.error ? (
+        <ErrorState title="환불 신청 조회 실패" message={refundRequests.error.message} onRetry={refundRequests.reload} />
+      ) : null}
+      {!refundRequests.loading && !refundRequests.error ? (
+        <RefundRequestTable rows={getList(refundRequests.data)} onFileApproval={handleFileRefundApproval} />
       ) : null}
       <h2 className="section-title mt-4">환불</h2>
       {refunds.loading ? <LoadingState label="환불을 불러오는 중" /> : null}
@@ -2157,6 +2217,10 @@ function getApprovalRequestTargetLabel(request) {
     return request.targetProductTitle || (request.targetProductId ? `#${request.targetProductId}` : '-');
   }
 
+  if (request.operation === 'PAYMENT_REFUND') {
+    return request.targetPaymentId ? `결제 #${request.targetPaymentId}` : '-';
+  }
+
   if (String(request.operation || '').startsWith('COUPON_')) {
     return request.couponPayload?.eventName || request.reason || approvalOperationLabel(request.operation);
   }
@@ -2167,6 +2231,10 @@ function getApprovalRequestTargetLabel(request) {
 function getApprovalRequestTargetDetail(request) {
   if (request.operation === 'PRODUCT_HIDE') {
     return request.targetProductId ? `#${request.targetProductId}` : '-';
+  }
+
+  if (request.operation === 'PAYMENT_REFUND') {
+    return request.reason || '-';
   }
 
   if (String(request.operation || '').startsWith('COUPON_')) {
@@ -2188,7 +2256,8 @@ function approvalOperationLabel(operation) {
     PRODUCT_HIDE: '상품 숨김',
     COUPON_EVENT_CREATE: '쿠폰 이벤트 생성',
     COUPON_EVENT_STOP: '쿠폰 이벤트 중단',
-    COUPON_INDIVIDUAL_ISSUE: '쿠폰 개별 발급'
+    COUPON_INDIVIDUAL_ISSUE: '쿠폰 개별 발급',
+    PAYMENT_REFUND: '결제 환불'
   };
 
   return labels[key] || key;

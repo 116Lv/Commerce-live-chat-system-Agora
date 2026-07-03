@@ -16,9 +16,13 @@ import com.team7.agora.domain.coupon.repository.AdminCouponApprovalPayloadReposi
 import com.team7.agora.domain.coupon.repository.CouponEventRepository;
 import com.team7.agora.domain.coupon.repository.CouponRepository;
 import com.team7.agora.domain.coupon.service.CouponSlotService;
+import com.team7.agora.domain.payment.entity.Payment;
+import com.team7.agora.domain.payment.repository.PaymentRepository;
 import com.team7.agora.domain.product.entity.Product;
 import com.team7.agora.domain.product.repository.ProductRepository;
 import com.team7.agora.domain.search.service.ProductSearchService;
+import com.team7.agora.domain.settlement.entity.Settlement;
+import com.team7.agora.domain.settlement.repository.SettlementRepository;
 import com.team7.agora.global.auth.AdminPrincipal;
 import com.team7.agora.global.exception.BusinessException;
 import com.team7.agora.global.exception.ErrorCode;
@@ -41,6 +45,8 @@ public class AdminApprovalService {
     private final CouponSlotService couponSlotService;
     private final ProductRepository productRepository;
     private final ProductSearchService productSearchService;
+    private final PaymentRepository paymentRepository;
+    private final SettlementRepository settlementRepository;
 
     public AdminApprovalService(
             AdminApprovalRequestRepository approvalRequestRepository,
@@ -50,7 +56,9 @@ public class AdminApprovalService {
             CouponRepository couponRepository,
             CouponSlotService couponSlotService,
             ProductRepository productRepository,
-            ProductSearchService productSearchService
+            ProductSearchService productSearchService,
+            PaymentRepository paymentRepository,
+            SettlementRepository settlementRepository
     ) {
         this.approvalRequestRepository = approvalRequestRepository;
         this.adminRepository = adminRepository;
@@ -60,6 +68,8 @@ public class AdminApprovalService {
         this.couponSlotService = couponSlotService;
         this.productRepository = productRepository;
         this.productSearchService = productSearchService;
+        this.paymentRepository = paymentRepository;
+        this.settlementRepository = settlementRepository;
     }
 
     public List<AdminApprovalRequestResponse> getRequests(AdminPrincipal admin, String status) {
@@ -176,6 +186,12 @@ public class AdminApprovalService {
                 }
                 couponSlotService.assignSlots(event.getId(), requiredPayload.targetUserIdList());
             }
+            case PAYMENT_REFUND -> {
+                Payment payment = findPayment(request.getTargetPaymentId());
+                payment.refund(request.getReason());
+                settlementRepository.findByPaymentTradeId(payment.getTrade().getId())
+                        .ifPresent(Settlement::cancel);
+            }
         }
     }
 
@@ -183,6 +199,14 @@ public class AdminApprovalService {
         if (request.getOperation() == AdminApprovalOperation.COUPON_EVENT_CREATE) {
             findCouponEvent(requirePayload(payload).getCouponEventId()).reject();
         }
+        if (request.getOperation() == AdminApprovalOperation.PAYMENT_REFUND) {
+            findPayment(request.getTargetPaymentId()).cancelRefundRequest();
+        }
+    }
+
+    private Payment findPayment(Long paymentId) {
+        return paymentRepository.findById(paymentId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "Payment not found."));
     }
 
     private AdminCouponApprovalPayload requirePayload(AdminCouponApprovalPayload payload) {
@@ -194,7 +218,8 @@ public class AdminApprovalService {
 
     private Optional<AdminCouponApprovalPayload> findPayload(AdminApprovalRequest request) {
         if (request.getOperation() == AdminApprovalOperation.ADMIN_ROLE_CHANGE
-                || request.getOperation() == AdminApprovalOperation.PRODUCT_HIDE) {
+                || request.getOperation() == AdminApprovalOperation.PRODUCT_HIDE
+                || request.getOperation() == AdminApprovalOperation.PAYMENT_REFUND) {
             return Optional.empty();
         }
         return approvalPayloadRepository.findByApprovalRequest(request);
