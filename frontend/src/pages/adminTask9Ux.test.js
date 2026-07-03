@@ -142,7 +142,7 @@ test('remaining admin pages expose page-specific Korean filter UX', () => {
   assert.match(pages, /handleMyApprovalReset/);
   assert.doesNotMatch(pages, /approval-target-admin|approval-requested-role|approval-reason/);
   assert.match(pages, /내 승인 요청/);
-  assert.doesNotMatch(pages, /Approval management|My approval requests|Request admin role change|Target admin ID|Requested role|Reason|Request approval|Loading approval requests|Loading my approval requests/);
+  assert.doesNotMatch(pages, /Approval management|My approval requests|Request admin role change|Target admin ID|Requested role|\bReason\b|Request approval|Loading approval requests|Loading my approval requests/);
 });
 
 test('admin search panels use a full-width keyword row with compact filters and bottom-right actions', () => {

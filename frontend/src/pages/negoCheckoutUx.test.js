@@ -102,13 +102,13 @@ describe('checkout and payment result UX source', () => {
     assert.doesNotMatch(source, /controlId="resultPaymentKey"/);
   });
 
-  test('TradeDetailPage does not expose direct refund form before paid status', () => {
+  test('TradeDetailPage exposes a refund request form gated to paid buyers', () => {
     const source = readSource('./TradeDetailPage.jsx');
 
-    assert.match(source, /paymentStatus === 'PAID'/);
-    assert.doesNotMatch(source, /refundPayment/);
-    assert.doesNotMatch(source, /controlId="refundPaymentId"/);
-    assert.doesNotMatch(source, /type="submit"[\s\S]{0,80}refund/);
+    assert.match(source, /const canRequestRefund = isCurrentUserBuyer && paymentStatus === 'PAID';/);
+    assert.match(source, /refundPayment/);
+    assert.match(source, /controlId="refund-reason"/);
+    assert.match(source, /canRequestRefund \?/);
   });
 
   test('TradeDetailPage limits reviews to buyers and shows counterpart smile score', () => {

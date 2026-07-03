@@ -9,12 +9,14 @@ import java.time.LocalDateTime;
  * @param paymentId 결제 ID
  * @param tradeId 거래 ID
  * @param status 조회 또는 변경할 상태
+ * @param refundRequestedAt 환불이 신청된 시각
  * @param refundedAt 환불이 완료된 시각
  */
 public record RefundStatusResponse(
     Long paymentId,
     Long tradeId,
     String status,
+    LocalDateTime refundRequestedAt,
     LocalDateTime refundedAt
 ) {
 
@@ -28,6 +30,7 @@ public record RefundStatusResponse(
             payment.getId(),
             payment.getTrade().getId(),
             payment.getStatus().name(),
+            payment.getRefundRequestedAt(),
             payment.getRefundedAt()
         );
     }

@@ -21,7 +21,9 @@ public record AdminPaymentResponse(
     String orderId,
     String paymentKey,
     String status,
-    LocalDateTime requestedAt
+    LocalDateTime requestedAt,
+    LocalDateTime refundRequestedAt,
+    String refundReason
 ) {
 
     /**
@@ -46,7 +48,9 @@ public record AdminPaymentResponse(
             payment.getOrderId(),
             payment.getPaymentKey(),
             payment.getStatus().name(),
-            payment.getRequestedAt()
+            payment.getRequestedAt(),
+            payment.getRefundRequestedAt(),
+            payment.getRefundReason()
         );
     }
 }

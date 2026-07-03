@@ -358,30 +358,44 @@ class PaymentServiceTest {
     }
 
     @Test
-    void refundMarksPaidPaymentRefundedLegacyDisabled() {
+    void requestRefundMarksPaymentRefundRequestedWithoutChangingStatus() {
         Payment payment = Payment.ready(trade, buyer, BigDecimal.valueOf(50000), "order-1");
         assignId(payment, 1000L);
         payment.markPaid("payment-key");
-        when(paymentRepository.findById(1000L)).thenReturn(Optional.of(payment));
+        when(paymentRepository.findByIdForUpdate(1000L)).thenReturn(Optional.of(payment));
 
-        assertThatThrownBy(() -> paymentService.refund(2L, 1000L, "구매자 요청"))
-            .isInstanceOf(PaymentException.class);
+        var response = paymentService.requestRefund(2L, 1000L, "구매자 요청");
 
+        assertThat(response.status()).isEqualTo("PAID");
         assertThat(payment.getStatus()).isEqualTo(PaymentStatus.PAID);
+        assertThat(payment.getRefundRequestedAt()).isNotNull();
+        assertThat(payment.getRefundReason()).isEqualTo("구매자 요청");
     }
 
     @Test
-    void refundRequestDoesNotImmediatelyRefundPaidPayment() {
+    void requestRefundRejectsNonPayer() {
         Payment payment = Payment.ready(trade, buyer, BigDecimal.valueOf(50000), "order-1");
         assignId(payment, 1000L);
         payment.markPaid("payment-key");
-        when(paymentRepository.findById(1000L)).thenReturn(Optional.of(payment));
+        when(paymentRepository.findByIdForUpdate(1000L)).thenReturn(Optional.of(payment));
 
-        assertThatThrownBy(() -> paymentService.refund(2L, 1000L, "buyer request"))
+        assertThatThrownBy(() -> paymentService.requestRefund(999L, 1000L, "buyer request"))
+            .isInstanceOf(PaymentException.class);
+        assertThat(payment.getRefundRequestedAt()).isNull();
+    }
+
+    @Test
+    void requestRefundRejectsAlreadyRequestedPayment() {
+        Payment payment = Payment.ready(trade, buyer, BigDecimal.valueOf(50000), "order-1");
+        assignId(payment, 1000L);
+        payment.markPaid("payment-key");
+        payment.requestRefund("first request");
+        when(paymentRepository.findByIdForUpdate(1000L)).thenReturn(Optional.of(payment));
+
+        assertThatThrownBy(() -> paymentService.requestRefund(2L, 1000L, "second request"))
             .isInstanceOfSatisfying(PaymentException.class, exception ->
-                assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.INVALID_REQUEST)
+                assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.CONFLICT)
             );
-        assertThat(payment.getStatus()).isEqualTo(PaymentStatus.PAID);
     }
 
     @Test

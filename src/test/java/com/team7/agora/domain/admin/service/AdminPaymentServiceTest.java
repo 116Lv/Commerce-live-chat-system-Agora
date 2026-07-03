@@ -6,6 +6,9 @@ import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.team7.agora.domain.admin.entity.Admin;
+import com.team7.agora.domain.admin.repository.AdminApprovalRequestRepository;
+import com.team7.agora.domain.admin.repository.AdminRepository;
 import com.team7.agora.domain.payment.service.PaymentService;
 import com.team7.agora.domain.payment.entity.Payment;
 import com.team7.agora.domain.payment.enums.PaymentStatus;
@@ -41,12 +44,24 @@ class AdminPaymentServiceTest {
     @Mock
     private SettlementRepository settlementRepository;
 
+    @Mock
+    private AdminRepository adminRepository;
+
+    @Mock
+    private AdminApprovalRequestRepository approvalRequestRepository;
+
     private AdminPaymentService adminPaymentService;
     private AdminPrincipal settlementAdmin;
 
     @BeforeEach
     void setUp() {
-        adminPaymentService = new AdminPaymentService(paymentRepository, paymentService, settlementRepository);
+        adminPaymentService = new AdminPaymentService(
+            paymentRepository,
+            paymentService,
+            settlementRepository,
+            adminRepository,
+            approvalRequestRepository
+        );
         settlementAdmin = new AdminPrincipal(
             99L,
             "settlement@admin.com",
@@ -118,6 +133,49 @@ class AdminPaymentServiceTest {
         assertThat(response.status()).isEqualTo("PAID");
         verify(paymentService).confirmByPaymentId(5L, "payment-key-5");
         verify(settlementRepository).findByPayment(paid);
+    }
+
+    @Test
+    void getRefundRequestsReturnsPaidPaymentsWithPendingRefundRequest() {
+        Payment requested = payment(6L, PaymentStatus.PAID);
+        when(paymentRepository.findAllByStatusAndRefundRequestedAtIsNotNull(PaymentStatus.PAID))
+            .thenReturn(List.of(requested));
+
+        var responses = adminPaymentService.getRefundRequests(settlementAdmin);
+
+        assertThat(responses).hasSize(1);
+        assertThat(responses.getFirst().paymentId()).isEqualTo(6L);
+    }
+
+    @Test
+    void requestRefundApprovalCreatesPendingApprovalRequest() {
+        Payment payment = payment(7L, PaymentStatus.PAID);
+        when(payment.getRefundRequestedAt()).thenReturn(LocalDateTime.now());
+        when(payment.getRefundReason()).thenReturn("구매자 단순 변심");
+        when(paymentRepository.findById(7L)).thenReturn(Optional.of(payment));
+
+        Admin admin = com.team7.agora.domain.admin.entity.Admin.create(
+            "settlement@admin.com", "encoded", "정산관리자", AdminRole.SETTLEMENT_ADMIN
+        );
+        com.team7.agora.support.TestEntityIds.assignId(admin, 99L);
+        when(adminRepository.findById(99L)).thenReturn(Optional.of(admin));
+        when(approvalRequestRepository.existsByPendingRequestKey("PAYMENT_REFUND:7")).thenReturn(false);
+        when(approvalRequestRepository.save(org.mockito.ArgumentMatchers.any()))
+            .thenAnswer(invocation -> invocation.getArgument(0));
+
+        var response = adminPaymentService.requestRefundApproval(settlementAdmin, 7L);
+
+        assertThat(response.operation()).isEqualTo("PAYMENT_REFUND");
+        assertThat(response.reason()).isEqualTo("구매자 단순 변심");
+    }
+
+    @Test
+    void requestRefundApprovalRejectsPaymentWithoutRefundRequest() {
+        Payment payment = payment(8L, PaymentStatus.PAID);
+        when(paymentRepository.findById(8L)).thenReturn(Optional.of(payment));
+
+        assertThatThrownBy(() -> adminPaymentService.requestRefundApproval(settlementAdmin, 8L))
+            .isInstanceOf(BusinessException.class);
     }
 
     @Test

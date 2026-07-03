@@ -110,6 +110,11 @@ export const verifyAdminPayment = (paymentId, config = {}) =>
 
 export const getAdminRefunds = (config = {}) => apiClient.get('/api/admin/refunds', config);
 
+export const getAdminRefundRequests = (config = {}) => apiClient.get('/api/admin/refund-requests', config);
+
+export const requestAdminPaymentRefundApproval = (paymentId, config = {}) =>
+  apiClient.post(`/api/admin/payments/${paymentId}/refund-requests`, null, config);
+
 export const settleAdminSettlement = (settlementId, config = {}) =>
   apiClient.post(`/api/admin/settlements/${settlementId}/settle`, null, config);
 

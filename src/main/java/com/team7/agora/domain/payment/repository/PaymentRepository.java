@@ -37,6 +37,8 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
 
     List<Payment> findAllByStatus(PaymentStatus status);
 
+    List<Payment> findAllByStatusAndRefundRequestedAtIsNotNull(PaymentStatus status);
+
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select p from Payment p where p.status = :status and p.confirmingAt <= :threshold")
     List<Payment> findAllByStatusAndConfirmingAtLessThanEqualForUpdate(

@@ -58,6 +58,8 @@ public class AdminApprovalRequest extends BaseTimeEntity {
     @Column(length = 100)
     private String targetProductTitle;
 
+    private Long targetPaymentId;
+
     @Column(nullable = false, length = 500)
     private String reason;
 
@@ -135,6 +137,20 @@ public class AdminApprovalRequest extends BaseTimeEntity {
         return new AdminApprovalRequest(requester, targetProductId, targetProductTitle, reason);
     }
 
+    public static AdminApprovalRequest createPaymentRefund(Admin requester, Long targetPaymentId, String reason) {
+        if (requester == null || targetPaymentId == null) {
+            throw new BusinessException(ErrorCode.INVALID_REQUEST);
+        }
+        AdminApprovalRequest request = new AdminApprovalRequest(
+            AdminApprovalOperation.PAYMENT_REFUND,
+            requester,
+            reason,
+            buildPaymentRefundPendingRequestKey(targetPaymentId)
+        );
+        request.targetPaymentId = targetPaymentId;
+        return request;
+    }
+
     public void approve(Admin approver, String memo) {
         validatePending();
         this.status = AdminApprovalStatus.APPROVED;
@@ -191,5 +207,9 @@ public class AdminApprovalRequest extends BaseTimeEntity {
 
     public static String buildProductHidePendingRequestKey(Long productId) {
         return "PRODUCT_HIDE:" + productId;
+    }
+
+    public static String buildPaymentRefundPendingRequestKey(Long paymentId) {
+        return "PAYMENT_REFUND:" + paymentId;
     }
 }

@@ -81,6 +81,10 @@ public class Payment {
     private LocalDateTime paidAt;
     private LocalDateTime refundedAt;
     private LocalDateTime confirmingAt;
+    private LocalDateTime refundRequestedAt;
+
+    @Column(length = 500)
+    private String refundReason;
 
     private Payment(Trade trade, User payer, BigDecimal amount, String orderId) {
         this.trade = trade;
@@ -200,7 +204,29 @@ public class Payment {
     }
 
     /**
-     * 결제 환불 요청을 검증하고 결제 상태를 환불 처리로 갱신한다.
+     * 구매자가 환불을 신청한 상태로 표시한다. 실제 환불 처리는 관리자 승인 이후 refund()에서 이루어진다.
+     * @param reason 환불 신청 사유
+     */
+    public void requestRefund(String reason) {
+        if (status != PaymentStatus.PAID) {
+            throw new PaymentException(ErrorCode.CONFLICT, "결제 완료 상태에서만 환불을 신청할 수 있습니다.");
+        }
+        if (refundRequestedAt != null) {
+            throw new PaymentException(ErrorCode.CONFLICT, "이미 환불을 신청한 결제입니다.");
+        }
+        this.refundReason = reason;
+        this.refundRequestedAt = AgoraClock.now();
+    }
+
+    /**
+     * 환불 신청을 철회한다. 관리자가 환불 승인요청을 거절했을 때 호출된다.
+     */
+    public void cancelRefundRequest() {
+        this.refundRequestedAt = null;
+    }
+
+    /**
+     * 관리자 승인 이후 결제 상태를 환불 처리로 갱신한다.
      * @param reason 처리 사유
      */
     public void refund(String reason) {
@@ -208,6 +234,7 @@ public class Payment {
             throw new PaymentException(ErrorCode.CONFLICT, "결제 완료 상태에서만 환불할 수 있습니다.");
         }
         this.status = PaymentStatus.REFUNDED;
+        this.refundReason = reason;
         this.refundedAt = AgoraClock.now();
     }
 
