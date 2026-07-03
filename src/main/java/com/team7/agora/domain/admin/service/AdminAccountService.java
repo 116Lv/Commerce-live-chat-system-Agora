@@ -58,6 +58,12 @@ public class AdminAccountService {
         return AdminUserResponse.from(target);
     }
 
+    /**
+     * ROOT_ADMIN을 강등시키는 변경일 때만 자기 자신 강등 금지, 마지막 1인 강등 금지를 검사한다.
+     * findAllByRoleForUpdate로 ROOT_ADMIN 행들을 먼저 잠근 뒤 countByRole을 세는 이유는,
+     * 두 강등 요청이 동시에 들어와도 둘 다 "2명 중 1명"으로 통과해 ROOT_ADMIN이 0명이
+     * 되는 경쟁 상태를 막기 위함이다.
+     */
     private void validateRoleChange(AdminPrincipal admin, Admin target, AdminRole role) {
         if (target.getRole() == role) {
             throw new BusinessException(ErrorCode.CONFLICT, "Target admin already has the requested role.");
