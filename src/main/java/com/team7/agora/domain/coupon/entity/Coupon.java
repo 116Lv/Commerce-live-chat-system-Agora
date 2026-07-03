@@ -90,6 +90,11 @@ public class Coupon {
         this.status = CouponStatus.USED;
     }
 
+    /**
+     * 결제 진행 중 다른 거래에서 같은 쿠폰이 중복 사용되지 않도록 ISSUED -> PAYMENT_PENDING으로 선점한다.
+     * 결제가 실패/취소되면 releasePaymentReservation으로 ISSUED로 되돌리고,
+     * 결제가 성공하면 use()가 호출되어 USED로 확정된다.
+     */
     public void reserveForPayment(Long userId, LocalDateTime now) {
         if (status != CouponStatus.ISSUED) {
             throw new BusinessException(ErrorCode.CONFLICT, "Issued coupon is required for payment.");

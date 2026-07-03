@@ -57,6 +57,12 @@ public class CouponEvent extends BaseTimeEntity {
     @Column(nullable = false)
     private int validDays;
 
+    /**
+     * 상태 전이 경로는 아래로 한정되며, 그 외 전이는 invalidStatusTransition으로 거부된다.
+     * PENDING_APPROVAL -> (approve) ACTIVE, PENDING_APPROVAL -> (reject) REJECTED
+     * ACTIVE -> (requestStop) STOP_REQUESTED, ACTIVE -> (end) ENDED
+     * STOP_REQUESTED -> (stop) STOPPED
+     */
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private CouponEventStatus status;
