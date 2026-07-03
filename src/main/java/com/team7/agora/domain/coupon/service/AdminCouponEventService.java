@@ -37,6 +37,11 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+/**
+ * 쿠폰 이벤트 생성/중단/개별발급은 모두 승인요청(AdminApprovalRequest)을 먼저 만든다.
+ * 요청자가 ROOT_ADMIN이면 그 자리에서 자동 승인하고 실제 효과(슬롯 생성, 이벤트 중단, 발급)까지 적용하지만,
+ * 그 외 관리자는 승인 대기 상태로만 남고 별도 승인 절차(ROOT_ADMIN 등)를 거쳐야 실제로 반영된다.
+ */
 @Service
 @Transactional(readOnly = true)
 public class AdminCouponEventService {
@@ -306,6 +311,10 @@ public class AdminCouponEventService {
         couponRepository.saveAll(slots);
     }
 
+    /**
+     * 유효 대상이 남은 발급 가능 수량(remaining)보다 많으면 요청을 거부하지 않고,
+     * 앞에서부터 remaining개까지만 잘라 발급 대상으로 삼는다(exceedsRemainingQuantity로 초과 여부만 응답에 알려준다).
+     */
     private IssueSummary summarizeIssueTargets(CouponEvent event, List<?> issueTargets) {
         Set<Long> seen = new LinkedHashSet<>();
         List<Long> eligibleTargetIds = new ArrayList<>();

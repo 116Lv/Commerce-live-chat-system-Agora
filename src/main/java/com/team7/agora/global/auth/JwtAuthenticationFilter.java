@@ -1,3 +1,4 @@
+// Authorization 헤더의 JWT를 검증해 SecurityContext에 인증 정보를 채우는 필터
 package com.team7.agora.global.auth;
 
 import com.team7.agora.global.exception.BusinessException;
@@ -17,6 +18,12 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
+/**
+ * Authorization 헤더가 없으면 인증 없이 통과시키고(인가는 이후 단계에서 처리),
+ * 헤더가 있는데 검증에 실패하면 SecurityContext를 비우고 즉시 에러 응답을 써서 체인을 끊는다.
+ * admin 토큰과 user 토큰은 각각 /api/admin 경로와 그 외 경로에서만 유효하도록
+ * matchesRequestPath로 교차 사용을 막는다.
+ */
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
